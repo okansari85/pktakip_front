@@ -1,0 +1,21 @@
+export default defineNuxtConfig({
+  compatibilityDate: '2026-09-22',
+  devtools: { enabled: true },
+  modules: ['@primevue/nuxt-module'],
+  primevue: {
+    options: {
+      ripple: true,
+      inputVariant: 'outlined'
+    }
+  },
+  css: [
+    'primeicons/primeicons.css',
+    'primeflex/primeflex.css',
+    '~/assets/css/main.css'
+  ],
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'
+    }
+  }
+})
