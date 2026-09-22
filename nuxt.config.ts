@@ -1,3 +1,5 @@
+import Aura from '@primevue/themes/aura'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-22',
   devtools: { enabled: true },
@@ -5,7 +7,15 @@ export default defineNuxtConfig({
   primevue: {
     options: {
       ripple: true,
-      inputVariant: 'outlined'
+      inputVariant: 'outlined',
+      theme: {
+        preset: Aura,
+        options: {
+          prefix: 'p',
+          darkModeSelector: 'system',
+          cssLayer: false
+        }
+      }
     }
   },
   css: [
