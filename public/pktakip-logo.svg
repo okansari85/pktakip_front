@@ -1,0 +1,7 @@
+<svg width="520" height="150" viewBox="0 0 520 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="8" width="118" height="118" rx="20" fill="#FFC107"/>
+  <path d="M30 68L55 93L101 39" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 8V18M62 116V126M4 67H14M112 67H122" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <text x="145" y="82" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2"> <tspan fill="#FFC107">PK</tspan><tspan fill="#111827">Takip</tspan></text>
+  <text x="148" y="116" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#4B5563">Periyodik Kontrol Takip</text>
+</svg>
