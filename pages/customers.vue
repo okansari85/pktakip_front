@@ -19,7 +19,7 @@
     <Message v-if="success" severity="success" :closable="false" class="feedback-message">{{ success }}</Message>
     <Message v-if="error" severity="error" :closable="false" class="feedback-message">{{ error }}</Message>
 
-    <ExpertCreateDialog v-model="showCreate" @created="handleCreated" />
+    <AdminExpertCreateDialog v-model="showCreate" @created="handleCreated" />
   </div>
 </template>
 
