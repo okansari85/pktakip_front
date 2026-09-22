@@ -1,3 +1,59 @@
-<template><div><div class="page-head"><div><span class="eyebrow">Tanımlamalar</span><h1>Müşteriler</h1><p>PKTakip müşterilerini yönetin.</p></div><Button label="Yeni Müşteri" icon="pi pi-plus" class="pk-primary" /></div><div class="stats"><div><small>Toplam Müşteri</small><strong>{{ tenants.length }}</strong></div><div><small>Kurumsal</small><strong>{{ companyCount }}</strong></div><div><small>Uzman</small><strong>{{ expertCount }}</strong></div></div><div class="card"><DataTable :value="tenants" :loading="loading" stripedRows paginator :rows="10" responsiveLayout="scroll"><Column field="name" header="Müşteri"><template #body="{data}"><strong>{{ data.name }}</strong><small class="slug">{{ data.slug }}</small></template></Column><Column header="Tip"><template #body="{data}"><Tag :value="data.tenant_type === 'expert' ? 'Uzman' : 'Kurumsal'" :severity="data.tenant_type === 'expert' ? 'warn' : 'info'" /></template></Column><Column field="status" header="Durum"><template #body="{data}"><Tag :value="data.status ? 'Aktif' : 'Pasif'" :severity="data.status ? 'success' : 'danger'" /></template></Column><Column header="İşlemler"><template #body="{data}"><Button icon="pi pi-chevron-right" text rounded @click="openTenant(data)" /></template></Column></DataTable></div><Message v-if="error" severity="error" :closable="false">{{ error }}</Message></div></template>
-<script setup lang="ts">definePageMeta({middleware:'auth'});const config=useRuntimeConfig();const {authHeaders}=useAuth();const tenants=ref<any[]>([]);const loading=ref(true);const error=ref('');const companyCount=computed(()=>tenants.value.filter(t=>t.tenant_type!=='expert').length);const expertCount=computed(()=>tenants.value.filter(t=>t.tenant_type==='expert').length);onMounted(async()=>{try{const r=await $fetch<{data:any[]}>(`${config.public.apiBaseUrl}/tenants`,{headers:authHeaders()});tenants.value=r.data||[]}catch(e:any){error.value=e?.data?.message||'Müşteriler alınamadı.'}finally{loading.value=false}});const openTenant=(tenant:any)=>{console.log('tenant',tenant)}</script>
-<style scoped>.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.eyebrow{font-size:12px;color:#d99e00;font-weight:700;text-transform:uppercase}.page-head h1{margin:4px 0;font-size:30px;color:#111827}.page-head p{margin:0;color:#64748b}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}.stats>div,.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px}.stats>div{padding:18px 20px}.stats small{display:block;color:#64748b}.stats strong{display:block;margin-top:5px;font-size:25px;color:#111827}.card{padding:4px}.slug{display:block;color:#94a3b8;font-size:11px;margin-top:3px}.p-datatable{border-radius:10px;overflow:hidden}</style>
+<template>
+  <div class="customers-page">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow">Tanımlamalar / Müşteriler</span>
+        <h1>Müşteriler</h1>
+        <p>PKTakip uzman müşterilerini yönetin.</p>
+      </div>
+      <Button label="Yeni Uzman" icon="pi pi-plus" class="pk-primary" />
+    </div>
+
+    <CustomerStats :total="experts.length" :active="activeCount" :inactive="inactiveCount" />
+
+    <CustomerTable :customers="experts" :loading="loading" @open="openTenant" />
+
+    <Message v-if="error" severity="error" :closable="false" class="error-message">{{ error }}</Message>
+  </div>
+</template>
+
+<script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
+const config = useRuntimeConfig()
+const { authHeaders } = useAuth()
+const tenants = ref<any[]>([])
+const loading = ref(true)
+const error = ref('')
+
+const experts = computed(() => tenants.value.filter(tenant => tenant.tenant_type === 'expert'))
+const activeCount = computed(() => experts.value.filter(tenant => Boolean(tenant.status)).length)
+const inactiveCount = computed(() => experts.value.filter(tenant => !tenant.status).length)
+
+onMounted(async () => {
+  try {
+    const response = await $fetch<{ data: any[] }>(`${config.public.apiBaseUrl}/tenants`, {
+      headers: authHeaders()
+    })
+    tenants.value = response.data || []
+  } catch (e: any) {
+    error.value = e?.data?.message || 'Müşteriler alınamadı.'
+  } finally {
+    loading.value = false
+  }
+})
+
+const openTenant = (tenant: any) => {
+  console.log('tenant', tenant)
+}
+</script>
+
+<style scoped>
+.customers-page { max-width: 1500px; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.eyebrow { display: block; margin-bottom: 7px; color: var(--pk-yellow-dark); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.page-head h1 { margin: 0; color: var(--admin-heading); font-size: 30px; line-height: 1.15; letter-spacing: -.7px; }
+.page-head p { margin: 7px 0 0; color: var(--admin-muted); font-size: 13px; }
+.error-message { margin-top: 16px; }
+@media (max-width: 700px) { .page-head { align-items: flex-start; flex-direction: column; } }
+</style>
