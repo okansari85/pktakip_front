@@ -1,4 +1,6 @@
 export default defineNuxtRouteMiddleware(() => {
+  if (import.meta.server) return
+
   const { loadStoredAuth, token, user } = useAuth()
   loadStoredAuth()
 
