@@ -14,6 +14,12 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 
+export const AdminSidebar: typeof import("../components/AdminSidebar.vue")['default']
+export const AdminTopbar: typeof import("../components/AdminTopbar.vue")['default']
+export const CustomerStats: typeof import("../components/CustomerStats.vue")['default']
+export const CustomerTable: typeof import("../components/CustomerTable.vue")['default']
+export const AdminCustomerStats: typeof import("../components/admin/CustomerStats.vue")['default']
+export const AdminCustomerTable: typeof import("../components/admin/CustomerTable.vue")['default']
 export const NuxtWelcome: typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']
 export const NuxtLayout: typeof import("../node_modules/nuxt/dist/app/components/nuxt-layout")['default']
 export const NuxtErrorBoundary: typeof import("../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']
@@ -159,6 +165,12 @@ export const Head: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Html']
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+export const LazyAdminSidebar: LazyComponent<typeof import("../components/AdminSidebar.vue")['default']>
+export const LazyAdminTopbar: LazyComponent<typeof import("../components/AdminTopbar.vue")['default']>
+export const LazyCustomerStats: LazyComponent<typeof import("../components/CustomerStats.vue")['default']>
+export const LazyCustomerTable: LazyComponent<typeof import("../components/CustomerTable.vue")['default']>
+export const LazyAdminCustomerStats: LazyComponent<typeof import("../components/admin/CustomerStats.vue")['default']>
+export const LazyAdminCustomerTable: LazyComponent<typeof import("../components/admin/CustomerTable.vue")['default']>
 export const LazyNuxtWelcome: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']>
 export const LazyNuxtLayout: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-layout")['default']>
 export const LazyNuxtErrorBoundary: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']>
