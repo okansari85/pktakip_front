@@ -10,11 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@primevue/nuxt-module": "latest",
+    "@primevue/nuxt-module": "^4.5.5",
     "nuxt": "latest",
-    "primeflex": "latest",
-    "primeicons": "latest",
-    "primevue": "latest"
+    "primeflex": "^4.0.0",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.5.5"
   },
   "devDependencies": {}
 }
