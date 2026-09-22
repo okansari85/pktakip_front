@@ -46,3 +46,8 @@ a {
   border-color: var(--pk-yellow-dark);
   color: var(--pk-black);
 }
+
+/* Login ekranında marka yalnızca sol panelde gösterilir. */
+.login-card .form-logo {
+  display: none !important;
+}
