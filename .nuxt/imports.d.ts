@@ -33,8 +33,10 @@ export { requestIdleCallback, cancelIdleCallback } from '#app/compat/idle-callba
 export { setInterval } from '#app/compat/interval';
 export { definePageMeta, PageMeta } from '#app/composables/pages';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
+export { useAuth, AuthUser } from '../composables/useAuth';
 export { usePrimeVue } from 'primevue/config';
 export { useStyle } from 'primevue/usestyle';
 export { useConfirm } from 'primevue/useconfirm';
 export { useToast } from 'primevue/usetoast';
 export { useDialog } from 'primevue/usedialog';
+export { useNuxtDevTools } from '../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';
