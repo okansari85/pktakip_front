@@ -18,8 +18,13 @@
       <Column header="Durum">
         <template #body="{ data }"><Tag :value="data.status ? 'Aktif' : 'Pasif'" :severity="data.status ? 'success' : 'danger'" /></template>
       </Column>
-      <Column header="İşlemler" headerStyle="width: 100px">
-        <template #body="{ data }"><Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" /></template>
+      <Column header="İşlemler" headerStyle="width: 150px">
+        <template #body="{ data }">
+          <div class="actions">
+            <Button icon="pi pi-sign-in" text rounded aria-label="Uzman olarak giriş yap" v-tooltip.top="'Uzman olarak giriş yap'" @click="impersonate(data)" />
+            <Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" />
+          </div>
+        </template>
       </Column>
     </DataTable>
   </div>
@@ -27,9 +32,10 @@
 
 <script setup lang="ts">
 defineProps<{ customers: any[]; loading: boolean }>()
-const emit = defineEmits<{ open: [tenant: any] }>()
+const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any] }>()
 const initials = (name: string) => name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()
 const openTenant = (tenant: any) => emit('open', tenant)
+const impersonate = (tenant: any) => emit('impersonate', tenant)
 </script>
 
 <style scoped>
@@ -43,6 +49,7 @@ const openTenant = (tenant: any) => emit('open', tenant)
 .customer-avatar { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 9px; background: #fff5cc; color: #b57b00; font-size: 11px; font-weight: 800; }
 .customer-cell strong { display: block; color: var(--admin-heading); font-size: 13px; }
 .customer-cell small { display: block; margin-top: 3px; color: var(--admin-muted); font-size: 10px; }
+.actions { display: flex; align-items: center; gap: 2px; }
 :deep(.p-datatable-thead > tr > th) { padding: 13px 16px; background: var(--admin-soft); color: var(--admin-muted); border-color: var(--admin-border); font-size: 11px; font-weight: 700; }
 :deep(.p-datatable-tbody > tr > td) { padding: 12px 16px; background: var(--admin-card); color: var(--admin-text); border-color: var(--admin-border); }
 :deep(.p-paginator) { background: var(--admin-card); border-color: var(--admin-border); }
