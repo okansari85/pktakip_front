@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'super-admin' })
 
 const config = useRuntimeConfig()
 const { authHeaders } = useAuth()
