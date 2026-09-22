@@ -1,5 +1,7 @@
 <template>
   <div class="pk-shell">
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </div>
 </template>
