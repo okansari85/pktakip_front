@@ -14,7 +14,7 @@
 
     <CustomerStats :total="experts.length" :active="activeCount" :inactive="inactiveCount" />
 
-    <CustomerTable :customers="experts" :loading="loading" @open="openTenant" @impersonate="impersonate" />
+    <CustomerTable :customers="experts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
 
     <Message v-if="success" severity="success" :closable="false" class="feedback-message">{{ success }}</Message>
     <Message v-if="error" severity="error" :closable="false" class="feedback-message">{{ error }}</Message>
@@ -63,6 +63,21 @@ onMounted(loadExperts)
 const handleCreated = async (response: any) => {
   success.value = response?.message || 'Uzman oluşturuldu ve davet e-postası gönderildi.'
   await loadExperts()
+}
+
+const sendInvite = async (tenant: any) => {
+  error.value = ''
+  success.value = ''
+  try {
+    const response = await $fetch<{ message: string }>(`${config.public.apiBaseUrl}/experts/${tenant.id}/resend-invitation`, {
+      method: 'POST',
+      headers: authHeaders(),
+    })
+
+    success.value = response.message || 'Uzman davet e-postası yeniden gönderildi.'
+  } catch (e: any) {
+    error.value = e?.data?.message || 'Uzman davet e-postası gönderilemedi.'
+  }
 }
 
 const openTenant = (tenant: any) => {
