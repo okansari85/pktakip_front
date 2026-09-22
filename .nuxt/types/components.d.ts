@@ -28,38 +28,28 @@ interface _GlobalComponents {
   NuxtImg: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtImg']
   NuxtPicture: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']
   AutoComplete: typeof import("primevue/autocomplete")['default']
+  Calendar: typeof import("primevue/calendar")['default']
   CascadeSelect: typeof import("primevue/cascadeselect")['default']
   Checkbox: typeof import("primevue/checkbox")['default']
   CheckboxGroup: typeof import("primevue/checkboxgroup")['default']
+  Chips: typeof import("primevue/chips")['default']
   ColorPicker: typeof import("primevue/colorpicker")['default']
   DatePicker: typeof import("primevue/datepicker")['default']
+  Dropdown: typeof import("primevue/dropdown")['default']
   FloatLabel: typeof import("primevue/floatlabel")['default']
   Fluid: typeof import("primevue/fluid")['default']
   IconField: typeof import("primevue/iconfield")['default']
   IftaLabel: typeof import("primevue/iftalabel")['default']
-  InputColor: typeof import("primevue/inputcolor")['default']
-  InputColorArea: typeof import("primevue/inputcolorarea")['default']
-  InputColorAreaBackground: typeof import("primevue/inputcolorareabackground")['default']
-  InputColorAreaHandle: typeof import("primevue/inputcolorareahandle")['default']
-  InputColorEyeDropper: typeof import("primevue/inputcoloreyedropper")['default']
-  InputColorInput: typeof import("primevue/inputcolorinput")['default']
-  InputColorSlider: typeof import("primevue/inputcolorslider")['default']
-  InputColorSliderHandle: typeof import("primevue/inputcolorsliderhandle")['default']
-  InputColorSliderTrack: typeof import("primevue/inputcolorslidertrack")['default']
-  InputColorSwatch: typeof import("primevue/inputcolorswatch")['default']
-  InputColorSwatchBackground: typeof import("primevue/inputcolorswatchbackground")['default']
-  InputColorTransparencyGrid: typeof import("primevue/inputcolortransparencygrid")['default']
+  InputChips: typeof import("primevue/inputchips")['default']
   InputGroup: typeof import("primevue/inputgroup")['default']
   InputGroupAddon: typeof import("primevue/inputgroupaddon")['default']
   InputIcon: typeof import("primevue/inputicon")['default']
   InputMask: typeof import("primevue/inputmask")['default']
   InputNumber: typeof import("primevue/inputnumber")['default']
   InputOtp: typeof import("primevue/inputotp")['default']
-  InputPassword: typeof import("primevue/inputpassword")['default']
-  InputTags: typeof import("primevue/inputtags")['default']
+  InputSwitch: typeof import("primevue/inputswitch")['default']
   InputText: typeof import("primevue/inputtext")['default']
   Knob: typeof import("primevue/knob")['default']
-  Label: typeof import("primevue/label")['default']
   Listbox: typeof import("primevue/listbox")['default']
   MultiSelect: typeof import("primevue/multiselect")['default']
   Password: typeof import("primevue/password")['default']
@@ -94,17 +84,12 @@ interface _GlobalComponents {
   AccordionPanel: typeof import("primevue/accordionpanel")['default']
   AccordionHeader: typeof import("primevue/accordionheader")['default']
   AccordionContent: typeof import("primevue/accordioncontent")['default']
+  AccordionTab: typeof import("primevue/accordiontab")['default']
   Card: typeof import("primevue/card")['default']
   DeferredContent: typeof import("primevue/deferredcontent")['default']
   Divider: typeof import("primevue/divider")['default']
   Fieldset: typeof import("primevue/fieldset")['default']
   Panel: typeof import("primevue/panel")['default']
-  ScrollArea: typeof import("primevue/scrollarea")['default']
-  ScrollAreaContent: typeof import("primevue/scrollareacontent")['default']
-  ScrollAreaCorner: typeof import("primevue/scrollareacorner")['default']
-  ScrollAreaHandle: typeof import("primevue/scrollareahandle")['default']
-  ScrollAreaScrollbar: typeof import("primevue/scrollareascrollbar")['default']
-  ScrollAreaViewport: typeof import("primevue/scrollareaviewport")['default']
   ScrollPanel: typeof import("primevue/scrollpanel")['default']
   Splitter: typeof import("primevue/splitter")['default']
   SplitterPanel: typeof import("primevue/splitterpanel")['default']
@@ -114,6 +99,7 @@ interface _GlobalComponents {
   StepItem: typeof import("primevue/stepitem")['default']
   StepPanels: typeof import("primevue/steppanels")['default']
   StepPanel: typeof import("primevue/steppanel")['default']
+  TabView: typeof import("primevue/tabview")['default']
   Tabs: typeof import("primevue/tabs")['default']
   TabList: typeof import("primevue/tablist")['default']
   Tab: typeof import("primevue/tab")['default']
@@ -125,76 +111,25 @@ interface _GlobalComponents {
   Dialog: typeof import("primevue/dialog")['default']
   Drawer: typeof import("primevue/drawer")['default']
   DynamicDialog: typeof import("primevue/dynamicdialog")['default']
+  OverlayPanel: typeof import("primevue/overlaypanel")['default']
   Popover: typeof import("primevue/popover")['default']
+  Sidebar: typeof import("primevue/sidebar")['default']
   FileUpload: typeof import("primevue/fileupload")['default']
   Breadcrumb: typeof import("primevue/breadcrumb")['default']
-  CommandMenu: typeof import("primevue/commandmenu")['default']
   ContextMenu: typeof import("primevue/contextmenu")['default']
   Dock: typeof import("primevue/dock")['default']
   Menu: typeof import("primevue/menu")['default']
   Menubar: typeof import("primevue/menubar")['default']
   MegaMenu: typeof import("primevue/megamenu")['default']
   PanelMenu: typeof import("primevue/panelmenu")['default']
-  Sidebar: typeof import("primevue/sidebar")['default']
-  SidebarAside: typeof import("primevue/sidebaraside")['default']
-  SidebarBackdrop: typeof import("primevue/sidebarbackdrop")['default']
-  SidebarContent: typeof import("primevue/sidebarcontent")['default']
-  SidebarFooter: typeof import("primevue/sidebarfooter")['default']
-  SidebarGroup: typeof import("primevue/sidebargroup")['default']
-  SidebarGroupAction: typeof import("primevue/sidebargroupaction")['default']
-  SidebarGroupContent: typeof import("primevue/sidebargroupcontent")['default']
-  SidebarGroupLabel: typeof import("primevue/sidebargrouplabel")['default']
-  SidebarHeader: typeof import("primevue/sidebarheader")['default']
-  SidebarLayout: typeof import("primevue/sidebarlayout")['default']
-  SidebarMain: typeof import("primevue/sidebarmain")['default']
-  SidebarMenu: typeof import("primevue/sidebarmenu")['default']
-  SidebarMenuAction: typeof import("primevue/sidebarmenuaction")['default']
-  SidebarMenuBadge: typeof import("primevue/sidebarmenubadge")['default']
-  SidebarMenuButton: typeof import("primevue/sidebarmenubutton")['default']
-  SidebarMenuItem: typeof import("primevue/sidebarmenuitem")['default']
-  SidebarMenuSub: typeof import("primevue/sidebarmenusub")['default']
-  SidebarMenuSubButton: typeof import("primevue/sidebarmenusubbutton")['default']
-  SidebarMenuSubItem: typeof import("primevue/sidebarmenusubitem")['default']
-  SidebarPanel: typeof import("primevue/sidebarpanel")['default']
-  SidebarRail: typeof import("primevue/sidebarrail")['default']
-  SidebarSpacer: typeof import("primevue/sidebarspacer")['default']
-  SidebarTrigger: typeof import("primevue/sidebartrigger")['default']
   Steps: typeof import("primevue/steps")['default']
+  TabMenu: typeof import("primevue/tabmenu")['default']
   TieredMenu: typeof import("primevue/tieredmenu")['default']
   Message: typeof import("primevue/message")['default']
+  InlineMessage: typeof import("primevue/inlinemessage")['default']
   Toast: typeof import("primevue/toast")['default']
   Carousel: typeof import("primevue/carousel")['default']
-  CarouselContent: typeof import("primevue/carouselcontent")['default']
-  CarouselIndicator: typeof import("primevue/carouselindicator")['default']
-  CarouselIndicators: typeof import("primevue/carouselindicators")['default']
-  CarouselItem: typeof import("primevue/carouselitem")['default']
-  CarouselNext: typeof import("primevue/carouselnext")['default']
-  CarouselPrev: typeof import("primevue/carouselprev")['default']
   Galleria: typeof import("primevue/galleria")['default']
-  Gallery: typeof import("primevue/gallery")['default']
-  GalleryBackdrop: typeof import("primevue/gallerybackdrop")['default']
-  GalleryContent: typeof import("primevue/gallerycontent")['default']
-  GalleryDownload: typeof import("primevue/gallerydownload")['default']
-  GalleryFlipX: typeof import("primevue/galleryflipx")['default']
-  GalleryFlipY: typeof import("primevue/galleryflipy")['default']
-  GalleryFooter: typeof import("primevue/galleryfooter")['default']
-  GalleryFullScreen: typeof import("primevue/galleryfullscreen")['default']
-  GalleryHeader: typeof import("primevue/galleryheader")['default']
-  GalleryItem: typeof import("primevue/galleryitem")['default']
-  GalleryNext: typeof import("primevue/gallerynext")['default']
-  GalleryPrev: typeof import("primevue/galleryprev")['default']
-  GalleryRotateLeft: typeof import("primevue/galleryrotateleft")['default']
-  GalleryRotateRight: typeof import("primevue/galleryrotateright")['default']
-  GalleryThumbnail: typeof import("primevue/gallerythumbnail")['default']
-  GalleryThumbnailContent: typeof import("primevue/gallerythumbnailcontent")['default']
-  GalleryThumbnailItem: typeof import("primevue/gallerythumbnailitem")['default']
-  GalleryZoomIn: typeof import("primevue/galleryzoomin")['default']
-  GalleryZoomOut: typeof import("primevue/galleryzoomout")['default']
-  GalleryZoomToggle: typeof import("primevue/galleryzoomtoggle")['default']
-  Compare: typeof import("primevue/compare")['default']
-  CompareHandle: typeof import("primevue/comparehandle")['default']
-  CompareIndicator: typeof import("primevue/compareindicator")['default']
-  CompareItem: typeof import("primevue/compareitem")['default']
   Image: typeof import("primevue/image")['default']
   ImageCompare: typeof import("primevue/imagecompare")['default']
   Avatar: typeof import("primevue/avatar")['default']
@@ -238,38 +173,28 @@ interface _GlobalComponents {
   LazyNuxtImg: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtImg']>
   LazyNuxtPicture: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']>
   LazyAutoComplete: LazyComponent<typeof import("primevue/autocomplete")['default']>
+  LazyCalendar: LazyComponent<typeof import("primevue/calendar")['default']>
   LazyCascadeSelect: LazyComponent<typeof import("primevue/cascadeselect")['default']>
   LazyCheckbox: LazyComponent<typeof import("primevue/checkbox")['default']>
   LazyCheckboxGroup: LazyComponent<typeof import("primevue/checkboxgroup")['default']>
+  LazyChips: LazyComponent<typeof import("primevue/chips")['default']>
   LazyColorPicker: LazyComponent<typeof import("primevue/colorpicker")['default']>
   LazyDatePicker: LazyComponent<typeof import("primevue/datepicker")['default']>
+  LazyDropdown: LazyComponent<typeof import("primevue/dropdown")['default']>
   LazyFloatLabel: LazyComponent<typeof import("primevue/floatlabel")['default']>
   LazyFluid: LazyComponent<typeof import("primevue/fluid")['default']>
   LazyIconField: LazyComponent<typeof import("primevue/iconfield")['default']>
   LazyIftaLabel: LazyComponent<typeof import("primevue/iftalabel")['default']>
-  LazyInputColor: LazyComponent<typeof import("primevue/inputcolor")['default']>
-  LazyInputColorArea: LazyComponent<typeof import("primevue/inputcolorarea")['default']>
-  LazyInputColorAreaBackground: LazyComponent<typeof import("primevue/inputcolorareabackground")['default']>
-  LazyInputColorAreaHandle: LazyComponent<typeof import("primevue/inputcolorareahandle")['default']>
-  LazyInputColorEyeDropper: LazyComponent<typeof import("primevue/inputcoloreyedropper")['default']>
-  LazyInputColorInput: LazyComponent<typeof import("primevue/inputcolorinput")['default']>
-  LazyInputColorSlider: LazyComponent<typeof import("primevue/inputcolorslider")['default']>
-  LazyInputColorSliderHandle: LazyComponent<typeof import("primevue/inputcolorsliderhandle")['default']>
-  LazyInputColorSliderTrack: LazyComponent<typeof import("primevue/inputcolorslidertrack")['default']>
-  LazyInputColorSwatch: LazyComponent<typeof import("primevue/inputcolorswatch")['default']>
-  LazyInputColorSwatchBackground: LazyComponent<typeof import("primevue/inputcolorswatchbackground")['default']>
-  LazyInputColorTransparencyGrid: LazyComponent<typeof import("primevue/inputcolortransparencygrid")['default']>
+  LazyInputChips: LazyComponent<typeof import("primevue/inputchips")['default']>
   LazyInputGroup: LazyComponent<typeof import("primevue/inputgroup")['default']>
   LazyInputGroupAddon: LazyComponent<typeof import("primevue/inputgroupaddon")['default']>
   LazyInputIcon: LazyComponent<typeof import("primevue/inputicon")['default']>
   LazyInputMask: LazyComponent<typeof import("primevue/inputmask")['default']>
   LazyInputNumber: LazyComponent<typeof import("primevue/inputnumber")['default']>
   LazyInputOtp: LazyComponent<typeof import("primevue/inputotp")['default']>
-  LazyInputPassword: LazyComponent<typeof import("primevue/inputpassword")['default']>
-  LazyInputTags: LazyComponent<typeof import("primevue/inputtags")['default']>
+  LazyInputSwitch: LazyComponent<typeof import("primevue/inputswitch")['default']>
   LazyInputText: LazyComponent<typeof import("primevue/inputtext")['default']>
   LazyKnob: LazyComponent<typeof import("primevue/knob")['default']>
-  LazyLabel: LazyComponent<typeof import("primevue/label")['default']>
   LazyListbox: LazyComponent<typeof import("primevue/listbox")['default']>
   LazyMultiSelect: LazyComponent<typeof import("primevue/multiselect")['default']>
   LazyPassword: LazyComponent<typeof import("primevue/password")['default']>
@@ -304,17 +229,12 @@ interface _GlobalComponents {
   LazyAccordionPanel: LazyComponent<typeof import("primevue/accordionpanel")['default']>
   LazyAccordionHeader: LazyComponent<typeof import("primevue/accordionheader")['default']>
   LazyAccordionContent: LazyComponent<typeof import("primevue/accordioncontent")['default']>
+  LazyAccordionTab: LazyComponent<typeof import("primevue/accordiontab")['default']>
   LazyCard: LazyComponent<typeof import("primevue/card")['default']>
   LazyDeferredContent: LazyComponent<typeof import("primevue/deferredcontent")['default']>
   LazyDivider: LazyComponent<typeof import("primevue/divider")['default']>
   LazyFieldset: LazyComponent<typeof import("primevue/fieldset")['default']>
   LazyPanel: LazyComponent<typeof import("primevue/panel")['default']>
-  LazyScrollArea: LazyComponent<typeof import("primevue/scrollarea")['default']>
-  LazyScrollAreaContent: LazyComponent<typeof import("primevue/scrollareacontent")['default']>
-  LazyScrollAreaCorner: LazyComponent<typeof import("primevue/scrollareacorner")['default']>
-  LazyScrollAreaHandle: LazyComponent<typeof import("primevue/scrollareahandle")['default']>
-  LazyScrollAreaScrollbar: LazyComponent<typeof import("primevue/scrollareascrollbar")['default']>
-  LazyScrollAreaViewport: LazyComponent<typeof import("primevue/scrollareaviewport")['default']>
   LazyScrollPanel: LazyComponent<typeof import("primevue/scrollpanel")['default']>
   LazySplitter: LazyComponent<typeof import("primevue/splitter")['default']>
   LazySplitterPanel: LazyComponent<typeof import("primevue/splitterpanel")['default']>
@@ -324,6 +244,7 @@ interface _GlobalComponents {
   LazyStepItem: LazyComponent<typeof import("primevue/stepitem")['default']>
   LazyStepPanels: LazyComponent<typeof import("primevue/steppanels")['default']>
   LazyStepPanel: LazyComponent<typeof import("primevue/steppanel")['default']>
+  LazyTabView: LazyComponent<typeof import("primevue/tabview")['default']>
   LazyTabs: LazyComponent<typeof import("primevue/tabs")['default']>
   LazyTabList: LazyComponent<typeof import("primevue/tablist")['default']>
   LazyTab: LazyComponent<typeof import("primevue/tab")['default']>
@@ -335,76 +256,25 @@ interface _GlobalComponents {
   LazyDialog: LazyComponent<typeof import("primevue/dialog")['default']>
   LazyDrawer: LazyComponent<typeof import("primevue/drawer")['default']>
   LazyDynamicDialog: LazyComponent<typeof import("primevue/dynamicdialog")['default']>
+  LazyOverlayPanel: LazyComponent<typeof import("primevue/overlaypanel")['default']>
   LazyPopover: LazyComponent<typeof import("primevue/popover")['default']>
+  LazySidebar: LazyComponent<typeof import("primevue/sidebar")['default']>
   LazyFileUpload: LazyComponent<typeof import("primevue/fileupload")['default']>
   LazyBreadcrumb: LazyComponent<typeof import("primevue/breadcrumb")['default']>
-  LazyCommandMenu: LazyComponent<typeof import("primevue/commandmenu")['default']>
   LazyContextMenu: LazyComponent<typeof import("primevue/contextmenu")['default']>
   LazyDock: LazyComponent<typeof import("primevue/dock")['default']>
   LazyMenu: LazyComponent<typeof import("primevue/menu")['default']>
   LazyMenubar: LazyComponent<typeof import("primevue/menubar")['default']>
   LazyMegaMenu: LazyComponent<typeof import("primevue/megamenu")['default']>
   LazyPanelMenu: LazyComponent<typeof import("primevue/panelmenu")['default']>
-  LazySidebar: LazyComponent<typeof import("primevue/sidebar")['default']>
-  LazySidebarAside: LazyComponent<typeof import("primevue/sidebaraside")['default']>
-  LazySidebarBackdrop: LazyComponent<typeof import("primevue/sidebarbackdrop")['default']>
-  LazySidebarContent: LazyComponent<typeof import("primevue/sidebarcontent")['default']>
-  LazySidebarFooter: LazyComponent<typeof import("primevue/sidebarfooter")['default']>
-  LazySidebarGroup: LazyComponent<typeof import("primevue/sidebargroup")['default']>
-  LazySidebarGroupAction: LazyComponent<typeof import("primevue/sidebargroupaction")['default']>
-  LazySidebarGroupContent: LazyComponent<typeof import("primevue/sidebargroupcontent")['default']>
-  LazySidebarGroupLabel: LazyComponent<typeof import("primevue/sidebargrouplabel")['default']>
-  LazySidebarHeader: LazyComponent<typeof import("primevue/sidebarheader")['default']>
-  LazySidebarLayout: LazyComponent<typeof import("primevue/sidebarlayout")['default']>
-  LazySidebarMain: LazyComponent<typeof import("primevue/sidebarmain")['default']>
-  LazySidebarMenu: LazyComponent<typeof import("primevue/sidebarmenu")['default']>
-  LazySidebarMenuAction: LazyComponent<typeof import("primevue/sidebarmenuaction")['default']>
-  LazySidebarMenuBadge: LazyComponent<typeof import("primevue/sidebarmenubadge")['default']>
-  LazySidebarMenuButton: LazyComponent<typeof import("primevue/sidebarmenubutton")['default']>
-  LazySidebarMenuItem: LazyComponent<typeof import("primevue/sidebarmenuitem")['default']>
-  LazySidebarMenuSub: LazyComponent<typeof import("primevue/sidebarmenusub")['default']>
-  LazySidebarMenuSubButton: LazyComponent<typeof import("primevue/sidebarmenusubbutton")['default']>
-  LazySidebarMenuSubItem: LazyComponent<typeof import("primevue/sidebarmenusubitem")['default']>
-  LazySidebarPanel: LazyComponent<typeof import("primevue/sidebarpanel")['default']>
-  LazySidebarRail: LazyComponent<typeof import("primevue/sidebarrail")['default']>
-  LazySidebarSpacer: LazyComponent<typeof import("primevue/sidebarspacer")['default']>
-  LazySidebarTrigger: LazyComponent<typeof import("primevue/sidebartrigger")['default']>
   LazySteps: LazyComponent<typeof import("primevue/steps")['default']>
+  LazyTabMenu: LazyComponent<typeof import("primevue/tabmenu")['default']>
   LazyTieredMenu: LazyComponent<typeof import("primevue/tieredmenu")['default']>
   LazyMessage: LazyComponent<typeof import("primevue/message")['default']>
+  LazyInlineMessage: LazyComponent<typeof import("primevue/inlinemessage")['default']>
   LazyToast: LazyComponent<typeof import("primevue/toast")['default']>
   LazyCarousel: LazyComponent<typeof import("primevue/carousel")['default']>
-  LazyCarouselContent: LazyComponent<typeof import("primevue/carouselcontent")['default']>
-  LazyCarouselIndicator: LazyComponent<typeof import("primevue/carouselindicator")['default']>
-  LazyCarouselIndicators: LazyComponent<typeof import("primevue/carouselindicators")['default']>
-  LazyCarouselItem: LazyComponent<typeof import("primevue/carouselitem")['default']>
-  LazyCarouselNext: LazyComponent<typeof import("primevue/carouselnext")['default']>
-  LazyCarouselPrev: LazyComponent<typeof import("primevue/carouselprev")['default']>
   LazyGalleria: LazyComponent<typeof import("primevue/galleria")['default']>
-  LazyGallery: LazyComponent<typeof import("primevue/gallery")['default']>
-  LazyGalleryBackdrop: LazyComponent<typeof import("primevue/gallerybackdrop")['default']>
-  LazyGalleryContent: LazyComponent<typeof import("primevue/gallerycontent")['default']>
-  LazyGalleryDownload: LazyComponent<typeof import("primevue/gallerydownload")['default']>
-  LazyGalleryFlipX: LazyComponent<typeof import("primevue/galleryflipx")['default']>
-  LazyGalleryFlipY: LazyComponent<typeof import("primevue/galleryflipy")['default']>
-  LazyGalleryFooter: LazyComponent<typeof import("primevue/galleryfooter")['default']>
-  LazyGalleryFullScreen: LazyComponent<typeof import("primevue/galleryfullscreen")['default']>
-  LazyGalleryHeader: LazyComponent<typeof import("primevue/galleryheader")['default']>
-  LazyGalleryItem: LazyComponent<typeof import("primevue/galleryitem")['default']>
-  LazyGalleryNext: LazyComponent<typeof import("primevue/gallerynext")['default']>
-  LazyGalleryPrev: LazyComponent<typeof import("primevue/galleryprev")['default']>
-  LazyGalleryRotateLeft: LazyComponent<typeof import("primevue/galleryrotateleft")['default']>
-  LazyGalleryRotateRight: LazyComponent<typeof import("primevue/galleryrotateright")['default']>
-  LazyGalleryThumbnail: LazyComponent<typeof import("primevue/gallerythumbnail")['default']>
-  LazyGalleryThumbnailContent: LazyComponent<typeof import("primevue/gallerythumbnailcontent")['default']>
-  LazyGalleryThumbnailItem: LazyComponent<typeof import("primevue/gallerythumbnailitem")['default']>
-  LazyGalleryZoomIn: LazyComponent<typeof import("primevue/galleryzoomin")['default']>
-  LazyGalleryZoomOut: LazyComponent<typeof import("primevue/galleryzoomout")['default']>
-  LazyGalleryZoomToggle: LazyComponent<typeof import("primevue/galleryzoomtoggle")['default']>
-  LazyCompare: LazyComponent<typeof import("primevue/compare")['default']>
-  LazyCompareHandle: LazyComponent<typeof import("primevue/comparehandle")['default']>
-  LazyCompareIndicator: LazyComponent<typeof import("primevue/compareindicator")['default']>
-  LazyCompareItem: LazyComponent<typeof import("primevue/compareitem")['default']>
   LazyImage: LazyComponent<typeof import("primevue/image")['default']>
   LazyImageCompare: LazyComponent<typeof import("primevue/imagecompare")['default']>
   LazyAvatar: LazyComponent<typeof import("primevue/avatar")['default']>
