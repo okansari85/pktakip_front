@@ -62,22 +62,16 @@ const openTenant = (tenant: any) => {
 }
 
 const impersonate = async (tenant: any) => {
-  const userId = tenant?.expert_user_id
-  if (!userId) {
-    error.value = 'Bu uzman için giriş kullanıcısı bulunamadı.'
-    return
-  }
-
+  error.value = ''
   try {
-    const response = await $fetch<{ token: string; user: any }>(`${config.public.apiBaseUrl}/users/${userId}/impersonate`, {
+    const response = await $fetch<{ token: string; user: any }>(`${config.public.apiBaseUrl}/experts/${tenant.id}/impersonate`, {
       method: 'POST',
       headers: authHeaders(),
     })
 
-    localStorage.setItem('pktakip_impersonated_from_admin', localStorage.getItem('pktakip_token') || '')
-    localStorage.setItem('pktakip_token', response.token)
-    localStorage.setItem('pktakip_user', JSON.stringify(response.user))
-    await navigateTo('/')
+    localStorage.setItem('pktakip_impersonation_token', response.token)
+    localStorage.setItem('pktakip_impersonation_user', JSON.stringify(response.user))
+    success.value = `${tenant.name} için uzman oturumu hazırlandı.`
   } catch (e: any) {
     error.value = e?.data?.message || 'Uzman hesabına geçiş yapılamadı.'
   }
