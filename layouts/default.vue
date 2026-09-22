@@ -1,12 +1,16 @@
 <template>
   <div class="admin-layout">
-    <AdminSidebar />
+    <AdminSidebar :collapsed="sidebarCollapsed" @toggle="sidebarCollapsed = !sidebarCollapsed" />
     <main class="main-area">
       <AdminTopbar />
       <div class="page-content"><slot /></div>
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+const sidebarCollapsed = ref(false)
+</script>
 
 <style scoped>
 .admin-layout { min-height: 100vh; display: flex; background: var(--admin-background); }
