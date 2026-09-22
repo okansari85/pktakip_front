@@ -21,6 +21,7 @@
       <Column header="İşlemler" headerStyle="width: 150px">
         <template #body="{ data }">
           <div class="actions">
+            <Button icon="pi pi-envelope" text rounded aria-label="Davet maili gönder" v-tooltip.top="'Davet maili gönder'" @click="sendInvite(data)" />
             <Button icon="pi pi-sign-in" text rounded aria-label="Uzman olarak giriş yap" v-tooltip.top="'Uzman olarak giriş yap'" @click="impersonate(data)" />
             <Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" />
           </div>
@@ -32,10 +33,11 @@
 
 <script setup lang="ts">
 defineProps<{ customers: any[]; loading: boolean }>()
-const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any] }>()
+const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any]; sendInvite: [tenant: any] }>()
 const initials = (name: string) => name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()
 const openTenant = (tenant: any) => emit('open', tenant)
 const impersonate = (tenant: any) => emit('impersonate', tenant)
+const sendInvite = (tenant: any) => emit('sendInvite', tenant)
 </script>
 
 <style scoped>
