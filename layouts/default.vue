@@ -1,3 +1,19 @@
-<template><div class="admin-layout"><aside class="sidebar"><div class="brand"><span class="brand-mark">✓</span><span><b><i>PK</i>Takip</b><small>Periyodik Kontrol Takip</small></span></div><nav><NuxtLink to="/customers" class="menu-item"><i class="pi pi-building" /> Müşteriler</NuxtLink></nav><div class="sidebar-footer">Süper Admin</div></aside><main class="main-area"><header class="topbar"><strong>PKTakip <small>Yönetim Paneli</small></strong><div class="user-area"><span>{{ user?.name }}</span><Button icon="pi pi-sign-out" text rounded aria-label="Çıkış" @click="logout" /></div></header><div class="page-content"><slot /></div></main></div></template>
-<script setup lang="ts">const { user, logout } = useAuth()</script>
-<style scoped>.admin-layout{min-height:100vh;display:flex;background:#f8fafc}.sidebar{width:245px;background:#111827;color:#fff;padding:22px 16px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:10px;margin:4px 8px 42px}.brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#ffc107;color:#111827;font-size:27px;font-weight:800}.brand b{display:block;font-size:21px}.brand i{font-style:normal;color:#ffc107}.brand small{display:block;color:#9ca3af;font-size:10px}.menu-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:8px;color:#d1d5db}.menu-item:hover,.menu-item.router-link-active{background:#ffc107;color:#111827;font-weight:600}.sidebar-footer{margin-top:auto;color:#9ca3af;font-size:12px;padding:12px}.main-area{flex:1}.topbar{height:70px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 32px;color:#172554}.topbar small{color:#64748b;font-weight:400}.user-area{display:flex;align-items:center;gap:12px}.page-content{padding:30px 34px}</style>
+<template>
+  <div class="admin-layout">
+    <AdminSidebar />
+    <main class="main-area">
+      <AdminTopbar />
+      <div class="page-content"><slot /></div>
+    </main>
+  </div>
+</template>
+
+<style scoped>
+.admin-layout { min-height: 100vh; display: flex; background: var(--admin-background); }
+.main-area { min-width: 0; flex: 1; }
+.page-content { padding: 30px 34px 40px; }
+@media (max-width: 800px) {
+  .admin-layout { display: block; }
+  .page-content { padding: 20px 16px 30px; }
+}
+</style>
