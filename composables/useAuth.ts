@@ -3,6 +3,7 @@ export type AuthUser = {
   name: string
   email: string
   roles: string[]
+  is_expert: boolean
   tenant_id: number | null
 }
 
@@ -24,8 +25,8 @@ export const useAuth = () => {
     const response = await $fetch<{ token: string; user: AuthUser; message: string }>(`${config.public.apiBaseUrl}/login`, {
       method: 'POST', body: { email, password },
     })
-    if (!response.user.roles.includes('super-admin')) {
-      throw new Error('Bu panel yalnızca süper admin kullanıcıları içindir.')
+    if (!response.user.roles.includes('super-admin') && !response.user.is_expert) {
+      throw new Error('Bu panel yalnızca yetkili kullanıcılar içindir.')
     }
     token.value = response.token
     user.value = response.user
