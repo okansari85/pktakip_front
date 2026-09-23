@@ -20,6 +20,10 @@ interface _GlobalComponents {
   CustomerTable: typeof import("../../components/CustomerTable.vue")['default']
   AdminCustomerStats: typeof import("../../components/admin/CustomerStats.vue")['default']
   AdminCustomerTable: typeof import("../../components/admin/CustomerTable.vue")['default']
+  AdminExpertCreateDialog: typeof import("../../components/admin/ExpertCreateDialog.vue")['default']
+  ExpertSidebar: typeof import("../../components/expert/ExpertSidebar.vue")['default']
+  ExpertTopbar: typeof import("../../components/expert/ExpertTopbar.vue")['default']
+  ExpertOrganizationNode: typeof import("../../components/expert/OrganizationNode.vue")['default']
   NuxtWelcome: typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']
   NuxtLayout: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-layout")['default']
   NuxtErrorBoundary: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']
@@ -171,6 +175,10 @@ interface _GlobalComponents {
   LazyCustomerTable: LazyComponent<typeof import("../../components/CustomerTable.vue")['default']>
   LazyAdminCustomerStats: LazyComponent<typeof import("../../components/admin/CustomerStats.vue")['default']>
   LazyAdminCustomerTable: LazyComponent<typeof import("../../components/admin/CustomerTable.vue")['default']>
+  LazyAdminExpertCreateDialog: LazyComponent<typeof import("../../components/admin/ExpertCreateDialog.vue")['default']>
+  LazyExpertSidebar: LazyComponent<typeof import("../../components/expert/ExpertSidebar.vue")['default']>
+  LazyExpertTopbar: LazyComponent<typeof import("../../components/expert/ExpertTopbar.vue")['default']>
+  LazyExpertOrganizationNode: LazyComponent<typeof import("../../components/expert/OrganizationNode.vue")['default']>
   LazyNuxtWelcome: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']>
   LazyNuxtLayout: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-layout")['default']>
   LazyNuxtErrorBoundary: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']>

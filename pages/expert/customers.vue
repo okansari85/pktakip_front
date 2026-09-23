@@ -108,7 +108,6 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 definePageMeta({ layout: 'expert', middleware: 'expert' })
 
@@ -116,7 +115,15 @@ interface Customer { id: number | string; name: string; locations_count?: number
 interface OrganizationNode { id: number | string; name: string; children?: OrganizationNode[] }
 
 const config = useRuntimeConfig()
-const { authHeaders } = useAuth()
+const { authHeaders, user } = useAuth()
+
+const tenantHeaders = () => ({
+  ...authHeaders(),
+  ...(user.value?.tenant_id
+    ? { 'X-Tenant-ID': String(user.value.tenant_id) }
+    : {})
+})
+
 const customers = ref<Customer[]>([])
 const loading = ref(true)
 const error = ref('')
@@ -153,7 +160,7 @@ const loadCustomers = async () => {
   loading.value = true
   error.value = ''
   try {
-    const response = await $fetch(`${config.public.apiBaseUrl}/customers`, { headers: authHeaders() })
+    const response = await $fetch(`${config.public.apiBaseUrl}/customers`, { headers: tenantHeaders() })
     const data = unwrap(response)
     customers.value = Array.isArray(data) ? data : (data?.items || [])
   } catch (e: any) {
@@ -168,7 +175,7 @@ const openOrganization = async (customer: Customer) => {
   organizationError.value = ''
   organizationSearch.value = ''
   try {
-    const response = await $fetch(`${config.public.apiBaseUrl}/customers/${customer.id}/organizations`, { headers: authHeaders() })
+    const response = await $fetch(`${config.public.apiBaseUrl}/customers/${customer.id}/organizations`, { headers: tenantHeaders() })
     const data = unwrap(response)
     organizationTree.value = Array.isArray(data) ? data : (data?.items || data?.tree || [])
   } catch (e: any) {
@@ -186,7 +193,7 @@ const createCustomer = async () => {
   if (!customerName.value.trim()) return
   saving.value = true
   try {
-    await $fetch(`${config.public.apiBaseUrl}/customers`, { method: 'POST', headers: authHeaders(), body: { name: customerName.value.trim(), notes: customerNotes.value.trim() || null } })
+    await $fetch(`${config.public.apiBaseUrl}/customers`, { method: 'POST', headers: tenantHeaders(), body: { name: customerName.value.trim(), notes: customerNotes.value.trim() || null } })
     customerFormOpen.value = false
     await loadCustomers()
   } catch (e: any) { error.value = e?.data?.message || 'Müşteri oluşturulamadı.' }
@@ -198,7 +205,7 @@ const createOrganization = async () => {
   savingOrganization.value = true
   try {
     await $fetch(`${config.public.apiBaseUrl}/customers/${selectedCustomer.value.id}/organizations`, {
-      method: 'POST', headers: authHeaders(), body: { name: organizationName.value.trim(), parent_id: organizationParent.value?.id ?? null }
+      method: 'POST', headers: tenantHeaders(), body: { name: organizationName.value.trim(), parent_id: organizationParent.value?.id ?? null }
     })
     organizationFormOpen.value = false
     await openOrganization(selectedCustomer.value)
