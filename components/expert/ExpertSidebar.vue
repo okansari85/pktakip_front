@@ -23,10 +23,10 @@
         <i class="pi pi-users" />
         <span v-if="!collapsed">Müşteriler</span>
       </NuxtLink>
-      <a href="#" class="sidebar-link" @click.prevent>
+      <NuxtLink to="/expert/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
         <i class="pi pi-map-marker" />
         <span v-if="!collapsed">Lokasyonlar</span>
-      </a>
+      </NuxtLink>
       <a href="#" class="sidebar-link" @click.prevent>
         <i class="pi pi-wrench" />
         <span v-if="!collapsed">Ekipmanlar</span>
