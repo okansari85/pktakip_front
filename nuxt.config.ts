@@ -3,6 +3,8 @@ import Aura from '@primevue/themes/aura'
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-22',
   devtools: { enabled: true },
+  // Oturum localStorage'da tutulduğu için sunucu kullanıcıyı bilemez; panel SPA olarak çalışır.
+  ssr: false,
   modules: ['@primevue/nuxt-module'],
   primevue: {
     options: {

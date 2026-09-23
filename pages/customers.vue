@@ -12,9 +12,9 @@
       </button>
     </div>
 
-    <CustomerStats :total="experts.length" :active="activeCount" :inactive="inactiveCount" />
+    <AdminCustomerStats :total="experts.length" :active="activeCount" :inactive="inactiveCount" />
 
-    <CustomerTable :customers="experts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
+    <AdminCustomerTable :customers="experts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
 
     <Message v-if="success" severity="success" :closable="false" class="feedback-message">{{ success }}</Message>
     <Message v-if="error" severity="error" :closable="false" class="feedback-message">{{ error }}</Message>

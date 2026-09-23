@@ -79,12 +79,13 @@
         <div v-else-if="organizationError" class="drawer-state error-state">{{ organizationError }}</div>
         <div v-else-if="filteredTree.length === 0" class="drawer-state">Bu müşteriye bağlı organizasyon bulunmuyor.</div>
         <div v-else class="tree-list">
-          <OrganizationNode
+          <ExpertOrganizationNode
             v-for="node in filteredTree"
             :key="node.id"
             :node="node"
             :depth="0"
             @add-child="openOrganizationForm"
+            @delete="deleteOrganization"
           />
         </div>
       </aside>
@@ -177,7 +178,7 @@ const openOrganization = async (customer: Customer) => {
   try {
     const response = await $fetch(`${config.public.apiBaseUrl}/customers/${customer.id}/organizations`, { headers: tenantHeaders() })
     const data = unwrap(response)
-    organizationTree.value = Array.isArray(data) ? data : (data?.items || data?.tree || [])
+    organizationTree.value = Array.isArray(data) ? data : (data?.organizations || data?.items || data?.tree || [])
   } catch (e: any) {
     organizationError.value = e?.data?.message || 'Organizasyon ağacı alınamadı.'
   } finally { organizationLoading.value = false }
@@ -205,7 +206,7 @@ const createOrganization = async () => {
   savingOrganization.value = true
   try {
     await $fetch(`${config.public.apiBaseUrl}/customers/${selectedCustomer.value.id}/organizations`, {
-      method: 'POST', headers: tenantHeaders(), body: { name: organizationName.value.trim(), parent_id: organizationParent.value?.id ?? null }
+      method: 'POST', headers: tenantHeaders(), body: { name: organizationName.value.trim(), parent_id: organizationParent.value?.id ?? null, color: '#465FFF' }
     })
     organizationFormOpen.value = false
     await openOrganization(selectedCustomer.value)
@@ -213,7 +214,17 @@ const createOrganization = async () => {
   finally { savingOrganization.value = false }
 }
 
-const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
+const deleteOrganization = async (node: OrganizationNode) => {
+  if (!selectedCustomer.value) return
+  if (node.children?.length) { alert('Alt organizasyonları bulunan bir organizasyon silinemez. Önce alt organizasyonları silin.'); return }
+  if (!confirm(`"${node.name}" organizasyonu silinsin mi?`)) return
+  try {
+    await $fetch(`${config.public.apiBaseUrl}/organizations/${node.id}`, { method: 'DELETE', headers: tenantHeaders() })
+    await openOrganization(selectedCustomer.value)
+  } catch (e: any) { alert(e?.data?.message || 'Organizasyon silinemedi.') }
+}
+
+const formatDate =(value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
 onMounted(loadCustomers)
 </script>
