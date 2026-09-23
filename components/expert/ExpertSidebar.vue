@@ -19,6 +19,10 @@
         <i class="pi pi-home" />
         <span v-if="!collapsed">Genel Bakış</span>
       </NuxtLink>
+      <NuxtLink to="/expert/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
+        <i class="pi pi-users" />
+        <span v-if="!collapsed">Müşteriler</span>
+      </NuxtLink>
       <a href="#" class="sidebar-link" @click.prevent>
         <i class="pi pi-map-marker" />
         <span v-if="!collapsed">Lokasyonlar</span>
@@ -30,14 +34,6 @@
       <a href="#" class="sidebar-link" @click.prevent>
         <i class="pi pi-calendar" />
         <span v-if="!collapsed">Kontroller</span>
-      </a>
-      <a href="#" class="sidebar-link" @click.prevent>
-        <i class="pi pi-exclamation-triangle" />
-        <span v-if="!collapsed">Bulgular</span>
-      </a>
-      <a href="#" class="sidebar-link" @click.prevent>
-        <i class="pi pi-file" />
-        <span v-if="!collapsed">Belgeler</span>
       </a>
     </nav>
 
