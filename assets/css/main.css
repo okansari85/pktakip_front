@@ -23,9 +23,42 @@
   --admin-sidebar-muted: #94a3b8;
   --admin-sidebar-hover: #1f2937;
   --admin-sidebar-border: #263244;
+
+  /* Sayfa içi yüzeyler ve durum renkleri (koyu temada aşağıda yeniden tanımlanır). */
+  --admin-input: #ffffff;
+  --admin-hover: #f5f7fa;
+  --admin-row-border: #edf0f5;
+  --admin-chip: #f2f4f7;
+  --admin-accent-soft: #fff9df;
+  --admin-accent-text: #7a5b00;
+  --admin-overlay: rgba(15, 23, 42, .16);
+  --admin-shadow: rgba(15, 23, 42, .16);
+  --admin-success-bg: #ecfdf3;
+  --admin-success-text: #067647;
+  --admin-warning-bg: #fffaeb;
+  --admin-warning-text: #b54708;
+  --admin-danger-bg: #fef3f2;
+  --admin-danger-text: #b42318;
+  --admin-link: #175cd3;
 }
 
 :root.dark-theme {
+  color-scheme: dark;
+  --admin-input: #0f1729;
+  --admin-hover: #1a2436;
+  --admin-row-border: #1e293b;
+  --admin-chip: #1e293b;
+  --admin-accent-soft: rgba(255, 193, 7, .12);
+  --admin-accent-text: #fcd34d;
+  --admin-overlay: rgba(0, 0, 0, .55);
+  --admin-shadow: rgba(0, 0, 0, .5);
+  --admin-success-bg: rgba(34, 197, 94, .14);
+  --admin-success-text: #4ade80;
+  --admin-warning-bg: rgba(245, 158, 11, .15);
+  --admin-warning-text: #fbbf24;
+  --admin-danger-bg: rgba(239, 68, 68, .15);
+  --admin-danger-text: #f87171;
+  --admin-link: #60a5fa;
   --admin-background: #0b1120;
   --admin-surface: #111827;
   --admin-card: #111827;

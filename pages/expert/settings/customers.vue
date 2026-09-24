@@ -85,6 +85,7 @@
             :node="node"
             :depth="0"
             @add-child="openOrganizationForm"
+            @edit="openEditOrganizationForm"
             @delete="deleteOrganization"
           />
         </div>
@@ -102,9 +103,10 @@
 
     <div v-if="organizationFormOpen" class="modal-backdrop" @click.self="closeOrganizationForm">
       <section class="modal-card small-modal">
-        <div class="modal-head"><div><h2>Organizasyon Ekle</h2><p>{{ organizationParent ? `${organizationParent.name} altına` : 'Müşteri köküne' }} yeni organizasyon ekleyin.</p></div><button class="close-button" type="button" @click="closeOrganizationForm"><i class="pi pi-times" /></button></div>
+        <div class="modal-head"><div><h2>{{ editingOrganization ? 'Organizasyonu Düzenle' : 'Organizasyon Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" organizasyonunun adını değiştirin.</p><p v-else>{{ organizationParent ? `${organizationParent.name} altına` : 'Müşteri köküne' }} yeni organizasyon ekleyin.</p></div><button class="close-button" type="button" @click="closeOrganizationForm"><i class="pi pi-times" /></button></div>
         <label>Organizasyon Adı <span>*</span><input v-model="organizationName" type="text" placeholder="Örn. Dayanıklı Tüketim" /></label>
-        <div class="modal-actions"><button class="secondary-button" type="button" @click="closeOrganizationForm">İptal</button><button class="primary-button" type="button" :disabled="savingOrganization" @click="createOrganization">{{ savingOrganization ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
+        <p v-if="organizationFormError" class="form-error">{{ organizationFormError }}</p>
+        <div class="modal-actions"><button class="secondary-button" type="button" @click="closeOrganizationForm">İptal</button><button class="primary-button" type="button" :disabled="savingOrganization" @click="editingOrganization ? renameOrganization() : createOrganization()">{{ savingOrganization ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
       </section>
     </div>
   </div>
@@ -142,6 +144,8 @@ const saving = ref(false)
 const organizationFormOpen = ref(false)
 const organizationName = ref('')
 const organizationParent = ref<OrganizationNode | null>(null)
+const editingOrganization = ref<OrganizationNode | null>(null)
+const organizationFormError = ref('')
 const savingOrganization = ref(false)
 
 const filteredCustomers = computed(() => customers.value.filter(c => c.name.toLocaleLowerCase('tr-TR').includes(search.value.toLocaleLowerCase('tr-TR'))))
@@ -187,7 +191,8 @@ const openOrganization = async (customer: Customer) => {
 const closeOrganization = () => { organizationOpen.value = false; selectedCustomer.value = null; organizationTree.value = [] }
 const openCustomerForm = () => { customerName.value = ''; customerNotes.value = ''; customerFormOpen.value = true }
 const closeCustomerForm = () => { if (!saving.value) customerFormOpen.value = false }
-const openOrganizationForm = (parent: OrganizationNode | null) => { organizationParent.value = parent; organizationName.value = ''; organizationFormOpen.value = true }
+const openOrganizationForm = (parent: OrganizationNode | null) => { editingOrganization.value = null; organizationFormError.value = ''; organizationParent.value = parent; organizationName.value = ''; organizationFormOpen.value = true }
+const openEditOrganizationForm = (node: OrganizationNode) => { editingOrganization.value = node; organizationFormError.value = ''; organizationParent.value = null; organizationName.value = node.name; organizationFormOpen.value = true }
 const closeOrganizationForm = () => { if (!savingOrganization.value) organizationFormOpen.value = false }
 
 const createCustomer = async () => {
@@ -212,6 +217,25 @@ const createOrganization = async () => {
     await openOrganization(selectedCustomer.value)
   } catch (e: any) { organizationError.value = e?.data?.message || 'Organizasyon oluşturulamadı.' }
   finally { savingOrganization.value = false }
+}
+
+const renameOrganization = async () => {
+  const node = editingOrganization.value
+  const name = organizationName.value.trim()
+  if (!node || !name || !selectedCustomer.value) return
+  if (name === node.name) { organizationFormOpen.value = false; return }
+  savingOrganization.value = true
+  organizationFormError.value = ''
+  try {
+    await $fetch(`${config.public.apiBaseUrl}/customers/${selectedCustomer.value.id}/organizations/${node.id}`, {
+      method: 'PATCH', headers: tenantHeaders(), body: { name }
+    })
+    organizationFormOpen.value = false
+    await openOrganization(selectedCustomer.value)
+  } catch (e: any) {
+    const errors = e?.data?.errors
+    organizationFormError.value = (errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Organizasyon güncellenemedi.'
+  } finally { savingOrganization.value = false }
 }
 
 const deleteOrganization = async (node: OrganizationNode) => {
@@ -239,5 +263,6 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid #edf0f5;font-size:12px;color:var(--admin-muted)}th{font-size:11px;font-weight:700;color:#667085;background:#fbfcfe}td strong{color:var(--admin-heading)}.actions-head{text-align:right}.actions{display:flex;justify-content:flex-end;gap:8px}.icon-button{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:#fff;color:#68758a;cursor:pointer}.icon-button:hover,.tree-button:hover{border-color:#d7a900;color:#111827;background:#fff9df}.customer-name{display:flex;align-items:center;gap:10px}.customer-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:7px;color:#2b3442;background:#f2f4f7}.table-footer{padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:#b42318}
 .drawer-backdrop,.modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.16)}.organization-drawer{position:absolute;top:0;right:0;width:min(430px,92vw);height:100%;background:#fff;box-shadow:-12px 0 30px rgba(15,23,42,.10);display:flex;flex-direction:column}.drawer-head{padding:26px 20px 18px;border-bottom:1px solid var(--admin-border);display:flex;justify-content:space-between;gap:15px}.drawer-head h2{margin:0 0 18px;font-size:18px;color:var(--admin-heading)}.drawer-customer{display:flex;align-items:center;gap:11px}.drawer-customer>i{font-size:22px;color:#263140}.drawer-customer div{display:flex;flex-direction:column;gap:3px}.drawer-customer strong{font-size:13px;color:var(--admin-heading)}.drawer-customer span{font-size:11px;color:var(--admin-muted)}.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:#7b8798;cursor:pointer;border-radius:7px}.close-button:hover{background:#f3f5f8;color:#111827}.drawer-toolbar{padding:14px 20px 10px;display:flex;justify-content:flex-end}.drawer-search{margin:0 20px 12px}.tree-list{padding:4px 18px 24px;overflow:auto}.drawer-state{padding:50px 25px;text-align:center;color:var(--admin-muted);font-size:12px}
 .modal-backdrop{display:grid;place-items:center;padding:20px}.modal-card{width:min(430px,100%);padding:22px;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(15,23,42,.18)}.small-modal{width:min(400px,100%)}.modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:22px}.modal-head h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}.modal-card label{display:block;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}.modal-card label span{color:#d92d20}.modal-card label small{font-weight:400;color:var(--admin-muted)}.modal-card input,.modal-card textarea{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;font:inherit;font-size:13px;color:var(--admin-heading);resize:vertical}.modal-card input:focus,.modal-card textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:#f7f8fa;color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
+.form-error{margin:0 0 8px;color:#b42318;font-size:12px}
 @media(max-width:800px){.page-head{align-items:flex-start;flex-direction:column}.primary-button{align-self:flex-end}}
 </style>

@@ -48,7 +48,7 @@ const sendInvite = (tenant: any) => emit('sendInvite', tenant)
 .table-head b { color: var(--pk-yellow-dark); }
 .count-badge { padding: 5px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-muted) !important; font-weight: 600; }
 .customer-cell { display: flex; align-items: center; gap: 11px; }
-.customer-avatar { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 9px; background: #fff5cc; color: #b57b00; font-size: 11px; font-weight: 800; }
+.customer-avatar { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 9px; background: var(--admin-accent-soft); color: #b57b00; font-size: 11px; font-weight: 800; }
 .customer-cell strong { display: block; color: var(--admin-heading); font-size: 13px; }
 .customer-cell small { display: block; margin-top: 3px; color: var(--admin-muted); font-size: 10px; }
 .actions { display: flex; align-items: center; gap: 2px; }
