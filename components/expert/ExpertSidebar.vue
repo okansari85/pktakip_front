@@ -13,29 +13,63 @@
       <span v-if="!collapsed">Menüyü daralt</span>
     </button>
 
-    <div v-if="!collapsed" class="sidebar-label">UZMAN PANELİ</div>
-    <nav class="sidebar-nav">
-      <NuxtLink to="/expert" class="sidebar-link" :title="collapsed ? 'Genel Bakış' : undefined">
-        <i class="pi pi-home" />
-        <span v-if="!collapsed">Genel Bakış</span>
+    <template v-if="mode === 'settings'">
+      <NuxtLink to="/expert/workplaces" class="back-link" :title="collapsed ? 'Panele dön' : undefined">
+        <i class="pi pi-arrow-left" />
+        <span v-if="!collapsed">Panele dön</span>
       </NuxtLink>
-      <NuxtLink to="/expert/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
-        <i class="pi pi-users" />
-        <span v-if="!collapsed">Müşteriler</span>
-      </NuxtLink>
-      <NuxtLink to="/expert/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
-        <i class="pi pi-map-marker" />
-        <span v-if="!collapsed">Lokasyonlar</span>
-      </NuxtLink>
-      <a href="#" class="sidebar-link" @click.prevent>
-        <i class="pi pi-wrench" />
-        <span v-if="!collapsed">Ekipmanlar</span>
-      </a>
-      <a href="#" class="sidebar-link" @click.prevent>
-        <i class="pi pi-calendar" />
-        <span v-if="!collapsed">Kontroller</span>
-      </a>
-    </nav>
+      <div v-if="!collapsed" class="sidebar-label">AYARLAR · TANIMLAR</div>
+      <nav class="sidebar-nav">
+        <NuxtLink to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
+          <i class="pi pi-users" />
+          <span v-if="!collapsed">Müşteriler</span>
+        </NuxtLink>
+        <NuxtLink to="/expert/settings/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
+          <i class="pi pi-map-marker" />
+          <span v-if="!collapsed">Lokasyonlar</span>
+        </NuxtLink>
+        <NuxtLink to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
+          <i class="pi pi-briefcase" />
+          <span v-if="!collapsed">Firmalar</span>
+        </NuxtLink>
+      </nav>
+      <div class="sidebar-spacer" />
+    </template>
+
+    <template v-else>
+      <div v-if="!collapsed" class="sidebar-label">UZMAN PANELİ</div>
+      <nav class="sidebar-nav">
+        <NuxtLink to="/expert" class="sidebar-link" active-class="" exact-active-class="router-link-active" :title="collapsed ? 'Genel Bakış' : undefined">
+          <i class="pi pi-home" />
+          <span v-if="!collapsed">Genel Bakış</span>
+        </NuxtLink>
+        <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? 'Firmalarım' : undefined">
+          <i class="pi pi-briefcase" />
+          <span v-if="!collapsed">Firmalarım</span>
+        </NuxtLink>
+        <a href="#" class="sidebar-link" @click.prevent>
+          <i class="pi pi-wrench" />
+          <span v-if="!collapsed">Ekipmanlar</span>
+        </a>
+        <a href="#" class="sidebar-link" @click.prevent>
+          <i class="pi pi-calendar" />
+          <span v-if="!collapsed">Kontroller</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-section">
+        <nav class="sidebar-nav">
+          <NuxtLink to="/expert/test" class="sidebar-link" :title="collapsed ? 'Test' : undefined">
+            <i class="pi pi-code" />
+            <span v-if="!collapsed">Test</span>
+          </NuxtLink>
+          <NuxtLink to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
+            <i class="pi pi-cog" />
+            <span v-if="!collapsed">Ayarlar</span>
+          </NuxtLink>
+        </nav>
+      </div>
+    </template>
 
     <div class="sidebar-bottom">
       <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>Uzman</span></div>
@@ -48,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{ collapsed?: boolean }>(), { collapsed: false })
+withDefaults(defineProps<{ collapsed?: boolean; mode?: 'panel' | 'settings' }>(), { collapsed: false, mode: 'panel' })
 const emit = defineEmits<{ toggle: [] }>()
 const { logout } = useAuth()
 </script>
@@ -69,7 +103,12 @@ const { logout } = useAuth()
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
 .sidebar-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
 .sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; }
-.sidebar-bottom { margin-top: auto; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
+.back-link { display: flex; align-items: center; gap: 10px; min-height: 40px; margin-bottom: 14px; padding: 0 13px; border-radius: 9px; color: var(--admin-sidebar-muted); font-size: 12px; font-weight: 600; }
+.collapsed .back-link { justify-content: center; padding: 0; }
+.back-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
+.sidebar-spacer { flex: 1; }
+.sidebar-section { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--admin-sidebar-border); }
+.sidebar-bottom { margin-top: 14px; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
 .expert-badge, .logout-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; color: var(--admin-sidebar-muted); font-size: 12px; }
 .logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
 .collapsed .logout-link { justify-content: center; padding: 0; }

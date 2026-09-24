@@ -1,9 +1,7 @@
 <template>
   <header class="expert-topbar">
-    <div>
-      <span class="topbar-eyebrow">PKTAKİP</span>
-      <strong>Uzman Paneli</strong>
-    </div>
+    <ExpertWorkplaceSwitcher v-if="!title.startsWith('Ayarlar')" />
+    <div v-else />
 
     <div class="topbar-actions">
       <button class="theme-toggle" type="button" :aria-label="isDark ? 'Açık temaya geç' : 'Koyu temaya geç'" @click="toggleTheme">
@@ -21,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+withDefaults(defineProps<{ title?: string }>(), { title: 'Uzman Paneli' })
 const { user } = useAuth()
 const isDark = ref(false)
 

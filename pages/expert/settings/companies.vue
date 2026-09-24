@@ -2,9 +2,9 @@
   <div class="companies-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>Firmalarım</strong></div>
-        <h1>Firmalarım</h1>
-        <p>Hizmet verdiğiniz işyerlerini ve firma tanımlarınızı yönetin.</p>
+        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Firmalar</strong></div>
+        <h1>Firmalar</h1>
+        <p>Firma tanımlarını ve firmaların hangi lokasyonlarda hizmet aldığını yönetin.</p>
       </div>
       <button v-if="tab === 'workplaces'" class="primary-button" type="button" @click="workplaceFormOpen = true">
         <i class="pi pi-plus" /><span>İşyeri Ekle</span>
@@ -16,76 +16,20 @@
 
     <div class="tabs">
       <button type="button" :class="{ active: tab === 'workplaces' }" @click="tab = 'workplaces'">
-        <i class="pi pi-map-marker" /> İşyerlerim <span class="count">{{ workplaces.length }}</span>
+        <i class="pi pi-map-marker" /> İşyerleri <span class="count">{{ workplaces.length }}</span>
       </button>
       <button type="button" :class="{ active: tab === 'companies' }" @click="tab = 'companies'">
         <i class="pi pi-briefcase" /> Firma Tanımları <span class="count">{{ companies.length }}</span>
       </button>
     </div>
 
-    <!-- İşyerlerim -->
-    <section v-if="tab === 'workplaces'" class="table-card">
-      <div class="toolbar">
-        <label class="field">
-          <span>Müşteri</span>
-          <select v-model="customerFilter">
-            <option :value="null">Tüm müşteriler</option>
-            <option v-for="name in customerNames" :key="name" :value="name">{{ name }}</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Tehlike Sınıfı</span>
-          <select v-model="hazardFilter">
-            <option :value="null">Tümü</option>
-            <option v-for="hazard in HAZARD_CLASSES" :key="hazard" :value="hazard">{{ hazard }}</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Ara</span>
-          <div class="search-box"><i class="pi pi-search" /><input v-model="workplaceSearch" type="text" placeholder="Firma, lokasyon, NACE veya SGK no" /></div>
-        </label>
-      </div>
-
-      <div v-if="workplacesLoading" class="state-row">İşyerleri yükleniyor...</div>
-      <div v-else-if="workplacesError" class="state-row error-state">{{ workplacesError }}</div>
-      <div v-else-if="filteredWorkplaces.length === 0" class="state-row empty-state">
-        <i class="pi pi-map-marker" />
-        <strong>İşyeri bulunmuyor</strong>
-        <span>"İşyeri Ekle" ile bir lokasyona firma ekleyebilirsiniz.</span>
-      </div>
-      <div v-else class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Firma</th>
-              <th>Müşteri</th>
-              <th>Lokasyon</th>
-              <th>NACE</th>
-              <th>Tehlike Sınıfı</th>
-              <th>SGK Sicil No</th>
-              <th>Uzman</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in filteredWorkplaces" :key="item.id">
-              <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ item.company_name }}</strong></div></td>
-              <td>{{ item.customer_name || '—' }}</td>
-              <td>
-                <div class="stacked"><strong>{{ item.location_name }}</strong><small v-if="item.organization_name">{{ item.organization_name }}</small></div>
-              </td>
-              <td>
-                <div v-if="item.nace_code" class="stacked"><strong>{{ item.nace_code }}</strong><small class="activity" :title="item.activity || ''">{{ item.activity }}</small></div>
-                <span v-else>—</span>
-              </td>
-              <td><span class="hazard-badge" :class="hazardClassKey(item.hazard_class)">{{ item.hazard_class }}</span></td>
-              <td>{{ item.sgk_workplace_number || '—' }}</td>
-              <td>{{ item.experts?.join(', ') || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="table-footer"><span>Toplam {{ filteredWorkplaces.length }} işyeri</span></div>
-      </div>
-    </section>
+    <!-- İşyerleri -->
+    <ExpertWorkplaceTable v-if="tab === 'workplaces'" :workplaces="workplaces" :loading="workplacesLoading" :error="workplacesError">
+      <template #empty>
+        <span v-if="workplaces.length === 0">"İşyeri Ekle" ile bir lokasyona firma ekleyebilirsiniz.</span>
+        <span v-else>Aramanızla eşleşen işyeri yok.</span>
+      </template>
+    </ExpertWorkplaceTable>
 
     <!-- Firma Tanımları -->
     <section v-else class="table-card">
@@ -155,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'expert', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
 
 interface Workplace { id: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
@@ -168,21 +112,9 @@ const tab = ref<'workplaces' | 'companies'>('workplaces')
 const workplaces = ref<Workplace[]>([])
 const workplacesLoading = ref(true)
 const workplacesError = ref('')
-const workplaceSearch = ref('')
-const customerFilter = ref<string | null>(null)
-const hazardFilter = ref<string | null>(null)
 const workplaceFormOpen = ref(false)
-
-const customerNames = computed(() => [...new Set(workplaces.value.map(w => w.customer_name).filter(Boolean) as string[])].sort((a, b) => a.localeCompare(b, 'tr')))
-
-const filteredWorkplaces = computed(() => {
-  const q = trLower(workplaceSearch.value.trim())
-  return workplaces.value.filter(w =>
-    (!customerFilter.value || w.customer_name === customerFilter.value) &&
-    (!hazardFilter.value || w.hazard_class === hazardFilter.value) &&
-    (!q || [w.company_name, w.location_name, w.nace_code, w.sgk_workplace_number, w.activity].some(v => trLower(v).includes(q)))
-  )
-})
+// Topbar seçicisinin listesi de güncel kalsın.
+const { load: refreshMyWorkplaces } = useMyWorkplaces()
 
 const loadWorkplaces = async () => {
   workplacesLoading.value = true
@@ -194,7 +126,7 @@ const loadWorkplaces = async () => {
 
 const onWorkplaceSaved = async () => {
   workplaceFormOpen.value = false
-  await Promise.all([loadWorkplaces(), loadCompanies()])
+  await Promise.all([loadWorkplaces(), loadCompanies(), refreshMyWorkplaces(true)])
 }
 
 // Firma Tanımları
@@ -247,7 +179,7 @@ const saveCompany = async () => {
     if (editingCompany.value) await patch(`/my-companies/${editingCompany.value.business_entity_id}`, body)
     else await post('/my-companies', body)
     companyFormOpen.value = false
-    await Promise.all([loadCompanies(), loadWorkplaces()])
+    await Promise.all([loadCompanies(), loadWorkplaces(), refreshMyWorkplaces(true)])
   } catch (e: any) {
     companyFormError.value = errorMessage(e, 'Firma kaydedilemedi.')
   } finally { companySaving.value = false }
@@ -267,28 +199,28 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
-.tabs .count{min-width:22px;padding:1px 7px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:11px}
+.tabs .count{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px}
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .toolbar{padding:18px 16px;border-bottom:1px solid var(--admin-border);display:grid;grid-template-columns:minmax(180px,240px) minmax(160px,200px) 1fr;gap:12px;align-items:start}.toolbar.single{display:block}
-.field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:#667085}
-.field select{box-sizing:border-box;height:42px;margin:0;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:#fff;color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
-.search-box{box-sizing:border-box;height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:#fff;color:#8a96a8}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:13px}.search-box input::placeholder{color:#8a96a8}
-.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid #edf0f5;font-size:12px;color:var(--admin-muted);vertical-align:middle}th{font-size:11px;font-weight:700;color:#667085;background:#fbfcfe;white-space:nowrap}td strong{color:var(--admin-heading)}
-.name-cell{display:flex;align-items:center;gap:10px}.row-icon{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:7px;color:#2b3442;background:#f2f4f7}
+.field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}
+.field select{box-sizing:border-box;height:42px;margin:0;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
+.search-box{box-sizing:border-box;height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:13px}.search-box input::placeholder{color:var(--admin-muted)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-muted);vertical-align:middle}th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}td strong{color:var(--admin-heading)}
+.name-cell{display:flex;align-items:center;gap:10px}.row-icon{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:7px;color:var(--admin-text);background:var(--admin-chip)}
 .stacked{display:flex;flex-direction:column;gap:3px}.stacked small{font-size:11px;color:var(--admin-muted)}.stacked .activity{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hazard-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.hazard-badge.low{background:#ecfdf3;color:#067647}.hazard-badge.high{background:#fffaeb;color:#b54708}.hazard-badge.very-high{background:#fef3f2;color:#b42318}
+.hazard-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.hazard-badge.low{background:var(--admin-success-bg);color:var(--admin-success-text)}.hazard-badge.high{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.hazard-badge.very-high{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .actions-head{text-align:right}.actions{text-align:right}
-.icon-button{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:#fff;color:#68758a;cursor:pointer}.icon-button:hover{border-color:#d7a900;background:#fff9df;color:#111827}
-.table-footer{padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:#b42318}
-.modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.16);display:grid;place-items:center;padding:20px}
-.modal-card{width:min(460px,100%);padding:22px;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(15,23,42,.18)}
+.icon-button{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.table-footer{padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:var(--admin-danger-text)}
+.modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay);display:grid;place-items:center;padding:20px}
+.modal-card{width:min(460px,100%);padding:22px;background:var(--admin-input);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:22px}.modal-head h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
-.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:#7b8798;cursor:pointer;border-radius:7px}.close-button:hover{background:#f3f5f8;color:#111827}
-.modal-card label{display:flex;flex-direction:column;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}.modal-card label span{color:#d92d20}.modal-card label small{font-weight:400;color:var(--admin-muted)}
-.modal-card input,.modal-card select{width:100%;height:42px;margin-top:7px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;background:#fff;font:inherit;font-size:13px;color:var(--admin-heading)}
+.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
+.modal-card label{display:block;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}.modal-card label span{color:var(--admin-danger-text)}.modal-card label small{font-weight:400;color:var(--admin-muted)}
+.modal-card input,.modal-card select{width:100%;height:42px;margin-top:7px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;background:var(--admin-input);font:inherit;font-size:13px;color:var(--admin-heading)}
 .modal-card input:focus,.modal-card select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
-.hint{margin:-8px 0 14px;font-size:12px}.hint.warn{color:#b54708}
-.form-error{margin:0 0 8px;color:#b42318;font-size:12px}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:#f7f8fa;color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
+.hint{margin:-8px 0 14px;font-size:12px}.hint.warn{color:var(--admin-warning-text)}
+.form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:900px){.toolbar{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.primary-button{align-self:flex-end}}
 </style>
