@@ -17,7 +17,9 @@ export const useExpertApi = () => {
   const config = useRuntimeConfig()
   const { authHeaders, user } = useAuth()
 
+  // Accept: Laravel hata durumunda 302 yönlendirme yerine JSON (422 vb.) döner; FormData/GET isteklerinde $fetch bunu kendisi eklemiyor.
   const headers = () => ({
+    Accept: 'application/json',
     ...authHeaders(),
     ...(user.value?.tenant_id ? { 'X-Tenant-ID': String(user.value.tenant_id) } : {})
   })
@@ -34,11 +36,14 @@ export const useExpertApi = () => {
     $fetch<T>(url(path), { method: 'PATCH', headers: headers(), body })
   const del = <T = any>(path: string) =>
     $fetch<T>(url(path), { method: 'DELETE', headers: headers() })
+  // Yetki isteyen dosyalar (kontrol raporu gibi) için: dosya Blob olarak alınır.
+  const getBlob = (path: string) =>
+    $fetch<Blob>(url(path), { headers: headers(), responseType: 'blob' })
 
   const errorMessage = (e: any, fallback: string) => {
     const errors = e?.data?.errors
     return (errors && (Object.values(errors).flat()[0] as string)) || e?.data?.message || fallback
   }
 
-  return { get, post, postForm, patch, del, errorMessage }
+  return { get, post, postForm, patch, del, getBlob, errorMessage }
 }

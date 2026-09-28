@@ -4,35 +4,14 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Firmalar</strong></div>
         <h1>Firmalar</h1>
-        <p>Firma tanımlarını ve firmaların hangi lokasyonlarda hizmet aldığını yönetin.</p>
+        <p>Firma tanımlarını yönetin. Firmaları lokasyonlara Lokasyonlar sayfasından atarsınız.</p>
       </div>
-      <button v-if="tab === 'workplaces'" class="primary-button" type="button" @click="workplaceFormOpen = true">
-        <i class="pi pi-plus" /><span>İşyeri Ekle</span>
-      </button>
-      <button v-else class="primary-button" type="button" @click="openCompanyForm(null)">
+      <button class="primary-button" type="button" @click="openCompanyForm(null)">
         <i class="pi pi-plus" /><span>Firma Tanımla</span>
       </button>
     </div>
 
-    <div class="tabs">
-      <button type="button" :class="{ active: tab === 'workplaces' }" @click="tab = 'workplaces'">
-        <i class="pi pi-map-marker" /> İşyerleri <span class="count">{{ workplaces.length }}</span>
-      </button>
-      <button type="button" :class="{ active: tab === 'companies' }" @click="tab = 'companies'">
-        <i class="pi pi-briefcase" /> Firma Tanımları <span class="count">{{ companies.length }}</span>
-      </button>
-    </div>
-
-    <!-- İşyerleri -->
-    <ExpertWorkplaceTable v-if="tab === 'workplaces'" :workplaces="workplaces" :loading="workplacesLoading" :error="workplacesError">
-      <template #empty>
-        <span v-if="workplaces.length === 0">"İşyeri Ekle" ile bir lokasyona firma ekleyebilirsiniz.</span>
-        <span v-else>Aramanızla eşleşen işyeri yok.</span>
-      </template>
-    </ExpertWorkplaceTable>
-
-    <!-- Firma Tanımları -->
-    <section v-else class="table-card">
+    <section class="table-card">
       <div class="toolbar single">
         <div class="search-box"><i class="pi pi-search" /><input v-model="companySearch" type="text" placeholder="Firma ara" /></div>
       </div>
@@ -71,8 +50,6 @@
       </div>
     </section>
 
-    <ExpertWorkplaceForm v-if="workplaceFormOpen" @close="workplaceFormOpen = false" @saved="onWorkplaceSaved" />
-
     <div v-if="companyFormOpen" class="modal-backdrop" @click.self="closeCompanyForm">
       <section class="modal-card">
         <div class="modal-head">
@@ -101,35 +78,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
 
-interface Workplace { id: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
-
 const { get, post, patch, errorMessage } = useExpertApi()
 const trLower = (value?: string | null) => (value || '').toLocaleLowerCase('tr-TR')
 
-const tab = ref<'workplaces' | 'companies'>('workplaces')
-
-// İşyerlerim
-const workplaces = ref<Workplace[]>([])
-const workplacesLoading = ref(true)
-const workplacesError = ref('')
-const workplaceFormOpen = ref(false)
-// Topbar seçicisinin listesi de güncel kalsın.
+// Firma adı değişince topbar seçicisindeki işyeri adları da güncel kalsın.
 const { load: refreshMyWorkplaces } = useMyWorkplaces()
 
-const loadWorkplaces = async () => {
-  workplacesLoading.value = true
-  workplacesError.value = ''
-  try { workplaces.value = await get<Workplace[]>('/my-workplaces') }
-  catch (e: any) { workplacesError.value = errorMessage(e, 'İşyerleri alınamadı.') }
-  finally { workplacesLoading.value = false }
-}
-
-const onWorkplaceSaved = async () => {
-  workplaceFormOpen.value = false
-  await Promise.all([loadWorkplaces(), loadCompanies(), refreshMyWorkplaces(true)])
-}
-
-// Firma Tanımları
 const companies = ref<MyCompany[]>([])
 const companiesLoading = ref(true)
 const companiesError = ref('')
@@ -179,7 +133,7 @@ const saveCompany = async () => {
     if (editingCompany.value) await patch(`/my-companies/${editingCompany.value.business_entity_id}`, body)
     else await post('/my-companies', body)
     companyFormOpen.value = false
-    await Promise.all([loadCompanies(), loadWorkplaces(), refreshMyWorkplaces(true)])
+    await Promise.all([loadCompanies(), refreshMyWorkplaces(true)])
   } catch (e: any) {
     companyFormError.value = errorMessage(e, 'Firma kaydedilemedi.')
   } finally { companySaving.value = false }
@@ -187,7 +141,7 @@ const saveCompany = async () => {
 
 const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
-onMounted(() => { loadWorkplaces(); loadCompanies() })
+onMounted(loadCompanies)
 </script>
 
 <style scoped>
@@ -196,10 +150,6 @@ onMounted(() => { loadWorkplaces(); loadCompanies() })
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.07)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--admin-border)}
-.tabs button{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
-.tabs .count{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px}
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .toolbar{padding:18px 16px;border-bottom:1px solid var(--admin-border);display:grid;grid-template-columns:minmax(180px,240px) minmax(160px,200px) 1fr;gap:12px;align-items:start}.toolbar.single{display:block}
 .field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}

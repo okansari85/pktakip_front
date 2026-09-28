@@ -32,6 +32,18 @@
           <i class="pi pi-briefcase" />
           <span v-if="!collapsed">Firmalar</span>
         </NuxtLink>
+        <NuxtLink to="/expert/settings/catalog-requests" class="sidebar-link" :title="collapsed ? 'Katalog talepleri' : undefined">
+          <i class="pi pi-inbox" />
+          <span v-if="!collapsed">Katalog talepleri</span>
+        </NuxtLink>
+        <NuxtLink to="/expert/settings/analyses" class="sidebar-link" :title="collapsed ? 'Analiz geçmişi' : undefined">
+          <i class="pi pi-history" />
+          <span v-if="!collapsed">Analiz geçmişi</span>
+        </NuxtLink>
+        <NuxtLink to="/expert/settings/ai" class="sidebar-link" :title="collapsed ? 'Yapay zeka' : undefined">
+          <i class="pi pi-sparkles" />
+          <span v-if="!collapsed">Yapay zeka</span>
+        </NuxtLink>
       </nav>
       <div class="sidebar-spacer" />
     </template>
@@ -47,14 +59,23 @@
           <i class="pi pi-briefcase" />
           <span v-if="!collapsed">Firmalarım</span>
         </NuxtLink>
-        <a href="#" class="sidebar-link" @click.prevent>
-          <i class="pi pi-wrench" />
-          <span v-if="!collapsed">Ekipmanlar</span>
-        </a>
-        <a href="#" class="sidebar-link" @click.prevent>
-          <i class="pi pi-calendar" />
-          <span v-if="!collapsed">Kontroller</span>
-        </a>
+        <!-- Periyodik Kontroller: ekipmanlar + tesisatlar (daraltılmış menüde yalnızca simgeler) -->
+        <template v-if="collapsed">
+          <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
+        </template>
+        <div v-else class="sidebar-group" :class="{ open: periodicOpen, active: periodicActive }">
+          <button class="sidebar-link group-toggle" type="button" :aria-expanded="periodicOpen" @click="periodicOpen = !periodicOpen">
+            <i class="pi pi-calendar-clock" />
+            <span>Periyodik Kontroller</span>
+            <i class="pi pi-chevron-down chevron" />
+          </button>
+          <div v-show="periodicOpen" class="sidebar-children">
+            <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link child">
+              <i :class="item.icon" />
+              <span>{{ item.label }}</span>
+            </NuxtLink>
+          </div>
+        </div>
       </nav>
 
       <div class="sidebar-section">
@@ -85,6 +106,17 @@
 withDefaults(defineProps<{ collapsed?: boolean; mode?: 'panel' | 'settings' }>(), { collapsed: false, mode: 'panel' })
 const emit = defineEmits<{ toggle: [] }>()
 const { logout } = useAuth()
+
+const PERIODIC = [
+  { to: '/expert/equipment', label: 'Ekipmanlar', icon: 'pi pi-wrench' },
+  { to: '/expert/installations', label: 'Tesisatlar', icon: 'pi pi-sitemap' },
+  { to: '/expert/reports', label: 'Durum Raporu', icon: 'pi pi-chart-bar' }
+]
+const route = useRoute()
+const periodicActive = computed(() => PERIODIC.some(item => route.path.startsWith(item.to)))
+// Grup açık gelir; kapatılabilir, içindeki bir sayfaya gidilince yeniden açılır.
+const periodicOpen = ref(true)
+watch(periodicActive, active => { if (active) periodicOpen.value = true })
 </script>
 
 <style scoped>
@@ -103,6 +135,12 @@ const { logout } = useAuth()
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
 .sidebar-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
 .sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; }
+.group-toggle { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.group-toggle .chevron { margin-left: auto; font-size: 11px; transition: transform .15s ease; }
+.sidebar-group:not(.open) .chevron { transform: rotate(-90deg); }
+.sidebar-group.active > .group-toggle { color: #fff; font-weight: 600; }
+.sidebar-children { display: grid; gap: 3px; margin-top: 3px; padding-left: 14px; }
+.sidebar-link.child { min-height: 38px; font-size: 13px; }
 .back-link { display: flex; align-items: center; gap: 10px; min-height: 40px; margin-bottom: 14px; padding: 0 13px; border-radius: 9px; color: var(--admin-sidebar-muted); font-size: 12px; font-weight: 600; }
 .collapsed .back-link { justify-content: center; padding: 0; }
 .back-link:hover { background: var(--admin-sidebar-hover); color: #fff; }

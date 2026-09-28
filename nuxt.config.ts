@@ -10,6 +10,17 @@ export default defineNuxtConfig({
     options: {
       ripple: true,
       inputVariant: 'outlined',
+      // Takvim (DatePicker) Türkçe, hafta pazartesi başlar; diğer metinler PrimeVue varsayılanı (birleştirilir).
+      locale: {
+        dayNames: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
+        dayNamesShort: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
+        dayNamesMin: ['Pz', 'Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct'],
+        monthNames: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+        monthNamesShort: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+        firstDayOfWeek: 1,
+        today: 'Bugün',
+        clear: 'Temizle'
+      },
       theme: {
         preset: Aura,
         options: {

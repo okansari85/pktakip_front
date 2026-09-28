@@ -50,7 +50,7 @@
                 <button class="icon-button tree-button" type="button" title="Organizasyonu yönet" @click="openOrganization(customer)">
                   <i class="pi pi-sitemap" />
                 </button>
-                <button class="icon-button" type="button" title="Diğer işlemler"><i class="pi pi-ellipsis-h" /></button>
+                <button class="icon-button delete-button" type="button" title="Müşteriyi sil" @click="openDelete(customer)"><i class="pi pi-trash" /></button>
               </td>
             </tr>
           </tbody>
@@ -98,6 +98,27 @@
         <label>Müşteri Adı <span>*</span><input v-model="customerName" type="text" placeholder="Örn. Koç Holding" /></label>
         <label>Not <small>(Opsiyonel)</small><textarea v-model="customerNotes" rows="3" placeholder="Müşteri ile ilgili notlar..."></textarea></label>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeCustomerForm">İptal</button><button class="primary-button" type="button" :disabled="saving" @click="createCustomer">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
+      </section>
+    </div>
+
+    <!-- Müşteri silme: altındaki organizasyon, lokasyon, işyeri, ekipman ve kontrol raporlarıyla birlikte, kalıcı -->
+    <div v-if="deleteTarget" class="modal-backdrop" @click.self="closeDelete">
+      <section class="modal-card">
+        <div class="modal-head"><div><h2>Müşteriyi Sil</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir, geri alınamaz.</p></div><button class="close-button" type="button" @click="closeDelete"><i class="pi pi-times" /></button></div>
+        <p v-if="deleteSummaryLoading" class="muted-text">Müşterinin altındaki kayıtlar hesaplanıyor...</p>
+        <template v-else-if="deleteSummary">
+          <p v-if="!deleteHasData" class="muted-text">Bu müşterinin altında kayıt yok.</p>
+          <template v-else>
+            <p class="muted-text">Birlikte silinecekler:</p>
+            <ul class="delete-list">
+              <li v-for="row in deleteRows" :key="row.label"><strong>{{ row.count }}</strong> {{ row.label }}</li>
+            </ul>
+          </template>
+          <p v-if="deleteSummary.blockers.length" class="form-error">Silinemez: {{ deleteSummary.blockers.join(', ') }}.</p>
+          <label v-else-if="deleteHasData">Onaylamak için müşteri adını yazın<input v-model="deleteConfirm" type="text" :placeholder="deleteTarget.name" /></label>
+        </template>
+        <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
+        <div class="modal-actions"><button class="secondary-button" type="button" :disabled="deleting" @click="closeDelete">İptal</button><button class="danger-button" type="button" :disabled="!canDelete || deleting" @click="deleteCustomer">{{ deleting ? 'Siliniyor...' : 'Kalıcı olarak sil' }}</button></div>
       </section>
     </div>
 
@@ -165,9 +186,14 @@ const loadCustomers = async () => {
   loading.value = true
   error.value = ''
   try {
-    const response = await $fetch(`${config.public.apiBaseUrl}/customers`, { headers: tenantHeaders() })
+    // "Firma" sütunu: müşterinin lokasyonlarında işyeri olan firma sayısı (ayrı uç noktadan).
+    const [response, companyCounts] = await Promise.all([
+      $fetch(`${config.public.apiBaseUrl}/customers`, { headers: tenantHeaders() }),
+      $fetch<Record<string, number>>(`${config.public.apiBaseUrl}/customer-company-counts`, { headers: tenantHeaders() }).catch(() => ({} as Record<string, number>))
+    ])
     const data = unwrap(response)
-    customers.value = Array.isArray(data) ? data : (data?.items || [])
+    const list: Customer[] = Array.isArray(data) ? data : (data?.items || [])
+    customers.value = list.map(customer => ({ ...customer, firms_count: companyCounts[String(customer.id)] ?? 0 }))
   } catch (e: any) {
     error.value = e?.data?.message || 'Müşteriler alınamadı.'
   } finally { loading.value = false }
@@ -248,6 +274,54 @@ const deleteOrganization = async (node: OrganizationNode) => {
   } catch (e: any) { alert(e?.data?.message || 'Organizasyon silinemedi.') }
 }
 
+// --- Müşteri silme: önce altındakiler sayılır; kayıt varsa onay için müşteri adı yazılır ---
+interface DeleteSummary { organizations: number; locations: number; workplaces: number; equipment: number; inspections: number; blockers: string[] }
+const { load: reloadWorkplaces } = useMyWorkplaces()
+const deleteTarget = ref<Customer | null>(null)
+const deleteSummary = ref<DeleteSummary | null>(null)
+const deleteSummaryLoading = ref(false)
+const deleteConfirm = ref('')
+const deleteError = ref('')
+const deleting = ref(false)
+const deleteRows = computed(() => deleteSummary.value ? [
+  { label: 'organizasyon', count: deleteSummary.value.organizations },
+  { label: 'lokasyon', count: deleteSummary.value.locations },
+  { label: 'işyeri', count: deleteSummary.value.workplaces },
+  { label: 'periyodik kontrol ekipmanı', count: deleteSummary.value.equipment },
+  { label: 'kontrol raporu (dosyalarıyla)', count: deleteSummary.value.inspections }
+].filter(row => row.count > 0) : [])
+const deleteHasData = computed(() => deleteRows.value.length > 0)
+const canDelete = computed(() => !!deleteSummary.value && !deleteSummary.value.blockers.length
+  && (!deleteHasData.value || deleteConfirm.value.trim().toLocaleLowerCase('tr-TR') === deleteTarget.value?.name.trim().toLocaleLowerCase('tr-TR')))
+
+const openDelete = async (customer: Customer) => {
+  deleteTarget.value = customer
+  deleteSummary.value = null
+  deleteConfirm.value = ''
+  deleteError.value = ''
+  deleteSummaryLoading.value = true
+  try {
+    deleteSummary.value = await $fetch<DeleteSummary>(`${config.public.apiBaseUrl}/customers/${customer.id}/purge-summary`, { headers: tenantHeaders() })
+  } catch (e: any) { deleteError.value = e?.data?.message || 'Müşterinin kayıtları alınamadı.' }
+  finally { deleteSummaryLoading.value = false }
+}
+const closeDelete = () => { if (!deleting.value) deleteTarget.value = null }
+const deleteCustomer = async () => {
+  if (!deleteTarget.value || !canDelete.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await $fetch(`${config.public.apiBaseUrl}/customers/${deleteTarget.value.id}/purge`, { method: 'DELETE', headers: tenantHeaders() })
+    deleteTarget.value = null
+    await loadCustomers()
+    // Seçili çalışma alanı silinen lokasyondaysa temizlenir.
+    reloadWorkplaces(true)
+  } catch (e: any) {
+    const errors = e?.data?.errors
+    deleteError.value = (errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Müşteri silinemedi.'
+  } finally { deleting.value = false }
+}
+
 const formatDate =(value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
 onMounted(loadCustomers)
@@ -264,5 +338,9 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .drawer-backdrop,.modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay)}.organization-drawer{position:absolute;top:0;right:0;width:min(430px,92vw);height:100%;background:var(--admin-input);box-shadow:-12px 0 30px var(--admin-shadow);display:flex;flex-direction:column}.drawer-head{padding:26px 20px 18px;border-bottom:1px solid var(--admin-border);display:flex;justify-content:space-between;gap:15px}.drawer-head h2{margin:0 0 18px;font-size:18px;color:var(--admin-heading)}.drawer-customer{display:flex;align-items:center;gap:11px}.drawer-customer>i{font-size:22px;color:var(--admin-text)}.drawer-customer div{display:flex;flex-direction:column;gap:3px}.drawer-customer strong{font-size:13px;color:var(--admin-heading)}.drawer-customer span{font-size:11px;color:var(--admin-muted)}.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}.drawer-toolbar{padding:14px 20px 10px;display:flex;justify-content:flex-end}.drawer-search{margin:0 20px 12px}.tree-list{padding:4px 18px 24px;overflow:auto}.drawer-state{padding:50px 25px;text-align:center;color:var(--admin-muted);font-size:12px}
 .modal-backdrop{display:grid;place-items:center;padding:20px}.modal-card{width:min(430px,100%);padding:22px;background:var(--admin-input);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}.small-modal{width:min(400px,100%)}.modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:22px}.modal-head h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}.modal-card label{display:block;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}.modal-card label span{color:var(--admin-danger-text)}.modal-card label small{font-weight:400;color:var(--admin-muted)}.modal-card input,.modal-card textarea{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;font:inherit;font-size:13px;color:var(--admin-heading);resize:vertical}.modal-card input:focus,.modal-card textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
+.delete-button:hover{border-color:var(--admin-danger-text);color:var(--admin-danger-text);background:var(--admin-danger-bg)}
+.muted-text{margin:0 0 10px;color:var(--admin-muted);font-size:12px}
+.delete-list{margin:0 0 16px;padding-left:18px;display:grid;gap:4px;color:var(--admin-text);font-size:13px}.delete-list strong{color:var(--admin-heading)}
+.danger-button{min-height:40px;padding:0 18px;border:0;border-radius:8px;background:var(--admin-danger-text);color:#fff;font-size:12px;font-weight:800;cursor:pointer}.danger-button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:800px){.page-head{align-items:flex-start;flex-direction:column}.primary-button{align-self:flex-end}}
 </style>

@@ -39,6 +39,8 @@
   --admin-warning-text: #b54708;
   --admin-danger-bg: #fef3f2;
   --admin-danger-text: #b42318;
+  /* Yaklaşan kontrol (60 gün içinde) kalan gün yazısı: sarı */
+  --admin-upcoming-text: #ca8a04;
   --admin-link: #175cd3;
 }
 
@@ -58,6 +60,7 @@
   --admin-warning-text: #fbbf24;
   --admin-danger-bg: rgba(239, 68, 68, .15);
   --admin-danger-text: #f87171;
+  --admin-upcoming-text: #facc15;
   --admin-link: #60a5fa;
   --admin-background: #0b1120;
   --admin-surface: #111827;

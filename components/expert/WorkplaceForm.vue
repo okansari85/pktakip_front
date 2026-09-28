@@ -29,8 +29,13 @@
 
       <label>Firma <span>*</span>
         <select v-model="companySelection" @change="onCompanySelect">
-          <option :value="null" disabled>Firma seçin</option>
-          <option v-for="company in availableCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+          <option :value="null" disabled>{{ ownCompanies.length || freeCompanies.length ? 'Firma seçin' : 'Bu müşterinin firması yok — yeni firma oluşturun' }}</option>
+          <optgroup v-if="ownCompanies.length" label="Bu müşterinin firmaları">
+            <option v-for="company in ownCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+          </optgroup>
+          <optgroup v-if="freeCompanies.length" label="Henüz bir müşteride işyeri olmayan firmalar">
+            <option v-for="company in freeCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+          </optgroup>
           <option :value="NEW_COMPANY">+ Yeni firma oluştur</option>
         </select>
       </label>
@@ -46,7 +51,7 @@
           </label>
         </div>
         <p v-if="duplicateCompany" class="hint warn">
-          "{{ duplicateCompany.name }}" zaten kayıtlı.
+          "{{ duplicateCompany.name }}" zaten kayıtlı<template v-if="otherCustomerIds.has(duplicateCompany.business_entity_id)"> (başka bir müşteride işyeri var)</template>.
           <button type="button" class="link-button" @click="useExisting(duplicateCompany)">Bu firmayı seç</button>
         </p>
       </div>
@@ -110,6 +115,24 @@ let naceTimer: ReturnType<typeof setTimeout> | undefined
 
 // Aynı firma aynı lokasyona ikinci kez eklenemez.
 const availableCompanies = computed(() => myCompanies.value.filter(c => !attachedIds.value.has(c.business_entity_id)))
+// Firmaların müşterilere dağılımı (işyeri olduğu lokasyonun müşterisine göre): başka müşterilerin firmaları gösterilmez.
+// Kullanıcı aynı adı yazıp "Bu firmayı seç" derse o firma bu müşteri için listeye eklenir.
+const customerCompanyIds = ref<Set<number>>(new Set())
+const otherCustomerIds = ref<Set<number>>(new Set())
+const chosenIds = ref<Set<number>>(new Set())
+const ownCompanies = computed(() => availableCompanies.value.filter(c => customerCompanyIds.value.has(c.business_entity_id) || chosenIds.value.has(c.business_entity_id)))
+const freeCompanies = computed(() => availableCompanies.value.filter(c => !customerCompanyIds.value.has(c.business_entity_id) && !chosenIds.value.has(c.business_entity_id) && !otherCustomerIds.value.has(c.business_entity_id)))
+const loadCustomerCompanies = async () => {
+  customerCompanyIds.value = new Set()
+  otherCustomerIds.value = new Set()
+  chosenIds.value = new Set()
+  if (!customerId.value) return
+  try {
+    const result = await get<{ customer: number[]; other_customers: number[] }>(`/customers/${customerId.value}/companies`)
+    customerCompanyIds.value = new Set(result.customer)
+    otherCustomerIds.value = new Set(result.other_customers)
+  } catch { /* alınamazsa tüm firmalar gösterilir */ }
+}
 
 const canSave = computed(() => !saving.value && !!customerId.value && !!locationId.value && !!hazardClass.value &&
   (companySelection.value === NEW_COMPANY ? !!newCompany.name.trim() && !duplicateCompany.value : !!companySelection.value))
@@ -121,6 +144,7 @@ const findDuplicate = (name: string) => {
 
 const useExisting = (company: MyCompany) => {
   if (attachedIds.value.has(company.business_entity_id)) { error.value = `"${company.name}" bu lokasyona zaten ekli.`; return }
+  chosenIds.value = new Set([...chosenIds.value, company.business_entity_id])
   companySelection.value = company.business_entity_id
   duplicateCompany.value = null
 }
@@ -141,6 +165,8 @@ const onCustomerChange = async () => {
   locationId.value = null
   customerLocations.value = []
   attachedIds.value = new Set()
+  companySelection.value = null
+  loadCustomerCompanies()
   if (!customerId.value) return
   try { customerLocations.value = await get(`/customers/${customerId.value}/locations`) } catch { customerLocations.value = [] }
 }
@@ -194,7 +220,7 @@ const save = async () => {
 
 onMounted(async () => {
   try { myCompanies.value = await get<MyCompany[]>('/my-companies') } catch { myCompanies.value = [] }
-  if (props.location) await loadAttached()
+  if (props.location) await Promise.all([loadAttached(), loadCustomerCompanies()])
   else {
     try { customers.value = await get('/customers') } catch { customers.value = [] }
     if (customerId.value) await onCustomerChange()
