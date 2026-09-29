@@ -4,22 +4,22 @@
       <div>
         <span class="eyebrow">Tanımlamalar / Müşteriler</span>
         <h1>Müşteriler</h1>
-        <p>PKTakip uzman müşterilerini yönetin.</p>
+        <p>PKTakip müşterilerini (uzman, OSGB, kurumsal) yönetin.</p>
       </div>
       <button type="button" class="new-expert-button" @click="openCreateDialog">
         <i class="pi pi-plus" />
-        <span>Yeni Uzman</span>
+        <span>Yeni Müşteri</span>
       </button>
     </div>
 
-    <AdminCustomerStats :total="experts.length" :active="activeCount" :inactive="inactiveCount" />
+    <AdminCustomerStats :total="accounts.length" :active="activeCount" :inactive="inactiveCount" :detail="typeDetail" />
 
-    <AdminCustomerTable :customers="experts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
+    <AdminCustomerTable :customers="accounts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
 
     <Message v-if="success" severity="success" :closable="false" class="feedback-message">{{ success }}</Message>
     <Message v-if="error" severity="error" :closable="false" class="feedback-message">{{ error }}</Message>
 
-    <AdminExpertCreateDialog v-model="showCreate" @created="handleCreated" />
+    <AdminAccountCreateDialog v-model="showCreate" @created="handleCreated" />
   </div>
 </template>
 
@@ -27,16 +27,23 @@
 definePageMeta({ middleware: 'super-admin' })
 
 const config = useRuntimeConfig()
-const { authHeaders } = useAuth()
+const { authHeaders, startImpersonation } = useAuth()
 const tenants = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
 const success = ref('')
 const showCreate = ref(false)
 
-const experts = computed(() => tenants.value.filter(tenant => tenant.tenant_type === 'expert'))
-const activeCount = computed(() => experts.value.filter(tenant => Boolean(tenant.status)).length)
-const inactiveCount = computed(() => experts.value.filter(tenant => !tenant.status).length)
+// PKTakip hesapları: bireysel uzman, OSGB, kurumsal (Taşeron'un firma hesapları listelenmez).
+const ACCOUNT_TYPES: Record<string, string> = { expert: 'uzman', osgb: 'OSGB', corporate: 'kurumsal' }
+const accounts = computed(() => tenants.value.filter(tenant => tenant.tenant_type in ACCOUNT_TYPES))
+const activeCount = computed(() => accounts.value.filter(tenant => Boolean(tenant.status)).length)
+const inactiveCount = computed(() => accounts.value.filter(tenant => !tenant.status).length)
+const typeDetail = computed(() => Object.entries(ACCOUNT_TYPES)
+  .map(([type, label]) => ({ label, count: accounts.value.filter(tenant => tenant.tenant_type === type).length }))
+  .filter(item => item.count)
+  .map(item => `${item.count} ${item.label}`)
+  .join(' · '))
 
 const openCreateDialog = () => {
   error.value = ''
@@ -61,22 +68,24 @@ const loadExperts = async () => {
 onMounted(loadExperts)
 
 const handleCreated = async (response: any) => {
-  success.value = response?.message || 'Uzman oluşturuldu ve davet e-postası gönderildi.'
+  success.value = response?.message || 'Hesap oluşturuldu ve davet e-postası gönderildi.'
   await loadExperts()
 }
 
+// Davet yeniden: uzmanda bugünkü uzman daveti, OSGB / kurumsalda hesabın yöneticisine PKTakip daveti.
 const sendInvite = async (tenant: any) => {
   error.value = ''
   success.value = ''
+  const path = tenant.tenant_type === 'expert' ? `/experts/${tenant.id}/resend-invitation` : `/pk-accounts/${tenant.id}/resend-invitation`
   try {
-    const response = await $fetch<{ message: string }>(`${config.public.apiBaseUrl}/experts/${tenant.id}/resend-invitation`, {
+    const response = await $fetch<{ message: string }>(`${config.public.apiBaseUrl}${path}`, {
       method: 'POST',
       headers: authHeaders(),
     })
 
-    success.value = response.message || 'Uzman davet e-postası yeniden gönderildi.'
+    success.value = response.message || 'Davet e-postası yeniden gönderildi.'
   } catch (e: any) {
-    error.value = e?.data?.message || 'Uzman davet e-postası gönderilemedi.'
+    error.value = e?.data?.message || 'Davet e-postası gönderilemedi.'
   }
 }
 
@@ -84,19 +93,20 @@ const openTenant = (tenant: any) => {
   console.log('tenant', tenant)
 }
 
+// Hesaba giriş (her tür): hesabın yöneticisi olarak panele geçilir (sayfa baştan yüklenir); üst çubuktaki "Süper admine
+// dön" ile bu sayfaya dönülür.
 const impersonate = async (tenant: any) => {
   error.value = ''
+  success.value = ''
   try {
-    const response = await $fetch<{ token: string; user: any }>(`${config.public.apiBaseUrl}/experts/${tenant.id}/impersonate`, {
+    const response = await $fetch<{ token: string; user: any }>(`${config.public.apiBaseUrl}/pk-accounts/${tenant.id}/impersonate`, {
       method: 'POST',
       headers: authHeaders(),
     })
 
-    localStorage.setItem('pktakip_impersonation_token', response.token)
-    localStorage.setItem('pktakip_impersonation_user', JSON.stringify(response.user))
-    success.value = `${tenant.name} için uzman oturumu hazırlandı.`
+    startImpersonation(response.token, response.user)
   } catch (e: any) {
-    error.value = e?.data?.message || 'Uzman hesabına geçiş yapılamadı.'
+    error.value = e?.data?.message || 'Hesaba geçiş yapılamadı.'
   }
 }
 </script>

@@ -5,7 +5,7 @@
         <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>Firmalarım</strong></div>
         <h1>Firmalarım</h1>
         <p v-if="loaded && workplaces.length">
-          <strong>{{ workplaces.length }}</strong> işyeri · <strong>{{ locationCount }}</strong> lokasyon · <strong>{{ customerCount }}</strong> müşteri
+          <strong>{{ workplaces.length }}</strong> işyeri · <strong>{{ locationCount }}</strong> lokasyon<template v-if="!corporate"> · <strong>{{ customerCount }}</strong> müşteri</template>
         </p>
         <p v-else>Hizmet verdiğiniz işyerleri.</p>
       </div>
@@ -30,6 +30,8 @@ const { workplaces, loaded, error, load } = useMyWorkplaces()
 
 const locationCount = computed(() => new Set(workplaces.value.map(w => w.location_id)).size)
 const customerCount = computed(() => new Set(workplaces.value.map(w => w.customer_name).filter(Boolean)).size)
+// Kurumsal hesapta müşteri firmanın kendisi: müşteri sayısı yazılmaz.
+const { corporate } = useAccount()
 
 // Sayfa her açıldığında listeyi tazeler (Ayarlar'da yapılan değişiklikler görünsün).
 onMounted(() => load(true))

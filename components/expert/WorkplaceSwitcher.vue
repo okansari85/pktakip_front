@@ -4,7 +4,11 @@
       <span><i class="pi pi-map-marker" /> Lokasyon</span>
       <select :value="context?.location_id ?? ''" :disabled="!loaded || groups.length === 0" @change="onLocationChange">
         <option value="" disabled>{{ !loaded ? 'Yükleniyor...' : groups.length === 0 ? 'İşyeri yok' : 'Lokasyon seçin' }}</option>
-        <optgroup v-for="customer in customers" :key="customer.name" :label="customer.name">
+        <!-- Kurumsal hesapta müşteri firmanın kendisi: müşteri grubu başlığı yok -->
+        <template v-if="corporate">
+          <option v-for="group in groups" :key="group.location_id" :value="group.location_id">{{ group.location_name }}</option>
+        </template>
+        <optgroup v-for="customer in customers" v-else :key="customer.name" :label="customer.name">
           <option v-for="group in customer.groups" :key="group.location_id" :value="group.location_id">{{ group.location_name }}</option>
         </optgroup>
       </select>
@@ -25,6 +29,7 @@
 <script setup lang="ts">
 const { context } = useWorkplaceContext()
 const { groups, loaded, load, selectLocation, selectWorkplace } = useMyWorkplaces()
+const { corporate } = useAccount()
 
 // Lokasyonlar müşteriye göre gruplanır (optgroup).
 const customers = computed(() => {

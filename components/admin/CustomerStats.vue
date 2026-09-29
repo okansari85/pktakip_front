@@ -2,7 +2,7 @@
   <section class="stats-grid">
     <div class="stat-card">
       <span class="stat-icon"><i class="pi pi-users" /></span>
-      <div><small>Toplam Uzman</small><strong>{{ total }}</strong></div>
+      <div><small>Toplam Müşteri</small><strong>{{ total }}</strong><em v-if="detail">{{ detail }}</em></div>
     </div>
     <div class="stat-card">
       <span class="stat-icon success"><i class="pi pi-check-circle" /></span>
@@ -16,7 +16,8 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ total: number; active: number; inactive: number }>()
+// detail: türlere göre dağılım ("2 uzman · 1 OSGB · 1 kurumsal").
+defineProps<{ total: number; active: number; inactive: number; detail?: string }>()
 </script>
 
 <style scoped>
@@ -27,5 +28,6 @@ defineProps<{ total: number; active: number; inactive: number }>()
 .stat-icon.muted { background: var(--admin-soft); color: var(--admin-muted); }
 .stat-card small { display: block; color: var(--admin-muted); font-size: 11px; }
 .stat-card strong { display: block; margin-top: 5px; color: var(--admin-heading); font-size: 24px; line-height: 1; }
+.stat-card em { display: block; margin-top: 6px; color: var(--admin-muted); font-size: 11px; font-style: normal; }
 @media (max-width: 800px) { .stats-grid { grid-template-columns: 1fr; } }
 </style>

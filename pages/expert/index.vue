@@ -11,7 +11,7 @@
 
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, takvim, tesisat ve formlar -->
     <div class="tabs">
-      <button v-for="item in TABS" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
+      <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
     </div>
     <!-- Haritada il seçiliyken sayfanın tamamı o ile göre -->
     <div v-if="selectedCity" class="city-bar">
@@ -28,9 +28,11 @@
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
-        <div class="kpis two">
-          <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ cityCount }} ilde · {{ scopeCounts.customers }} müşteri</small></div>
+        <div class="kpis" :class="team ? 'three' : 'two'">
+          <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ cityCount }} ilde<template v-if="!corporate"> · {{ scopeCounts.customers }} müşteri</template></small></div>
           <div class="kpi"><span>Takip edilen ekipman</span><strong>{{ data.totals.equipment }}</strong><small>{{ scopeCounts.workplaces }} işyeri</small></div>
+          <!-- OSGB / kurumsal: yönetici ve operasyon yöneticisi -->
+          <div v-if="team" class="kpi" :class="{ warn: team.counts.unassigned }"><span>Uzman</span><strong>{{ team.counts.experts }}</strong><small>{{ team.counts.unassigned ? `${team.counts.unassigned} firmanın uzmanı yok` : 'bütün firmaların uzmanı var' }}</small></div>
         </div>
         <div class="map-grid">
           <section class="card chart-card map-card">
@@ -48,6 +50,19 @@
             <ExpertScoreGauge class="gauge-fill" :score="data.score" />
           </section>
         </div>
+        <!-- OSGB: müşteri bazında PK durumu (yönetici ve operasyon yöneticisi) -->
+        <section v-if="team?.customers?.length" class="card list-card">
+          <header><div><h3>Müşteri özeti</h3><small>Müşteri bazında PK durumu (yüzde kaçı tamam); en çok süresi geçmiş üstte.</small></div></header>
+          <div v-for="row in team.customers" :key="row.id" class="location-row static">
+            <span class="location-name"><strong>{{ row.name }}</strong><small>{{ row.locations }} lokasyon · {{ row.score.total }} ekipman</small></span>
+            <template v-if="row.score.total">
+              <div class="progress-bar"><i :class="levelOf(row.score.percent)" :style="{ width: `${row.score.percent ?? 0}%` }" /></div>
+              <strong class="location-percent" :class="levelOf(row.score.percent)">%{{ percentText(row.score.percent) }}</strong>
+              <small class="location-detail">{{ row.score.ok }} / {{ row.score.total }} tamam<template v-if="row.score.overdue"> · {{ row.score.overdue }} süresi geçmiş</template><template v-if="row.score.nonconforming"> · {{ row.score.nonconforming }} uygun değil</template></small>
+            </template>
+            <span v-else class="location-empty">Ekipman yok</span>
+          </div>
+        </section>
         <section class="card list-card">
           <header>
             <div><h3>Lokasyon özeti</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Lokasyon bazında PK durumu (yüzde kaçı tamam); en sorunlu üstte, tıklayınca o lokasyona iner.</small></div>
@@ -145,6 +160,11 @@
         <ExpertControlCalendar :agenda="data.agenda || []" :undated="data.undated" :query="viewQuery" />
       </template>
 
+      <!-- OSGB / kurumsal: Uzmanlar (yönetici ve operasyon yöneticisi) -->
+      <template v-else-if="tab === 'team'">
+        <ExpertTeamOverview :data="team" :loading="teamLoading" :error="teamError" />
+      </template>
+
       <!-- 4) Tesisatlar ve tüp kontrol formları -->
       <template v-else>
       <div class="grid two">
@@ -191,7 +211,7 @@ const TABS = [
 ] as const
 const route = useRoute()
 const router = useRouter()
-const tab = ref<string>(TABS.some(item => item.key === route.query.sekme) ? String(route.query.sekme) : 'locations')
+const tab = ref<string>([...TABS.map(item => item.key), 'team'].includes(String(route.query.sekme)) ? String(route.query.sekme) : 'locations')
 watch(tab, value => router.replace({ query: value === 'locations' ? {} : { sekme: value } }))
 
 const { user } = useAuth()
@@ -299,6 +319,36 @@ onMounted(async () => {
   await load()
   loadData()
 })
+
+// --- OSGB / kurumsal hesabın yöneticisi ve operasyon yöneticisi: Uzmanlar sekmesi, Uzman kartı, OSGB'de müşteri özeti.
+// Bireysel uzmanda (ve diğer rollerde) hiçbiri yok, sekmeler aynı. ---
+const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
+const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
+const tabs = computed(() => teamView.value ? [...TABS, { key: 'team', label: 'Uzmanlar', icon: 'pi pi-users' }] : TABS)
+const team = ref<any>(null)
+const teamLoading = ref(false)
+const teamError = ref('')
+// Kapsam: müşteri / lokasyon filtresi ya da il seçiliyse o lokasyonlar, değilse hesabın tamamı.
+const { customer: scopeCustomer, locationId: scopeLocationId } = useDashboardScope()
+const teamLocationIds = computed<number[]>(() => scopeCustomer.value || scopeLocationId.value || selectedCity.value ? viewQuery.value['location_ids[]'] : [])
+let teamKey = ''
+const loadTeam = async () => {
+  if (!teamView.value) { team.value = null; teamKey = ''; return }
+  const key = JSON.stringify(teamLocationIds.value)
+  if (key === teamKey) return
+  teamKey = key
+  teamLoading.value = true
+  teamError.value = ''
+  try { team.value = await get('/pk-account/overview', teamLocationIds.value.length ? { 'location_ids[]': teamLocationIds.value } : {}) }
+  catch (e: any) { teamKey = ''; teamError.value = errorMessage(e, 'Uzman özeti alınamadı.') }
+  finally { teamLoading.value = false }
+}
+watch([teamView, teamLocationIds], loadTeam, { immediate: true })
+onMounted(async () => {
+  await loadAccount()
+  // Adres satırından Uzmanlar sekmesi gelip yetkisi yoksa ilk sekme.
+  if (tab.value === 'team' && !teamView.value) tab.value = 'locations'
+})
 </script>
 
 <style scoped>
@@ -319,7 +369,8 @@ onMounted(async () => {
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
 /* Lokasyonlar sekmesi: başta iki KPI kartı, lokasyon özeti (alt) */
-.kpis.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.kpis.two{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.kpis.three{grid-template-columns:1fr}}
 .location-row{display:grid;grid-template-columns:minmax(220px,1.3fr) minmax(120px,2fr) 64px minmax(180px,1.2fr);align-items:center;gap:14px;padding:10px 8px;border-top:1px solid var(--admin-row-border);border-radius:8px;cursor:pointer}
 .location-row:hover{background:var(--admin-hover)}.location-row.static{cursor:default}.location-row.static:hover{background:none}
 .location-name{display:flex;flex-direction:column;gap:2px;min-width:0}.location-name strong{color:var(--admin-heading);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.location-name small{color:var(--admin-muted);font-size:11px}

@@ -28,6 +28,7 @@
           <thead>
             <tr>
               <th>Firma Adı</th>
+              <th>Unvan</th>
               <th>Kısa Ad</th>
               <th>Tür</th>
               <th>Lokasyon</th>
@@ -38,6 +39,7 @@
           <tbody>
             <tr v-for="company in filteredCompanies" :key="company.business_entity_id">
               <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ company.name }}</strong></div></td>
+              <td>{{ titleOf[company.business_entity_id] || '—' }}</td>
               <td>{{ company.short_name || '—' }}</td>
               <td>{{ companyTypeLabel(company.company_type) }}</td>
               <td>{{ company.locations_count ?? 0 }}</td>
@@ -50,6 +52,9 @@
       </div>
     </section>
 
+    <!-- OSGB / kurumsal hesap: uzman ↔ firma ataması (yönetici, operasyon yöneticisi); bireysel uzmanda yok -->
+    <ExpertWorkplaceAssignments v-if="canAssign" />
+
     <div v-if="companyFormOpen" class="modal-backdrop" @click.self="closeCompanyForm">
       <section class="modal-card">
         <div class="modal-head">
@@ -58,6 +63,9 @@
         </div>
         <label>Firma Adı <span>*</span><input v-model="companyForm.name" type="text" placeholder="Örn. Arçelik A.Ş." /></label>
         <p v-if="duplicateCompany" class="hint warn">"{{ duplicateCompany.name }}" zaten kayıtlı.</p>
+        <!-- Ünvan bir kez tanımlanır; aynı şirketin işletmeleri listeden aynı ünvanı seçer -->
+        <label>Unvan <small>(Opsiyonel)</small><input v-model="companyForm.title" type="text" list="company-titles" placeholder="Örn. Arçelik A.Ş." /></label>
+        <datalist id="company-titles"><option v-for="title in titles" :key="title.id" :value="title.name" /></datalist>
         <label>Kısa Ad <small>(Opsiyonel)</small><input v-model="companyForm.short_name" type="text" /></label>
         <label>Firma Türü <span>*</span>
           <select v-model="companyForm.company_type">
@@ -92,11 +100,23 @@ const companyFormOpen = ref(false)
 const companySaving = ref(false)
 const companyFormError = ref('')
 const editingCompany = ref<MyCompany | null>(null)
-const companyForm = reactive({ name: '', short_name: '', company_type: 'corporate' })
+const companyForm = reactive({ name: '', short_name: '', company_type: 'corporate', title: '' })
+
+// Firma ünvanları: hesapta bir kez tanımlanır, firmalar ona bağlanır (titleOf: firma → ünvan adı).
+const titles = ref<{ id: number; name: string; companies: number }[]>([])
+const titleOf = ref<Record<string, string>>({})
+const loadTitles = async () => {
+  try {
+    const data = await get<{ titles: { id: number; name: string; companies: number }[]; links: Record<string, number> }>('/pk-company-titles')
+    const names: Record<string, string> = Object.fromEntries(data.titles.map(title => [String(title.id), title.name]))
+    titles.value = data.titles
+    titleOf.value = Object.fromEntries(Object.entries(data.links || {}).map(([entity, titleId]) => [entity, names[String(titleId)] || '']))
+  } catch { titles.value = []; titleOf.value = {} }
+}
 
 const filteredCompanies = computed(() => {
   const q = trLower(companySearch.value.trim())
-  return companies.value.filter(c => !q || trLower(c.name).includes(q) || trLower(c.short_name).includes(q))
+  return companies.value.filter(c => !q || trLower(c.name).includes(q) || trLower(c.short_name).includes(q) || trLower(titleOf.value[c.business_entity_id]).includes(q))
 })
 
 // Aynı firmanın ikinci kez tanımlanmasını formda da engeller (backend ayrıca kontrol eder).
@@ -118,7 +138,7 @@ const loadCompanies = async () => {
 
 const openCompanyForm = (company: MyCompany | null) => {
   editingCompany.value = company
-  Object.assign(companyForm, { name: company?.name || '', short_name: company?.short_name || '', company_type: company?.company_type || 'corporate' })
+  Object.assign(companyForm, { name: company?.name || '', short_name: company?.short_name || '', company_type: company?.company_type || 'corporate', title: company ? titleOf.value[company.business_entity_id] || '' : '' })
   companyFormError.value = ''
   companyFormOpen.value = true
 }
@@ -130,10 +150,14 @@ const saveCompany = async () => {
   companyFormError.value = ''
   const body = { name: companyForm.name.trim(), short_name: companyForm.short_name.trim() || null, company_type: companyForm.company_type }
   try {
-    if (editingCompany.value) await patch(`/my-companies/${editingCompany.value.business_entity_id}`, body)
-    else await post('/my-companies', body)
+    let businessEntityId = editingCompany.value?.business_entity_id
+    if (editingCompany.value) await patch(`/my-companies/${businessEntityId}`, body)
+    else businessEntityId = (await post<MyCompany>('/my-companies', body)).business_entity_id
+    // Ünvan değiştiyse: yazılan ünvan hesapta varsa ona bağlanır, yoksa bir kez tanımlanır.
+    const title = companyForm.title.trim()
+    if (businessEntityId && title !== (titleOf.value[businessEntityId] || '')) await patch(`/pk-company-titles/${businessEntityId}`, { title: title || null })
     companyFormOpen.value = false
-    await Promise.all([loadCompanies(), refreshMyWorkplaces(true)])
+    await Promise.all([loadCompanies(), loadTitles(), refreshMyWorkplaces(true)])
   } catch (e: any) {
     companyFormError.value = errorMessage(e, 'Firma kaydedilemedi.')
   } finally { companySaving.value = false }
@@ -142,6 +166,12 @@ const saveCompany = async () => {
 const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
 onMounted(loadCompanies)
+onMounted(loadTitles)
+
+// OSGB / kurumsal hesapta uzman ataması: yönetici ve operasyon yöneticisi.
+const { multiUser, isManager, isOperation, load: loadAccount } = useAccount()
+const canAssign = computed(() => multiUser.value && (isManager.value || isOperation.value))
+onMounted(loadAccount)
 </script>
 
 <style scoped>

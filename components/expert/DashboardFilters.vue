@@ -1,6 +1,7 @@
 <template>
   <div class="dashboard-filters">
-    <select :value="customer" @change="setCustomer(($event.target as HTMLSelectElement).value)">
+    <!-- Kurumsal hesapta müşteri firmanın kendisi: müşteri seçimi yok -->
+    <select v-if="!corporate" :value="customer" @change="setCustomer(($event.target as HTMLSelectElement).value)">
       <option value="">Tüm müşteriler</option>
       <option v-for="item in customers" :key="item" :value="item">{{ item }}</option>
     </select>
@@ -19,6 +20,7 @@
 <script setup lang="ts">
 // Genel Bakış / Durum Raporu filtresi: müşteri → lokasyon → işyeri (boşsa uzmanın tüm lokasyonları).
 const { customer, locationId, workplaceId, customers, locations, workplaces, locationLabel, setCustomer, setLocation, setWorkplace, reset } = useDashboardScope()
+const { corporate } = useAccount()
 </script>
 
 <style scoped>

@@ -5,14 +5,15 @@
         <div>
           <h2>İşyeri Ekle</h2>
           <p v-if="location">{{ location.name }} lokasyonuna firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
-          <p v-else>Müşteri ve lokasyon seçip firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
+          <p v-else>{{ corporate ? 'Lokasyon' : 'Müşteri ve lokasyon' }} seçip firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
         </div>
         <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
       </div>
 
       <template v-if="!location">
         <div class="form-row">
-          <label>Müşteri <span>*</span>
+          <!-- Kurumsal hesapta müşteri firmanın kendisi: otomatik seçili, kutu yok -->
+          <label v-if="!corporate">Müşteri <span>*</span>
             <select v-model="customerId" @change="onCustomerChange">
               <option :value="null" disabled>Müşteri seçin</option>
               <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }}</option>
@@ -30,15 +31,25 @@
       <label>Firma <span>*</span>
         <select v-model="companySelection" @change="onCompanySelect">
           <option :value="null" disabled>{{ ownCompanies.length || freeCompanies.length ? 'Firma seçin' : 'Bu müşterinin firması yok — yeni firma oluşturun' }}</option>
-          <optgroup v-if="ownCompanies.length" label="Bu müşterinin firmaları">
-            <option v-for="company in ownCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+          <optgroup v-if="ownPlain.length" label="Bu müşterinin firmaları">
+            <option v-for="company in ownPlain" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+          </optgroup>
+          <!-- Ünvanlı (görünen adlı) firmalar: adı · ünvanı -->
+          <optgroup v-if="ownTitled.length" label="Görünen adlı firmalar">
+            <option v-for="company in ownTitled" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }} · {{ titleOf[company.business_entity_id] }}</option>
           </optgroup>
           <optgroup v-if="freeCompanies.length" label="Henüz bir müşteride işyeri olmayan firmalar">
-            <option v-for="company in freeCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
+            <option v-for="company in freeCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}{{ titleOf[company.business_entity_id] ? ` · ${titleOf[company.business_entity_id]}` : '' }}</option>
           </optgroup>
           <option :value="NEW_COMPANY">+ Yeni firma oluştur</option>
         </select>
       </label>
+
+      <!-- Görünen ad: aynı şirketin bu lokasyondaki işletmesi / bölümü; o adla firma eklenir, ünvanı seçilen firma olur -->
+      <label v-if="companySelection !== NEW_COMPANY">Görünen ad <small>(Opsiyonel)</small>
+        <input v-model="displayName" type="text" placeholder="Örn. Beyaz Eşya Depo — boş bırakılırsa firma kendi adıyla eklenir" />
+      </label>
+      <p v-if="displayNameHint" class="hint" :class="{ warn: displayNameBlocked }">{{ displayNameHint }}</p>
 
       <div v-if="companySelection === NEW_COMPANY" class="new-company">
         <div class="form-row">
@@ -92,7 +103,7 @@ const props = defineProps<{ customerId?: number | null; location?: { id: number;
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 const NEW_COMPANY = -1
-const { get, post, errorMessage } = useExpertApi()
+const { get, post, patch, errorMessage } = useExpertApi()
 
 const customers = ref<{ id: number; name: string }[]>([])
 const customerLocations = ref<{ id: number; name: string }[]>([])
@@ -113,8 +124,20 @@ const saving = ref(false)
 const error = ref('')
 let naceTimer: ReturnType<typeof setTimeout> | undefined
 
-// Aynı firma aynı lokasyona ikinci kez eklenemez.
-const availableCompanies = computed(() => myCompanies.value.filter(c => !attachedIds.value.has(c.business_entity_id)))
+// Görünen ad (opsiyonel): o adla firma (aynı adlı firma varsa o) lokasyona eklenir, ünvanı seçilen firma olur. Boşsa akış
+// bugünkü gibi. titleOf: firma → ünvan adı (ünvanlı firmalar listede ayrı grupta).
+const displayName = ref('')
+const titleOf = ref<Record<string, string>>({})
+const loadTitles = async () => {
+  try {
+    const data = await get<{ titles: { id: number; name: string }[]; links: Record<string, number> }>('/pk-company-titles')
+    const names: Record<string, string> = Object.fromEntries(data.titles.map(title => [String(title.id), title.name]))
+    titleOf.value = Object.fromEntries(Object.entries(data.links || {}).map(([entity, titleId]) => [entity, names[String(titleId)] || '']))
+  } catch { titleOf.value = {} }
+}
+
+// Aynı firma aynı lokasyona ikinci kez eklenemez (görünen adla eklenecekse ekli şirket de seçilebilir: eklenen, görünen adlı firma).
+const availableCompanies = computed(() => myCompanies.value.filter(c => displayName.value.trim() || !attachedIds.value.has(c.business_entity_id)))
 // Firmaların müşterilere dağılımı (işyeri olduğu lokasyonun müşterisine göre): başka müşterilerin firmaları gösterilmez.
 // Kullanıcı aynı adı yazıp "Bu firmayı seç" derse o firma bu müşteri için listeye eklenir.
 const customerCompanyIds = ref<Set<number>>(new Set())
@@ -122,6 +145,20 @@ const otherCustomerIds = ref<Set<number>>(new Set())
 const chosenIds = ref<Set<number>>(new Set())
 const ownCompanies = computed(() => availableCompanies.value.filter(c => customerCompanyIds.value.has(c.business_entity_id) || chosenIds.value.has(c.business_entity_id)))
 const freeCompanies = computed(() => availableCompanies.value.filter(c => !customerCompanyIds.value.has(c.business_entity_id) && !chosenIds.value.has(c.business_entity_id) && !otherCustomerIds.value.has(c.business_entity_id)))
+const ownPlain = computed(() => ownCompanies.value.filter(c => !titleOf.value[c.business_entity_id]))
+const ownTitled = computed(() => ownCompanies.value.filter(c => titleOf.value[c.business_entity_id]))
+const selectedCompany = computed(() => myCompanies.value.find(c => c.business_entity_id === companySelection.value) || null)
+// Görünen adla eklenecek firma: aynı adlı tanım varsa o (bu lokasyonda ekliyse eklenemez).
+const displayNameMatch = computed(() => displayName.value.trim() ? findDuplicate(displayName.value) : null)
+const displayNameBlocked = computed(() => !!displayNameMatch.value && attachedIds.value.has(displayNameMatch.value.business_entity_id))
+const displayNameHint = computed(() => {
+  const name = displayName.value.trim()
+  if (!name || !selectedCompany.value || companySelection.value === NEW_COMPANY) return ''
+  if (displayNameBlocked.value) return `"${displayNameMatch.value!.name}" bu lokasyona zaten ekli.`
+  return displayNameMatch.value
+    ? `Tanımlı "${displayNameMatch.value.name}" firması eklenir; ünvanı ${selectedCompany.value.name} olur.`
+    : `"${name}" adıyla firma olarak eklenir; ünvanı ${selectedCompany.value.name} olur.`
+})
 const loadCustomerCompanies = async () => {
   customerCompanyIds.value = new Set()
   otherCustomerIds.value = new Set()
@@ -135,7 +172,9 @@ const loadCustomerCompanies = async () => {
 }
 
 const canSave = computed(() => !saving.value && !!customerId.value && !!locationId.value && !!hazardClass.value &&
-  (companySelection.value === NEW_COMPANY ? !!newCompany.name.trim() && !duplicateCompany.value : !!companySelection.value))
+  (companySelection.value === NEW_COMPANY ? !!newCompany.name.trim() && !duplicateCompany.value : !!companySelection.value) &&
+  // Görünen ad yoksa seçilen firma bu lokasyonda ekli olamaz; görünen adlı firma da ekli olamaz.
+  (companySelection.value === NEW_COMPANY || (displayName.value.trim() ? !displayNameBlocked.value : !attachedIds.value.has(companySelection.value ?? 0))))
 
 const findDuplicate = (name: string) => {
   const key = normalizeCompanyName(name)
@@ -204,6 +243,17 @@ const save = async () => {
       businessEntityId = created.business_entity_id
       myCompanies.value.push(created)
       companySelection.value = businessEntityId
+    } else if (displayName.value.trim() && selectedCompany.value) {
+      // Görünen ad: o adla firma (tanımlıysa o) eklenir, ünvanı seçilen firma (ör. Beyaz Eşya Depo · Arçelik Pazarlama A.Ş.).
+      const owner = selectedCompany.value
+      if (displayNameMatch.value) businessEntityId = displayNameMatch.value.business_entity_id
+      else {
+        const created = await post<MyCompany>('/my-companies', { name: displayName.value.trim(), company_type: owner.company_type || 'corporate' })
+        businessEntityId = created.business_entity_id
+        myCompanies.value.push(created)
+      }
+      // Ünvan yetkisi yoksa (OSGB / kurumsalda yönetici değil) firma yine eklenir.
+      try { await patch(`/pk-company-titles/${businessEntityId}`, { title: owner.name }) } catch { /* ünvan eklenemedi */ }
     }
     await post(`/customers/${customerId.value}/locations/${locationId.value}/companies`, {
       business_entity_id: businessEntityId,
@@ -219,13 +269,19 @@ const save = async () => {
 }
 
 onMounted(async () => {
+  loadTitles()
   try { myCompanies.value = await get<MyCompany[]>('/my-companies') } catch { myCompanies.value = [] }
   if (props.location) await Promise.all([loadAttached(), loadCustomerCompanies()])
   else {
     try { customers.value = await get('/customers') } catch { customers.value = [] }
+    // Kurumsal hesap: tek müşteri (firmanın kendisi) otomatik seçilir.
+    await loadAccount()
+    if (corporate.value && !customerId.value && customers.value[0]) customerId.value = customers.value[0].id
     if (customerId.value) await onCustomerChange()
   }
 })
+
+const { corporate, load: loadAccount } = useAccount()
 </script>
 
 <style scoped>

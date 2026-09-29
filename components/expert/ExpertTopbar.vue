@@ -4,6 +4,8 @@
     <div v-else />
 
     <div class="topbar-actions">
+      <!-- Süper admin bir hesaba girdiyse: kendi oturumuna (Müşteriler) döner -->
+      <button v-if="impersonating" class="return-button" type="button" @click="stopImpersonation"><i class="pi pi-arrow-left" /> Süper admine dön</button>
       <button class="theme-toggle" type="button" :aria-label="isDark ? 'Açık temaya geç' : 'Koyu temaya geç'" @click="toggleTheme">
         <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" />
       </button>
@@ -11,7 +13,7 @@
         <span class="avatar">{{ initials }}</span>
         <div>
           <strong>{{ user?.name || 'Uzman' }}</strong>
-          <small>Uzman</small>
+          <small>{{ roleLabel }}</small>
         </div>
       </div>
     </div>
@@ -20,7 +22,8 @@
 
 <script setup lang="ts">
 withDefaults(defineProps<{ title?: string }>(), { title: 'Uzman Paneli' })
-const { user } = useAuth()
+const { user, impersonating, stopImpersonation } = useAuth()
+const { roleLabel } = useAccount()
 const isDark = ref(false)
 
 const initials = computed(() => {
@@ -52,6 +55,8 @@ onMounted(() => {
 .topbar-actions { display: flex; align-items: center; gap: 14px; }
 .theme-toggle { width: 38px; height: 38px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-card); color: var(--admin-muted); cursor: pointer; }
 .theme-toggle:hover { color: var(--pk-yellow-dark); border-color: var(--pk-yellow); }
+.return-button { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--pk-yellow); border-radius: 9px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.return-button:hover { background: var(--pk-yellow); color: #111827; }
 .user-chip { display: flex; align-items: center; gap: 9px; }
 .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 12px; font-weight: 800; }
 .user-chip strong { display: block; font-size: 12px; }

@@ -19,10 +19,13 @@ export const useDashboardScope = () => {
     ...(locationId.value && workplaceId.value ? { workplace_id: workplaceId.value } : {})
   }))
 
-  // Grafik ve listelerde lokasyon: aynı adlı lokasyonlar olabildiği için müşteri adıyla.
+  // Grafik ve listelerde lokasyon: aynı adlı lokasyonlar olabildiği için müşteri adıyla. Kurumsal hesapta müşteri firmanın
+  // kendisi (tek müşteri): yalnızca lokasyon adı.
+  const { corporate } = useAccount()
   const locationLabel = (id: number | null | undefined, fallback?: string | null) => {
     const group = groups.value.find(item => item.location_id === id)
-    return group ? [group.customer_name, group.location_name].filter(Boolean).join(' · ') : (fallback || '—')
+    if (!group) return fallback || '—'
+    return corporate.value ? group.location_name : [group.customer_name, group.location_name].filter(Boolean).join(' · ')
   }
   const scopeLabel = computed(() => {
     if (locationId.value) {

@@ -4,7 +4,7 @@
       <span class="brand-icon">✓</span>
       <div v-if="!collapsed">
         <strong><span>PK</span>Takip</strong>
-        <small>Periyodik Kontrol Takip</small>
+        <small>{{ edition || 'Periyodik Kontrol Takip' }}</small>
       </div>
     </div>
 
@@ -20,7 +20,12 @@
       </NuxtLink>
       <div v-if="!collapsed" class="sidebar-label">AYARLAR · TANIMLAR</div>
       <nav class="sidebar-nav">
-        <NuxtLink to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
+        <!-- Kurumsal hesapta müşteri yok (firma tek müşteri): organizasyonu tam ekran; OSGB / kurumsalda yalnızca yönetici -->
+        <NuxtLink v-if="corporate && isManager" to="/expert/settings/organization" class="sidebar-link" :title="collapsed ? 'Organizasyon' : undefined">
+          <i class="pi pi-sitemap" />
+          <span v-if="!collapsed">Organizasyon</span>
+        </NuxtLink>
+        <NuxtLink v-else-if="!multiUser || isManager" to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
           <i class="pi pi-users" />
           <span v-if="!collapsed">Müşteriler</span>
         </NuxtLink>
@@ -31,6 +36,10 @@
         <NuxtLink to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
           <i class="pi pi-briefcase" />
           <span v-if="!collapsed">Firmalar</span>
+        </NuxtLink>
+        <NuxtLink v-if="isManager" to="/expert/settings/users" class="sidebar-link" :title="collapsed ? 'Kullanıcılar' : undefined">
+          <i class="pi pi-id-card" />
+          <span v-if="!collapsed">Kullanıcılar</span>
         </NuxtLink>
         <NuxtLink to="/expert/settings/catalog-requests" class="sidebar-link" :title="collapsed ? 'Katalog talepleri' : undefined">
           <i class="pi pi-inbox" />
@@ -84,7 +93,7 @@
             <i class="pi pi-code" />
             <span v-if="!collapsed">Test</span>
           </NuxtLink>
-          <NuxtLink to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
+          <NuxtLink :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
@@ -93,7 +102,7 @@
     </template>
 
     <div class="sidebar-bottom">
-      <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>Uzman</span></div>
+      <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>{{ roleLabel }}</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">
         <i class="pi pi-sign-out" />
         <span v-if="!collapsed">Çıkış Yap</span>
@@ -106,6 +115,14 @@
 withDefaults(defineProps<{ collapsed?: boolean; mode?: 'panel' | 'settings' }>(), { collapsed: false, mode: 'panel' })
 const emit = defineEmits<{ toggle: [] }>()
 const { logout } = useAuth()
+// Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
+const { multiUser, corporate, isManager, edition, roleLabel, load: loadAccount } = useAccount()
+onMounted(loadAccount)
+// Ayarlar'ın ilk sayfası: bireysel uzman ve OSGB yöneticisinde Müşteriler, kurumsal yöneticide Organizasyon, diğer
+// rollerde Lokasyonlar.
+const settingsHome = computed(() => !multiUser.value ? '/expert/settings/customers'
+  : !isManager.value ? '/expert/settings/locations'
+  : corporate.value ? '/expert/settings/organization' : '/expert/settings/customers')
 
 const PERIODIC = [
   { to: '/expert/equipment', label: 'Ekipmanlar', icon: 'pi pi-wrench' },

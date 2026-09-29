@@ -1,11 +1,11 @@
 <template>
   <div class="table-card">
     <div class="table-head">
-      <div><strong>Uzmanlar</strong><span>Tenant tipi <b>Uzman</b> olan müşteriler</span></div>
+      <div><strong>Müşteriler</strong><span><b>Uzman</b>, <b>OSGB</b> ve <b>kurumsal</b> hesaplar</span></div>
       <span class="count-badge">{{ customers.length }} kayıt</span>
     </div>
 
-    <DataTable :value="customers" :loading="loading" paginator :rows="10" responsiveLayout="scroll" emptyMessage="Kayıtlı uzman bulunamadı.">
+    <DataTable :value="customers" :loading="loading" paginator :rows="10" responsiveLayout="scroll" emptyMessage="Kayıtlı müşteri bulunamadı.">
       <Column header="Müşteri">
         <template #body="{ data }">
           <div class="customer-cell">
@@ -14,7 +14,7 @@
           </div>
         </template>
       </Column>
-      <Column header="Tip"><template #body><Tag value="Uzman" severity="warn" /></template></Column>
+      <Column header="Tip"><template #body="{ data }"><Tag :value="typeOf(data).label" :severity="typeOf(data).severity" /></template></Column>
       <Column header="Durum">
         <template #body="{ data }"><Tag :value="data.status ? 'Aktif' : 'Pasif'" :severity="data.status ? 'success' : 'danger'" /></template>
       </Column>
@@ -22,7 +22,7 @@
         <template #body="{ data }">
           <div class="actions">
             <Button icon="pi pi-envelope" text rounded aria-label="Davet maili gönder" v-tooltip.top="'Davet maili gönder'" @click="sendInvite(data)" />
-            <Button icon="pi pi-sign-in" text rounded aria-label="Uzman olarak giriş yap" v-tooltip.top="'Uzman olarak giriş yap'" @click="impersonate(data)" />
+            <Button icon="pi pi-sign-in" text rounded aria-label="Hesaba giriş yap" v-tooltip.top="'Hesaba giriş yap'" @click="impersonate(data)" />
             <Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" />
           </div>
         </template>
@@ -35,6 +35,13 @@
 defineProps<{ customers: any[]; loading: boolean }>()
 const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any]; sendInvite: [tenant: any] }>()
 const initials = (name: string) => name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()
+// Hesap türü etiketi: uzman, OSGB, kurumsal.
+const TYPES: Record<string, { label: string; severity: string }> = {
+  expert: { label: 'Uzman', severity: 'warn' },
+  osgb: { label: 'OSGB', severity: 'info' },
+  corporate: { label: 'Kurumsal', severity: 'contrast' }
+}
+const typeOf = (tenant: any) => TYPES[tenant.tenant_type] || TYPES.expert!
 const openTenant = (tenant: any) => emit('open', tenant)
 const impersonate = (tenant: any) => emit('impersonate', tenant)
 const sendInvite = (tenant: any) => emit('sendInvite', tenant)

@@ -4,7 +4,7 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
         <h1>Lokasyonlar</h1>
-        <p>Müşteri ve organizasyon seçerek lokasyonları görüntüleyin ve yeni lokasyon ekleyin.</p>
+        <p>{{ corporate ? 'Organizasyon' : 'Müşteri ve organizasyon' }} seçerek lokasyonları görüntüleyin ve yeni lokasyon ekleyin.</p>
       </div>
       <button class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
         <i class="pi pi-plus" />
@@ -13,8 +13,9 @@
     </div>
 
     <section class="table-card">
-      <div class="toolbar">
-        <label class="field">
+      <div class="toolbar" :class="{ 'no-customer': corporate }">
+        <!-- Kurumsal hesapta müşteri firmanın kendisi: seçim kutusu yok (otomatik seçili) -->
+        <label v-if="!corporate" class="field">
           <span>Müşteri</span>
           <select v-model="selectedCustomerId" @change="onCustomerChange">
             <option :value="null" disabled>Müşteri seçin</option>
@@ -48,7 +49,8 @@
       <div v-else-if="filteredLocations.length === 0" class="state-row empty-state">
         <i class="pi pi-map-marker" />
         <strong>Lokasyon bulunmuyor</strong>
-        <span v-if="organizationOptions.length === 0">Bu müşterinin organizasyonu yok. Önce Müşteriler sayfasından organizasyon ekleyin.</span>
+        <span v-if="organizationOptions.length === 0 && corporate">Henüz organizasyon yok. Önce Organizasyon sayfasından organizasyon ekleyin.</span>
+        <span v-else-if="organizationOptions.length === 0">Bu müşterinin organizasyonu yok. Önce Müşteriler sayfasından organizasyon ekleyin.</span>
         <span v-else>Seçili organizasyon için ilk lokasyonu ekleyebilirsiniz.</span>
       </div>
       <div v-else class="table-wrap">
@@ -98,7 +100,7 @@
         <ul v-else class="company-list">
           <li v-for="item in locationCompanies" :key="item.id" class="company-item">
             <div class="company-item-head">
-              <strong>{{ item.name }}</strong>
+              <div class="company-name"><strong>{{ item.name }}</strong><small v-if="titleOf[item.business_entity_id]">{{ titleOf[item.business_entity_id] }}</small></div>
               <button class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><i class="pi pi-trash" /></button>
             </div>
             <div class="company-meta">
@@ -322,14 +324,25 @@ const loadLocationCompanies = async () => {
   } finally { companiesLoading.value = false }
 }
 
+// Firma ünvanları (ör. aynı şirketin işletmeleri "Arçelik A.Ş."): firma adının altında.
+const titleOf = ref<Record<string, string>>({})
+const loadTitles = async () => {
+  try {
+    const data = await $fetch<{ titles: { id: number; name: string }[]; links: Record<string, number> }>(api('/pk-company-titles'), { headers: tenantHeaders() })
+    const names: Record<string, string> = Object.fromEntries(data.titles.map(title => [String(title.id), title.name]))
+    titleOf.value = Object.fromEntries(Object.entries(data.links || {}).map(([entity, titleId]) => [entity, names[String(titleId)] || '']))
+  } catch { titleOf.value = {} }
+}
+
 const openCompanies = (location: Location) => {
   companyLocation.value = location
   locationCompanies.value = []
   loadLocationCompanies()
+  loadTitles()
 }
 const closeCompanies = () => { companyLocation.value = null }
 const openCompanyForm = () => { companyFormOpen.value = true }
-const onWorkplaceSaved = async () => { companyFormOpen.value = false; await loadLocationCompanies() }
+const onWorkplaceSaved = async () => { companyFormOpen.value = false; await Promise.all([loadLocationCompanies(), loadTitles()]) }
 
 const removeCompany = async (item: LocationCompany) => {
   if (!confirm(`"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
@@ -345,6 +358,16 @@ const removeCompany = async (item: LocationCompany) => {
 const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
 onMounted(loadCustomers)
+
+// Kurumsal hesap: müşteri firmanın kendisi (tek müşteri); seçim kutusu yok, otomatik seçilir.
+const { corporate, load: loadAccount } = useAccount()
+onMounted(loadAccount)
+watch([corporate, customers], () => {
+  if (corporate.value && !selectedCustomerId.value && customers.value[0]) {
+    selectedCustomerId.value = customers.value[0].id
+    onCustomerChange()
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -355,6 +378,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.07)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .toolbar{padding:18px 16px;border-bottom:1px solid var(--admin-border);display:grid;grid-template-columns:minmax(180px,260px) minmax(200px,320px) 1fr;gap:12px;align-items:start}
+.toolbar.no-customer{grid-template-columns:minmax(200px,320px) 1fr}
 .field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}
 .field select,.field .search-box{box-sizing:border-box;height:42px;margin:0}
 .field select,.modal-card select{height:42px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
@@ -384,6 +408,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .drawer-toolbar{padding:14px 20px 10px;display:flex;justify-content:flex-end}.drawer-state{padding:50px 25px;text-align:center;color:var(--admin-muted);font-size:12px}
 .company-list{list-style:none;margin:0;padding:4px 18px 24px;overflow:auto;display:grid;gap:10px}
 .company-item{padding:13px 14px;border:1px solid var(--admin-border);border-radius:10px}.company-item-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.company-item-head strong{font-size:13px;color:var(--admin-heading)}
+.company-name{display:flex;flex-direction:column;gap:2px;min-width:0}.company-name small{color:var(--admin-muted);font-size:11px;font-weight:600}
 .company-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:11px;color:var(--admin-muted);align-items:center}
 .company-activity,.company-experts{margin:7px 0 0;font-size:11px;color:var(--admin-muted)}.company-experts i{font-size:10px}
 .hazard-badge{padding:3px 8px;border-radius:999px;font-weight:700}.hazard-badge.low,.nace-results em.low{background:var(--admin-success-bg);color:var(--admin-success-text)}.hazard-badge.high,.nace-results em.high{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.hazard-badge.very-high,.nace-results em.very-high{background:var(--admin-danger-bg);color:var(--admin-danger-text)}

@@ -1,7 +1,8 @@
 <template>
   <section class="table-card">
-    <div class="toolbar">
-      <label class="field">
+    <div class="toolbar" :class="{ 'no-customer': corporate }">
+      <!-- Kurumsal hesapta müşteri firmanın kendisi: müşteri filtresi ve sütunu yok -->
+      <label v-if="!corporate" class="field">
         <span>Müşteri</span>
         <select v-model="customerFilter">
           <option :value="null">Tüm müşteriler</option>
@@ -33,7 +34,7 @@
         <thead>
           <tr>
             <th>Firma</th>
-            <th>Müşteri</th>
+            <th v-if="!corporate">Müşteri</th>
             <th>Lokasyon</th>
             <th>NACE</th>
             <th>Tehlike Sınıfı</th>
@@ -44,7 +45,7 @@
         <tbody>
           <tr v-for="item in filtered" :key="item.id">
             <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ item.company_name }}</strong></div></td>
-            <td>{{ item.customer_name || '—' }}</td>
+            <td v-if="!corporate">{{ item.customer_name || '—' }}</td>
             <td><div class="stacked"><strong>{{ item.location_name }}</strong><small v-if="item.organization_name">{{ item.organization_name }}</small></div></td>
             <td>
               <div v-if="item.nace_code" class="stacked"><strong>{{ item.nace_code }}</strong><small class="activity" :title="item.activity || ''">{{ item.activity }}</small></div>
@@ -65,6 +66,7 @@
 interface WorkplaceRow { id: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
 const props = defineProps<{ workplaces: WorkplaceRow[]; loading?: boolean; error?: string }>()
+const { corporate } = useAccount()
 
 const search = ref('')
 const customerFilter = ref<string | null>(null)
@@ -86,6 +88,7 @@ const filtered = computed(() => {
 <style scoped>
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .toolbar{padding:18px 16px;border-bottom:1px solid var(--admin-border);display:grid;grid-template-columns:minmax(180px,240px) minmax(160px,200px) 1fr;gap:12px;align-items:start}
+.toolbar.no-customer{grid-template-columns:minmax(160px,200px) 1fr}
 .field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}
 .field select{box-sizing:border-box;height:42px;margin:0;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
 .search-box{box-sizing:border-box;height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:13px}.search-box input::placeholder{color:var(--admin-muted)}

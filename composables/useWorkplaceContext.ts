@@ -34,13 +34,17 @@ export const useMyWorkplaces = () => {
   const error = useState('my-workplaces-error', () => '')
   const { get, errorMessage } = useExpertApi()
   const { context, setContext } = useWorkplaceContext()
+  const { isManager, isOperation, load: loadAccount } = useAccount()
 
   const load = async (force = false) => {
     if (loading.value || (loaded.value && !force)) return
     loading.value = true
     error.value = ''
     try {
-      workplaces.value = await get<Workplace[]>('/my-workplaces')
+      // OSGB / kurumsal hesabın yöneticisi ve operasyon yöneticisi hesaptaki bütün işyerlerini görür; uzman ve bireysel uzman
+      // atandıklarını (bugünkü liste; hesap bilgisiyle aynı anda alınır).
+      const [, mine] = await Promise.all([loadAccount(), get<Workplace[]>('/my-workplaces')])
+      workplaces.value = isManager.value || isOperation.value ? await get<Workplace[]>('/pk-account/workplaces') : mine
       loaded.value = true
       // Hatırlanan context artık listede yoksa (silinmiş/kaldırılmış) temizlenir.
       const current = context.value
