@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Rapor Bekleniyor</h2><p>{{ installation.name }}</p></div>

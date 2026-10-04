@@ -1,6 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'expert' })
-await navigateTo('/expert/settings/customers', { replace: true })
+// Role göre Ayarlar'ın ilk sayfası (bireysel uzmanda Müşteriler, bugünkü gibi).
+const { settingsHome, load } = useAccount()
+await load()
+await navigateTo(settingsHome.value, { replace: true })
 </script>
 
 <template><div /></template>

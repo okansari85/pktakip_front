@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div><h2><i class="pi pi-sparkles" /> Rapordan Ekipman Tanımla</h2><p>{{ context?.location_name }}<template v-if="context?.type === 'workplace' && context.company_name"> · {{ context.company_name }}</template></p></div>
@@ -64,6 +64,18 @@
                 <em :class="{ strong: candidate.strong }">{{ candidate.reason }}</em>
               </span>
             </label>
+            <!-- Rapordaki no / konum kayıtlı ekipmandan farklı yazılmışsa (ör. kontrol firması değişti): ekipman listeden seçilir. -->
+            <label v-if="otherOptions.length" class="choice" :class="{ active: choice === 'other' }">
+              <input v-model="choice" type="radio" value="other" />
+              <span>
+                <strong>Başka bir mevcut ekipmana ekle</strong>
+                <small>Rapordaki no ya da konum kayıtlı ekipmandan farklı yazılmışsa (ör. kontrol firması değişti) ekipmanı listeden seçin.</small>
+              </span>
+            </label>
+            <select v-if="choice === 'other'" v-model="otherId" class="other-select">
+              <option value="" disabled>Ekipman seçin</option>
+              <option v-for="item in otherOptions" :key="item.id" :value="String(item.id)">{{ otherText(item) }}</option>
+            </select>
             <label class="choice" :class="{ active: choice === 'new' }">
               <input v-model="choice" type="radio" value="new" />
               <span>
@@ -96,9 +108,23 @@
             <label>Model<input v-model="form.model" type="text" /></label>
             <label>Seri no<input v-model="form.serial_no" type="text" /></label>
             <label>Ait olduğu yer
-              <select v-model="form.location_business_entity_id">
+              <select v-model="form.location_business_entity_id" @change="onWorkplace">
                 <option :value="null">Lokasyon geneli</option>
-                <option v-for="workplace in workplaces" :key="workplace.id" :value="workplace.id">{{ workplace.company_name }}</option>
+                <option v-for="workplace in workplaces" :key="workplace.id" :value="workplace.id">{{ workplaceLabel(workplace.id, workplace.company_name) }}</option>
+              </select>
+            </label>
+            <!-- Seçili işyerinin operasyonel birimi varsa -->
+            <label v-if="units.length">Birim <small>(Opsiyonel)</small>
+              <select v-model="form.pk_operational_unit_id">
+                <option :value="null">Birim yok</option>
+                <option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.name }}</option>
+              </select>
+            </label>
+            <!-- Lokasyonda alan tanımlıysa: ekipmanın bulunduğu fiziksel yer -->
+            <label v-if="areas.length">Alan <small>(Opsiyonel)</small>
+              <select v-model="form.pk_area_id">
+                <option :value="null">Alan yok</option>
+                <option v-for="area in areas" :key="area.id" :value="area.id">{{ areaText(area) }}</option>
               </select>
             </label>
             <label class="wide">Bulunduğu yer<input v-model="form.place" type="text" /></label>
@@ -124,10 +150,13 @@ const props = defineProps<{
   context: any
   catalog: { slug: string; name: string; types: { id: number; name: string; default_scope?: string; variants?: string[]; variant_label?: string | null }[] }[]
   workplaces: { id: number; company_name: string }[]
+  // Sayfadaki ekipman listesi (çalışma alanının): "Başka bir mevcut ekipmana ekle" seçenekleri.
+  equipment?: any[]
 }>()
 const emit = defineEmits<{
   close: []
-  continue: [payload: { equipmentId?: number; draft?: Record<string, any>; type?: any; analysisId: string; file: File }]
+  // areaId: yeni ekipman için seçilen alan (lokasyonda alan varsa); rapor kaydedilince ekipmana yazılır.
+  continue: [payload: { equipmentId?: number; draft?: Record<string, any>; type?: any; analysisId: string; file: File; areaId?: number | null; unitId?: number | null }]
   // Rapor toplu tüp kontrol formu: okunmuş haliyle tüp kontrol formu penceresine geçilir.
   bulk: [payload: { analysis: any; file: File }]
 }>()
@@ -144,13 +173,37 @@ const result = ref<any>(null)
 const choice = ref('new')
 const form = reactive({
   equipment_type_id: null as number | null, variant: '', name: '', code: '', brand: '', model: '', serial_no: '',
-  location_business_entity_id: null as number | null, place: ''
+  location_business_entity_id: null as number | null, place: '', pk_area_id: null as number | null, pk_operational_unit_id: null as number | null
 })
+// İşyeri adı, operasyonel birim ve alan (isteğe bağlı): tanımlı değilse kutular görünmez. Birim seçili işyerinin birimlerinden,
+// alan (fiziksel yer) lokasyonun alanlarından; ikisi de ekipmanın firmasını değiştirmez.
+const { load: loadNames, workplaceLabel } = useWorkplaceNames()
+const { options: areaOptions, load: loadAreas } = useLocationAreas()
+const { load: loadUnits, unitsOf } = useOperationalUnits()
+const areas = computed(() => areaOptions.value.filter(area => area.active))
+const units = computed(() => unitsOf(form.location_business_entity_id))
+const onWorkplace = () => { if (!units.value.some(unit => unit.id === form.pk_operational_unit_id)) form.pk_operational_unit_id = null }
 
 const busy = computed(() => analyzing.value)
 const types = computed(() => props.catalog.flatMap(category => category.types))
 const selectedType = computed(() => types.value.find(type => type.id === form.equipment_type_id) || null)
-const canContinue = computed(() => choice.value !== 'new' || !!form.equipment_type_id)
+
+// Başka bir mevcut ekipman: yapay zekanın bulduğu türdeki (tür bulunamadıysa tümü) aktif ekipmanlar; önerilenler, tesisata
+// bağlı olanlar (kontrolü tesisat raporundan gelir) hariç; no'ya göre sıralı.
+const otherId = ref('')
+const otherOptions = computed(() => {
+  const typeId = result.value?.detected_type?.id
+  const suggested = new Set((result.value?.candidates || []).map((candidate: any) => candidate.id))
+  return (props.equipment || [])
+    .filter(item => (!typeId || item.type?.id === typeId) && item.is_active !== false && !item.installation && !suggested.has(item.id))
+    .sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'tr', { numeric: true }) || String(a.place || '').localeCompare(String(b.place || ''), 'tr'))
+})
+const otherText = (item: any) => [
+  item.code ? `no ${item.code}` : 'no yok', item.place, item.workplace && workplaceLabel(item.workplace.id, item.workplace.company_name),
+  !result.value?.detected_type && item.type?.name, item.name
+].filter(Boolean).join(' · ')
+
+const canContinue = computed(() => choice.value === 'other' ? !!otherId.value : choice.value !== 'new' || !!form.equipment_type_id)
 const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 const defaultWorkplace = () => props.context?.type === 'workplace' && selectedType.value?.default_scope !== 'location' ? props.context.workplace_id ?? null : null
 
@@ -165,7 +218,7 @@ const onFile = (event: Event) => {
 }
 const onType = () => {
   if (!selectedType.value?.variants?.includes(form.variant)) form.variant = ''
-  form.location_business_entity_id = defaultWorkplace()
+  if (!form.pk_operational_unit_id) { form.location_business_entity_id = defaultWorkplace(); onWorkplace() }
 }
 
 const analyze = async () => {
@@ -186,6 +239,7 @@ const analyze = async () => {
     result.value = data
     const strong = data.candidates.find((candidate: any) => candidate.strong)
     choice.value = strong ? String(strong.id) : 'new'
+    otherId.value = ''
     Object.assign(form, {
       equipment_type_id: data.detected_type?.id ?? null,
       variant: data.fields?.variant || '',
@@ -194,7 +248,9 @@ const analyze = async () => {
       brand: data.fields?.brand || '',
       model: data.fields?.model || '',
       serial_no: data.fields?.serial_no || '',
-      place: data.fields?.place || ''
+      place: data.fields?.place || '',
+      pk_area_id: null,
+      pk_operational_unit_id: null
     })
     form.location_business_entity_id = defaultWorkplace()
     if (!selectedType.value?.variants?.includes(form.variant)) form.variant = ''
@@ -207,7 +263,8 @@ const analyze = async () => {
 const proceed = () => {
   if (!result.value || !file.value) return
   if (choice.value !== 'new') {
-    emit('continue', { equipmentId: Number(choice.value), analysisId: result.value.analysis_id, file: file.value })
+    const equipmentId = Number(choice.value === 'other' ? otherId.value : choice.value)
+    emit('continue', { equipmentId, analysisId: result.value.analysis_id, file: file.value })
     return
   }
   const clean = (value: string) => value.trim() || null
@@ -215,6 +272,8 @@ const proceed = () => {
     analysisId: result.value.analysis_id,
     file: file.value,
     type: selectedType.value,
+    areaId: form.pk_area_id,
+    unitId: form.pk_operational_unit_id,
     draft: {
       location_id: props.context.location_id,
       location_business_entity_id: form.location_business_entity_id,
@@ -227,6 +286,7 @@ const proceed = () => {
 }
 
 onMounted(loadFixtures)
+onMounted(() => Promise.all([loadAreas(props.context?.location_id), loadUnits(props.context?.location_id), loadNames()]))
 </script>
 
 <style scoped>
@@ -251,6 +311,7 @@ h4{margin:16px 0 8px;color:var(--admin-heading);font-size:13px}
 .choices{display:grid;gap:6px}
 .choice{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:9px;cursor:pointer}.choice.active{border-color:#6d28d9;background:var(--admin-soft)}
 .choice input{margin-top:3px;accent-color:#6d28d9}.choice span{display:flex;flex-direction:column;gap:3px;min-width:0}.choice strong{color:var(--admin-heading);font-size:13px}.choice small{color:var(--admin-muted);font-size:11px}
+.other-select{width:100%;height:40px;padding:0 10px;border:1px solid #6d28d9;border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
 .choice em{width:max-content;padding:1px 8px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:10px;font-style:normal;font-weight:700}.choice em.strong{background:var(--admin-success-bg);color:var(--admin-success-text)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:12px}
 .form-grid label{display:block;color:var(--admin-heading);font-size:12px;font-weight:700}.form-grid label small{font-weight:400;color:var(--admin-muted)}.form-grid label > span{color:var(--admin-danger-text)}.wide{grid-column:1 / -1}

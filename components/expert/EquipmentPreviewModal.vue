@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="emit('close')">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div>
@@ -24,7 +24,7 @@
             <dt>Kalan gün</dt><dd><span v-if="!data.is_active" class="muted">Pasif</span><span v-else class="days" :class="daysKey(data.days_left)">{{ daysText(data.days_left) }}</span></dd>
             <dt>Marka / Model</dt><dd>{{ [data.brand, data.model].filter(Boolean).join(' / ') || '—' }}</dd>
             <dt>Seri no</dt><dd>{{ data.serial_no || '—' }}</dd>
-            <dt>Ait olduğu yer</dt><dd>{{ data.workplace?.company_name || 'Lokasyon geneli' }}</dd>
+            <dt>Ait olduğu yer</dt><dd>{{ data.workplace ? workplaceLabel(data.workplace.id, data.workplace.company_name) : 'Lokasyon geneli' }}</dd>
             <dt>Bulunduğu yer</dt><dd>{{ data.place || '—' }}</dd>
           </dl>
         </div>
@@ -67,6 +67,7 @@ const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uy
 const SOURCE_LABELS: Record<string, string> = { manual: 'Elle', ai: 'Yapay zeka' }
 
 const { get, errorMessage } = useExpertApi()
+const { load: loadNames, workplaceLabel } = useWorkplaceNames()
 const data = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
@@ -76,6 +77,7 @@ const daysText = (days: number | null) => days === null || days === undefined ? 
 const daysKey = (days: number | null) => days === null || days === undefined ? '' : days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok'
 
 onMounted(async () => {
+  loadNames()
   try { data.value = await get(`/pk-equipment/${props.summary.id}`) }
   catch (e: any) { error.value = errorMessage(e, 'Ekipman alınamadı.') }
   finally { loading.value = false }

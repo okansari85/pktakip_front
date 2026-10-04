@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="emit('close')">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div>

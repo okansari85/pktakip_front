@@ -7,7 +7,6 @@
         <p>{{ scopeLabel }} · {{ today }}</p>
       </div>
       <div class="head-actions no-print">
-        <ExpertDashboardFilters />
         <button class="primary-button" type="button" :disabled="!data" @click="print"><i class="pi pi-print" /> Yazdır / PDF</button>
       </div>
     </div>
@@ -92,8 +91,9 @@
         <section v-for="installation in data.installations" :key="installation.id" class="card block installation">
           <header class="installation-head">
             <div>
-              <h3>{{ installation.name }}</h3>
-              <small>{{ locationLabel(installation.location?.id, installation.location?.name) }}<template v-if="installation.workplace"> · {{ installation.workplace.company_name }}</template></small>
+              <!-- Başlık tesisatın türü; kaydın adı (bina) türden farklıysa altta -->
+              <h3>{{ installation.type?.name || installation.name }}</h3>
+              <small><template v-if="installation.type?.name && installation.name !== installation.type.name">{{ installation.name }} · </template>{{ locationLabel(installation.location?.id, installation.location?.name) }}<template v-if="installation.workplace"> · {{ workplaceLabel(installation.workplace.id, installation.workplace.company_name) }}</template></small>
             </div>
             <span class="status-pill" :class="installation.status">{{ INSTALLATION_STATUS[installation.status] || installation.status }}</span>
           </header>
@@ -148,13 +148,15 @@
 <script setup lang="ts">
 // Durum Raporu: ekipman bazında (kategori, tür, lokasyon, sorunlu ekipmanlar) ve tesisat bazında (sistemler, ekipmanları,
 // bulgular); kapsam Genel Bakış ile aynı filtre (tüm lokasyonlar → müşteri → lokasyon → işyeri). Yazdırılabilir.
-definePageMeta({ layout: 'expert', middleware: 'expert' })
+// Kapsam üstteki lokasyon / firma menüsünden; bu sayfada menüde "Tüm lokasyonlar" da seçilebilir (dashboardScope).
+definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok', belirtilmemis: 'Belirtilmemiş' }
 const statusText = STATUS_TEXT
 
 const { get, errorMessage } = useExpertApi()
 const { groups, load, query, scopeLabel, locationLabel } = useDashboardScope()
+const { load: loadNames, workplaceLabel } = useWorkplaceNames()
 
 const tab = ref<'equipment' | 'installations'>('equipment')
 const data = ref<any>(null)
@@ -230,6 +232,7 @@ const loadData = async () => {
 
 watch(query, loadData, { deep: true })
 onMounted(async () => {
+  loadNames()
   await load()
   loadData()
 })

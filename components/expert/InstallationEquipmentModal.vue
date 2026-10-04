@@ -1,10 +1,10 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div>
           <h2>Ekipman Ekle</h2>
-          <p>{{ system.name }} · {{ installation.workplace?.company_name || 'Lokasyon geneli' }} · {{ installation.location?.name }}</p>
+          <p>{{ system.name }} · {{ installation.workplace ? workplaceLabel(installation.workplace.id, installation.workplace.company_name) : 'Lokasyon geneli' }} · {{ installation.location?.name }}</p>
         </div>
         <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
       </div>
@@ -55,6 +55,8 @@ const emit = defineEmits<{ close: []; saved: []; changed: [] }>()
 interface Row { uid: number; equipment_type_id: number; code: string; place: string; variant: string; error: string }
 
 const { post, errorMessage } = useExpertApi()
+// İşyeri adı varsa "Ad · Firma" (adlar sayfada yüklenmiş olur).
+const { workplaceLabel } = useWorkplaceNames()
 
 let uid = 0
 const newRow = (from?: Row): Row => ({

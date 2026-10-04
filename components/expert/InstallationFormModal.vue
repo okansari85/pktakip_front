@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div>
@@ -16,7 +16,18 @@
             <option v-for="workplace in workplaces" :key="workplace.id" :value="workplace.id">{{ workplace.company_name }}</option>
           </select>
         </label>
-        <label :class="{ wide: !!installation }">Ad <small>(Opsiyonel)</small><input v-model="form.name" type="text" :placeholder="type.name" /></label>
+        <!-- Lokasyonda alan tanımlıysa: tesisat yine lokasyon geneli; bina / alan bazında kayıtsa alan seçilir -->
+        <label v-if="areas.length">Alan / bina <small>(Opsiyonel)</small>
+          <select v-model="form.pk_area_id">
+            <option :value="null">Lokasyon geneli</option>
+            <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.label }}</option>
+          </select>
+        </label>
+        <label :class="{ wide: !!installation && !areas.length }">Ad <small>(Opsiyonel)</small><input v-model="form.name" type="text" :placeholder="type.name" />
+          <!-- Elektrik ailesi: rapor bina bazında geliyorsa her bina ayrı kayıt; adı bina adı (rapor yüklerken eşleştirilir) -->
+          <small v-if="['elektrik-ic-tesisati', 'topraklama', 'yangin-algilama', 'havalandirma-klima', 'paratoner', 'akumulator'].includes(type.slug)" class="field-hint">Bina bazında rapor geliyorsa bina adı (ör. Tesellüm Depo)</small>
+          <small v-else-if="type.slug === 'trafo'" class="field-hint">Birden fazla trafo merkezi varsa merkezin adı (ör. TM-2)</small>
+        </label>
       </div>
 
       <!-- Sistemler: yalnızca bu tesisat türünün katalogundan -->
@@ -63,7 +74,17 @@ const error = ref('')
 const form = reactive({
   name: props.installation?.name && props.installation.name !== props.type.name ? props.installation.name : '',
   notes: props.installation?.notes || '',
-  location_business_entity_id: null as number | null
+  location_business_entity_id: null as number | null,
+  pk_area_id: null as number | null
+})
+
+// Alanlar (isteğe bağlı): lokasyonda alan yoksa kutu görünmez, tesisat bugünkü gibi kaydedilir.
+const { options: areaOptions, assignments: areaAssignments, load: loadAreas, setInstallationArea } = useLocationAreas()
+const currentAreaId = computed<number | null>(() => props.installation ? areaAssignments.value.installations[String(props.installation.id)] ?? null : null)
+const areas = computed(() => areaOptions.value.filter(area => area.active || area.id === currentAreaId.value))
+onMounted(async () => {
+  await loadAreas(props.installation?.location?.id ?? props.context?.location_id, !!props.installation)
+  form.pk_area_id = currentAreaId.value
 })
 const current = computed<any[]>(() => (props.installation?.systems || []).filter((system: any) => system.system_id))
 const selected = ref<number[]>(current.value.map(system => system.system_id))
@@ -84,14 +105,18 @@ const save = async () => {
   error.value = ''
   const body = { name: form.name.trim() || null, notes: form.notes.trim() || null, system_ids: selected.value }
   try {
-    emit('saved', props.installation
+    const saved = props.installation
       ? await patch(`/pk-installations/${props.installation.id}`, body)
       : await post('/pk-installations', {
         ...body,
         installation_type_id: props.type.id,
         location_id: props.context.location_id,
         location_business_entity_id: form.location_business_entity_id
-      }))
+      })
+    // Alan değiştiyse ayrıca yazılır (yalnızca lokasyonda alan varsa).
+    const installationId = saved?.id ?? saved?.installation?.id ?? props.installation?.id
+    if (areaOptions.value.length && installationId && form.pk_area_id !== currentAreaId.value) await setInstallationArea(installationId, form.pk_area_id)
+    emit('saved', saved)
   } catch (e: any) {
     error.value = errorMessage(e, 'Tesisat kaydedilemedi.')
   } finally { saving.value = false }
@@ -119,6 +144,7 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
 .form-grid label,.notes{display:block;color:var(--admin-heading);font-size:12px;font-weight:700}.wide{grid-column:1 / -1}
 label > span{color:var(--admin-danger-text)}label small{font-weight:400;color:var(--admin-muted)}
+label small.field-hint{display:block;font-size:11px}
 .form-grid input,.form-grid select,.notes textarea{display:block;width:100%;height:40px;margin-top:6px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
 .notes{margin-top:16px}.notes textarea{height:auto;padding:9px 10px;resize:vertical}
 .form-grid input:focus,.form-grid select:focus,.notes textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}

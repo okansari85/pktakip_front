@@ -4,9 +4,10 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Firmalar</strong></div>
         <h1>Firmalar</h1>
-        <p>Firma tanımlarını yönetin. Firmaları lokasyonlara Lokasyonlar sayfasından atarsınız.</p>
+        <p v-if="canDelete">Firma tanımlarını yönetin. Firmaları lokasyonlara Lokasyonlar sayfasından atarsınız.</p>
+        <p v-else>Hesaptaki firmalar. Firma tanımlarını yönetici değiştirir; uzman atamasını aşağıdan yaparsınız.</p>
       </div>
-      <button class="primary-button" type="button" @click="openCompanyForm(null)">
+      <button v-if="canDelete" class="primary-button" type="button" @click="openCompanyForm(null)">
         <i class="pi pi-plus" /><span>Firma Tanımla</span>
       </button>
     </div>
@@ -44,7 +45,10 @@
               <td>{{ companyTypeLabel(company.company_type) }}</td>
               <td>{{ company.locations_count ?? 0 }}</td>
               <td>{{ formatDate(company.created_at) }}</td>
-              <td class="actions"><button class="icon-button" type="button" title="Düzenle" @click="openCompanyForm(company)"><i class="pi pi-pencil" /></button></td>
+              <td class="actions">
+                <button v-if="canDelete" class="icon-button" type="button" title="Düzenle" @click="openCompanyForm(company)"><i class="pi pi-pencil" /></button>
+                <button v-if="canDelete" class="icon-button danger" type="button" title="Sil" @click="openDelete(company)"><i class="pi pi-trash" /></button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -55,7 +59,7 @@
     <!-- OSGB / kurumsal hesap: uzman ↔ firma ataması (yönetici, operasyon yöneticisi); bireysel uzmanda yok -->
     <ExpertWorkplaceAssignments v-if="canAssign" />
 
-    <div v-if="companyFormOpen" class="modal-backdrop" @click.self="closeCompanyForm">
+    <div v-if="companyFormOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>{{ editingCompany ? 'Firmayı Düzenle' : 'Firma Tanımla' }}</h2><p>{{ editingCompany ? 'Firma bilgilerini güncelleyin.' : 'Yeni firma kaydı oluşturun.' }}</p></div>
@@ -80,13 +84,42 @@
         </div>
       </section>
     </div>
+
+    <!-- Firma silme: önce bağlı kayıtlar kontrol edilir; verisi olan firma silinmez -->
+    <div v-if="deleteTarget" class="modal-backdrop">
+      <section class="modal-card">
+        <div class="modal-head">
+          <div><h2>Firmayı Sil</h2><p>{{ deleteTarget.name }}</p></div>
+          <button class="close-button" type="button" :disabled="deleting" @click="closeDelete"><i class="pi pi-times" /></button>
+        </div>
+        <p v-if="deleteLoading" class="delete-text"><i class="pi pi-spin pi-spinner" /> Firmanın kayıtları kontrol ediliyor...</p>
+        <template v-else-if="deleteSummary">
+          <div v-if="!deleteSummary.deletable" class="delete-block">
+            <i class="pi pi-ban" />
+            <div>
+              <strong>Bu firma silinemez</strong>
+              <span>Bağlı kayıtlar: {{ deleteSummary.blockers.map(row => `${row.count} ${row.label}`).join(', ') }}.</span>
+              <small>Kayıtlar yanlışlıkla silinmesin diye verisi olan firma silinmez.<template v-if="deleteSummary.blockers.some(row => row.label === 'uzman ataması')"> Uzman atamasını bu sayfanın altındaki "Uzman atamaları" bölümünden kaldırabilirsiniz.</template></small>
+            </div>
+          </div>
+          <p v-else class="delete-text">
+            <strong>{{ deleteTarget.name }}</strong> silinecek<template v-if="deleteSummary.locations">; {{ deleteSummary.locations }} lokasyon bağlantısı da kaldırılacak (bu lokasyonlarda firmaya ait kayıt yok)</template>. Bu işlem geri alınamaz.
+          </p>
+        </template>
+        <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" :disabled="deleting" @click="closeDelete">{{ deleteSummary?.deletable ? 'Vazgeç' : 'Kapat' }}</button>
+          <button v-if="deleteSummary?.deletable" class="danger-button" type="button" :disabled="deleting" @click="confirmDelete">{{ deleting ? 'Siliniyor...' : 'Sil' }}</button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-settings-role'] })
 
-const { get, post, patch, errorMessage } = useExpertApi()
+const { get, post, patch, del, errorMessage } = useExpertApi()
 const trLower = (value?: string | null) => (value || '').toLocaleLowerCase('tr-TR')
 
 // Firma adı değişince topbar seçicisindeki işyeri adları da güncel kalsın.
@@ -172,6 +205,37 @@ onMounted(loadTitles)
 const { multiUser, isManager, isOperation, load: loadAccount } = useAccount()
 const canAssign = computed(() => multiUser.value && (isManager.value || isOperation.value))
 onMounted(loadAccount)
+
+// Firma tanımlama, düzenleme ve silme: OSGB / kurumsal hesapta yönetici, bireysel uzman hesabında uzman. Önce bağlı kayıtlar sorulur (sunucu ayrıca
+// kontrol eder); yalnızca verisi olmayan firma silinir, verisiz lokasyon bağlantıları birlikte kalkar.
+const canDelete = computed(() => !multiUser.value || isManager.value)
+const deleteTarget = ref<MyCompany | null>(null)
+const deleteSummary = ref<{ deletable: boolean; locations: number; blockers: { label: string; count: number }[] } | null>(null)
+const deleteLoading = ref(false)
+const deleting = ref(false)
+const deleteError = ref('')
+const openDelete = async (company: MyCompany) => {
+  deleteTarget.value = company
+  deleteSummary.value = null
+  deleteError.value = ''
+  deleteLoading.value = true
+  try { deleteSummary.value = await get(`/my-companies/${company.business_entity_id}/delete-summary`) }
+  catch (e: any) { deleteError.value = errorMessage(e, 'Firmanın kayıtları kontrol edilemedi.') }
+  finally { deleteLoading.value = false }
+}
+const closeDelete = () => { if (!deleting.value) deleteTarget.value = null }
+const confirmDelete = async () => {
+  if (!deleteTarget.value || !deleteSummary.value?.deletable) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await del(`/my-companies/${deleteTarget.value.business_entity_id}`)
+    deleteTarget.value = null
+    await Promise.all([loadCompanies(), loadTitles(), refreshMyWorkplaces(true)])
+  } catch (e: any) {
+    deleteError.value = errorMessage(e, 'Firma silinemedi.')
+  } finally { deleting.value = false }
+}
 </script>
 
 <style scoped>
@@ -191,6 +255,11 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .hazard-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.hazard-badge.low{background:var(--admin-success-bg);color:var(--admin-success-text)}.hazard-badge.high{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.hazard-badge.very-high{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .actions-head{text-align:right}.actions{text-align:right}
 .icon-button{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.actions .icon-button + .icon-button{margin-left:6px}.icon-button.danger:hover{border-color:var(--admin-danger-text);background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.delete-text{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;color:var(--admin-text);font-size:13px;line-height:1.5}.delete-text strong{color:var(--admin-heading)}
+.delete-block{display:flex;gap:12px;padding:12px 14px;border:1px solid var(--admin-danger-text);border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.delete-block > i{margin-top:2px;font-size:16px}.delete-block div{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.45}.delete-block strong{font-size:13px}.delete-block small{color:var(--admin-text);font-size:11px}
+.danger-button{min-height:40px;padding:0 18px;border:0;border-radius:8px;background:var(--admin-danger-text);color:#fff;font-size:13px;font-weight:800;cursor:pointer}.danger-button:disabled{opacity:.55;cursor:not-allowed}
 .table-footer{padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:var(--admin-danger-text)}
 .modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay);display:grid;place-items:center;padding:20px}
 .modal-card{width:min(460px,100%);padding:22px;background:var(--admin-input);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
         <div>
@@ -28,7 +28,13 @@
         </div>
       </template>
 
-      <label>Firma <span>*</span>
+      <!-- İşletme adı: işyerinin (firmanın bu lokasyondaki kaydı, SGK sicili) adı, ör. Eskişehir Buzdolabı İşletmesi. Aynı firmanın
+           lokasyonda birden çok işyeri varsa adıyla ayırt edilir; ayrı firma tanımı açılmaz. Boşsa firma adıyla görünür. -->
+      <label>İşletme adı <small>(Opsiyonel)</small>
+        <input v-model="displayName" type="text" placeholder="Örn. Eskişehir Buzdolabı İşletmesi — boşsa firma adıyla görünür" />
+      </label>
+
+      <label>Firma (işveren) <span>*</span>
         <select v-model="companySelection" @change="onCompanySelect">
           <option :value="null" disabled>{{ ownCompanies.length || freeCompanies.length ? 'Firma seçin' : 'Bu müşterinin firması yok — yeni firma oluşturun' }}</option>
           <optgroup v-if="ownPlain.length" label="Bu müşterinin firmaları">
@@ -45,10 +51,6 @@
         </select>
       </label>
 
-      <!-- Görünen ad: aynı şirketin bu lokasyondaki işletmesi / bölümü; o adla firma eklenir, ünvanı seçilen firma olur -->
-      <label v-if="companySelection !== NEW_COMPANY">Görünen ad <small>(Opsiyonel)</small>
-        <input v-model="displayName" type="text" placeholder="Örn. Beyaz Eşya Depo — boş bırakılırsa firma kendi adıyla eklenir" />
-      </label>
       <p v-if="displayNameHint" class="hint" :class="{ warn: displayNameBlocked }">{{ displayNameHint }}</p>
 
       <div v-if="companySelection === NEW_COMPANY" class="new-company">
@@ -87,6 +89,7 @@
       </div>
       <p v-if="selectedNace && hazardClass !== selectedNace.hazard_class" class="hint warn">NACE listesine göre tehlike sınıfı: {{ selectedNace.hazard_class }}. Elle değiştirdiniz.</p>
 
+
       <p v-if="error" class="form-error">{{ error }}</p>
       <div class="modal-actions">
         <button class="secondary-button" type="button" @click="close">İptal</button>
@@ -124,9 +127,10 @@ const saving = ref(false)
 const error = ref('')
 let naceTimer: ReturnType<typeof setTimeout> | undefined
 
-// Görünen ad (opsiyonel): o adla firma (aynı adlı firma varsa o) lokasyona eklenir, ünvanı seçilen firma olur. Boşsa akış
-// bugünkü gibi. titleOf: firma → ünvan adı (ünvanlı firmalar listede ayrı grupta).
+// İşyeri adı (opsiyonel): firmanın bu lokasyondaki kaydının adı. Firma lokasyonda zaten varsa adıyla ikinci işyeri açılır
+// (aynı firmanın ayrı işvereni / müdürlüğü olan bölümü). titleOf: firma → ünvan adı (ünvanlı firmalar listede ayrı grupta).
 const displayName = ref('')
+const { workplaceLabel, setName: setWorkplaceName, addAdditional } = useWorkplaceNames()
 const titleOf = ref<Record<string, string>>({})
 const loadTitles = async () => {
   try {
@@ -136,8 +140,8 @@ const loadTitles = async () => {
   } catch { titleOf.value = {} }
 }
 
-// Aynı firma aynı lokasyona ikinci kez eklenemez (görünen adla eklenecekse ekli şirket de seçilebilir: eklenen, görünen adlı firma).
-const availableCompanies = computed(() => myCompanies.value.filter(c => displayName.value.trim() || !attachedIds.value.has(c.business_entity_id)))
+// Lokasyonda ekli firma da seçilebilir: işyeri adı yazılırsa ikinci işyeri olarak eklenir (adsız ikinci kayıt engellenir).
+const availableCompanies = computed(() => myCompanies.value)
 // Firmaların müşterilere dağılımı (işyeri olduğu lokasyonun müşterisine göre): başka müşterilerin firmaları gösterilmez.
 // Kullanıcı aynı adı yazıp "Bu firmayı seç" derse o firma bu müşteri için listeye eklenir.
 const customerCompanyIds = ref<Set<number>>(new Set())
@@ -148,16 +152,14 @@ const freeCompanies = computed(() => availableCompanies.value.filter(c => !custo
 const ownPlain = computed(() => ownCompanies.value.filter(c => !titleOf.value[c.business_entity_id]))
 const ownTitled = computed(() => ownCompanies.value.filter(c => titleOf.value[c.business_entity_id]))
 const selectedCompany = computed(() => myCompanies.value.find(c => c.business_entity_id === companySelection.value) || null)
-// Görünen adla eklenecek firma: aynı adlı tanım varsa o (bu lokasyonda ekliyse eklenemez).
-const displayNameMatch = computed(() => displayName.value.trim() ? findDuplicate(displayName.value) : null)
-const displayNameBlocked = computed(() => !!displayNameMatch.value && attachedIds.value.has(displayNameMatch.value.business_entity_id))
+// Seçilen firma bu lokasyonda zaten varsa: işyeri adıyla ikinci işyeri olarak eklenir; adsız eklenemez.
+const alreadyAttached = computed(() => companySelection.value !== NEW_COMPANY && attachedIds.value.has(companySelection.value ?? 0))
+const displayNameBlocked = computed(() => alreadyAttached.value && !displayName.value.trim())
 const displayNameHint = computed(() => {
-  const name = displayName.value.trim()
-  if (!name || !selectedCompany.value || companySelection.value === NEW_COMPANY) return ''
-  if (displayNameBlocked.value) return `"${displayNameMatch.value!.name}" bu lokasyona zaten ekli.`
-  return displayNameMatch.value
-    ? `Tanımlı "${displayNameMatch.value.name}" firması eklenir; ünvanı ${selectedCompany.value.name} olur.`
-    : `"${name}" adıyla firma olarak eklenir; ünvanı ${selectedCompany.value.name} olur.`
+  if (!alreadyAttached.value || !selectedCompany.value) return ''
+  return displayName.value.trim()
+    ? `${selectedCompany.value.name} bu lokasyonda zaten var; "${displayName.value.trim()}" adıyla ikinci işletme olarak eklenir.`
+    : `${selectedCompany.value.name} bu lokasyonda zaten var. Ayrı bir işletmeyse (ayrı SGK sicili) işletme adını yazın.`
 })
 const loadCustomerCompanies = async () => {
   customerCompanyIds.value = new Set()
@@ -173,8 +175,8 @@ const loadCustomerCompanies = async () => {
 
 const canSave = computed(() => !saving.value && !!customerId.value && !!locationId.value && !!hazardClass.value &&
   (companySelection.value === NEW_COMPANY ? !!newCompany.name.trim() && !duplicateCompany.value : !!companySelection.value) &&
-  // Görünen ad yoksa seçilen firma bu lokasyonda ekli olamaz; görünen adlı firma da ekli olamaz.
-  (companySelection.value === NEW_COMPANY || (displayName.value.trim() ? !displayNameBlocked.value : !attachedIds.value.has(companySelection.value ?? 0))))
+  // Lokasyonda ekli firma yalnızca işyeri adıyla (ikinci işyeri) eklenir.
+  !displayNameBlocked.value)
 
 const findDuplicate = (name: string) => {
   const key = normalizeCompanyName(name)
@@ -182,7 +184,6 @@ const findDuplicate = (name: string) => {
 }
 
 const useExisting = (company: MyCompany) => {
-  if (attachedIds.value.has(company.business_entity_id)) { error.value = `"${company.name}" bu lokasyona zaten ekli.`; return }
   chosenIds.value = new Set([...chosenIds.value, company.business_entity_id])
   companySelection.value = company.business_entity_id
   duplicateCompany.value = null
@@ -243,25 +244,33 @@ const save = async () => {
       businessEntityId = created.business_entity_id
       myCompanies.value.push(created)
       companySelection.value = businessEntityId
-    } else if (displayName.value.trim() && selectedCompany.value) {
-      // Görünen ad: o adla firma (tanımlıysa o) eklenir, ünvanı seçilen firma (ör. Beyaz Eşya Depo · Arçelik Pazarlama A.Ş.).
-      const owner = selectedCompany.value
-      if (displayNameMatch.value) businessEntityId = displayNameMatch.value.business_entity_id
-      else {
-        const created = await post<MyCompany>('/my-companies', { name: displayName.value.trim(), company_type: owner.company_type || 'corporate' })
-        businessEntityId = created.business_entity_id
-        myCompanies.value.push(created)
-      }
-      // Ünvan yetkisi yoksa (OSGB / kurumsalda yönetici değil) firma yine eklenir.
-      try { await patch(`/pk-company-titles/${businessEntityId}`, { title: owner.name }) } catch { /* ünvan eklenemedi */ }
     }
-    await post(`/customers/${customerId.value}/locations/${locationId.value}/companies`, {
-      business_entity_id: businessEntityId,
+    const workplaceName = displayName.value.trim()
+    const details = {
       hazard_class: hazardClass.value,
       nace_code: selectedNace.value?.nace_code ?? null,
       activity: selectedNace.value?.activity_name ?? null,
       sgk_workplace_number: sgkNumber.value.trim() || null
-    })
+    }
+    let workplaceId: number | null = null
+    if (alreadyAttached.value) {
+      // Firma bu lokasyonda zaten var: işyeri adıyla ikinci işyeri (ayrı işveren / müdürlük).
+      workplaceId = (await addAdditional({ location_id: locationId.value!, business_entity_id: businessEntityId!, name: workplaceName, ...details })).id
+    } else {
+      await post(`/customers/${customerId.value}/locations/${locationId.value}/companies`, { business_entity_id: businessEntityId, ...details })
+      // Yeni kaydın kimliği lokasyonun firma listesinden (işyeri adı için).
+      if (workplaceName) {
+        const items = await get<{ id: number; business_entity_id: number }[]>(`/customers/${customerId.value}/locations/${locationId.value}/companies`)
+        workplaceId = items.filter(item => item.business_entity_id === businessEntityId).sort((a, b) => b.id - a.id)[0]?.id ?? null
+      }
+    }
+    try {
+      if (workplaceId && workplaceName && !alreadyAttached.value) await setWorkplaceName(workplaceId, workplaceName)
+    } catch (e: any) {
+      error.value = errorMessage(e, 'İşyeri eklendi ama adı kaydedilemedi; Lokasyonlar → Firmalar panelinden düzenleyebilirsiniz.')
+      saving.value = false
+      return
+    }
     emit('saved')
   } catch (e: any) {
     error.value = errorMessage(e, 'İşyeri eklenemedi.')
@@ -282,6 +291,7 @@ onMounted(async () => {
 })
 
 const { corporate, load: loadAccount } = useAccount()
+
 </script>
 
 <style scoped>
@@ -304,6 +314,7 @@ input:focus,select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,
 .hint{margin:-8px 0 14px;font-size:12px;color:var(--admin-muted)}.hint.warn{color:var(--admin-warning-text)}
 .link-button{border:0;background:none;padding:0;margin-left:4px;color:var(--admin-link);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
+
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}

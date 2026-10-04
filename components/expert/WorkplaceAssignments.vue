@@ -18,10 +18,18 @@
     <div v-else-if="!shown.length" class="state-row">Filtreye uyan firma yok.</div>
     <div v-else class="table-wrap">
       <table>
-        <thead><tr><th>Firma</th><th>{{ corporate ? 'Lokasyon' : 'Müşteri · Lokasyon' }}</th><th>Uzmanlar</th><th class="actions-head">İşlemler</th></tr></thead>
+        <thead><tr><th>İşyeri</th><th>{{ corporate ? 'Lokasyon' : 'Müşteri · Lokasyon' }}</th><th>Uzmanlar</th><th class="actions-head">İşlemler</th></tr></thead>
         <tbody>
           <tr v-for="item in shown" :key="item.id">
-            <td><strong>{{ item.company_name }}</strong></td>
+            <!-- Üstte işletme adı (yoksa lokasyon); altında firma, tehlike sınıfı ve NACE rozetleri -->
+            <td class="name-cell">
+              <strong>{{ titleOf(item) }}</strong>
+              <span class="badges">
+                <span class="firm-badge">{{ item.company_name }}</span>
+                <span v-if="detailOf(item)?.hazard_class" class="hazard-badge" :class="hazardClassKey(detailOf(item)?.hazard_class)">{{ detailOf(item)?.hazard_class }}</span>
+                <span v-if="detailOf(item)?.nace_code" class="nace">NACE {{ detailOf(item)?.nace_code }}</span>
+              </span>
+            </td>
             <td>{{ [corporate ? null : item.customer_name, item.location_name].filter(Boolean).join(' · ') }}</td>
             <td>
               <span v-for="person in expertsOf(item)" :key="person.id" class="chip">{{ person.name }}</span>
@@ -34,10 +42,10 @@
       <div class="table-footer"><span>Toplam {{ shown.length }} firma</span></div>
     </div>
 
-    <div v-if="target" class="modal-backdrop" @click.self="close">
+    <div v-if="target" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
-          <div><h2>Uzman Ata</h2><p>{{ target.company_name }} · {{ target.location_name }}</p></div>
+          <div><h2>Uzman Ata</h2><p>{{ titleOf(target) }} · {{ target.company_name }}<template v-if="titleOf(target) !== target.location_name"> · {{ target.location_name }}</template></p></div>
           <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
         </div>
         <p v-if="!experts.length" class="hint">Hesapta aktif uzman yok. Uzmanları Kullanıcılar sayfasından eklersiniz.</p>
@@ -67,6 +75,14 @@ interface Expert { id: number; name: string; email: string }
 const { get, patch, errorMessage } = useExpertApi()
 // Kurumsal hesapta müşteri firmanın kendisi: yalnızca lokasyon.
 const { corporate } = useAccount()
+// Aynı firmanın lokasyondaki işyerleri adlarıyla ayrılır: "Eskişehir Buzdolabı İşletmesi · Arçelik".
+// Satırın başlığı işletme adı; adı yoksa lokasyon (ör. Pişirici Cihazlar İşletmesi). Firma, tehlike sınıfı ve NACE altında rozet.
+// Tehlike sınıfı ve NACE hesabın işyeri listesinden (yönetici / operasyon için bütün işyerleri).
+const { load: loadNames, nameOf } = useWorkplaceNames()
+const { workplaces: accountWorkplaces, load: loadWorkplaces } = useMyWorkplaces()
+const detailById = computed(() => new Map(accountWorkplaces.value.map(item => [item.id, item])))
+const detailOf = (item: AssignmentWorkplace) => detailById.value.get(item.id)
+const titleOf = (item: AssignmentWorkplace) => nameOf(item.id) || item.location_name || item.company_name
 
 const workplaces = ref<AssignmentWorkplace[]>([])
 const experts = ref<Expert[]>([])
@@ -82,7 +98,7 @@ const trLower = (value?: string | null) => (value || '').toLocaleLowerCase('tr-T
 const shown = computed(() => {
   const q = trLower(search.value.trim())
   return workplaces.value.filter(item => (!onlyUnassigned.value || !expertsOf(item).length)
-    && (!q || [item.company_name, item.customer_name, item.location_name].some(value => trLower(value).includes(q))))
+    && (!q || [titleOf(item), item.company_name, item.customer_name, item.location_name, detailOf(item)?.nace_code].some(value => trLower(value).includes(q))))
 })
 
 const load = async () => {
@@ -114,7 +130,7 @@ const save = async () => {
   finally { saving.value = false }
 }
 
-onMounted(load)
+onMounted(() => { loadNames(); loadWorkplaces(); load() })
 </script>
 
 <style scoped>
@@ -125,7 +141,10 @@ onMounted(load)
 .toolbar{padding:14px 16px 18px;border-bottom:1px solid var(--admin-border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .search-box{box-sizing:border-box;flex:1;min-width:220px;height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:13px}.search-box input::placeholder{color:var(--admin-muted)}
 .check{display:inline-flex;align-items:center;gap:8px;color:var(--admin-text);font-size:12px;font-weight:700;cursor:pointer}.check input{width:16px;height:16px;accent-color:#d7a900}
-.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-muted);vertical-align:middle}th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}td strong{color:var(--admin-heading)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-muted);vertical-align:middle}th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}td strong{color:var(--admin-heading)}.name-cell strong{display:block;font-size:13px}.badges{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.firm-badge{display:inline-block;padding:3px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px;font-weight:700;white-space:nowrap}
+.hazard-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.hazard-badge.low{background:var(--admin-success-bg);color:var(--admin-success-text)}.hazard-badge.high{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.hazard-badge.very-high{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.nace{font-size:11px;color:var(--admin-muted)}
 .chip{display:inline-block;margin:2px 4px 2px 0;padding:3px 10px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px;font-weight:700}.chip.empty{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .actions-head{text-align:right}.actions{text-align:right}
 .icon-button{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}

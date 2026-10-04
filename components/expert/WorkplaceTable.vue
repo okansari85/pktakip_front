@@ -44,7 +44,7 @@
         </thead>
         <tbody>
           <tr v-for="item in filtered" :key="item.id">
-            <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ item.company_name }}</strong></div></td>
+            <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><div class="stacked"><strong>{{ workplaceTitle(item.id, item.company_name) }}</strong><small v-if="workplaceFirm(item.id, item.company_name) || titleText(item)">{{ [workplaceFirm(item.id, item.company_name), titleText(item)].filter(Boolean).join(' · ') }}</small></div></div></td>
             <td v-if="!corporate">{{ item.customer_name || '—' }}</td>
             <td><div class="stacked"><strong>{{ item.location_name }}</strong><small v-if="item.organization_name">{{ item.organization_name }}</small></div></td>
             <td>
@@ -63,15 +63,34 @@
 </template>
 
 <script setup lang="ts">
-interface WorkplaceRow { id: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
+interface WorkplaceRow { id: number; business_entity_id?: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
 const props = defineProps<{ workplaces: WorkplaceRow[]; loading?: boolean; error?: string }>()
 const { corporate } = useAccount()
+const { get } = useExpertApi()
+// İşletme adı varsa üstte o, altında firma (işveren).
+const { load: loadNames, nameOf, workplaceTitle, workplaceFirm } = useWorkplaceNames()
+onMounted(() => loadNames())
 
 const search = ref('')
 const customerFilter = ref<string | null>(null)
 const hazardFilter = ref<string | null>(null)
 const trLower = (value?: string | null) => (value || '').toLocaleLowerCase('tr-TR')
+
+// Firma ünvanı (ör. "Arçelik A.Ş."): firma adının altında yazılır ve aramada bulunur; adla aynıysa tekrar yazılmaz.
+const titleOf = ref<Record<string, string>>({})
+const loadTitles = async () => {
+  try {
+    const data = await get<{ titles: { id: number; name: string }[]; links: Record<string, number> }>('/pk-company-titles')
+    const names: Record<string, string> = Object.fromEntries(data.titles.map(title => [String(title.id), title.name]))
+    titleOf.value = Object.fromEntries(Object.entries(data.links || {}).map(([entity, titleId]) => [entity, names[String(titleId)] || '']))
+  } catch { titleOf.value = {} }
+}
+const titleText = (item: WorkplaceRow) => {
+  const title = item.business_entity_id ? titleOf.value[item.business_entity_id] || '' : ''
+  return title && trLower(title) !== trLower(item.company_name) ? title : ''
+}
+onMounted(loadTitles)
 
 const customerNames = computed(() => [...new Set(props.workplaces.map(w => w.customer_name).filter(Boolean) as string[])].sort((a, b) => a.localeCompare(b, 'tr')))
 
@@ -80,7 +99,7 @@ const filtered = computed(() => {
   return props.workplaces.filter(w =>
     (!customerFilter.value || w.customer_name === customerFilter.value) &&
     (!hazardFilter.value || w.hazard_class === hazardFilter.value) &&
-    (!q || [w.company_name, w.location_name, w.nace_code, w.sgk_workplace_number, w.activity].some(v => trLower(v).includes(q)))
+    (!q || [w.company_name, nameOf(w.id), titleText(w), w.location_name, w.nace_code, w.sgk_workplace_number, w.activity].some(v => trLower(v).includes(q)))
   )
 })
 </script>

@@ -10,7 +10,7 @@
     <div v-else-if="!reports.length" class="state empty">
       <i class="pi pi-file-check" />
       <strong>Henüz tüp kontrol formu yok</strong>
-      <span>“Tüp Kontrol Formu Yükle” ile yükleyin; tüpler envantere eklenir, her tüpe kendi sonucuyla kontrol kaydı açılır.</span>
+      <span>“Tüp Kontrol Formu Yükle” ile yükleyin; tüpler Ekipmanlar'daki kayıtlarla eşleşir, her tüpe kendi sonucuyla kontrol kaydı açılır.</span>
     </div>
     <div v-else class="table-wrap">
       <table>
@@ -18,7 +18,14 @@
         <tbody>
           <template v-for="report in reports" :key="report.id">
             <tr :class="{ open: openId === report.id }" @click="toggle(report)">
-              <td><strong>{{ formatDate(report.control_date) }}</strong></td>
+              <td>
+                <strong>{{ formatDate(report.control_date) }}</strong>
+                <!-- Formun türü: eşleştirme ekranı son tüm envanter formuna göre çalışır -->
+                <select class="scope-select" :class="scopes[report.id] || 'full'" :value="scopes[report.id] || 'full'" title="Formun türü" @click.stop @change="changeScope(report, ($event.target as HTMLSelectElement).value)">
+                  <option value="full">Tüm envanter</option>
+                  <option value="partial">Ek form</option>
+                </select>
+              </td>
               <td>{{ formatDate(report.next_control_date) }}</td>
               <td @click.stop>
                 <button v-if="report.has_report" class="link-button" type="button" :title="report.report_file_name" @click="openPdf(report)"><i class="pi pi-file-pdf" /> {{ report.report_no || 'Görüntüle' }}</button>
@@ -30,7 +37,11 @@
                 <span v-for="system in report.systems" :key="system.name" class="section-line" :class="system.status || 'none'">{{ system.name }}: {{ STATUS_LABELS[system.status] || 'Belirtilmemiş' }}</span>
                 <span v-if="!report.systems.length" class="muted">—</span>
               </td>
-              <td>{{ report.equipment_count }}</td>
+              <td>
+                {{ report.equipment_count }}
+                <!-- Eşleştirme bekleyenler "Eşleştirme bekliyor" sekmesinde -->
+                <button v-if="pendingCounts[report.id]" class="pending-badge" type="button" @click.stop="emit('matching')">{{ pendingCounts[report.id] }} eşleştirme bekliyor</button>
+              </td>
               <td>{{ report.findings_count || '—' }}</td>
               <td>{{ report.created_by || '—' }}<small class="muted block">{{ report.source === 'ai' ? 'Yapay zeka ile okundu' : 'Elle girildi' }}</small></td>
               <td class="actions-col" @click.stop>
@@ -74,20 +85,24 @@
 
 <script setup lang="ts">
 // Ekipmanlar → Yangın Söndürme Cihazı → Kontrol Formları: lokasyondaki tüp kontrol formları, form detayı (bölümler,
-// bulgular, tüplerin o formdaki sonucu), PDF ve silme. Yükleme penceresini üst sayfa açar ("upload").
+// bulgular, tüplerin o formdaki sonucu), PDF ve silme. Yükleme penceresini üst sayfa açar ("upload"); eşleştirme bekleyenler
+// "Eşleştirme bekliyor" sekmesinde ("matching").
 const props = defineProps<{ context: any; refreshKey?: number }>()
-const emit = defineEmits<{ upload: []; changed: [] }>()
+const emit = defineEmits<{ upload: []; changed: []; matching: [] }>()
 
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil' }
 const EQUIPMENT_STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', belirtilmemis: 'Belirtilmemiş', rapor_bekleniyor: 'Rapor bekleniyor' }
 
-const { get, del, getBlob, errorMessage } = useExpertApi()
+const { get, post, del, getBlob, errorMessage } = useExpertApi()
 const reports = ref<any[]>([])
 const loading = ref(false)
 const error = ref('')
 const openId = ref<number | null>(null)
 const detail = ref<any>(null)
 const detailLoading = ref(false)
+// Form id → eşleştirme bekleyen sayısı; form id → tür (full: tüm envanter, partial: ek form).
+const pendingCounts = ref<Record<number, number>>({})
+const scopes = ref<Record<number, string>>({})
 
 const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
@@ -96,10 +111,17 @@ const load = async () => {
   loading.value = true
   error.value = ''
   try {
-    reports.value = await get('/pk-bulk-reports', {
-      location_id: props.context.location_id,
-      ...(props.context.type === 'workplace' ? { workplace_id: props.context.workplace_id } : {})
-    })
+    const [list, counts, types] = await Promise.all([
+      get('/pk-bulk-reports', {
+        location_id: props.context.location_id,
+        ...(props.context.type === 'workplace' ? { workplace_id: props.context.workplace_id } : {})
+      }),
+      get('/pk-bulk-report-matches/pending-counts', { location_id: props.context.location_id }).catch(() => ({})),
+      get('/pk-bulk-report-matches/scopes', { location_id: props.context.location_id }).catch(() => ({}))
+    ])
+    reports.value = list
+    pendingCounts.value = counts || {}
+    scopes.value = types || {}
   } catch (e: any) {
     error.value = errorMessage(e, 'Kontrol formları alınamadı.')
   } finally { loading.value = false }
@@ -113,6 +135,19 @@ const toggle = async (report: any) => {
   try { detail.value = await get(`/pk-bulk-reports/${report.id}`) }
   catch (e: any) { error.value = errorMessage(e, 'Form açılamadı.') }
   finally { detailLoading.value = false }
+}
+
+// Türü değişince eşleştirme ekranının sayısı da değişir (üst sayfa yeniler).
+const changeScope = async (report: any, scope: string) => {
+  const previous = scopes.value[report.id] || 'full'
+  scopes.value = { ...scopes.value, [report.id]: scope }
+  try {
+    await post(`/pk-bulk-report-matches/${report.id}/scope`, { scope })
+    emit('changed')
+  } catch (e: any) {
+    scopes.value = { ...scopes.value, [report.id]: previous }
+    alert(errorMessage(e, 'Formun türü değiştirilemedi.'))
+  }
 }
 
 const openPdf = async (report: any) => {
@@ -164,6 +199,9 @@ td strong{color:var(--admin-heading)}
 .sections-cell{min-width:220px}.section-line{display:block;font-size:11px;font-weight:600}.section-line.uygun{color:var(--admin-success-text)}.section-line.uygun_degil{color:var(--admin-danger-text)}.section-line.none{color:var(--admin-muted)}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
 .status-badge.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-badge.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}.status-badge.none{background:var(--admin-chip);color:var(--admin-muted)}
+.scope-select{display:block;margin-top:5px;height:24px;padding:0 6px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-chip);color:var(--admin-heading);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.scope-select.partial{background:var(--admin-accent-soft)}
+.pending-badge{display:block;width:max-content;margin-top:4px;padding:2px 8px;border:0;border-radius:999px;background:var(--admin-warning-bg);color:var(--admin-warning-text);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .muted{margin:0;color:var(--admin-muted);font-size:12px}.block{display:block;margin-top:2px;font-size:11px}
 .actions-col{width:1%;cursor:default}

@@ -8,6 +8,8 @@
         <p v-else>Üstten lokasyon ve firma seçin.</p>
       </div>
       <div class="head-actions">
+        <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
+        <button class="ai-button outline" type="button" :disabled="!context || bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu Rapor Yükle</button>
         <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
         <button class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> Rapordan Ekipman Tanımla</button>
         <button class="primary-button" type="button" :disabled="!context" @click="openCreate"><i class="pi pi-plus" /> Yeni Ekipman</button>
@@ -49,12 +51,14 @@
         </div>
       </div>
 
-      <!-- Yangın söndürme cihazı (tüp) seçiliyken: tüp listesi ve toplu kontrol formları -->
+      <!-- Yangın söndürme cihazı (tüp) seçiliyken: tüp listesi, toplu kontrol formları ve formlarda eşleştirme bekleyenler -->
       <div v-if="isTubeType" class="sub-tabs">
-        <button type="button" :class="{ active: !showForms }" @click="tubeTab = 'list'"><i class="pi pi-list" /> Tüpler <span class="count">{{ filtered.length }}</span></button>
+        <button type="button" :class="{ active: tubeTab === 'list' }" @click="tubeTab = 'list'"><i class="pi pi-list" /> Tüpler <span class="count">{{ filtered.length }}</span></button>
         <button type="button" :class="{ active: showForms }" @click="tubeTab = 'forms'"><i class="pi pi-file-check" /> Kontrol Formları</button>
+        <button type="button" :class="{ active: showMatching }" @click="tubeTab = 'matching'"><i class="pi pi-link" /> Eşleştirme bekliyor <span class="count" :class="{ warn: matchingCount }">{{ matchingCount }}</span></button>
       </div>
-      <ExpertBulkReportList v-if="showForms" :context="context" :refresh-key="formsKey" @upload="openBulk(null)" @changed="loadEquipment" />
+      <ExpertBulkReportList v-if="showForms" :context="context" :refresh-key="formsKey" @upload="openBulk(null)" @changed="onTubesChanged" @matching="tubeTab = 'matching'" />
+      <ExpertTubeMatching v-else-if="showMatching" :context="context" :refresh-key="formsKey" @changed="loadEquipment" @count="matchingCount = $event" />
 
       <section v-else class="card table-card">
         <div v-if="loading" class="state">Ekipmanlar yükleniyor...</div>
@@ -99,9 +103,10 @@
                   </div>
                 </td>
                 <td>
+                  <!-- Firma (işyeri adı varsa "Ad · Firma"); altında varsa birim, alan ve bulunduğu yer -->
                   <div class="name-cell">
-                    <span>{{ item.workplace?.company_name || 'Lokasyon geneli' }}</span>
-                    <small v-if="item.place">{{ item.place }}</small>
+                    <span>{{ item.workplace ? workplaceLabel(item.workplace.id, item.workplace.company_name) : 'Lokasyon geneli' }}</span>
+                    <small v-if="unitOfEquipment(item.id) || areaOf(item) || item.place">{{ [unitOfEquipment(item.id)?.name, areaOf(item)?.label, item.place].filter(Boolean).join(' · ') }}</small>
                   </div>
                 </td>
                 <td>{{ formatDate(item.last_control_date) }}</td>
@@ -132,14 +137,15 @@
     </template>
 
     <ExpertEquipmentPreviewModal v-if="previewItem" :summary="previewItem" @close="previewItem = null" @upload="fromPreview('report', $event)" @pending="fromPreview('pending', $event)" />
-    <ExpertEquipmentFromReportModal v-if="fromReportOpen" :context="context" :catalog="equipmentCategories" :workplaces="locationWorkplaces" @close="fromReportOpen = false" @continue="onFromReportContinue" @bulk="onFromReportBulk" />
+    <ExpertEquipmentFromReportModal v-if="fromReportOpen" :context="context" :catalog="equipmentCategories" :workplaces="locationWorkplaces" :equipment="equipment" @close="fromReportOpen = false" @continue="onFromReportContinue" @bulk="onFromReportBulk" />
     <ExpertBulkReportModal v-if="bulkOpen" :context="context" :preload="bulkPreload" @close="closeBulk" @saved="onBulkSaved" />
+    <ExpertBulkAnalysisModal v-if="bulkAnalysisOpen" :context="context" :catalog="equipmentCategories" :workplaces="locationWorkplaces" :equipment="equipment" @close="bulkAnalysisOpen = false" @changed="loadEquipment" />
     <ExpertEquipmentReportModal v-if="reportItem" :equipment="reportItem" :preload="reportPreload" :draft="reportDraft" @close="onReportClosed" @saved="onInspectionSaved" />
     <ExpertEquipmentPendingModal v-if="pendingItem" :equipment="pendingItem" @close="pendingItem = null" @saved="onInspectionSaved" />
     <ExpertEquipmentDeactivateModal v-if="deactivateIds.length" :ids="deactivateIds" :title="deactivateTitle" @close="deactivateIds = []" @saved="onDeactivated" />
 
     <!-- Yeni ekipman -->
-    <div v-if="createOpen" class="modal-backdrop" @click.self="closeCreate">
+    <div v-if="createOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Yeni Ekipman</h2><p>{{ context?.location_name }}</p></div>
@@ -170,9 +176,23 @@
           <label>Model <small>(Opsiyonel)</small><input v-model="form.model" type="text" /></label>
           <label>Seri no<input v-model="form.serial_no" type="text" /></label>
           <label>Ait olduğu yer <span>*</span>
-            <select v-model="form.location_business_entity_id">
+            <select v-model="form.location_business_entity_id" @change="onFormWorkplace">
               <option :value="null">Lokasyon geneli</option>
-              <option v-for="workplace in locationWorkplaces" :key="workplace.id" :value="workplace.id">{{ workplace.company_name }}</option>
+              <option v-for="workplace in locationWorkplaces" :key="workplace.id" :value="workplace.id">{{ workplaceLabel(workplace.id, workplace.company_name) }}</option>
+            </select>
+          </label>
+          <!-- Seçili işyerinin operasyonel birimi varsa (ör. Müşteri Hizmetleri) -->
+          <label v-if="formUnits.length">Birim <small>(Opsiyonel)</small>
+            <select v-model="form.pk_operational_unit_id">
+              <option :value="null">Birim yok</option>
+              <option v-for="unit in formUnits" :key="unit.id" :value="unit.id">{{ unit.name }}</option>
+            </select>
+          </label>
+          <!-- Lokasyonda alan tanımlıysa: ekipmanın bulunduğu fiziksel yer (bina, kat, depo…) -->
+          <label v-if="selectableAreas.length">Alan <small>(Opsiyonel)</small>
+            <select v-model="form.pk_area_id">
+              <option :value="null">Alan yok</option>
+              <option v-for="area in selectableAreas" :key="area.id" :value="area.id">{{ areaText(area) }}</option>
             </select>
           </label>
           <label>Bulunduğu yer <small>(Opsiyonel)</small><input v-model="form.place" type="text" placeholder="Örn. B Blok depo" /></label>
@@ -247,13 +267,22 @@ const visibleTypes = computed(() => {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'tr'))
 })
 const trLower = (value?: string | null) => (value || '').toLocaleLowerCase('tr-TR')
+// Raflar ekipman no'suna göre (01, 02 … 10 … 39; no'suz olanlar sonda); diğer türler eklenme sırasında kalır.
+const RACK_SLUG = 'depolama-rafi'
+const rackTypeId = computed(() => equipmentCategories.value.flatMap(category => category.types).find(type => type.slug === RACK_SLUG)?.id ?? null)
+const sortRacks = (items: any[]) => {
+  const racks = items.filter(item => item.type?.id === rackTypeId.value)
+    .sort((a, b) => Number(!a.code) - Number(!b.code) || String(a.code || '').localeCompare(String(b.code || ''), 'tr', { numeric: true }) || a.id - b.id)
+  let next = 0
+  return racks.length ? items.map(item => item.type?.id === rackTypeId.value ? racks[next++] : item) : items
+}
 const filtered = computed(() => {
   const q = trLower(search.value.trim())
-  return inCategory.value.filter(item =>
+  return sortRacks(inCategory.value.filter(item =>
     (!typeFilter.value || item.type?.id === typeFilter.value) &&
     (!statusFilter.value || (statusFilter.value === 'overdue' ? item.days_left !== null && item.days_left < 0 : item.status === statusFilter.value)) &&
     (!q || [item.code, item.name, item.brand, item.model, item.serial_no, item.place, item.type?.name, item.variant].some(v => trLower(v).includes(q)))
-  )
+  ))
 })
 
 const selectCategory = (slug: string) => { categoryFilter.value = slug; typeFilter.value = null }
@@ -321,18 +350,32 @@ const fromPreview = (action: 'report' | 'pending', equipment: any) => {
   if (action === 'report') reportItem.value = equipment
   else pendingItem.value = equipment
 }
-const onInspectionSaved = (equipment?: any) => {
+const onInspectionSaved = async (equipment?: any) => {
   // Rapordan yeni ekipman kaydedildiyse o ekipmanın kategorisi seçilir.
   if (reportDraft.value && equipment?.category?.slug) categoryFilter.value = equipment.category.slug
-  reportItem.value = null; reportPreload.value = null; reportDraft.value = null; pendingItem.value = null
+  // Rapordan yeni ekipmanda alan seçildiyse ekipmana yazılır (ekipman raporla birlikte oluştu).
+  if (reportDraft.value && equipment?.id && (reportAreaId.value || reportUnitId.value)) {
+    try {
+      if (reportUnitId.value) await setEquipmentUnit(equipment.id, reportUnitId.value)
+      if (reportAreaId.value) await setEquipmentArea(equipment.id, reportAreaId.value)
+    } catch (e: any) { alert(errorMessage(e, 'Ekipman kaydedildi ama birimi / alanı yazılamadı; ekipman sayfasından seçebilirsiniz.')) }
+  }
+  reportItem.value = null; reportPreload.value = null; reportDraft.value = null; pendingItem.value = null; reportAreaId.value = null; reportUnitId.value = null
   loadEquipment()
 }
 
 // --- Rapordan ekipman tanımlama: rapor okunur, eşleşen ekipmana ya da yeni ekipmana aynı analizle rapor penceresi açılır ---
 const fromReportOpen = ref(false)
+// Toplu rapor yükleme penceresi (küçültülünce sayfanın altında ilerleme olarak kalır).
+const bulkAnalysisOpen = ref(false)
 const reportPreload = ref<{ analysisId: string; file: File } | null>(null)
 const reportDraft = ref<Record<string, any> | null>(null)
-const onFromReportContinue = async (payload: { equipmentId?: number; draft?: Record<string, any>; type?: any; analysisId: string; file: File }) => {
+// Rapordan yeni ekipmanda seçilen alan (lokasyonda alan varsa); kayıttan sonra ekipmana yazılır.
+const reportAreaId = ref<number | null>(null)
+const reportUnitId = ref<number | null>(null)
+const onFromReportContinue = async (payload: { equipmentId?: number; draft?: Record<string, any>; type?: any; analysisId: string; file: File; areaId?: number | null; unitId?: number | null }) => {
+  reportAreaId.value = payload.draft ? payload.areaId ?? null : null
+  reportUnitId.value = payload.draft ? payload.unitId ?? null : null
   try {
     // Yeni ekipman henüz oluşturulmadı: rapor penceresi taslakla açılır, "Kaydet"te ekipman + rapor birlikte kaydedilir.
     const equipment = payload.draft
@@ -346,7 +389,7 @@ const onFromReportContinue = async (payload: { equipmentId?: number; draft?: Rec
     alert(errorMessage(e, 'Ekipman açılamadı.'))
   }
 }
-const onReportClosed = () => { reportItem.value = null; reportPreload.value = null; reportDraft.value = null }
+const onReportClosed = () => { reportItem.value = null; reportPreload.value = null; reportDraft.value = null; reportAreaId.value = null; reportUnitId.value = null }
 
 // --- Tüp kontrol formları: tüp türü seçiliyken "Tüpler | Kontrol Formları" sekmeleri. Form "Tüp Kontrol Formu Yükle" ile ya da
 // "Rapordan Ekipman Tanımla" toplu tüp raporunu tanıyınca (okunmuş olarak) aynı pencereden kaydedilir. ---
@@ -359,23 +402,34 @@ const tubeType = computed(() => {
   return null
 })
 const isTubeType = computed(() => !!tubeType.value && typeFilter.value === tubeType.value.id)
-const tubeTab = ref<'list' | 'forms'>(queryText('tab') === 'forms' ? 'forms' : 'list')
+const tubeTab = ref<'list' | 'forms' | 'matching'>(queryText('tab') === 'forms' ? 'forms' : queryText('tab') === 'matching' ? 'matching' : 'list')
 const showForms = computed(() => isTubeType.value && tubeTab.value === 'forms')
+const showMatching = computed(() => isTubeType.value && tubeTab.value === 'matching')
+// Envanter ile son kontrol formu arasındaki fark (sekmedeki sayı): envanterden çıkarılacaklar + yeni eklenecekler.
+const matchingCount = ref(0)
+const loadMatchingCount = async () => {
+  if (!context.value || !tubeType.value) { matchingCount.value = 0; return }
+  try {
+    const board = await get<{ left: any[]; right: any[] }>('/pk-bulk-report-matches/board', { location_id: context.value.location_id })
+    matchingCount.value = (board.left?.length || 0) + (board.right?.length || 0)
+  } catch { matchingCount.value = 0 }
+}
+const onTubesChanged = async () => { await loadEquipment(); loadMatchingCount() }
 const formsKey = ref(0)
 const bulkOpen = ref(false)
 const bulkPreload = ref<{ analysis: any; file: File } | null>(null)
 const openBulk = (preload: { analysis: any; file: File } | null) => { bulkPreload.value = preload; bulkOpen.value = true }
 const closeBulk = () => { bulkOpen.value = false; bulkPreload.value = null }
 const onFromReportBulk = (payload: { analysis: any; file: File }) => { fromReportOpen.value = false; openBulk(payload) }
-// Kayıttan sonra tüp listesi yenilenir ve Kontrol Formları sekmesi açılır.
+// Kayıttan sonra tüp listesi yenilenir; eşleştirme bekleyen varsa o sekme, yoksa Kontrol Formları açılır.
 const onBulkSaved = async () => {
   closeBulk()
-  await loadEquipment()
+  await Promise.all([loadEquipment(), loadMatchingCount()])
   if (tubeType.value) {
     categoryFilter.value = tubeType.value.category
     typeFilter.value = tubeType.value.id
   }
-  tubeTab.value = 'forms'
+  tubeTab.value = matchingCount.value ? 'matching' : 'forms'
   formsKey.value++
 }
 
@@ -388,10 +442,16 @@ const loadEquipment = async () => {
   loading.value = true
   error.value = ''
   try {
-    equipment.value = await get('/pk-equipment', {
-      location_id: context.value.location_id,
-      ...(context.value.type === 'workplace' ? { workplace_id: context.value.workplace_id } : {})
-    })
+    const [list] = await Promise.all([
+      get('/pk-equipment', {
+        location_id: context.value.location_id,
+        ...(context.value.type === 'workplace' ? { workplace_id: context.value.workplace_id } : {})
+      }),
+      loadAreas(context.value.location_id, true),
+      loadUnits(context.value.location_id, true),
+      loadNames()
+    ])
+    equipment.value = list
   } catch (e: any) {
     error.value = errorMessage(e, 'Ekipmanlar alınamadı.')
   } finally { loading.value = false }
@@ -403,9 +463,23 @@ const saving = ref(false)
 const formError = ref('')
 const emptyForm = () => ({
   category: '', equipment_type_id: null as number | null, variant: '', code: '', name: '', brand: '', model: '', serial_no: '', place: '',
-  location_business_entity_id: null as number | null
+  location_business_entity_id: null as number | null, pk_area_id: null as number | null, pk_operational_unit_id: null as number | null
 })
 const form = reactive(emptyForm())
+
+// --- İşyeri adı, operasyonel birim ve alan (isteğe bağlı): tanımlı değilse hiçbiri görünmez, her şey bugünkü gibi. Ekipman
+// firmaya (işyerine) aittir; birimi o işyerinin birimlerinden, alanı (fiziksel yer) lokasyonun alanlarından seçilir. ---
+const { load: loadNames, workplaceLabel } = useWorkplaceNames()
+const { options: areaOptions, assignments: areaAssignments, byId: areaById, load: loadAreas, setEquipmentArea } = useLocationAreas()
+const { load: loadUnits, unitsOf, unitOfEquipment, setEquipmentUnit } = useOperationalUnits()
+const areaOf = (item: any) => {
+  const id = areaAssignments.value.equipment[String(item.id)]
+  return id ? areaById.value.get(id) || null : null
+}
+const selectableAreas = computed(() => areaOptions.value.filter(area => area.active))
+const formUnits = computed(() => unitsOf(form.location_business_entity_id))
+// Firma değişince başka işyerinin birimi seçili kalmaz.
+const onFormWorkplace = () => { if (!formUnits.value.some(unit => unit.id === form.pk_operational_unit_id)) form.pk_operational_unit_id = null }
 
 const formTypes = computed(() => equipmentCategories.value.find(c => c.slug === form.category)?.types || [])
 const selectedType = computed(() => formTypes.value.find(t => t.id === form.equipment_type_id) || null)
@@ -424,14 +498,15 @@ const openCreate = () => {
 }
 const closeCreate = () => { if (!saving.value) createOpen.value = false }
 const onFormCategory = () => { form.equipment_type_id = null }
-const onFormType = () => { form.location_business_entity_id = defaultWorkplace(); form.variant = '' }
+// Tür değişince varsayılan yer (birim seçiliyse firması korunur).
+const onFormType = () => { if (!form.pk_operational_unit_id) { form.location_business_entity_id = defaultWorkplace(); onFormWorkplace() } form.variant = '' }
 
 const saveEquipment = async () => {
   if (!context.value || !form.equipment_type_id) return
   saving.value = true
   formError.value = ''
   try {
-    await post('/pk-equipment', {
+    const created = await post('/pk-equipment', {
       location_id: context.value.location_id,
       location_business_entity_id: form.location_business_entity_id,
       equipment_type_id: form.equipment_type_id,
@@ -443,6 +518,9 @@ const saveEquipment = async () => {
       serial_no: form.serial_no.trim() || null,
       place: form.place.trim() || null
     })
+    // Birim ve alan seçildiyse ekipmana yazılır (ayrı istekler; ekipman zaten oluştu).
+    if (form.pk_operational_unit_id && created?.id) await setEquipmentUnit(created.id, form.pk_operational_unit_id)
+    if (form.pk_area_id && created?.id) await setEquipmentArea(created.id, form.pk_area_id)
     createOpen.value = false
     categoryFilter.value = form.category
     typeFilter.value = null
@@ -467,7 +545,7 @@ watch([categoryFilter, typeFilter, tubeTab, activeFilter, statusFilter, search],
   const query: Record<string, string> = {}
   if (categoryFilter.value) query.category = categoryFilter.value
   if (typeFilter.value) query.type = String(typeFilter.value)
-  if (tubeTab.value === 'forms') query.tab = 'forms'
+  if (tubeTab.value !== 'list') query.tab = tubeTab.value
   if (activeFilter.value !== 'active') query.active = activeFilter.value
   if (statusFilter.value) query.status = statusFilter.value
   if (search.value.trim()) query.q = search.value.trim()
@@ -477,7 +555,10 @@ watch([categoryFilter, typeFilter, tubeTab, activeFilter, statusFilter, search],
 watch(() => context.value && `${context.value.location_id}-${context.value.workplace_id ?? ''}`, () => {
   typeFilter.value = null
   loadEquipment()
+  loadMatchingCount()
 })
+// Tüp türü seçilince (katalog yüklenince de) sekmedeki eşleştirme sayısı.
+watch(isTubeType, value => { if (value) loadMatchingCount() })
 
 onMounted(async () => {
   loadWorkplaces()
@@ -495,6 +576,7 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}h3{margin:22px 0 10px;colo
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .head-actions{display:flex;flex-wrap:wrap;gap:10px}
 .ai-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:#6d28d9;color:#fff;font-size:13px;font-weight:800;cursor:pointer}.ai-button:hover{background:#5b21b6}.ai-button:disabled{opacity:.55;cursor:not-allowed}
+.ai-button.outline{border:1.5px solid #7c3aed;background:transparent;color:#7c3aed}.ai-button.outline:hover{background:var(--admin-hover)}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px}
 .empty-state{display:flex;flex-direction:column;align-items:center;gap:7px;padding:70px 20px;text-align:center;color:var(--admin-muted)}.empty-state i{font-size:28px}.empty-state strong{color:var(--admin-heading)}
@@ -522,6 +604,7 @@ tbody tr{cursor:pointer}tbody tr:hover{background:var(--admin-hover)}tbody tr.se
 .sub-tabs{display:flex;gap:4px;margin-bottom:10px}
 .sub-tabs button{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .sub-tabs button:hover{color:var(--admin-heading)}.sub-tabs button.active{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.sub-tabs .count.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .bulk-spacer{flex:1}
 .secondary-button.small{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;background:var(--admin-card)}.secondary-button.small:disabled{opacity:.6}
 tbody tr.passive td:not(.check-col):not(.actions-col){opacity:.6}

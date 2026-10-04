@@ -28,6 +28,13 @@
           <select v-model="kind" :disabled="running">
             <option value="equipment">Ekipman raporu — tür, etiket ve teknik özellikler katalogla</option>
             <option value="installation">Tesisat raporu</option>
+            <option value="electrical">Elektrik iç tesisatı raporu — elektriğin kendi talimatıyla</option>
+            <option value="grounding">Topraklama tesisatı raporu — topraklamanın kendi talimatıyla</option>
+            <option value="detection">Yangın algılama raporu — algılamanın kendi talimatıyla</option>
+            <option value="ventilation">Havalandırma ve klima raporu — havalandırmanın kendi talimatıyla</option>
+            <option value="lightning">Paratoner (yıldırımdan korunma) raporu — paratonerin kendi talimatıyla</option>
+            <option value="battery">Akümülatör / UPS raporu — akümülatörün kendi talimatıyla</option>
+            <option value="transformer">Trafo merkezi raporu — trafonun kendi talimatıyla</option>
           </select>
         </label>
         <button class="primary-button" type="button" :disabled="running || (!file && !legacyId)" @click="runAnalysis">
@@ -52,7 +59,7 @@
             <tbody>
               <tr v-for="item in fixtures" :key="item.fixture_id" :class="{ selected: selected?.fixture_id === item.fixture_id }" @click="openFixture(item.fixture_id)">
                 <td class="file-cell" :title="item.original_file_name">{{ item.original_file_name }}<small class="origin">{{ [fixtureOrigin(item), item.input === 'image' && 'görüntüden okundu', item.input === 'ocr' && 'OCR ile okundu', item.model].filter(Boolean).join(' · ') }}</small></td>
-                <td>{{ item.report_category || '—' }}</td>
+                <td>{{ item.context?.mode === 'electrical' ? ({ topraklama: 'topraklama', 'yangin-algilama': 'yangin_algilama', 'havalandirma-klima': 'havalandirma_klima', paratoner: 'paratoner', akumulator: 'akumulator', trafo: 'trafo' } as Record<string, string>)[item.context?.type] || 'elektrik_ic_tesisati' : item.report_category || '—' }}</td>
                 <td><span class="status-badge" :class="statusKey(item.overall_status)">{{ statusLabel(item.overall_status) }}</span></td>
                 <td>{{ item.system_count }}</td>
                 <td class="equipment-cell">
@@ -88,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'expert', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-super-admin'] })
 
 interface EquipmentGroup { system_name: string; equipment_name: string; total: number; uygun: number; uygun_degil: number; unknown: number }
 interface FixtureSummary { fixture_id: string; original_file_name: string; report_category?: string | null; overall_status?: string | null; system_count?: number; finding_count?: number; equipment_summary?: EquipmentGroup[] | null; duration_s?: number | null; created_at?: string; context?: { mode?: string } | null; provider?: string | null; model?: string | null; input?: string }
@@ -106,7 +113,10 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
 const legacyId = ref('')
 // Ekipman raporu: yapay zekaya tüm katalog verilir (tür, etiket, teknik özellikler); rapor pencerelerinde test verisi olarak kullanılır.
-const kind = ref<'equipment' | 'installation'>('equipment')
+// Elektrik iç tesisatı / topraklama tesisatı / yangın algılama raporu: tesisatın kendi talimatıyla okunur; o tesisatın Kontrol Ekle
+// penceresinde kullanılır.
+const kind = ref<'equipment' | 'installation' | 'electrical' | 'grounding' | 'detection' | 'ventilation' | 'lightning' | 'battery' | 'transformer'>('equipment')
+const FAMILY_TYPES: Record<string, string> = { electrical: 'elektrik-ic-tesisati', grounding: 'topraklama', detection: 'yangin-algilama', ventilation: 'havalandirma-klima', lightning: 'paratoner', battery: 'akumulator', transformer: 'trafo' }
 const running = ref(false)
 const runError = ref('')
 const elapsed = ref(0)
@@ -157,8 +167,11 @@ const runAnalysis = async () => {
   if (file.value) form.append('file', file.value)
   else form.append('legacy_fixture_id', legacyId.value)
   form.append('kind', kind.value)
+  // Elektrik ailesi: tesisat türü (talimat bundan).
+  const family = !!FAMILY_TYPES[kind.value]
+  if (family) form.append('type', FAMILY_TYPES[kind.value])
   try {
-    const fixture = await postForm('/pk-report-analyses', form)
+    const fixture = await postForm(family ? '/pk-report-analyses/electrical' : '/pk-report-analyses', form)
     selected.value = fixture
     file.value = null
     legacyId.value = ''

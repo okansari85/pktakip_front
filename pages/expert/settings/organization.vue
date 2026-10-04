@@ -31,7 +31,7 @@
       </div>
     </section>
 
-    <div v-if="formOpen" class="modal-backdrop" @click.self="closeForm">
+    <div v-if="formOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>{{ editing ? 'Organizasyonu Düzenle' : 'Organizasyon Ekle' }}</h2><p v-if="editing">"{{ editing.name }}" organizasyonunun adını değiştirin.</p><p v-else>{{ parent ? `${parent.name} altına` : 'En üste' }} yeni organizasyon ekleyin.</p></div>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 // Ayarlar → Organizasyon (kurumsal hesap): müşteri menüsü yok, firmanın kendisi hesabın tek müşterisi; organizasyon ağacı
 // tam ekran. Müşteriler sayfasındaki organizasyon çekmecesiyle aynı uçlar ve ağaç bileşeni.
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-settings-role'] })
 
 interface Customer { id: number; name: string }
 interface OrganizationNode { id: number | string; name: string; children?: OrganizationNode[] }

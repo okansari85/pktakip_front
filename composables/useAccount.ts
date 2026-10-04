@@ -40,6 +40,11 @@ export const useAccount = () => {
   const edition = computed(() => EDITIONS[account.value?.type || ''] || null)
   // OSGB / kurumsal hesapta rol adı; bireysel uzmanda "Uzman".
   const roleLabel = computed(() => multiUser.value ? ACCOUNT_ROLE_LABELS[account.value?.role || ''] || 'Uzman' : 'Uzman')
+  // Ayarlar'ın ilk sayfası: bireysel uzman ve OSGB yöneticisinde Müşteriler, kurumsal yöneticide Organizasyon, operasyon
+  // yöneticisinde Lokasyonlar, uzmanda Katalog talepleri (uzman yapı sayfalarını görmez).
+  const settingsHome = computed(() => !multiUser.value ? '/expert/settings/customers'
+    : isManager.value ? (corporate.value ? '/expert/settings/organization' : '/expert/settings/customers')
+    : isOperation.value ? '/expert/settings/locations' : '/expert/settings/catalog-requests')
 
-  return { account, multiUser, corporate, isManager, isOperation, edition, roleLabel, load }
+  return { account, multiUser, corporate, isManager, isOperation, edition, roleLabel, settingsHome, load }
 }

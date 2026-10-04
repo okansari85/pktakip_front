@@ -6,7 +6,6 @@
         <h1>Genel Bakış</h1>
         <p>{{ scopeLabel }}</p>
       </div>
-      <ExpertDashboardFilters />
     </div>
 
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, takvim, tesisat ve formlar -->
@@ -28,9 +27,10 @@
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
-        <div class="kpis" :class="team ? 'three' : 'two'">
+        <div class="kpis" :class="team ? 'four' : 'three'">
           <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ cityCount }} ilde<template v-if="!corporate"> · {{ scopeCounts.customers }} müşteri</template></small></div>
           <div class="kpi"><span>Takip edilen ekipman</span><strong>{{ data.totals.equipment }}</strong><small>{{ scopeCounts.workplaces }} işyeri</small></div>
+          <div class="kpi"><span>Tesisat</span><strong>{{ data.installations.length }}</strong><small>{{ installationKpiText }}</small></div>
           <!-- OSGB / kurumsal: yönetici ve operasyon yöneticisi -->
           <div v-if="team" class="kpi" :class="{ warn: team.counts.unassigned }"><span>Uzman</span><strong>{{ team.counts.experts }}</strong><small>{{ team.counts.unassigned ? `${team.counts.unassigned} firmanın uzmanı yok` : 'bütün firmaların uzmanı var' }}</small></div>
         </div>
@@ -92,6 +92,23 @@
             <strong class="location-percent" :class="levelOf(row.score.percent)">%{{ percentText(row.score.percent) }}</strong>
             <small class="location-detail">{{ row.score.ok }} / {{ row.score.total }} tamam<template v-if="row.score.overdue"> · {{ row.score.overdue }} süresi geçmiş</template><template v-if="row.score.nonconforming"> · {{ row.score.nonconforming }} uygun değil</template></small>
           </div>
+        </section>
+        <!-- Ekipman türleri: Durum Raporu'ndaki tablo (yalnızca tablo); kapsam sayfayla aynı (filtre + seçili il) -->
+        <section class="card list-card">
+          <header><div><h3>Ekipman türleri</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Tür başına durum ve kontrol zamanı</small></div></header>
+          <p v-if="typesLoading && !typeRows.length" class="muted pad"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p v-else-if="typesError" class="muted pad error-text">{{ typesError }}</p>
+          <p v-else-if="!typeRows.length" class="muted pad">Ekipman yok.</p>
+          <ExpertTypeStatusTable v-else :types="typeRows" />
+        </section>
+        <!-- Tesisat özeti: kapsamdaki her tesisat kaydı (filtre + seçili il); en sorunlu üstte -->
+        <section class="card list-card">
+          <header>
+            <div><h3>Tesisat özeti</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Her tesisat kaydının son durumu; en sorunlu üstte</small></div>
+            <NuxtLink class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink>
+          </header>
+          <p v-if="!data.installations.length" class="muted pad">Tesisat yok.</p>
+          <ExpertInstallationSummaryTable v-else :installations="data.installations" />
         </section>
       </template>
 
@@ -173,7 +190,8 @@
           <p v-if="!data.installations.length" class="muted pad">Tesisat yok.</p>
           <div v-for="item in data.installations" :key="item.id" class="line">
             <span class="dot" :class="item.status" />
-            <span class="line-main"><strong>{{ item.name }}</strong><small>{{ locationLabel(item.location?.id, item.location_name) }}</small></span>
+            <!-- Başlık tesisatın türü (ör. Yangın Algılama ve Uyarı Sistemleri); kaydın adı (bina) türden farklıysa altta -->
+            <span class="line-main"><strong>{{ item.type?.name || item.name }}</strong><small>{{ [item.type?.name && item.name !== item.type.name ? item.name : null, locationLabel(item.location?.id, item.location_name)].filter(Boolean).join(' · ') }}</small></span>
             <span class="line-meta">{{ item.nonconforming_systems }}/{{ item.systems_count }} sistem uygun değil</span>
             <span class="days" :class="daysKey(item.days_left)">{{ daysText(item.days_left) }}</span>
             <span class="status-badge" :class="item.status">{{ INSTALLATION_STATUS[item.status] || item.status }}</span>
@@ -198,7 +216,8 @@
 <script setup lang="ts">
 // Genel Bakış: uzmanın tüm lokasyonlarındaki (ya da filtrelenen müşteri / lokasyon / işyerindeki) ekipman ve tesisat
 // özeti; hangi lokasyonun sorunlu olduğu tek bakışta. Lokasyon çubuğuna tıklayınca o lokasyona iner.
-definePageMeta({ layout: 'expert', middleware: 'expert' })
+// Kapsam üstteki lokasyon / firma menüsünden; bu sayfada menüde "Tüm lokasyonlar" da seçilebilir (dashboardScope).
+definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok' }
 
@@ -262,7 +281,16 @@ const mapCities = computed(() => {
 })
 const selectedCityName = computed(() => mapCities.value.find(city => city.code === selectedCity.value)?.name || '')
 const summaryLocations = computed(() => data.value?.locations || [])
-const cityCount = computed(() => new Set((data.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size)
+// Tesisat kartı: kaç türde, kaçı uygun değil, kaçının süresi geçmiş.
+const installationKpiText = computed(() => {
+  const items: any[] = data.value?.installations || []
+  if (!items.length) return 'tesisat yok'
+  const types = new Set(items.map(item => item.type?.id ?? item.type?.name ?? item.name)).size
+  const nonconforming = items.filter(item => item.status === 'uygun_degil').length
+  const overdue = items.filter(item => item.days_left !== null && item.days_left !== undefined && item.days_left < 0).length
+  return [`${types} türde`, nonconforming && `${nonconforming} uygun değil`, overdue && `${overdue} süresi geçmiş`].filter(Boolean).join(' · ')
+})
+const cityCount = computed(() =>new Set((data.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size)
 // Seçili ilin lokasyonları: sayfanın kapsamı (takvim listesi de dahil) bunlar.
 const cityLocationIds = computed(() => selectedCity.value
   ? (fullData.value?.locations || []).filter((location: any) => location.city_id === selectedCity.value).map((location: any) => location.location_id)
@@ -281,6 +309,32 @@ const scopeCounts = computed(() => {
   const inScope = groups.value.filter(group => ids.has(group.location_id))
   return { customers: new Set(inScope.map(group => group.customer_name || '')).size, workplaces: inScope.reduce((sum, group) => sum + group.items.length, 0) }
 })
+
+// Lokasyonlar sekmesinin altındaki ekipman türleri tablosu: Durum Raporu'nun verisi (pk-dashboard/report), sayfanın kapsamıyla
+// (filtre + seçili il). Yalnızca bu sekme açıkken ve kapsam değişince alınır.
+const typeRows = ref<any[]>([])
+const typesLoading = ref(false)
+const typesError = ref('')
+let typesKey = ''
+let typesRequest = 0
+const loadTypes = async () => {
+  if (tab.value !== 'locations' || !groups.value.length) return
+  const key = JSON.stringify(viewQuery.value)
+  if (key === typesKey) return
+  typesKey = key
+  const request = ++typesRequest
+  typesLoading.value = true
+  typesError.value = ''
+  try {
+    const report = await get('/pk-dashboard/report', viewQuery.value)
+    if (request === typesRequest) typeRows.value = report.types || []
+  } catch (e: any) {
+    if (request === typesRequest) { typesKey = ''; typesError.value = errorMessage(e, 'Ekipman türleri alınamadı.') }
+  } finally {
+    if (request === typesRequest) typesLoading.value = false
+  }
+}
+watch([tab, viewQuery], loadTypes, { deep: true })
 
 // Genel durum: kategori (yangın hariç) ve yangın ekipmanı türü başına "yüzde kaçı uygun" ilerleme çubuğu; altında geri kalanlar.
 const progressBoxes = computed(() => [
@@ -318,6 +372,7 @@ watch(query, loadData, { deep: true })
 onMounted(async () => {
   await load()
   loadData()
+  loadTypes()
 })
 
 // --- OSGB / kurumsal hesabın yöneticisi ve operasyon yöneticisi: Uzmanlar sekmesi, Uzman kartı, OSGB'de müşteri özeti.
@@ -369,7 +424,8 @@ onMounted(async () => {
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
 /* Lokasyonlar sekmesi: başta iki KPI kartı, lokasyon özeti (alt) */
-.kpis.two{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpis.two{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.three{grid-template-columns:repeat(3,minmax(0,1fr))}.kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.kpis.four{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.kpis.four{grid-template-columns:1fr}}
 @media(max-width:900px){.kpis.three{grid-template-columns:1fr}}
 .location-row{display:grid;grid-template-columns:minmax(220px,1.3fr) minmax(120px,2fr) 64px minmax(180px,1.2fr);align-items:center;gap:14px;padding:10px 8px;border-top:1px solid var(--admin-row-border);border-radius:8px;cursor:pointer}
 .location-row:hover{background:var(--admin-hover)}.location-row.static{cursor:default}.location-row.static:hover{background:none}

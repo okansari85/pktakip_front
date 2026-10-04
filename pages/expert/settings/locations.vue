@@ -4,9 +4,9 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
         <h1>Lokasyonlar</h1>
-        <p>{{ corporate ? 'Organizasyon' : 'Müşteri ve organizasyon' }} seçerek lokasyonları görüntüleyin ve yeni lokasyon ekleyin.</p>
+        <p>{{ corporate ? 'Organizasyon' : 'Müşteri ve organizasyon' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
       </div>
-      <button class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
+      <button v-if="canEditStructure" class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
         <i class="pi pi-plus" />
         <span>Lokasyon Ekle</span>
       </button>
@@ -72,7 +72,11 @@
               <td>{{ [location.city, location.district].filter(Boolean).join(' / ') || '—' }}</td>
               <td class="address-cell">{{ location.address || '—' }}</td>
               <td>{{ formatDate(location.created_at) }}</td>
-              <td class="actions"><button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> Firmalar</button></td>
+              <td class="actions">
+                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> Firmalar</button>
+                <!-- Alanlar (isteğe bağlı): operasyonel alanlar firmasıyla, ortak alanlar firmasız -->
+                <button class="row-button" type="button" @click="areaLocation = location"><i class="pi pi-th-large" /> Alanlar</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -90,7 +94,7 @@
           <button class="close-button" type="button" @click="closeCompanies"><i class="pi pi-times" /></button>
         </div>
 
-        <div class="drawer-toolbar">
+        <div v-if="canEditStructure" class="drawer-toolbar">
           <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> Firma Ekle</button>
         </div>
 
@@ -100,8 +104,22 @@
         <ul v-else class="company-list">
           <li v-for="item in locationCompanies" :key="item.id" class="company-item">
             <div class="company-item-head">
-              <div class="company-name"><strong>{{ item.name }}</strong><small v-if="titleOf[item.business_entity_id]">{{ titleOf[item.business_entity_id] }}</small></div>
-              <button class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><i class="pi pi-trash" /></button>
+              <!-- İşyeri adı (isteğe bağlı): aynı firmanın lokasyondaki işyerlerini ayırt eder ("Ad · Firma") -->
+              <div class="company-name">
+                <template v-if="nameEdit?.id === item.id">
+                  <div class="name-edit">
+                    <input v-model="nameEdit.value" type="text" placeholder="İşletme adı (ör. Eskişehir Buzdolabı İşletmesi) — boşsa firma adı" @keyup.enter="saveName" />
+                    <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><i class="pi pi-check" /></button>
+                    <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><i class="pi pi-times" /></button>
+                  </div>
+                  <small v-if="nameError" class="name-error">{{ nameError }}</small>
+                </template>
+                <template v-else>
+                  <strong>{{ workplaceTitle(item.id, item.name) }}<button v-if="canEditStructure" class="inline-edit" type="button" title="İşletme adını düzenle" @click="nameEdit = { id: item.id, value: nameOf(item.id) }; nameError = ''"><i class="pi pi-pencil" /></button></strong>
+                  <small v-if="workplaceFirm(item.id, item.name) || titleOf[item.business_entity_id]">{{ [workplaceFirm(item.id, item.name), titleOf[item.business_entity_id]].filter(Boolean).join(' · ') }}</small>
+                </template>
+              </div>
+              <button v-if="canEditStructure" class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><i class="pi pi-trash" /></button>
             </div>
             <div class="company-meta">
               <span class="hazard-badge" :class="hazardClassKey(item.hazard_class)">{{ item.hazard_class }}</span>
@@ -110,10 +128,18 @@
             </div>
             <p v-if="item.activity" class="company-activity">{{ item.activity }}</p>
             <p v-if="item.experts?.length" class="company-experts"><i class="pi pi-user" /> {{ item.experts.join(', ') }}</p>
+            <!-- Operasyonel birimler (isteğe bağlı): işyerinin içinde ayrı yönetilen birimler -->
+            <div v-if="workplaceUnits(item.id).length || canEditStructure" class="company-areas">
+              <span v-for="unit in workplaceUnits(item.id)" :key="unit.id" class="area-chip">{{ unit.name }}</span>
+              <button class="link-button" type="button" @click="unitWorkplace = { id: item.id, name: workplaceLabel(item.id, item.name) }"><i class="pi pi-sitemap" /> Birimler</button>
+            </div>
           </li>
         </ul>
       </aside>
     </div>
+
+    <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="selectedCustomer?.name" @close="areaLocation = null" />
+    <ExpertWorkplaceUnitsModal v-if="unitWorkplace && companyLocation" :location="companyLocation" :workplace="unitWorkplace" @close="unitWorkplace = null" @changed="loadUnits(companyLocation.id)" />
 
     <ExpertWorkplaceForm
       v-if="companyFormOpen && companyLocation"
@@ -123,7 +149,7 @@
       @saved="onWorkplaceSaved"
     />
 
-    <div v-if="locationFormOpen" class="modal-backdrop" @click.self="closeLocationForm">
+    <div v-if="locationFormOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Lokasyon Ekle</h2><p>{{ selectedCustomer?.name }} için yeni lokasyon oluşturun.</p></div>
@@ -162,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-settings-role'] })
 
 interface Customer { id: number; name: string }
 interface OrganizationNode { id: number; name: string; children?: OrganizationNode[] }
@@ -305,6 +331,8 @@ const createLocation = async () => {
 interface LocationCompany { id: number; business_entity_id: number; name: string; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
 const companyLocation = ref<Location | null>(null)
+// Alanlar paneli açık olan lokasyon.
+const areaLocation = ref<Location | null>(null)
 const locationCompanies = ref<LocationCompany[]>([])
 const companiesLoading = ref(false)
 const companiesError = ref('')
@@ -339,10 +367,39 @@ const openCompanies = (location: Location) => {
   locationCompanies.value = []
   loadLocationCompanies()
   loadTitles()
+  loadUnits(location.id)
 }
 const closeCompanies = () => { companyLocation.value = null }
 const openCompanyForm = () => { companyFormOpen.value = true }
-const onWorkplaceSaved = async () => { companyFormOpen.value = false; await Promise.all([loadLocationCompanies(), loadTitles()]) }
+const onWorkplaceSaved = async () => {
+  companyFormOpen.value = false
+  await Promise.all([loadLocationCompanies(), loadTitles(), companyLocation.value ? loadUnits(companyLocation.value.id) : null])
+}
+
+// Operasyonel birimler (isteğe bağlı): panelde firma (işyeri) altında birim adları, "Birimler" ile ekleme / düzenleme.
+// Düzenleme: OSGB / kurumsal hesapta yönetici, bireysel uzman hesabında uzman; diğerleri görür.
+const { load: loadUnits, unitsOf } = useOperationalUnits()
+const workplaceUnits = (workplaceId: number) => unitsOf(workplaceId)
+const unitWorkplace = ref<{ id: number; name: string } | null>(null)
+
+// İşyeri adı: panelde "Ad · Firma"; kalemle düzenlenir (boş bırakılırsa ad kalkar, firma adı görünür).
+const { load: loadNames, nameOf, workplaceLabel, workplaceTitle, workplaceFirm, setName } = useWorkplaceNames()
+onMounted(() => loadNames())
+const nameEdit = ref<{ id: number; value: string } | null>(null)
+const nameSaving = ref(false)
+const nameError = ref('')
+const saveName = async () => {
+  if (!nameEdit.value) return
+  nameSaving.value = true
+  nameError.value = ''
+  try {
+    await setName(nameEdit.value.id, nameEdit.value.value.trim() || null)
+    nameEdit.value = null
+  } catch (e: any) {
+    const errors = e?.data?.errors
+    nameError.value = (errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'İşyeri adı kaydedilemedi.'
+  } finally { nameSaving.value = false }
+}
 
 const removeCompany = async (item: LocationCompany) => {
   if (!confirm(`"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
@@ -360,7 +417,8 @@ const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').
 onMounted(loadCustomers)
 
 // Kurumsal hesap: müşteri firmanın kendisi (tek müşteri); seçim kutusu yok, otomatik seçilir.
-const { corporate, load: loadAccount } = useAccount()
+const { corporate, multiUser, isManager, load: loadAccount } = useAccount()
+const canEditStructure = computed(() => !multiUser.value || isManager.value)
 onMounted(loadAccount)
 watch([corporate, customers], () => {
   if (corporate.value && !selectedCustomerId.value && customers.value[0]) {
@@ -398,7 +456,14 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
-.actions-head{text-align:right}.actions{text-align:right}
+.actions-head{text-align:right}.actions{text-align:right;white-space:nowrap}.actions .row-button + .row-button{margin-left:6px}
+.company-areas{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
+.inline-edit{margin-left:6px;padding:0;border:0;background:none;color:var(--admin-muted);font-size:11px;cursor:pointer}.inline-edit:hover{color:var(--admin-heading)}
+.name-edit{display:flex;align-items:center;gap:5px}.name-edit input{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
+.name-error{color:var(--admin-danger-text) !important}
+.area-chip{padding:2px 8px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font-size:11px;font-weight:700}
+.area-empty{color:var(--admin-muted);font-size:11px}
+.company-areas .link-button{display:inline-flex;align-items:center;gap:4px;margin-left:auto;border:0;background:none;color:var(--admin-link);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .row-button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-text);font-size:12px;font-weight:600;cursor:pointer}.row-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
 .primary-button.small{min-height:38px;padding:0 13px;font-size:12px}
 .drawer-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay)}

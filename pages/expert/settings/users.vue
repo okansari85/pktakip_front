@@ -80,7 +80,7 @@
     </section>
 
     <!-- Kullanıcı ekle: davet e-postasıyla kendi şifresini belirler -->
-    <div v-if="inviteOpen" class="modal-backdrop" @click.self="closeInvite">
+    <div v-if="inviteOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Kullanıcı Ekle</h2><p>Davet e-postası gider; kullanıcı kendi şifresini belirler.</p></div>
@@ -101,7 +101,7 @@
     </div>
 
     <!-- Rol değiştir -->
-    <div v-if="roleTarget" class="modal-backdrop" @click.self="roleTarget = null">
+    <div v-if="roleTarget" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Rolü Değiştir</h2><p>{{ roleTarget.name }}</p></div>
@@ -120,7 +120,7 @@
     </div>
 
     <!-- Pasife al -->
-    <div v-if="deactivateTarget" class="modal-backdrop" @click.self="deactivateTarget = null">
+    <div v-if="deactivateTarget" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Pasife Al</h2><p>{{ deactivateTarget.name }}</p></div>
@@ -145,7 +145,7 @@
 <script setup lang="ts">
 // Ayarlar → Kullanıcılar (yalnızca OSGB / kurumsal hesabın yöneticisi): davet, rol, pasif / aktif. Süper admin hesaptayken
 // satırdan o kullanıcı olarak girebilir (her rolün panelini görmek için).
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-settings-role'] })
 
 interface AccountUser { id: number; name: string; email: string; role: string; role_label: string; status: 'aktif' | 'davet' | 'pasif'; workplaces_count: number; created_at?: string | null }
 

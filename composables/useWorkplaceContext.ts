@@ -13,6 +13,7 @@ export interface Workplace { id: number; company_name: string; customer_name?: s
 export interface WorkplaceGroup { location_id: number; location_name: string; customer_name?: string | null; organization_name?: string | null; items: Workplace[] }
 
 const STORAGE_KEY = 'pktakip_workplace_context'
+const ALL_LOCATIONS_KEY = 'pktakip_dashboard_all_locations'
 
 // İşyerlerini lokasyona göre gruplar (müşteri, sonra lokasyon adına göre sıralı).
 export const groupWorkplaces = (workplaces: Workplace[]): WorkplaceGroup[] => {
@@ -33,7 +34,7 @@ export const useMyWorkplaces = () => {
   const loaded = useState('my-workplaces-loaded', () => false)
   const error = useState('my-workplaces-error', () => '')
   const { get, errorMessage } = useExpertApi()
-  const { context, setContext } = useWorkplaceContext()
+  const { context, setContext, setAllLocations } = useWorkplaceContext()
   const { isManager, isOperation, load: loadAccount } = useAccount()
 
   const load = async (force = false) => {
@@ -51,6 +52,9 @@ export const useMyWorkplaces = () => {
       if (current && !(current.type === 'workplace'
         ? workplaces.value.some(w => w.id === current.workplace_id)
         : workplaces.value.some(w => w.location_id === current.location_id))) setContext(null)
+      // Tek lokasyon varsa seçim gerekmez: o lokasyon seçili gelir (menüde kilitli; firma yine seçilebilir).
+      const only = groups.value.length === 1 ? groups.value[0] : null
+      if (only && context.value?.location_id !== only.location_id) selectLocation(only)
     } catch (e: any) {
       error.value = errorMessage(e, 'İşyerleri alınamadı.')
     } finally { loading.value = false }
@@ -58,11 +62,19 @@ export const useMyWorkplaces = () => {
 
   const groups = computed(() => groupWorkplaces(workplaces.value))
 
-  const selectLocation = (group: WorkplaceGroup) => setContext({ type: 'location', location_id: group.location_id, location_name: group.location_name, customer_name: group.customer_name })
-  const selectWorkplace = (group: WorkplaceGroup, item: Workplace) => setContext({
-    type: 'workplace', location_id: group.location_id, location_name: group.location_name, customer_name: group.customer_name,
-    workplace_id: item.id, company_name: item.company_name
-  })
+  // Lokasyon / işyeri seçmek Genel Bakış ve Durum Raporu'nun "Tüm lokasyonlar" görünümünü de kapatır (son seçim geçerli).
+  const selectLocation = (group: WorkplaceGroup) => {
+    setAllLocations(false)
+    setContext({ type: 'location', location_id: group.location_id, location_name: group.location_name, customer_name: group.customer_name })
+  }
+  const selectWorkplace = (group: WorkplaceGroup, item: Workplace) => {
+    setAllLocations(false)
+    setContext({
+      type: 'workplace', location_id: group.location_id, location_name: group.location_name, customer_name: group.customer_name,
+      // İşyeri adı varsa "Ad · Firma" (sayfa başlıklarında aynı firmanın işyerleri ayırt edilir).
+      workplace_id: item.id, company_name: useWorkplaceNames().workplaceLabel(item.id, item.company_name)
+    })
+  }
   const isLocationActive = (locationId: number) => context.value?.type === 'location' && context.value.location_id === locationId
   const isWorkplaceActive = (workplaceId: number) => context.value?.type === 'workplace' && context.value.workplace_id === workplaceId
 
@@ -92,8 +104,22 @@ export const useWorkplaceContext = () => {
     if (!context.value) return null
     return context.value.type === 'workplace'
       ? `${context.value.company_name} · ${context.value.location_name}`
-      : `${context.value.location_name} · Tüm lokasyon`
+      : `${context.value.location_name} · Tüm firmalar`
   })
 
-  return { context, setContext, label }
+  // Genel Bakış ve Durum Raporu: üstteki menüde "Tüm lokasyonlar" seçildi mi. Seçili lokasyon (context) değişmez; diğer
+  // sayfalar son seçilen lokasyonla açılır. Varsayılan: tüm lokasyonlar. Tarayıcıda saklanır.
+  const allLocations = useState('workplace-all-locations', () => true)
+  const allLoaded = useState('workplace-all-locations-loaded', () => false)
+  if (import.meta.client && !allLoaded.value) {
+    allLoaded.value = true
+    try { if (localStorage.getItem(ALL_LOCATIONS_KEY) === '0') allLocations.value = false } catch {}
+  }
+  const setAllLocations = (value: boolean) => {
+    allLocations.value = value
+    if (!import.meta.client) return
+    try { localStorage.setItem(ALL_LOCATIONS_KEY, value ? '1' : '0') } catch {}
+  }
+
+  return { context, setContext, label, allLocations, setAllLocations }
 }

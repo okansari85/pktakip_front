@@ -29,11 +29,11 @@
           <i class="pi pi-users" />
           <span v-if="!collapsed">Müşteriler</span>
         </NuxtLink>
-        <NuxtLink to="/expert/settings/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
+        <NuxtLink v-if="!multiUser || isManager || isOperation" to="/expert/settings/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
           <i class="pi pi-map-marker" />
           <span v-if="!collapsed">Lokasyonlar</span>
         </NuxtLink>
-        <NuxtLink to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
+        <NuxtLink v-if="!multiUser || isManager || isOperation" to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
           <i class="pi pi-briefcase" />
           <span v-if="!collapsed">Firmalar</span>
         </NuxtLink>
@@ -49,9 +49,14 @@
           <i class="pi pi-history" />
           <span v-if="!collapsed">Analiz geçmişi</span>
         </NuxtLink>
-        <NuxtLink to="/expert/settings/ai" class="sidebar-link" :title="collapsed ? 'Yapay zeka' : undefined">
+        <!-- Yalnızca süper admin: yapay zeka ayarı ve test sayfası (test verisi üretme) -->
+        <NuxtLink v-if="superAdmin" to="/expert/settings/ai" class="sidebar-link" :title="collapsed ? 'Yapay zeka' : undefined">
           <i class="pi pi-sparkles" />
           <span v-if="!collapsed">Yapay zeka</span>
+        </NuxtLink>
+        <NuxtLink v-if="superAdmin" to="/expert/test" class="sidebar-link" :title="collapsed ? 'Test' : undefined">
+          <i class="pi pi-code" />
+          <span v-if="!collapsed">Test</span>
         </NuxtLink>
       </nav>
       <div class="sidebar-spacer" />
@@ -63,10 +68,6 @@
         <NuxtLink to="/expert" class="sidebar-link" active-class="" exact-active-class="router-link-active" :title="collapsed ? 'Genel Bakış' : undefined">
           <i class="pi pi-home" />
           <span v-if="!collapsed">Genel Bakış</span>
-        </NuxtLink>
-        <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? 'Firmalarım' : undefined">
-          <i class="pi pi-briefcase" />
-          <span v-if="!collapsed">Firmalarım</span>
         </NuxtLink>
         <!-- Periyodik Kontroller: ekipmanlar + tesisatlar (daraltılmış menüde yalnızca simgeler) -->
         <template v-if="collapsed">
@@ -89,9 +90,9 @@
 
       <div class="sidebar-section">
         <nav class="sidebar-nav">
-          <NuxtLink to="/expert/test" class="sidebar-link" :title="collapsed ? 'Test' : undefined">
-            <i class="pi pi-code" />
-            <span v-if="!collapsed">Test</span>
+          <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? 'Firmalarım' : undefined">
+            <i class="pi pi-briefcase" />
+            <span v-if="!collapsed">Firmalarım</span>
           </NuxtLink>
           <NuxtLink :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
@@ -114,15 +115,11 @@
 <script setup lang="ts">
 withDefaults(defineProps<{ collapsed?: boolean; mode?: 'panel' | 'settings' }>(), { collapsed: false, mode: 'panel' })
 const emit = defineEmits<{ toggle: [] }>()
-const { logout } = useAuth()
+const { logout, superAdmin } = useAuth()
 // Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
-const { multiUser, corporate, isManager, edition, roleLabel, load: loadAccount } = useAccount()
+// Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
+const { multiUser, corporate, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
-// Ayarlar'ın ilk sayfası: bireysel uzman ve OSGB yöneticisinde Müşteriler, kurumsal yöneticide Organizasyon, diğer
-// rollerde Lokasyonlar.
-const settingsHome = computed(() => !multiUser.value ? '/expert/settings/customers'
-  : !isManager.value ? '/expert/settings/locations'
-  : corporate.value ? '/expert/settings/organization' : '/expert/settings/customers')
 
 const PERIODIC = [
   { to: '/expert/equipment', label: 'Ekipmanlar', icon: 'pi pi-wrench' },
@@ -137,7 +134,8 @@ watch(periodicActive, active => { if (active) periodicOpen.value = true })
 </script>
 
 <style scoped>
-.expert-sidebar { width: 250px; min-height: 100vh; padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0; background: var(--admin-sidebar); color: var(--admin-sidebar-text); border-right: 1px solid var(--admin-sidebar-border); transition: width .2s ease, padding .2s ease; }
+/* Sayfa uzasa da menü ekran boyunda sabit kalır (yapışık); menü ekrana sığmazsa kendi içinde kayar. */
+.expert-sidebar { position: sticky; top: 0; align-self: flex-start; width: 250px; height: 100vh; overflow-y: auto; padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0; background: var(--admin-sidebar); color: var(--admin-sidebar-text); border-right: 1px solid var(--admin-sidebar-border); transition: width .2s ease, padding .2s ease; }
 .expert-sidebar.collapsed { width: 76px; padding-left: 10px; padding-right: 10px; }
 .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 4px 10px 20px; }
 .brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: #111827; font-size: 25px; font-weight: 800; }
@@ -168,5 +166,5 @@ watch(periodicActive, active => { if (active) periodicOpen.value = true })
 .logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
 .collapsed .logout-link { justify-content: center; padding: 0; }
 .logout-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
-@media (max-width: 800px) { .expert-sidebar { width: 100%; min-height: auto; } .expert-sidebar.collapsed { width: 100%; } }
+@media (max-width: 800px) { .expert-sidebar { position: static; width: 100%; height: auto; overflow: visible; } .expert-sidebar.collapsed { width: 100%; } }
 </style>

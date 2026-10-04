@@ -12,8 +12,13 @@ export const useAuth = () => {
   const user = useState<AuthUser | null>('auth-user', () => null)
   // Süper admin bir hesaba girdiyse (kendi oturumu pktakip_admin_* altında saklı): "Süper admine dön" görünür.
   const impersonating = useState<boolean>('auth-impersonating', () => false)
+  // Hesaba giren süper adminin kendi rolleri (saklı oturumundan): uzman panelinde yalnızca süper admine açık menüler için.
+  const adminRoles = useState<string[]>('auth-admin-roles', () => [])
   const config = useRuntimeConfig()
 
+  const readAdminRoles = () => {
+    try { adminRoles.value = JSON.parse(localStorage.getItem('pktakip_admin_user') || 'null')?.roles || [] } catch { adminRoles.value = [] }
+  }
   const loadStoredAuth = () => {
     if (!import.meta.client || token.value) return
     token.value = localStorage.getItem('pktakip_token')
@@ -22,7 +27,10 @@ export const useAuth = () => {
       try { user.value = JSON.parse(storedUser) } catch { localStorage.removeItem('pktakip_user') }
     }
     impersonating.value = Boolean(localStorage.getItem('pktakip_admin_token'))
+    readAdminRoles()
   }
+  // Süper admin: kendi oturumu süper admin ya da bir hesaba süper admin olarak girmiş (Yapay zeka ayarı, Test sayfası).
+  const superAdmin = computed(() => !!user.value?.roles?.includes('super-admin') || (impersonating.value && adminRoles.value.includes('super-admin')))
 
   // Oturum anahtarını sunucuda siler (çıkış).
   const revoke = (value: string | null) => value
@@ -41,6 +49,7 @@ export const useAuth = () => {
       localStorage.removeItem('pktakip_admin_workplace_context')
     }
     impersonating.value = false
+    adminRoles.value = []
   }
 
   const login = async (email: string, password: string) => {
@@ -91,6 +100,7 @@ export const useAuth = () => {
     localStorage.setItem('pktakip_token', nextToken)
     localStorage.setItem('pktakip_user', JSON.stringify(nextUser))
     impersonating.value = true
+    readAdminRoles()
     reloadNuxtApp({ path: '/expert' })
   }
 
@@ -128,5 +138,5 @@ export const useAuth = () => {
     return token.value ? { Authorization: `Bearer ${token.value}` } : {}
   }
 
-  return { token, user, impersonating, loadStoredAuth, login, logout, authHeaders, startImpersonation, stopImpersonation, impersonateUser }
+  return { token, user, impersonating, superAdmin, loadStoredAuth, login, logout, authHeaders, startImpersonation, stopImpersonation, impersonateUser }
 }

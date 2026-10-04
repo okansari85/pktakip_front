@@ -64,7 +64,7 @@
 <script setup lang="ts">
 // Ayarlar → Yapay zeka: rapor okuyan varsayılan istemci (Gemini / OpenAI / NVIDIA), modelleri ve API anahtarları.
 // Anahtarlar sunucuda şifreli; sayfaya yalnızca son 4 karakteri gelir. Şimdilik tüm uzmanlara açık (ileride süper admin).
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-super-admin'] })
 
 interface Provider {
   key: string; label: string; note: string; key_env: string; key_source: 'db' | 'env' | null; key_hint: string | null; env_key_set: boolean

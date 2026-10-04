@@ -92,7 +92,7 @@
       </aside>
     </div>
 
-    <div v-if="customerFormOpen" class="modal-backdrop" @click.self="closeCustomerForm">
+    <div v-if="customerFormOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head"><div><h2>Müşteri Ekle</h2><p>Yeni müşteri kaydı oluşturun.</p></div><button class="close-button" type="button" @click="closeCustomerForm"><i class="pi pi-times" /></button></div>
         <label>Müşteri Adı <span>*</span><input v-model="customerName" type="text" placeholder="Örn. Koç Holding" /></label>
@@ -102,7 +102,7 @@
     </div>
 
     <!-- Müşteri silme: altındaki organizasyon, lokasyon, işyeri, ekipman ve kontrol raporlarıyla birlikte, kalıcı -->
-    <div v-if="deleteTarget" class="modal-backdrop" @click.self="closeDelete">
+    <div v-if="deleteTarget" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head"><div><h2>Müşteriyi Sil</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir, geri alınamaz.</p></div><button class="close-button" type="button" @click="closeDelete"><i class="pi pi-times" /></button></div>
         <p v-if="deleteSummaryLoading" class="muted-text">Müşterinin altındaki kayıtlar hesaplanıyor...</p>
@@ -122,7 +122,7 @@
       </section>
     </div>
 
-    <div v-if="organizationFormOpen" class="modal-backdrop" @click.self="closeOrganizationForm">
+    <div v-if="organizationFormOpen" class="modal-backdrop">
       <section class="modal-card small-modal">
         <div class="modal-head"><div><h2>{{ editingOrganization ? 'Organizasyonu Düzenle' : 'Organizasyon Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" organizasyonunun adını değiştirin.</p><p v-else>{{ organizationParent ? `${organizationParent.name} altına` : 'Müşteri köküne' }} yeni organizasyon ekleyin.</p></div><button class="close-button" type="button" @click="closeOrganizationForm"><i class="pi pi-times" /></button></div>
         <label>Organizasyon Adı <span>*</span><input v-model="organizationName" type="text" placeholder="Örn. Dayanıklı Tüketim" /></label>
@@ -133,7 +133,7 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
+definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-settings-role'] })
 
 interface Customer { id: number | string; name: string; locations_count?: number; firms_count?: number; created_at?: string }
 interface OrganizationNode { id: number | string; name: string; children?: OrganizationNode[] }
@@ -221,13 +221,26 @@ const openOrganizationForm = (parent: OrganizationNode | null) => { editingOrgan
 const openEditOrganizationForm = (node: OrganizationNode) => { editingOrganization.value = node; organizationFormError.value = ''; organizationParent.value = null; organizationName.value = node.name; organizationFormOpen.value = true }
 const closeOrganizationForm = () => { if (!savingOrganization.value) organizationFormOpen.value = false }
 
+// OSGB hesabında yeni müşteriye aynı adla kök organizasyon da açılır (üstteki Organizasyon kutusu müşterinin kökünden başlar).
+const { account, load: loadAccount } = useAccount()
 const createCustomer = async () => {
-  if (!customerName.value.trim()) return
+  const name = customerName.value.trim()
+  if (!name) return
   saving.value = true
   try {
-    await $fetch(`${config.public.apiBaseUrl}/customers`, { method: 'POST', headers: tenantHeaders(), body: { name: customerName.value.trim(), notes: customerNotes.value.trim() || null } })
+    const created = unwrap(await $fetch(`${config.public.apiBaseUrl}/customers`, { method: 'POST', headers: tenantHeaders(), body: { name, notes: customerNotes.value.trim() || null } }))
     customerFormOpen.value = false
+    await loadAccount()
+    let rootError = ''
+    if (account.value?.type === 'osgb' && created?.id) {
+      try {
+        await $fetch(`${config.public.apiBaseUrl}/customers/${created.id}/organizations`, { method: 'POST', headers: tenantHeaders(), body: { name, parent_id: null, color: '#465FFF' } })
+      } catch (e: any) {
+        rootError = `Müşteri oluşturuldu ama kök organizasyon eklenemedi (${e?.data?.message || 'bilinmeyen hata'}); müşterinin organizasyon ağacından elle ekleyebilirsiniz.`
+      }
+    }
     await loadCustomers()
+    if (rootError) error.value = rootError
   } catch (e: any) { error.value = e?.data?.message || 'Müşteri oluşturulamadı.' }
   finally { saving.value = false }
 }

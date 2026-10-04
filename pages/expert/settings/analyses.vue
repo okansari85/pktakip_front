@@ -4,16 +4,16 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Analiz geçmişi</strong></div>
         <h1>Analiz geçmişi</h1>
-        <p>Yapay zeka ile yapılan tüm rapor okumaları (hesaptaki tüm uzmanlar). Kaydedilmeyen ve okunamayan okumalar da burada kalır. Test verisiyle yapılan denemeler ve elle girişler yer almaz.</p>
+        <p>{{ ownOnly ? 'Yapay zeka ile yaptığınız rapor okumaları.' : 'Yapay zeka ile yapılan tüm rapor okumaları (hesaptaki tüm uzmanlar).' }} Kaydedilmeyen ve okunamayan okumalar da burada kalır. Test verisiyle yapılan denemeler ve elle girişler yer almaz.</p>
       </div>
     </div>
 
     <div class="filters">
       <select v-model="filters.location_id" @change="reload">
         <option value="">Tüm lokasyonlar</option>
-        <option v-for="location in locations" :key="location.id" :value="String(location.id)">{{ location.name }}</option>
+        <option v-for="location in locationOptions" :key="location.id" :value="String(location.id)">{{ location.name }}</option>
       </select>
-      <select v-model="filters.user_id" @change="reload">
+      <select v-if="!ownOnly" v-model="filters.user_id" @change="reload">
         <option value="">Tüm uzmanlar</option>
         <option v-for="user in users" :key="user.id" :value="String(user.id)">{{ user.name }}</option>
       </select>
@@ -127,7 +127,16 @@ const detailLoading = ref(false)
 const detailError = ref('')
 const detailAnchor = ref<HTMLElement | null>(null)
 
-const query = () => Object.fromEntries(Object.entries({ ...filters, page: page.value }).filter(([, value]) => value !== '' && value !== null))
+// OSGB / kurumsal hesapta uzman yalnızca kendi okumalarını görür (yönetici ve operasyon yöneticisi hepsini); bireysel uzmanda
+// bugünkü gibi.
+const { user } = useAuth()
+const { multiUser, isManager, isOperation, load: loadAccount } = useAccount()
+const { groups, load: loadWorkplaces } = useMyWorkplaces()
+const ownOnly = computed(() => multiUser.value && !isManager.value && !isOperation.value)
+const locationOptions = computed(() => ownOnly.value ? locations.value.filter(location => groups.value.some(group => group.location_id === location.id)) : locations.value)
+
+const query = () => Object.fromEntries(Object.entries({ ...filters, ...(ownOnly.value && user.value ? { user_id: String(user.value.id) } : {}), page: page.value })
+  .filter(([, value]) => value !== '' && value !== null))
 
 const load = async (append = false) => {
   loading.value = true
@@ -191,7 +200,10 @@ const formatNumber = (value: number) => new Intl.NumberFormat('tr-TR').format(va
 const tokenText = (item: any) => item.input_tokens || item.output_tokens ? `${formatNumber(item.input_tokens || 0)} + ${formatNumber(item.output_tokens || 0)} token` : ''
 const formatDateTime = (value?: string | null) => value ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—'
 
-onMounted(() => load())
+onMounted(async () => {
+  await Promise.all([loadAccount(), loadWorkplaces()])
+  load()
+})
 </script>
 
 <style scoped>

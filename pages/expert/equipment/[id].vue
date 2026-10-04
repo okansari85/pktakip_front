@@ -9,7 +9,7 @@
       <div class="page-head">
         <div>
           <h1>{{ equipment.name || equipment.type?.name }}<span v-if="equipment.variant" class="tag" :title="equipment.type?.variant_label || 'Etiket'">{{ equipment.variant }}</span></h1>
-          <p>{{ equipment.location?.name }} · {{ equipment.workplace?.company_name || 'Lokasyon geneli' }}<template v-if="equipment.place"> · {{ equipment.place }}</template></p>
+          <p>{{ equipment.location?.name }}<template v-if="currentArea"> · {{ currentArea.label }}</template> · {{ workplaceText }}<template v-if="currentUnit"> · {{ currentUnit.name }}</template><template v-if="equipment.place"> · {{ equipment.place }}</template></p>
         </div>
         <div class="head-side">
           <span class="status-badge big" :class="equipment.status">{{ STATUS_LABELS[equipment.status] }}</span>
@@ -68,7 +68,10 @@
             <dt>Ekipman adı</dt><dd>{{ equipment.name || '—' }}</dd>
             <dt>Marka / Model</dt><dd>{{ [equipment.brand, equipment.model].filter(Boolean).join(' / ') || '—' }}</dd>
             <dt>Seri no</dt><dd>{{ equipment.serial_no || '—' }}</dd>
-            <dt>Ait olduğu yer</dt><dd>{{ equipment.workplace?.company_name || 'Lokasyon geneli' }}</dd>
+            <dt>Ait olduğu yer</dt><dd>{{ workplaceText }}</dd>
+            <!-- İşyerinde birim / lokasyonda alan tanımlıysa -->
+            <template v-if="currentUnit || unitsOf(equipment.workplace?.id).length"><dt>Birim</dt><dd>{{ currentUnit?.name || '—' }}</dd></template>
+            <template v-if="areaOptions.length"><dt>Alan</dt><dd>{{ currentArea ? areaText(currentArea) : '—' }}</dd></template>
             <dt>Bulunduğu yer</dt><dd>{{ equipment.place || '—' }}</dd>
             <dt>Not</dt><dd>{{ equipment.notes || '—' }}</dd>
           </dl>
@@ -87,9 +90,22 @@
               <label>Model<input v-model="editForm.model" type="text" /></label>
               <label>Seri no<input v-model="editForm.serial_no" type="text" /></label>
               <label>Ait olduğu yer
-                <select v-model="editForm.location_business_entity_id">
+                <select v-model="editForm.location_business_entity_id" @change="onEditWorkplace">
                   <option :value="null">Lokasyon geneli</option>
-                  <option v-for="workplace in locationWorkplaces" :key="workplace.id" :value="workplace.id">{{ workplace.company_name }}</option>
+                  <option v-for="workplace in locationWorkplaces" :key="workplace.id" :value="workplace.id">{{ workplaceLabel(workplace.id, workplace.company_name) }}</option>
+                </select>
+              </label>
+              <!-- Birim yalnızca seçilen işyerinin birimleri; işyerinde birim yoksa görünmez. Alan fiziksel yer, firmadan bağımsız. -->
+              <label v-if="editUnits.length">Birim
+                <select v-model="editForm.pk_operational_unit_id">
+                  <option :value="null">Birim yok</option>
+                  <option v-for="unit in editUnits" :key="unit.id" :value="unit.id">{{ unit.name }}</option>
+                </select>
+              </label>
+              <label v-if="selectableAreas.length">Alan
+                <select v-model="editForm.pk_area_id">
+                  <option :value="null">Alan yok</option>
+                  <option v-for="area in selectableAreas" :key="area.id" :value="area.id">{{ areaText(area) }}</option>
                 </select>
               </label>
               <label>Bulunduğu yer<input v-model="editForm.place" type="text" /></label>
@@ -243,10 +259,29 @@ const daysKey = (days: number | null) => days === null || days === undefined ? '
 const load = async () => {
   loading.value = true
   loadError.value = ''
-  try { equipment.value = await get(`/pk-equipment/${id.value}`) }
+  try {
+    equipment.value = await get(`/pk-equipment/${id.value}`)
+    const locationId = equipment.value?.location?.id
+    await Promise.all([loadAreas(locationId, true), loadUnits(locationId, true)])
+  }
   catch (e: any) { loadError.value = errorMessage(e, 'Ekipman bulunamadı.') }
   finally { loading.value = false }
 }
+
+// --- Alan (isteğe bağlı): lokasyonda alan tanımlıysa gösterilir ve düzenlenir; yoksa hiç görünmez ---
+const { options: areaOptions, assignments: areaAssignments, byId: areaById, load: loadAreas, setEquipmentArea } = useLocationAreas()
+const currentAreaId = computed<number | null>(() => areaAssignments.value.equipment[String(id.value)] ?? null)
+const currentArea = computed(() => currentAreaId.value ? areaById.value.get(currentAreaId.value) || null : null)
+const selectableAreas = computed(() => areaOptions.value.filter(area => area.active || area.id === currentAreaId.value))
+
+// --- Birim (isteğe bağlı): işyerinde birim tanımlıysa gösterilir; ekipmanın firmasını değiştirmez ---
+const { assignments: unitAssignments, byId: unitById, load: loadUnits, unitsOf, setEquipmentUnit } = useOperationalUnits()
+const currentUnitId = computed<number | null>(() => unitAssignments.value[String(id.value)] ?? null)
+const currentUnit = computed(() => currentUnitId.value ? unitById.value.get(currentUnitId.value) || null : null)
+
+// --- İşyeri adı: "Ad · Firma" ---
+const { load: loadNames, workplaceLabel } = useWorkplaceNames()
+const workplaceText = computed(() => equipment.value?.workplace ? workplaceLabel(equipment.value.workplace.id, equipment.value.workplace.company_name) : 'Lokasyon geneli')
 
 // --- Fotoğraf ---
 const photoInput = ref<HTMLInputElement | null>(null)
@@ -279,14 +314,19 @@ const tab = ref<'info' | 'specs'>('info')
 const editing = ref(false)
 const savingEdit = ref(false)
 const editError = ref('')
-const editForm = reactive({ code: '', variant: '', name: '', brand: '', model: '', serial_no: '', place: '', notes: '', location_business_entity_id: null as number | null })
+const editForm = reactive({ code: '', variant: '', name: '', brand: '', model: '', serial_no: '', place: '', notes: '', location_business_entity_id: null as number | null, pk_area_id: null as number | null, pk_operational_unit_id: null as number | null })
 const locationWorkplaces = computed(() => (groups.value.find(g => g.location_id === equipment.value?.location?.id)?.items || [])
   .map(item => ({ id: item.id, company_name: item.company_name })))
+const editUnits = computed(() => unitsOf(editForm.location_business_entity_id, currentUnitId.value))
+// İşyeri değişince başka işyerinin birimi kalamaz.
+const onEditWorkplace = () => {
+  if (editForm.pk_operational_unit_id && !editUnits.value.some(unit => unit.id === editForm.pk_operational_unit_id)) editForm.pk_operational_unit_id = null
+}
 const startEdit = () => {
   const e = equipment.value
   Object.assign(editForm, {
     code: e.code || '', variant: e.variant || '', name: e.name || '', brand: e.brand || '', model: e.model || '', serial_no: e.serial_no || '',
-    place: e.place || '', notes: e.notes || '', location_business_entity_id: e.workplace?.id ?? null
+    place: e.place || '', notes: e.notes || '', location_business_entity_id: e.workplace?.id ?? null, pk_area_id: currentAreaId.value, pk_operational_unit_id: currentUnitId.value
   })
   editError.value = ''
   editing.value = true
@@ -302,6 +342,12 @@ const saveEdit = async () => {
       location_business_entity_id: editForm.location_business_entity_id,
       ...(equipment.value.type?.variants?.length ? { variant: editForm.variant || null } : {})
     })
+    // Birim ve alan değiştiyse ayrıca yazılır (firma yukarıda kaydedildi, bunlar firmayı değiştirmez); bilgiler yeniden alınır.
+    const unitChanged = editForm.pk_operational_unit_id !== currentUnitId.value
+    const areaChanged = areaOptions.value.length > 0 && editForm.pk_area_id !== currentAreaId.value
+    if (unitChanged) await setEquipmentUnit(Number(id.value), editForm.pk_operational_unit_id)
+    if (areaChanged) await setEquipmentArea(Number(id.value), editForm.pk_area_id)
+    if (unitChanged || areaChanged) await load()
     editing.value = false
   } catch (e: any) { editError.value = errorMessage(e, 'Bilgiler kaydedilemedi.') }
   finally { savingEdit.value = false }
@@ -374,6 +420,7 @@ onMounted(() => {
   backPath.value = typeof back === 'string' && back.startsWith('/expert') ? back : null
   load()
   loadWorkplaces()
+  loadNames()
 })
 </script>
 
