@@ -182,7 +182,7 @@ const STATE_LABELS: Record<ItemState, string> = {
 }
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil' }
 // Yapay zeka sağlayıcısı kaynaklı hatalarda (sınır, bakiye, yoğunluk) zincir durur; dosyaya özgü hatada sıradakine geçer.
-const STOP_WORDS = ['sınırı doldu', 'bakiye', 'kota', 'yoğun ya da yanıt veremiyor']
+const STOP_WORDS = ['sınırı doldu', 'bakiye', 'kota', 'yoğun ya da yanıt veremiyor', 'krediniz bitti', 'kredi gerekir', 'ekipman limitiniz', 'ekipmanlık yer kaldı']
 
 // Pencere açıldığı anki çalışma alanı: okuma ve yeni ekipman buna göre (üstte lokasyon değişse de).
 const ctx = { ...props.context }
@@ -330,7 +330,7 @@ const readItem = async (item: Item): Promise<string> => {
     item.message = errorMessage(e, 'Rapor okunamadı.')
     const status = e?.status ?? e?.statusCode ?? e?.response?.status
     const lower = item.message.toLocaleLowerCase('tr-TR')
-    if (!status || status >= 500 || [401, 403, 419, 429].includes(status) || STOP_WORDS.some(word => lower.includes(word))) {
+    if (!status || status >= 500 || [401, 402, 403, 419, 429].includes(status) || STOP_WORDS.some(word => lower.includes(word))) {
       return `Okuma durdu: ${item.message} Sıradaki raporlar bekliyor; uygun olduğunda "Devam et" ile sürdürün.`
     }
     return ''

@@ -8,6 +8,21 @@
       </div>
     </div>
 
+    <!-- Okumalar | Kredi hareketleri (paketin kredisi yalnızca rapor okumada düşer) -->
+    <div class="tabs-row">
+      <div class="tabs">
+        <button type="button" :class="{ active: tab === 'reads' }" @click="setTab('reads')">Okumalar</button>
+        <button type="button" :class="{ active: tab === 'credits' }" @click="setTab('credits')">Kredi hareketleri</button>
+      </div>
+      <ExpertCreditSummary v-if="tab === 'credits'" class="tab-summary" />
+    </div>
+
+    <template v-if="tab === 'credits'">
+      <p class="credit-hint">Kredi yalnızca rapor okumada düşer: metin / taranmış rapor 1, görüntü PDF 3, tesisat raporu ve tüp kontrol formu 5 kredi. Elle doldurma ve okunamayan rapor kredi düşürmez.</p>
+      <ExpertCreditEntries />
+    </template>
+
+    <template v-else>
     <div class="filters">
       <select v-model="filters.location_id" @change="reload">
         <option value="">Tüm lokasyonlar</option>
@@ -92,6 +107,7 @@
         </div>
       </template>
     </ExpertReportAnalysisView>
+    </template>
   </div>
 </template>
 
@@ -108,6 +124,11 @@ const targetLink = (target: any) => target.type === 'equipment' ? `/expert/equip
 const STATUS_LABELS: Record<string, string> = { saved: 'Kaydedildi', read: 'Kaydedilmedi', failed: 'Okunamadı' }
 
 const { get, getBlob, errorMessage } = useExpertApi()
+// Sekme adreste (?tab=credits): menüdeki Paketim kutusu doğrudan Kredi hareketlerini açar.
+const route = useRoute()
+const router = useRouter()
+const tab = computed<'reads' | 'credits'>(() => route.query.tab === 'credits' ? 'credits' : 'reads')
+const setTab = (value: 'reads' | 'credits') => router.replace({ query: { ...route.query, tab: value === 'credits' ? 'credits' : undefined } })
 const { context } = useWorkplaceContext()
 
 const rows = ref<any[]>([])
@@ -212,6 +233,12 @@ onMounted(async () => {
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;max-width:820px;color:var(--admin-muted);font-size:13px}
 h2{margin:0;color:var(--admin-heading);font-size:15px}
+.tabs-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card)}
+.tabs button{min-height:34px;padding:0 14px;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.tabs button.active{background:var(--admin-accent-soft);color:var(--admin-heading)}
+.tab-summary{min-width:240px}
+.credit-hint{margin:0;color:var(--admin-muted);font-size:12px;line-height:1.5}
 .filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
 .filters select,.filters input{height:38px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
 .filters select{min-width:170px}

@@ -19,6 +19,10 @@
         <i class="pi pi-users" />
         <span v-if="!collapsed">Müşteriler</span>
       </NuxtLink>
+      <NuxtLink to="/packages" class="sidebar-link" :title="collapsed ? 'Paketler' : undefined">
+        <i class="pi pi-box" />
+        <span v-if="!collapsed">Paketler</span>
+      </NuxtLink>
     </nav>
 
     <div class="sidebar-bottom">

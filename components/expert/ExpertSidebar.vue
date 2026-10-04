@@ -103,6 +103,8 @@
     </template>
 
     <div class="sidebar-bottom">
+      <!-- Paketim: kalan kredi ve ekipman doluluğu; tıklayınca kredi hareketleri -->
+      <NuxtLink v-if="!collapsed" to="/expert/settings/analyses?tab=credits" class="credit-link" title="Kredi hareketleri"><ExpertCreditSummary compact /></NuxtLink>
       <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>{{ roleLabel }}</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">
         <i class="pi pi-sign-out" />
@@ -161,6 +163,8 @@ watch(periodicActive, active => { if (active) periodicOpen.value = true })
 .back-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
 .sidebar-spacer { flex: 1; }
 .sidebar-section { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--admin-sidebar-border); }
+.credit-link { display: block; text-decoration: none; }
+.credit-link:hover :deep(.credit-summary) { border-color: var(--pk-yellow); }
 .sidebar-bottom { margin-top: 14px; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
 .expert-badge, .logout-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; color: var(--admin-sidebar-muted); font-size: 12px; }
 .logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
