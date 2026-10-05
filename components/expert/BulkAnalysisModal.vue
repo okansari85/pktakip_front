@@ -21,7 +21,7 @@
             <small>PDF · her dosya tek ekipmanın raporu (raf, kapı, transpalet, forklift…; yangın ekipmanları hariç). Raporlar sırayla, birer birer okunur; daha önce yüklenmiş dosya okunmaz, son 24 saatte okunup kaydedilmemiş dosya yeniden okunmaz.</small>
           </span>
         </button>
-        <label v-if="catalogFixtures.length" class="fixture-line">
+        <label v-if="showFixtures && catalogFixtures.length" class="fixture-line">
           <input v-model="useFixtures" type="checkbox" :disabled="running" />
           <span><i class="pi pi-database" /> Test verisi kullan <small>— dosya adı aynı olan test verisi okunur, yapay zeka çağrılmaz</small></span>
         </label>
@@ -139,6 +139,8 @@
 </template>
 
 <script setup lang="ts">
+// Test verisi seçeneği yalnızca süper admine (müşteri hesabına girmiş olsa da).
+const { superAdmin: showFixtures } = useAuth()
 // Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): seçilen raporlar öz yinelemeli okunur — biri bitince sıradaki kendiliğinden
 // gönderilir, aynı anda tek rapor, her rapor tek yapay zeka isteği, otomatik tekrar yok. Okuma "Rapordan Ekipman Tanımla" ile,
 // kayıt rapor penceresinin uçlarıyla aynı. Eşleşen ekipman seçili gelir, eşleşmeyende "Yeni ekipman" seçili gelir; kullanıcı

@@ -36,7 +36,7 @@
             <button class="ai-button" type="button" :disabled="!file && !fixtureId" @click="analyze">Analiz et</button>
           </template>
         </div>
-        <label v-if="!analyzing && fixtures.length" class="fixture-select">
+        <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
           <span><i class="pi pi-database" /> Test verisi</span>
           <select v-model="fixtureId">
             <option value="">Kullanma — raporu yapay zeka ile oku</option>
@@ -318,6 +318,8 @@
 </template>
 
 <script setup lang="ts">
+// Test verisi seçeneği yalnızca süper admine (müşteri hesabına girmiş olsa da).
+const { superAdmin: showFixtures } = useAuth()
 // Tesisat kontrolü (rapor) ekleme: elle giriş ya da yapay zeka ile okuma (tür, sistemler, sonuçlar, bulgular); kullanıcı kontrol edip kaydeder.
 // Tesisatın içinden açılınca sistemler tesisatın sistemleriyle dolu gelir. Sistemler katalogdan (ön tanımlı); raporda olup
 // tesisatta olmayan sistem kayıtta tesisata eklenir.

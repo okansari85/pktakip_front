@@ -26,14 +26,14 @@ export interface CreditEntry {
 }
 
 const REPORT_KINDS: Record<string, string> = { equipment: 'Ekipman raporu', equipment_new: 'Rapordan ekipman tanımlama', bulk: 'Tüp kontrol formu', installation: 'Tesisat raporu' }
-export const MODE_LABELS: Record<string, string> = { unlimited: 'Sınırsız (geçiş)', package: 'Paket', promo: 'Ücretsiz başlangıç', none: 'Paket yok' }
+export const MODE_LABELS: Record<string, string> = { unlimited: 'Sınırsız (geçiş)', package: 'Paket', promo: 'Ücretsiz deneme', none: 'Paket yok' }
 
 // Hareketin yazısı: "Rapor okundu · Tesisat raporu · dosya.pdf", "Paket kredisi yüklendi" …
 export const entryText = (entry: CreditEntry) => {
   if (entry.reason === 'reading') {
     return ['Rapor okundu', entry.kind && REPORT_KINDS[entry.kind], entry.input === 'image' && 'görüntüden', entry.detected_type, entry.file_name].filter(Boolean).join(' · ')
   }
-  const base: Record<string, string> = { grant: 'Paket kredisi yüklendi', promo: 'Ücretsiz başlangıç kredisi', manual: 'Elle düzeltme', reset: 'Kredi sıfırlandı' }
+  const base: Record<string, string> = { grant: 'Paket kredisi yüklendi', promo: 'Ücretsiz deneme kredisi', manual: 'Elle düzeltme', reset: 'Kredi sıfırlandı' }
   return [base[entry.reason] || entry.reason, entry.reason === 'grant' || entry.reason === 'promo' ? null : entry.note].filter(Boolean).join(' · ')
 }
 

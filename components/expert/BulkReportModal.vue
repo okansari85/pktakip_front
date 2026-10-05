@@ -29,7 +29,7 @@
             <button class="ai-button" type="button" :disabled="!file || analyzing" @click="analyze">Oku</button>
           </template>
         </div>
-        <label v-if="!analyzing && fixtures.length" class="fixture-select">
+        <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
           <span><i class="pi pi-database" /> Test verisi</span>
           <select v-model="fixtureId">
             <option value="">Kullanma — formu yapay zeka ile oku</option>
@@ -175,6 +175,8 @@
 </template>
 
 <script setup lang="ts">
+// Test verisi seçeneği yalnızca süper admine (müşteri hesabına girmiş olsa da).
+const { superAdmin: showFixtures } = useAuth()
 // Tüp kontrol formu (toplu rapor): okunur ("Rapordan Ekipman Tanımla"dan gelindiyse okunmuş gelir), tüpler Ekipmanlar'daki
 // kayıtlarla eşleştirilir (yer + no + tip aynıysa önerilir; elle aranabilir listeden). Kayıtta eşleşen tüplere kendi sonucuyla
 // kontrol kaydı açılır; eşleşmeyenler tüp eklenmeden formda "eşleştirme bekliyor" kalır (Kontrol Formları'ndan eşleştirilir ya

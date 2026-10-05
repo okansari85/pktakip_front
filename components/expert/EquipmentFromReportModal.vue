@@ -26,7 +26,7 @@
             <button class="ai-button" type="button" :disabled="!file || analyzing" @click="analyze">Analiz et</button>
           </template>
         </div>
-        <label v-if="!analyzing && fixtures.length" class="fixture-select">
+        <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
           <span><i class="pi pi-database" /> Test verisi</span>
           <select v-model="fixtureId">
             <option value="">Kullanma — raporu yapay zeka ile oku</option>
@@ -144,6 +144,8 @@
 </template>
 
 <script setup lang="ts">
+// Test verisi seçeneği yalnızca süper admine (müşteri hesabına girmiş olsa da).
+const { superAdmin: showFixtures } = useAuth()
 // Rapordan ekipman tanımlama: rapor okunur (tür dahil), mevcut ekipmanla eşleşirse ona eklenir, eşleşmezse yeni ekipman
 // oluşturulur; ardından aynı analizle (Gemini tekrar çağrılmadan) rapor penceresi açılır.
 const props = defineProps<{

@@ -89,6 +89,12 @@
               <label>Marka<input v-model="editForm.brand" type="text" /></label>
               <label>Model<input v-model="editForm.model" type="text" /></label>
               <label>Seri no<input v-model="editForm.serial_no" type="text" /></label>
+              <!-- Lokasyon: yanlış lokasyona açılmış ekipman, kontrol kayıtları ve raporlarıyla birlikte taşınır -->
+              <label v-if="editLocations.length > 1">Lokasyon
+                <select v-model="editForm.location_id" @change="onEditLocation">
+                  <option v-for="location in editLocations" :key="location.id" :value="location.id">{{ location.name }}</option>
+                </select>
+              </label>
               <label>Ait olduğu yer
                 <select v-model="editForm.location_business_entity_id" @change="onEditWorkplace">
                   <option :value="null">Lokasyon geneli</option>
@@ -96,13 +102,13 @@
                 </select>
               </label>
               <!-- Birim yalnızca seçilen işyerinin birimleri; işyerinde birim yoksa görünmez. Alan fiziksel yer, firmadan bağımsız. -->
-              <label v-if="editUnits.length">Birim
+              <label v-if="!locationMoved && editUnits.length">Birim
                 <select v-model="editForm.pk_operational_unit_id">
                   <option :value="null">Birim yok</option>
                   <option v-for="unit in editUnits" :key="unit.id" :value="unit.id">{{ unit.name }}</option>
                 </select>
               </label>
-              <label v-if="selectableAreas.length">Alan
+              <label v-if="!locationMoved && selectableAreas.length">Alan
                 <select v-model="editForm.pk_area_id">
                   <option :value="null">Alan yok</option>
                   <option v-for="area in selectableAreas" :key="area.id" :value="area.id">{{ areaText(area) }}</option>
@@ -111,6 +117,7 @@
               <label>Bulunduğu yer<input v-model="editForm.place" type="text" /></label>
               <label class="wide">Not<textarea v-model="editForm.notes" rows="2" /></label>
             </div>
+            <p v-if="locationMoved" class="hint-text"><i class="pi pi-info-circle" /> Ekipman kontrol kayıtları ve raporlarıyla birlikte {{ editLocationName }} lokasyonuna taşınacak. Birim ve alan yeni lokasyonda yeniden seçilir.</p>
             <p v-if="editError" class="error-text">{{ editError }}</p>
             <div class="actions">
               <button class="secondary-button" type="button" @click="editing = false">İptal</button>
@@ -314,8 +321,22 @@ const tab = ref<'info' | 'specs'>('info')
 const editing = ref(false)
 const savingEdit = ref(false)
 const editError = ref('')
-const editForm = reactive({ code: '', variant: '', name: '', brand: '', model: '', serial_no: '', place: '', notes: '', location_business_entity_id: null as number | null, pk_area_id: null as number | null, pk_operational_unit_id: null as number | null })
-const locationWorkplaces = computed(() => (groups.value.find(g => g.location_id === equipment.value?.location?.id)?.items || [])
+const editForm = reactive({ location_id: null as number | null, code: '', variant: '', name: '', brand: '', model: '', serial_no: '', place: '', notes: '', location_business_entity_id: null as number | null, pk_area_id: null as number | null, pk_operational_unit_id: null as number | null })
+// Taşınabilecek lokasyonlar: kullanıcının lokasyonları (mevcut lokasyon listede yoksa o da eklenir).
+const editLocations = computed(() => {
+  const list = groups.value.map(group => ({ id: group.location_id, name: group.location_name }))
+  const current = equipment.value?.location
+  return current && !list.some(item => item.id === current.id) ? [{ id: current.id, name: current.name }, ...list] : list
+})
+const locationMoved = computed(() => editing.value && !!editForm.location_id && editForm.location_id !== equipment.value?.location?.id)
+const editLocationName = computed(() => editLocations.value.find(item => item.id === editForm.location_id)?.name || '')
+// Lokasyon değişince firma, birim ve alan eski lokasyona ait olduğundan boşalır.
+const onEditLocation = () => {
+  editForm.location_business_entity_id = null
+  editForm.pk_operational_unit_id = null
+  editForm.pk_area_id = null
+}
+const locationWorkplaces = computed(() => (groups.value.find(g => g.location_id === (editForm.location_id ?? equipment.value?.location?.id))?.items || [])
   .map(item => ({ id: item.id, company_name: item.company_name })))
 const editUnits = computed(() => unitsOf(editForm.location_business_entity_id, currentUnitId.value))
 // İşyeri değişince başka işyerinin birimi kalamaz.
@@ -325,13 +346,15 @@ const onEditWorkplace = () => {
 const startEdit = () => {
   const e = equipment.value
   Object.assign(editForm, {
-    code: e.code || '', variant: e.variant || '', name: e.name || '', brand: e.brand || '', model: e.model || '', serial_no: e.serial_no || '',
+    location_id: e.location?.id ?? null, code: e.code || '', variant: e.variant || '', name: e.name || '', brand: e.brand || '', model: e.model || '', serial_no: e.serial_no || '',
     place: e.place || '', notes: e.notes || '', location_business_entity_id: e.workplace?.id ?? null, pk_area_id: currentAreaId.value, pk_operational_unit_id: currentUnitId.value
   })
   editError.value = ''
   editing.value = true
 }
 const saveEdit = async () => {
+  if (locationMoved.value && !confirm(`Ekipman, kontrol kayıtları ve raporlarıyla birlikte "${editLocationName.value}" lokasyonuna taşınsın mı?`)) return
+  const moved = locationMoved.value
   savingEdit.value = true
   editError.value = ''
   const clean = (v: string) => v.trim() || null
@@ -340,6 +363,7 @@ const saveEdit = async () => {
       code: clean(editForm.code), name: clean(editForm.name), brand: clean(editForm.brand), model: clean(editForm.model),
       serial_no: clean(editForm.serial_no), place: clean(editForm.place), notes: clean(editForm.notes),
       location_business_entity_id: editForm.location_business_entity_id,
+      ...(moved ? { location_id: editForm.location_id } : {}),
       ...(equipment.value.type?.variants?.length ? { variant: editForm.variant || null } : {})
     })
     // Birim ve alan değiştiyse ayrıca yazılır (firma yukarıda kaydedildi, bunlar firmayı değiştirmez); bilgiler yeniden alınır.
@@ -347,7 +371,7 @@ const saveEdit = async () => {
     const areaChanged = areaOptions.value.length > 0 && editForm.pk_area_id !== currentAreaId.value
     if (unitChanged) await setEquipmentUnit(Number(id.value), editForm.pk_operational_unit_id)
     if (areaChanged) await setEquipmentArea(Number(id.value), editForm.pk_area_id)
-    if (unitChanged || areaChanged) await load()
+    if (unitChanged || areaChanged || moved) await load()
     editing.value = false
   } catch (e: any) { editError.value = errorMessage(e, 'Bilgiler kaydedilemedi.') }
   finally { savingEdit.value = false }
@@ -486,4 +510,5 @@ tr:hover .row-delete .icon-button{opacity:1}.row-delete .icon-button:hover{backg
 .hint{margin:8px 0 0;color:var(--admin-muted);font-size:12px}.muted{color:var(--admin-muted);font-size:12px}.error-text{margin:8px 0 0;color:var(--admin-danger-text);font-size:12px}
 @media(max-width:1000px){.top-grid{grid-template-columns:1fr}.dates{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:640px){.form-grid{grid-template-columns:1fr}.dates{grid-template-columns:1fr}.page-head{flex-direction:column;align-items:flex-start}}
+.hint-text{margin:10px 0 0;color:var(--admin-muted);font-size:12px;line-height:1.5}
 </style>

@@ -36,7 +36,7 @@
             </template>
           </div>
           <!-- Test: yapay zeka yerine test sayfasında kaydedilmiş analiz -->
-          <label v-if="!analyzing && fixtures.length" class="fixture-select">
+          <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
             <span><i class="pi pi-database" /> Test verisi</span>
             <select v-model="fixtureId">
               <option value="">Kullanma — raporu yapay zeka ile oku</option>
@@ -191,6 +191,8 @@
 </template>
 
 <script setup lang="ts">
+// Test verisi seçeneği yalnızca süper admine (müşteri hesabına girmiş olsa da).
+const { superAdmin: showFixtures } = useAuth()
 // Periyodik kontrol raporu yükleme: rapor dosyası zorunlu (dijital arşiv); bilgiler elle ya da yapay zeka ile doldurulur.
 const props = defineProps<{
   equipment: { id: number | null; name?: string | null; code?: string | null; variant?: string | null; type?: { name: string; default_period_months?: number | null; variants?: string[]; variant_label?: string | null } | null }
