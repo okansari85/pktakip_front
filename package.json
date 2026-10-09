@@ -16,6 +16,7 @@
     "nuxt": "latest",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
-    "primevue": "4.5.5"
+    "primevue": "4.5.5",
+    "qrcode.vue": "^3.11.0"
   }
 }

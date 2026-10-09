@@ -13,6 +13,7 @@
         </div>
         <div class="head-side">
           <span class="status-badge big" :class="equipment.status">{{ STATUS_LABELS[equipment.status] }}</span>
+          <button class="secondary-button" type="button" @click="qrOpen = true"><i class="pi pi-qrcode" /> Karekod üret</button>
           <button v-if="equipment.is_active" class="secondary-button" type="button" @click="deactivateOpen = true"><i class="pi pi-ban" /> Pasife al</button>
           <button v-else class="secondary-button" type="button" :disabled="activating" @click="activate"><i class="pi pi-check-circle" /> Aktife al</button>
         </div>
@@ -232,10 +233,22 @@
       :ids="[equipment.id]" :title="[equipment.name || equipment.type?.name, equipment.code && `no ${equipment.code}`].filter(Boolean).join(' · ')"
       @close="deactivateOpen = false" @saved="onDeactivated"
     />
+    <ExpertEquipmentQrModal
+      v-if="equipment"
+      :open="qrOpen"
+      :equipment-id="equipment.id"
+      :code="equipment.code"
+      :type-name="equipment.name || equipment.type?.name"
+      :place="[equipment.location?.name, equipment.place].filter(Boolean).join(' · ')"
+      :next-control="equipment.next_control_date ? formatDate(equipment.next_control_date) : null"
+      @close="qrOpen = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+// Karekod etiketi penceresi
+const qrOpen = ref(false)
 definePageMeta({ layout: 'expert', middleware: 'expert' })
 
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', belirtilmemis: 'Belirtilmemiş', rapor_yok: 'Rapor yok' }

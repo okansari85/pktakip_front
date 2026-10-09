@@ -1,5 +1,6 @@
 <template>
-  <div class="expert-dashboard">
+  <!-- Lokasyon / il değişince her kart kendi içinde yükleniyor gösterir (eski değer soluk, ortada dönen gösterge) -->
+  <div class="expert-dashboard" :class="{ reloading: (loading || cityLoading) && !!data }">
     <div class="page-head">
       <div>
         <span class="eyebrow">Hoş geldiniz, {{ user?.name }}</span>
@@ -32,7 +33,7 @@
           <div class="kpi"><span>Takip edilen ekipman</span><strong>{{ data.totals.equipment }}</strong><small>{{ scopeCounts.workplaces }} işyeri</small></div>
           <div class="kpi"><span>Tesisat</span><strong>{{ data.installations.length }}</strong><small>{{ installationKpiText }}</small></div>
           <!-- OSGB / kurumsal: yönetici ve operasyon yöneticisi -->
-          <div v-if="team" class="kpi" :class="{ warn: team.counts.unassigned }"><span>Uzman</span><strong>{{ team.counts.experts }}</strong><small>{{ team.counts.unassigned ? `${team.counts.unassigned} firmanın uzmanı yok` : 'bütün firmaların uzmanı var' }}</small></div>
+          <div v-if="team" class="kpi" :class="{ warn: team.counts.unassigned, loading: teamLoading }"><span>Uzman</span><strong>{{ team.counts.experts }}</strong><small>{{ team.counts.unassigned ? `${team.counts.unassigned} firmanın uzmanı yok` : 'bütün firmaların uzmanı var' }}</small></div>
         </div>
         <div class="map-grid">
           <section class="card chart-card map-card">
@@ -50,8 +51,10 @@
             <ExpertScoreGauge class="gauge-fill" :score="data.score" />
           </section>
         </div>
+        <!-- Firma seçiliyken: olası idari para cezası (ayrıntı Ceza sekmesinde) -->
+        <ExpertFineSummary v-if="fineScope" compact :location-id="fineScope.locationId" :workplace-id="fineScope.workplaceId" @detail="tab = 'fines'" />
         <!-- OSGB: müşteri bazında PK durumu (yönetici ve operasyon yöneticisi) -->
-        <section v-if="team?.customers?.length" class="card list-card">
+        <section v-if="team?.customers?.length" class="card list-card" :class="{ loading: teamLoading }">
           <header><div><h3>Müşteri özeti</h3><small>Müşteri bazında PK durumu (yüzde kaçı tamam); en çok süresi geçmiş üstte.</small></div></header>
           <div v-for="row in team.customers" :key="row.id" class="location-row static">
             <span class="location-name"><strong>{{ row.name }}</strong><small>{{ row.locations }} lokasyon · {{ row.score.total }} ekipman</small></span>
@@ -94,7 +97,7 @@
           </div>
         </section>
         <!-- Ekipman türleri: Durum Raporu'ndaki tablo (yalnızca tablo); kapsam sayfayla aynı (filtre + seçili il) -->
-        <section class="card list-card">
+        <section class="card list-card" :class="{ loading: typesLoading && typeRows.length }">
           <header><div><h3>Ekipman türleri</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Tür başına durum ve kontrol zamanı</small></div></header>
           <p v-if="typesLoading && !typeRows.length" class="muted pad"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
           <p v-else-if="typesError" class="muted pad error-text">{{ typesError }}</p>
@@ -178,6 +181,9 @@
       </template>
 
       <!-- OSGB / kurumsal: Uzmanlar (yönetici ve operasyon yöneticisi) -->
+      <template v-else-if="tab === 'fines' && fineScope">
+        <ExpertFineSummary :location-id="fineScope.locationId" :workplace-id="fineScope.workplaceId" />
+      </template>
       <template v-else-if="tab === 'team'">
         <ExpertTeamOverview :data="team" :loading="teamLoading" :error="teamError" />
       </template>
@@ -230,7 +236,7 @@ const TABS = [
 ] as const
 const route = useRoute()
 const router = useRouter()
-const tab = ref<string>([...TABS.map(item => item.key), 'team'].includes(String(route.query.sekme)) ? String(route.query.sekme) : 'locations')
+const tab = ref<string>([...TABS.map(item => item.key), 'team', 'fines'].includes(String(route.query.sekme)) ? String(route.query.sekme) : 'locations')
 watch(tab, value => router.replace({ query: value === 'locations' ? {} : { sekme: value } }))
 
 const { user } = useAuth()
@@ -326,8 +332,9 @@ const loadTypes = async () => {
   typesLoading.value = true
   typesError.value = ''
   try {
-    const report = await get('/pk-dashboard/report', viewQuery.value)
-    if (request === typesRequest) typeRows.value = report.types || []
+    // Yalnızca tür tablosu (Durum Raporu'nun tamamı değil): aynı hesap, tesisat ayrıntıları olmadan.
+    const types = await get<any[]>('/pk-dashboard/types', viewQuery.value)
+    if (request === typesRequest) typeRows.value = types || []
   } catch (e: any) {
     if (request === typesRequest) { typesKey = ''; typesError.value = errorMessage(e, 'Ekipman türleri alınamadı.') }
   } finally {
@@ -379,7 +386,16 @@ onMounted(async () => {
 // Bireysel uzmanda (ve diğer rollerde) hiçbiri yok, sekmeler aynı. ---
 const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
 const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
-const tabs = computed(() => teamView.value ? [...TABS, { key: 'team', label: 'Uzmanlar', icon: 'pi pi-users' }] : TABS)
+const tabs = computed(() => [
+  ...TABS,
+  ...(teamView.value ? [{ key: 'team', label: 'Uzmanlar', icon: 'pi pi-users' }] : []),
+  // Ceza: yalnız üstten bir firma (işyeri) seçiliyken, en sonda
+  ...(fineScope.value ? [{ key: 'fines', label: 'Ceza', icon: 'pi pi-exclamation-triangle' }] : [])
+])
+// Olası ceza kapsamı: seçili lokasyon + firma (lokasyon geneli ekipmanlar o firmaya dahil)
+const { locationId: fineLocationId, workplaceId: fineWorkplaceId } = useDashboardScope()
+const fineScope = computed(() => (fineLocationId.value && fineWorkplaceId.value ? { locationId: fineLocationId.value, workplaceId: fineWorkplaceId.value } : null))
+watch(fineScope, (scope) => { if (!scope && tab.value === 'fines') tab.value = 'locations' })
 const team = ref<any>(null)
 const teamLoading = ref(false)
 const teamError = ref('')
@@ -477,4 +493,9 @@ h3{margin:0;color:var(--admin-heading);font-size:15px}header small{color:var(--a
 @media(max-width:1200px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1100px){.map-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.grid.two{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.location-row{grid-template-columns:1fr 64px}.location-row .progress-bar,.location-detail{grid-column:1 / -1}}
+/* Kart içi yükleniyor: eski içerik soluk, kartın ortasında dönen gösterge */
+.reloading .card:not(.state),.reloading .kpi,.card.loading,.kpi.loading{position:relative}
+.reloading .card:not(.state) > *,.reloading .kpi > *,.card.loading > *,.kpi.loading > *{opacity:.35;transition:opacity .15s}
+.reloading .card:not(.state)::after,.reloading .kpi::after,.card.loading::after,.kpi.loading::after{content:'';position:absolute;top:50%;left:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border:3px solid var(--admin-border);border-top-color:var(--pk-yellow);border-radius:50%;animation:card-spin .8s linear infinite}
+@keyframes card-spin{to{transform:rotate(360deg)}}
 </style>

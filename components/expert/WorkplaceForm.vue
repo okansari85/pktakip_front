@@ -88,6 +88,15 @@
         <label>SGK İşyeri Sicil No <small>(Opsiyonel)</small><input v-model="sgkNumber" type="text" /></label>
       </div>
       <p v-if="selectedNace && hazardClass !== selectedNace.hazard_class" class="hint warn">NACE listesine göre tehlike sınıfı: {{ selectedNace.hazard_class }}. Elle değiştirdiniz.</p>
+      <div class="form-row">
+        <label>Çalışan Sayısı <span>*</span>
+          <select v-model="employeeBand">
+            <option value="" disabled>Seçiniz</option>
+            <option v-for="band in EMPLOYEE_BANDS" :key="band.value" :value="band.value">{{ band.label }}</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint">Olası idari para cezası (6331) tehlike sınıfı ve çalışan sayısına göre hesaplanır.</p>
 
 
       <p v-if="error" class="form-error">{{ error }}</p>
@@ -122,6 +131,13 @@ const naceResults = ref<NaceItem[]>([])
 const naceOpen = ref(false)
 const selectedNace = ref<NaceItem | null>(null)
 const hazardClass = ref('')
+// Çalışan sayısı aralığı: Genel Bakış'taki olası ceza hesabı için (pk_workplace_employee_bands).
+const EMPLOYEE_BANDS = [
+  { value: 'lt10', label: "10'dan az" },
+  { value: '10_49', label: '10–49' },
+  { value: '50_plus', label: '50 ve üzeri' }
+]
+const employeeBand = ref('')
 const sgkNumber = ref('')
 const saving = ref(false)
 const error = ref('')
@@ -173,7 +189,7 @@ const loadCustomerCompanies = async () => {
   } catch { /* alınamazsa tüm firmalar gösterilir */ }
 }
 
-const canSave = computed(() => !saving.value && !!customerId.value && !!locationId.value && !!hazardClass.value &&
+const canSave = computed(() => !saving.value && !!customerId.value && !!locationId.value && !!hazardClass.value && !!employeeBand.value &&
   (companySelection.value === NEW_COMPANY ? !!newCompany.name.trim() && !duplicateCompany.value : !!companySelection.value) &&
   // Lokasyonda ekli firma yalnızca işyeri adıyla (ikinci işyeri) eklenir.
   !displayNameBlocked.value)
@@ -258,11 +274,16 @@ const save = async () => {
       workplaceId = (await addAdditional({ location_id: locationId.value!, business_entity_id: businessEntityId!, name: workplaceName, ...details })).id
     } else {
       await post(`/customers/${customerId.value}/locations/${locationId.value}/companies`, { business_entity_id: businessEntityId, ...details })
-      // Yeni kaydın kimliği lokasyonun firma listesinden (işyeri adı için).
-      if (workplaceName) {
-        const items = await get<{ id: number; business_entity_id: number }[]>(`/customers/${customerId.value}/locations/${locationId.value}/companies`)
-        workplaceId = items.filter(item => item.business_entity_id === businessEntityId).sort((a, b) => b.id - a.id)[0]?.id ?? null
-      }
+      // Yeni kaydın kimliği lokasyonun firma listesinden (işyeri adı ve çalışan sayısı için).
+      const items = await get<{ id: number; business_entity_id: number }[]>(`/customers/${customerId.value}/locations/${locationId.value}/companies`)
+      workplaceId = items.filter(item => item.business_entity_id === businessEntityId).sort((a, b) => b.id - a.id)[0]?.id ?? null
+    }
+    try {
+      if (workplaceId) await post(`/pk-workplace-employee-bands/${workplaceId}`, { band: employeeBand.value })
+    } catch (e: any) {
+      error.value = errorMessage(e, 'İşyeri eklendi ama çalışan sayısı kaydedilemedi; Genel Bakış → Ceza sekmesinden seçebilirsiniz.')
+      saving.value = false
+      return
     }
     try {
       if (workplaceId && workplaceName && !alreadyAttached.value) await setWorkplaceName(workplaceId, workplaceName)
