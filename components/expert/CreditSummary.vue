@@ -1,5 +1,5 @@
 <template>
-  <!-- Paketim: kalan kredi ve ekipman doluluğu (salt okunur; satın alma ödeme adımında gelir) -->
+  <!-- Paketim: kalan kredi ve işyeri doluluğu (salt okunur; satın alma ödeme adımında gelir) -->
   <div v-if="status" class="credit-summary" :class="{ compact }">
     <div v-if="status.unlimited" class="row">
       <span class="label">Paket</span><strong>Sınırsız</strong>
@@ -9,12 +9,12 @@
         <span class="label">{{ status.package?.name || MODE_LABELS[status.mode] }}</span>
         <strong :class="{ empty: (status.credits ?? 0) <= 0 }">{{ status.credits ?? 0 }} kredi</strong>
       </div>
-      <template v-if="status.equipment_limit !== null && status.equipment_limit !== undefined">
+      <template v-if="status.workplace_limit !== null && status.workplace_limit !== undefined">
         <div class="row">
-          <span class="label">Ekipman</span>
-          <strong :class="{ empty: (status.active_equipment ?? 0) >= status.equipment_limit }">{{ status.active_equipment ?? 0 }} / {{ status.equipment_limit }}</strong>
+          <span class="label">İşyeri</span>
+          <strong :class="{ empty: (status.active_workplaces ?? 0) >= status.workplace_limit }">{{ status.active_workplaces ?? 0 }} / {{ status.workplace_limit }}</strong>
         </div>
-        <div class="bar"><span :style="{ width: `${equipmentPercent}%` }" /></div>
+        <div class="bar"><span :style="{ width: `${workplacePercent}%` }" /></div>
       </template>
       <small v-if="!compact && status.mode === 'package' && status.next_grant_at">Sıradaki yükleme {{ formatDate(status.next_grant_at) }} · +{{ status.monthly_credits }} kredi</small>
     </template>
@@ -24,9 +24,9 @@
 <script setup lang="ts">
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 const { status, load } = useBilling()
-const equipmentPercent = computed(() => {
-  const limit = status.value?.equipment_limit
-  return limit ? Math.min(100, Math.round((status.value?.active_equipment ?? 0) / limit * 100)) : 100
+const workplacePercent = computed(() => {
+  const limit = status.value?.workplace_limit
+  return limit ? Math.min(100, Math.round((status.value?.active_workplaces ?? 0) / limit * 100)) : 100
 })
 const formatDate = (value: string) => new Intl.DateTimeFormat('tr-TR').format(new Date(value))
 onMounted(load)

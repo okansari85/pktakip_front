@@ -184,7 +184,7 @@ const STATE_LABELS: Record<ItemState, string> = {
 }
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil' }
 // Yapay zeka sağlayıcısı kaynaklı hatalarda (sınır, bakiye, yoğunluk) zincir durur; dosyaya özgü hatada sıradakine geçer.
-const STOP_WORDS = ['sınırı doldu', 'bakiye', 'kota', 'yoğun ya da yanıt veremiyor', 'krediniz bitti', 'kredi gerekir', 'ekipman limitiniz', 'ekipmanlık yer kaldı']
+const STOP_WORDS = ['sınırı doldu', 'bakiye', 'kota', 'yoğun ya da yanıt veremiyor', 'krediniz bitti', 'kredi gerekir']
 
 // Pencere açıldığı anki çalışma alanı: okuma ve yeni ekipman buna göre (üstte lokasyon değişse de).
 const ctx = { ...props.context }

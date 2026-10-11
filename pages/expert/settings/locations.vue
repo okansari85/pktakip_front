@@ -406,6 +406,8 @@ const removeCompany = async (item: LocationCompany) => {
   try {
     await $fetch(api(`${companiesPath()}/${item.id}`), { method: 'DELETE', headers: tenantHeaders() })
     await loadLocationCompanies()
+    // Paketim'deki işyeri sayısı.
+    useBilling().load()
   } catch (e: any) {
     const errors = e?.data?.errors
     alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Firma kaldırılamadı.')

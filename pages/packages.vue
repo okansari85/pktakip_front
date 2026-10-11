@@ -4,7 +4,7 @@
       <div>
         <span class="eyebrow">Yönetim / Paketler</span>
         <h1>Paketler ve Krediler</h1>
-        <p>Paketleri tanımlayın, hesaplara paket atayın, gerekirse elle kredi ekleyin. Kredi yalnızca rapor okumada düşer; ekipman paketin aktif ekipman limitiyle sınırlanır.</p>
+        <p>Paketleri tanımlayın, hesaplara paket atayın, gerekirse elle kredi ekleyin. Kredi yalnızca rapor okumada düşer; işyeri sayısı paketin aktif işyeri limitiyle sınırlanır (kullanıcı sınırsız).</p>
       </div>
     </div>
 
@@ -15,7 +15,7 @@
 
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
-    <!-- Hesaplar: paket, kalan kredi, ekipman doluluğu -->
+    <!-- Hesaplar: paket, kalan kredi, işyeri doluluğu -->
     <div v-if="tab === 'accounts'" class="table-card">
       <DataTable :value="accounts" :loading="loading" responsiveLayout="scroll" emptyMessage="Hesap yok.">
         <Column header="Hesap">
@@ -29,8 +29,8 @@
         <Column header="Kredi">
           <template #body="{ data }"><span v-if="data.unlimited" class="muted">Sınırsız</span><strong v-else :class="{ danger: data.credits <= 0 }">{{ data.credits }}</strong><small v-if="data.mode === 'package'" class="block">aylık +{{ data.monthly_credits }}</small></template>
         </Column>
-        <Column header="Aktif ekipman">
-          <template #body="{ data }">{{ data.active_equipment ?? '—' }}<span v-if="data.equipment_limit !== null && data.equipment_limit !== undefined" class="muted"> / {{ data.equipment_limit }}</span></template>
+        <Column header="Aktif işyeri">
+          <template #body="{ data }">{{ data.active_workplaces ?? '—' }}<span v-if="data.workplace_limit !== null && data.workplace_limit !== undefined" class="muted"> / {{ data.workplace_limit }}</span></template>
         </Column>
         <Column header="Sıradaki yükleme">
           <template #body="{ data }">{{ data.next_grant_at ? formatDate(data.next_grant_at) : '—' }}</template>
@@ -55,7 +55,7 @@
           <Column header="Paket"><template #body="{ data }"><strong>{{ data.name }}</strong></template></Column>
           <Column header="Müşteri türü"><template #body="{ data }">{{ TYPE_LABELS[data.account_type] }}</template></Column>
           <Column header="Aylık kredi"><template #body="{ data }">{{ data.monthly_credits }}</template></Column>
-          <Column header="Ekipman limiti"><template #body="{ data }">{{ data.equipment_limit ?? 'Sınırsız' }}</template></Column>
+          <Column header="İşyeri limiti"><template #body="{ data }">{{ data.workplace_limit ?? 'Sınırsız' }}</template></Column>
           <Column header="Aylık fiyat"><template #body="{ data }">{{ money(data.monthly_price) }}</template></Column>
           <Column header="Yıllık fiyat"><template #body="{ data }">{{ money(data.yearly_price) }}</template></Column>
           <Column header="Durum"><template #body="{ data }"><Tag :value="data.is_active ? 'Aktif' : 'Pasif'" :severity="data.is_active ? 'success' : 'secondary'" /></template></Column>
@@ -71,7 +71,7 @@
       <div class="field"><label>Müşteri türü</label><SelectButton v-model="packageForm.account_type" :options="TYPE_OPTIONS" option-label="label" option-value="value" :allow-empty="false" /></div>
       <div class="grid-2">
         <div class="field"><label>Aylık kredi</label><InputNumber v-model="packageForm.monthly_credits" :min="0" fluid /></div>
-        <div class="field"><label>Ekipman limiti <small>(boş = sınırsız)</small></label><InputNumber v-model="packageForm.equipment_limit" :min="0" fluid /></div>
+        <div class="field"><label>İşyeri limiti <small>(boş = sınırsız)</small></label><InputNumber v-model="packageForm.workplace_limit" :min="0" fluid /></div>
         <div class="field"><label>Aylık fiyat (TL + KDV)</label><InputNumber v-model="packageForm.monthly_price" :min="0" :max-fraction-digits="2" fluid /></div>
         <div class="field"><label>Yıllık fiyat (TL + KDV)</label><InputNumber v-model="packageForm.yearly_price" :min="0" :max-fraction-digits="2" fluid /></div>
       </div>
@@ -155,11 +155,11 @@ const load = async () => {
 
 // --- Paket ---
 const packageOpen = ref(false)
-const packageForm = reactive({ id: null as number | null, name: '', account_type: 'expert', monthly_credits: 0 as number | null, equipment_limit: null as number | null, monthly_price: null as number | null, yearly_price: null as number | null, is_active: true })
+const packageForm = reactive({ id: null as number | null, name: '', account_type: 'expert', monthly_credits: 0 as number | null, workplace_limit: null as number | null, monthly_price: null as number | null, yearly_price: null as number | null, is_active: true })
 const openPackage = (item: any) => {
   Object.assign(packageForm, item
-    ? { id: item.id, name: item.name, account_type: item.account_type, monthly_credits: item.monthly_credits, equipment_limit: item.equipment_limit, monthly_price: item.monthly_price === null ? null : Number(item.monthly_price), yearly_price: item.yearly_price === null ? null : Number(item.yearly_price), is_active: !!item.is_active }
-    : { id: null, name: '', account_type: 'expert', monthly_credits: 0, equipment_limit: null, monthly_price: null, yearly_price: null, is_active: true })
+    ? { id: item.id, name: item.name, account_type: item.account_type, monthly_credits: item.monthly_credits, workplace_limit: item.workplace_limit, monthly_price: item.monthly_price === null ? null : Number(item.monthly_price), yearly_price: item.yearly_price === null ? null : Number(item.yearly_price), is_active: !!item.is_active }
+    : { id: null, name: '', account_type: 'expert', monthly_credits: 0, workplace_limit: null, monthly_price: null, yearly_price: null, is_active: true })
   dialogError.value = ''
   packageOpen.value = true
 }
@@ -182,9 +182,9 @@ const assignOpen = ref(false)
 const assignForm = reactive({ choice: '' as string, note: '' })
 const assignOptions = computed(() => [
   ...packages.value.filter(item => item.is_active && item.account_type === target.value?.tenant_type)
-    .map(item => ({ label: `${item.name} · ${item.monthly_credits} kredi/ay · ${item.equipment_limit ?? 'sınırsız'} ekipman`, value: `package:${item.id}` })),
+    .map(item => ({ label: `${item.name} · ${item.monthly_credits} kredi/ay · ${item.workplace_limit ?? 'sınırsız'} işyeri`, value: `package:${item.id}` })),
   { label: 'Sınırsız (geçiş)', value: 'unlimited' },
-  { label: 'Paket yok (okuma ve yeni ekipman kapalı)', value: 'none' }
+  { label: 'Paket yok (okuma ve yeni işyeri kapalı)', value: 'none' }
 ])
 const openAssign = (account: any) => {
   target.value = account

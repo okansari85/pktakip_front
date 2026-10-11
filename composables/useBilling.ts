@@ -1,13 +1,13 @@
 // Paket ve kredi (Paketim, Kredi hareketleri). Birim "kredi": yalnızca rapor okuma düşer (metin / OCR 1, görüntü 3, tesisat ve
-// tüp kontrol formu 5); ekipman için paketin ayrı aktif ekipman limiti var. Mevcut hesaplar paket atanana kadar sınırsız (geçiş).
+// tüp kontrol formu 5); paketin ayrı aktif işyeri limiti var (her lokasyon-firma kaydı bir işyeri; kullanıcı sınırsız). Mevcut hesaplar paket atanana kadar sınırsız (geçiş).
 export interface BillingStatus {
   mode: 'unlimited' | 'package' | 'promo' | 'none'
   unlimited: boolean
   package?: { id: number; name: string } | null
   monthly_credits?: number
   credits?: number
-  equipment_limit?: number | null
-  active_equipment?: number
+  workplace_limit?: number | null
+  active_workplaces?: number
   next_grant_at?: string | null
   resets_at?: string | null
 }

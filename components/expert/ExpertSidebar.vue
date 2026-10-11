@@ -103,7 +103,7 @@
     </template>
 
     <div class="sidebar-bottom">
-      <!-- Paketim: kalan kredi ve ekipman doluluğu; tıklayınca kredi hareketleri -->
+      <!-- Paketim: kalan kredi ve işyeri doluluğu; tıklayınca kredi hareketleri -->
       <NuxtLink v-if="!collapsed" to="/expert/settings/analyses?tab=credits" class="credit-link" title="Kredi hareketleri"><ExpertCreditSummary compact /></NuxtLink>
       <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>{{ roleLabel }}</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">

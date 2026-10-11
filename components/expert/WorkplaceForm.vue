@@ -116,6 +116,12 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const NEW_COMPANY = -1
 const { get, post, patch, errorMessage } = useExpertApi()
+// Paketin işyeri limiti: doluysa yeni firma da açılmasın (firma işyerinden önce kaydedilir); asıl kontrol backend'de.
+const { status: billing, load: loadBilling } = useBilling()
+const workplaceLimitFull = () => {
+  const limit = billing.value?.unlimited ? null : billing.value?.workplace_limit
+  return limit !== null && limit !== undefined && (billing.value?.active_workplaces ?? 0) >= limit
+}
 
 const customers = ref<{ id: number; name: string }[]>([])
 const customerLocations = ref<{ id: number; name: string }[]>([])
@@ -254,6 +260,11 @@ const save = async () => {
   saving.value = true
   error.value = ''
   try {
+    await loadBilling()
+    if (workplaceLimitFull()) {
+      error.value = `İşyeri limitiniz doldu (${billing.value?.active_workplaces} / ${billing.value?.workplace_limit}). Yeni işyeri eklemek için paketinizi yükseltin.`
+      return
+    }
     let businessEntityId = companySelection.value
     if (businessEntityId === NEW_COMPANY) {
       const created = await post<MyCompany>('/my-companies', { name: newCompany.name.trim(), company_type: newCompany.company_type })
@@ -278,6 +289,7 @@ const save = async () => {
       const items = await get<{ id: number; business_entity_id: number }[]>(`/customers/${customerId.value}/locations/${locationId.value}/companies`)
       workplaceId = items.filter(item => item.business_entity_id === businessEntityId).sort((a, b) => b.id - a.id)[0]?.id ?? null
     }
+    loadBilling()
     try {
       if (workplaceId) await post(`/pk-workplace-employee-bands/${workplaceId}`, { band: employeeBand.value })
     } catch (e: any) {

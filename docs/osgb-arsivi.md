@@ -6,9 +6,11 @@ Durum: tasarım aşaması, kod yazılmadı. Kararlar 8 Ekim 2026'da kullanıcıy
 - Ürün adı şimdilik **PKTakip** kalır. "Uzman Takip" adı konuşuldu, değişiklik ertelendi.
 
 ## Modüller
-- Uygulama modüllerden oluşur; **her modülün kendi Genel Bakış'ı** vardır.
-- Modüller ayrı ayrı satılır. Müşteri kendisi satın alır; süper admin de elle açıp kapatabilir.
+- Uygulama modüllerden oluşur; **her modülün kendi Genel Bakış'ı** vardır. *(10 Ekim: yeniden değerlendiriliyor; aşağıdaki "Açık konu"ya bakın.)*
+- **Fiyatlandırma (10 Ekim 2026'da değişti):** Modüller ayrı satılmaz. OSGB Arşivi **aynı pakette, aynı kredi** ile çalışır; fiyatlar aynıdır.
 - Kapalı modül menüde görünmez.
+
+> **Açık konu (10 Ekim):** Her modülün altına ayrı Genel Bakış ve Türkiye haritası koymak tekrar olur. Önerilen: tek, ortak bir Genel Bakış (harita + özet + yapılacaklar); bugünkü Genel Bakış'ın periyodik kontrole özel sekmeleri Durum Raporu'na taşınır; arşivin karşılığı "Arşiv Durumu" olur. Henüz onaylanmadı.
 
 ```
 ▾ Periyodik Kontrol
@@ -28,6 +30,12 @@ Ayarlar           (ortak)
 - Modül başlıkları açılır kapanır.
 - İşyeri üstteki menüden seçilir.
 
+## Fiyatlandırma ilkeleri (10 Ekim 2026, uygulandı)
+- **Tek limit: işyeri.** Her `location_business_entity` kaydı bir işyeri; pasif işyeri ya da pasif lokasyon sayılmaz. Bütün modüller aynı limiti kullanır; modüllere ayrı limit konmaz.
+- **Ekipman, çalışan ve kullanıcı sayısı sınırsız.** Kullanıcı başı ücret yok (rakiplerin çoğu kullanıcı başı alıyor; arşivde tek operasyon kullanıcısıyla delinebildiği için seçilmedi).
+- **Kredi** yalnızca yapay zeka okumasında düşer; elle kullanım kredisiz.
+- Limitler (fiyatlar değişmedi): Mini 10, Standart 25, Plus sınırsız; OSGB Başlangıç 75, Pro sınırsız; kurumsal paketler sınırsız; ücretsiz deneme 3 işyeri. Başlangıç 75: rakiplerde 1.999 TL ≈ 2–3 uzman kullanıcısı, uzman başına 20–25 işyeri varsayımı, +%10.
+
 ## OSGB Arşivi
 **Birim:** İşyeri (SGK sicili). Her işyerinin kendi arşivi vardır.
 
@@ -44,8 +52,8 @@ Ayarlar           (ortak)
 
 **Belgeler**
 - Toplu olarak, seçili işyerinin Arşiv sayfasından yüklenir.
-- Yapay zeka her belgenin türünü, tarihini ve tutanaklardaki çalışanları bulur. Uzman onaylar; onaysız hiçbir şey kaydedilmez.
-- Yapay zeka okuması **kredi ile** yapılır.
+- **Elle yükleme her zaman vardır ve kredi düşmez** (10 Ekim 2026): uzman belge türünü ve tarihini kendisi seçer. Gerekçe: ödemeye razı OSGB sahibi "yapay zekasız" program istedi.
+- **Yapay zeka okuması isteğe bağlıdır ve kredi düşer:** her belgenin türünü, tarihini ve tutanaklardaki çalışanları bulur. Uzman onaylar; onaysız hiçbir şey kaydedilmez.
 - Aynı belge üst üste eklenir. **Belge tarihine göre en son olan geçerlidir**; eskiler geçmişte kalır.
 
 **Çalışanlar**
