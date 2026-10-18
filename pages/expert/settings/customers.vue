@@ -6,7 +6,7 @@
         <h1>{{ t.page }}</h1>
         <p>{{ t.intro }}</p>
       </div>
-      <button class="primary-button" type="button" @click="orgMode ? (wizardOpen = true) : openCustomerForm()">
+      <button class="primary-button" type="button" @click="wizardOpen = true">
         <i class="pi pi-plus" />
         <span>{{ t.add }}</span>
       </button>
@@ -27,7 +27,7 @@
         <i class="pi pi-building" />
         <strong>{{ t.emptyTitle }}</strong>
         <span>{{ t.emptyText }}</span>
-        <button v-if="orgMode && !search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus" /> İlk organizasyonunuzu ekleyin</button>
+        <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus" /> {{ orgMode ? 'İlk organizasyonunuzu ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -148,7 +148,8 @@
       </section>
     </div>
 
-    <ExpertOrganizationWizard v-if="wizardOpen" @close="wizardOpen = false" @created="onWizardCreated" />
+    <!-- Organizasyon / müşteri ekleme: bireysel uzman ve OSGB aynı sihirbaz (OSGB'de "müşteri" denir; kullanıcı 18 Ekim 2026) -->
+    <ExpertOrganizationWizard v-if="wizardOpen" :customer-mode="!orgMode" @close="wizardOpen = false" @created="onWizardCreated" />
 
     <div v-if="organizationFormOpen" class="modal-backdrop">
       <section class="modal-card wide">

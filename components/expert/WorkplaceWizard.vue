@@ -73,7 +73,7 @@
               <select v-model="companySelection" @change="onCompanySelect">
                 <option v-if="customerType === 'corporate' && customerName" :value="SELF">{{ customerName }}</option>
                 <option v-else :value="null" disabled>Firma seçin</option>
-                <optgroup v-if="ownCompanies.length" label="Bu organizasyonun firmaları">
+                <optgroup v-if="ownCompanies.length" :label="account === 'osgb' ? 'Bu müşterinin firmaları' : 'Bu organizasyonun firmaları'">
                   <option v-for="c in ownCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
                 <optgroup v-if="freeCompanies.length" label="Henüz atama yapılmamış firmalar">
@@ -212,7 +212,7 @@
           <template v-else>
             <dl class="summary">
               <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> Firma</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · yeni firma</small></dd></template>
-              <template v-else-if="customerName"><dt><i class="pi pi-sitemap" /> Organizasyon</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
+              <template v-else-if="customerName"><dt><i class="pi pi-sitemap" /> {{ account === 'osgb' ? 'Müşteri' : 'Organizasyon' }}</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
               <template v-if="isSelf && customerType === 'public'"><dt><i class="pi pi-building" /> İşyeri</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · Firmalar'a bu adla eklenir</small></dd></template>
               <template v-if="askName && displayName.trim()"><dt><i class="pi pi-tag" /> İşyeri adı</dt><dd>{{ displayName.trim() }} <small>· listelerde "{{ displayName.trim() }} · {{ chosenName }}"</small></dd></template>
               <dt><i class="pi pi-map-marker" /> Lokasyon</dt><dd>{{ location.name }}</dd>
@@ -252,7 +252,10 @@
 import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, useExpertApi, type MyCompany, type NaceItem } from '~/composables/useExpertApi'
 import { CUSTOMER_TYPES, customerTypeLabel, useCustomerTypes, type CustomerType } from '~/composables/useCustomerTypes'
 
-const props = defineProps<{ customerId: number | null; customerName?: string | null; location: { id: number; name: string } }>()
+// account: bireysel uzman (expert), OSGB (osgb; ekranda "müşteri" denir) ya da kurumsal hesap (corporate; müşteri firmanın
+// kendisi, tür sorulmaz, kurumsal firma gibi işler).
+const props = defineProps<{ customerId: number | null; customerName?: string | null; location: { id: number; name: string }; account?: 'expert' | 'osgb' | 'corporate' }>()
+const noun = computed(() => props.account === 'osgb' ? 'müşteri' : 'organizasyon')
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 type Step = 'ctype' | 'target' | 'company' | 'wname' | 'campus' | 'nace' | 'hazard' | 'employees' | 'sgk' | 'summary'
@@ -377,7 +380,7 @@ const steps = computed<Step[]>(() => [
 const stepIndex = ref(0)
 const step = computed(() => steps.value[Math.min(stepIndex.value, steps.value.length - 1)]!)
 const stepTitle = computed(() => {
-  if (step.value === 'ctype' && props.customerName) return `"${props.customerName}" ne tür bir organizasyon?`
+  if (step.value === 'ctype' && props.customerName) return `"${props.customerName}" ne tür bir ${noun.value}?`
   if (step.value === 'wname' && chosenName.value) return `"${chosenName.value}" lokasyonun tamamında mı, bir bölümünde mi faaliyet gösteriyor?`
   if (step.value === 'campus') return isSelf.value ? 'Bu lokasyonda zaten bir işyeri kayıtlı' : `"${chosenName.value}" bu lokasyonda zaten kayıtlı`
   if (step.value === 'nace' && !isSelf.value && chosenName.value) return `"${chosenName.value}" bu lokasyonda ne iş yapıyor?`
@@ -518,8 +521,9 @@ async function save() {
 }
 
 onMounted(async () => {
-  const types = await loadCustomerTypes()
-  customerType.value = props.customerId ? types[String(props.customerId)] ?? null : null
+  // Kurumsal hesap: müşteri firmanın kendisi; tür sorulmaz, kurumsal firma gibi (ana firma ya da başka firma).
+  const types = props.account === 'corporate' ? {} : await loadCustomerTypes()
+  customerType.value = props.account === 'corporate' ? 'corporate' : props.customerId ? types[String(props.customerId)] ?? null : null
   typeAsked.value = !customerType.value
   pickedType.value = customerType.value
   ready.value = true

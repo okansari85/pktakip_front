@@ -5,7 +5,7 @@
         <div class="head-title">
           <span class="head-icon"><i class="pi pi-sitemap" /></span>
           <div>
-            <h2>Organizasyon Ekle</h2>
+            <h2>{{ customerMode ? 'Müşteri Ekle' : 'Organizasyon Ekle' }}</h2>
             <p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu birkaç adımda tanımlayın.</p>
           </div>
         </div>
@@ -19,7 +19,7 @@
             <span class="dot"><i :class="step > n ? 'pi pi-check' : STEPS[n - 1]!.icon" /></span>
             <span class="name">{{ STEPS[n - 1]!.name }}</span>
           </li>
-          <li class="stepper-note"><i class="pi pi-info-circle" /> Lokasyonları ve firmaları organizasyonu oluşturduktan sonra eklersiniz.</li>
+          <li class="stepper-note"><i class="pi pi-info-circle" /> Lokasyonları ve firmaları {{ customerMode ? 'müşteriyi' : 'organizasyonu' }} oluşturduktan sonra eklersiniz.</li>
         </ol>
 
         <div class="content">
@@ -27,7 +27,7 @@
             <span class="step-icon"><i :class="STEPS[step - 1]!.icon" /></span>
             <div>
               <p class="step-count">Adım {{ visibleSteps.indexOf(step) + 1 }} / {{ visibleSteps.length }}</p>
-              <h3>{{ STEPS[step - 1]!.title }}</h3>
+              <h3>{{ stepTitles[step - 1] }}</h3>
               <p class="step-desc">{{ STEPS[step - 1]!.desc }}</p>
             </div>
           </div>
@@ -55,6 +55,13 @@
             </label>
             <p class="hint"><i class="pi pi-lightbulb" /> {{ current.nameHint }}</p>
             <p class="hint"><i class="pi pi-eye" /> Bu ad listelerde, raporlarda ve işyerlerinin üstünde görünür.</p>
+            <!-- OSGB: Müşteri Ekle penceresindeki Not alanı (isteğe bağlı) -->
+            <template v-if="customerMode">
+              <label>Not <small>(isteğe bağlı)</small>
+                <textarea v-model="notes" rows="3" placeholder="Örn. sözleşme dönemi, yetkili kişi..."></textarea>
+              </label>
+              <p class="hint"><i class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
+            </template>
           </div>
 
           <!-- 3: alt organizasyonlar (isteğe bağlı, iki düzey) -->
@@ -94,7 +101,7 @@
             <div class="next-steps">
               <strong><i class="pi pi-directions" /> Sonra ne yapacaksınız?</strong>
               <ol>
-                <li><b>Lokasyonlar</b> sayfasından bu organizasyona lokasyon (adres, bina, tesis) ekleyin.</li>
+                <li><b>Lokasyonlar</b> sayfasından bu {{ customerMode ? 'müşteriye' : 'organizasyona' }} lokasyon (adres, bina, tesis) ekleyin.</li>
                 <li>Lokasyonda <b>Lokasyona Firma Tanımla</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı, çalışan sayısı).</li>
                 <li>İşyerine periyodik kontrol ekipmanlarını ekleyin.</li>
               </ol>
@@ -122,6 +129,11 @@ import type { CustomerType } from '~/composables/useCustomerTypes'
 // (müşteri, aynı adla kök organizasyon, alt organizasyonlar); OSGB'de müşteri eklerken açılan kökle aynı yöntem.
 // 1. adımdaki tür müşterinin türüdür (ekranda "organizasyon" denir; kullanıcı 18 Ekim 2026): pk-customer-types ile kaydedilir,
 // "Lokasyona Firma Ata" sihirbazı soruyu buna göre sorar. Şahıs işletmesinde alt organizasyon adımı yok (şubeler lokasyondur).
+// customerMode: OSGB "Müşteri Ekle" (ekranda "müşteri" denir, Not alanı var); bireysel uzmanda "organizasyon".
+const props = defineProps<{ customerMode?: boolean }>()
+const noun = computed(() => props.customerMode ? 'müşteri' : 'organizasyon')
+const Noun = computed(() => props.customerMode ? 'Müşterinin' : 'Organizasyonun')
+const notes = ref('')
 const emit = defineEmits<{ close: []; created: [customerId: number | string, warning: string] }>()
 
 type Kind = 'kurumsal' | 'sahis' | 'kamu'
@@ -155,6 +167,7 @@ const STEPS = [
   { name: 'Özet', icon: 'pi pi-list-check', title: 'Kontrol edip oluşturun', desc: 'Aşağıdaki yapı oluşturulacak. Geri dönüp değiştirebilirsiniz.' }
 ]
 
+const stepTitles = computed(() => [`${Noun.value} türü nedir?`, `${Noun.value} adı nedir?`, STEPS[2]!.title, STEPS[3]!.title])
 const config = useRuntimeConfig()
 const { authHeaders, user } = useAuth()
 const headers = () => ({ ...authHeaders(), ...(user.value?.tenant_id ? { 'X-Tenant-ID': String(user.value.tenant_id) } : {}) })
@@ -205,7 +218,7 @@ async function create() {
   const title = name.value.trim()
   let customerId: number | string | null = null
   try {
-    customerId = (await post('/customers', { name: title, notes: null }))?.id
+    customerId = (await post('/customers', { name: title, notes: notes.value.trim() || null }))?.id
     if (!customerId) throw new Error('Organizasyon oluşturulamadı.')
   } catch (e: any) {
     error.value = e?.data?.message || e?.message || 'Organizasyon oluşturulamadı.'
@@ -238,6 +251,7 @@ async function create() {
 
 <style scoped>
 .modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay);display:grid;place-items:center;padding:20px}
+textarea{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--admin-border);border-radius:9px;outline:0;font:inherit;font-size:13px;color:var(--admin-heading);background:var(--admin-input);resize:vertical}
 .modal-card{width:min(860px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px 26px;background:var(--admin-input);border-radius:14px;box-shadow:0 20px 60px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:20px}
 .head-title{display:flex;align-items:center;gap:14px}

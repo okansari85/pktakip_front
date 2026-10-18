@@ -45,8 +45,10 @@
         <tbody>
           <tr v-for="item in filtered" :key="item.id">
             <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><div class="stacked"><strong>{{ workplaceTitle(item.id, item.company_name) }}</strong><small v-if="workplaceFirm(item.id, item.company_name) || titleText(item)">{{ [workplaceFirm(item.id, item.company_name), titleText(item)].filter(Boolean).join(' · ') }}</small></div></div></td>
-            <td v-if="!corporate">{{ item.customer_name || '—' }}</td>
-            <td><div class="stacked"><strong>{{ item.location_name }}</strong><small v-if="item.organization_name">{{ item.organization_name }}</small></div></td>
+            <!-- Bireysel uzman: lokasyonun bağlı olduğu organizasyon (altında en üstteki); OSGB: müşteri (kullanıcı 18 Ekim 2026) -->
+            <td v-if="!corporate && multiUser">{{ item.customer_name || '—' }}</td>
+            <td v-else-if="!corporate"><div class="stacked"><strong>{{ item.organization_name || item.customer_name || '—' }}</strong><small v-if="item.organization_name && item.customer_name && item.organization_name !== item.customer_name">{{ item.customer_name }}</small></div></td>
+            <td><div class="stacked"><strong>{{ item.location_name }}</strong><small v-if="item.organization_name && (multiUser || corporate)">{{ item.organization_name }}</small></div></td>
             <td>
               <div v-if="item.nace_code" class="stacked"><strong>{{ item.nace_code }}</strong><small class="activity" :title="item.activity || ''">{{ item.activity }}</small></div>
               <span v-else>—</span>

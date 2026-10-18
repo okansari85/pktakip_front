@@ -142,18 +142,12 @@
     <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="selectedCustomer?.name" @close="areaLocation = null" />
     <ExpertWorkplaceUnitsModal v-if="unitWorkplace && companyLocation" :location="companyLocation" :workplace="unitWorkplace" @close="unitWorkplace = null" @changed="loadUnits(companyLocation.id)" />
 
-    <!-- Bireysel uzman: soru-cevap sihirbazı (kullanıcı 18 Ekim 2026); OSGB / kurumsal: bugünkü form -->
+    <!-- Lokasyona firma atama: bütün hesaplarda soru-cevap sihirbazı (kullanıcı 18 Ekim 2026: OSGB ve kurumsal da) -->
     <ExpertWorkplaceWizard
-      v-if="companyFormOpen && companyLocation && !multiUser"
+      v-if="companyFormOpen && companyLocation"
+      :account="corporate ? 'corporate' : multiUser ? 'osgb' : 'expert'"
       :customer-id="selectedCustomerId"
       :customer-name="selectedCustomer?.name"
-      :location="companyLocation"
-      @close="companyFormOpen = false"
-      @saved="onWorkplaceSaved"
-    />
-    <ExpertWorkplaceForm
-      v-if="companyFormOpen && companyLocation && multiUser"
-      :customer-id="selectedCustomerId"
       :location="companyLocation"
       @close="companyFormOpen = false"
       @saved="onWorkplaceSaved"

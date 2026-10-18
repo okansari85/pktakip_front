@@ -28,13 +28,12 @@ export const useDashboardScope = () => {
     ...(locationId.value && workplaceId.value ? { workplace_id: workplaceId.value } : {})
   }))
 
-  // Grafik ve listelerde lokasyon: aynı adlı lokasyonlar olabildiği için müşteri adıyla. Kurumsal hesapta müşteri firmanın
-  // kendisi (tek müşteri): yalnızca lokasyon adı.
-  const { corporate } = useAccount()
+  // Grafik, liste ve raporlarda lokasyon yalnızca kendi adıyla yazılır; müşteri / organizasyon adı başına eklenmez
+  // (kullanıcı 18 Ekim 2026: "Koç Holding A.Ş · Arçelik Beylikdüzü Kampüs" gibi müşteri adı ekranlarda ve raporlarda görünmesin).
   const locationLabel = (id: number | null | undefined, fallback?: string | null) => {
     const group = groups.value.find(item => item.location_id === id)
     if (!group) return fallback || '—'
-    return corporate.value ? group.location_name : [group.customer_name, group.location_name].filter(Boolean).join(' · ')
+    return group.location_name || fallback || '—'
   }
   const scopeLabel = computed(() => {
     if (locationId.value) {
