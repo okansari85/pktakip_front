@@ -43,6 +43,8 @@ const remember = ref(false)
 const error = ref('')
 const loading = ref(false)
 const { login, user } = useAuth()
+// Oturum açıkken hesap pasife alındıysa buraya ?pasif=1 ile gelinir (kullanıcı 19 Ekim 2026).
+if (useRoute().query.pasif) error.value = 'Hesabınız pasife alınmıştır. Ayrıntı için bizimle iletişime geçin.'
 const submit = async () => {
   error.value = ''
   loading.value = true

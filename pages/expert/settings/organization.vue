@@ -4,7 +4,8 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Organizasyon</strong></div>
         <h1>Organizasyon</h1>
-        <p>Firmanızın organizasyon yapısını hiyerarşik olarak oluşturun. Lokasyonları organizasyonlara Lokasyonlar sayfasından eklersiniz.</p>
+        <p v-if="kamu">Kurumunuzun organizasyon yapısını (daire başkanlıkları, şube müdürlükleri) hiyerarşik olarak oluşturun. Binaları lokasyon olarak Lokasyonlar sayfasından eklersiniz.</p>
+        <p v-else>Firmanızın organizasyon yapısını hiyerarşik olarak oluşturun. Lokasyonları organizasyonlara Lokasyonlar sayfasından eklersiniz.</p>
       </div>
       <button v-if="customer" class="primary-button" type="button" @click="openForm(null)">
         <i class="pi pi-plus" /><span>Organizasyon Ekle</span>
@@ -20,7 +21,7 @@
       <div v-if="!corporate && account" class="state-row">Bu sayfa kurumsal hesaplar içindir. Müşteri organizasyonlarını <NuxtLink to="/expert/settings/customers">Müşteriler</NuxtLink> sayfasından yönetirsiniz.</div>
       <div v-else-if="loading" class="state-row">Organizasyon yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
-      <div v-else-if="!customer" class="state-row">Firma kaydı bulunamadı.</div>
+      <div v-else-if="!customer" class="state-row">{{ kamu ? 'Kurum' : 'Firma' }} kaydı bulunamadı.</div>
       <div v-else-if="filteredTree.length === 0" class="state-row empty-state">
         <i class="pi pi-sitemap" />
         <strong>{{ search ? 'Aramaya uyan organizasyon yok' : 'Henüz organizasyon yok' }}</strong>
@@ -54,7 +55,7 @@ interface Customer { id: number; name: string }
 interface OrganizationNode { id: number | string; name: string; children?: OrganizationNode[] }
 
 const { get, post, patch, del, errorMessage } = useExpertApi()
-const { account, corporate, load: loadAccount } = useAccount()
+const { account, corporate, kamu, load: loadAccount } = useAccount()
 
 const customer = ref<Customer | null>(null)
 const tree = ref<OrganizationNode[]>([])

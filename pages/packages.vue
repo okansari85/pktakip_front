@@ -130,7 +130,7 @@ const messageOf = (e: any, fallback: string) => {
   return (errors && (Object.values(errors).flat()[0] as string)) || e?.data?.message || fallback
 }
 
-const TYPE_LABELS: Record<string, string> = { expert: 'Bireysel uzman', osgb: 'OSGB', corporate: 'Kurumsal' }
+const TYPE_LABELS: Record<string, string> = { expert: 'Bireysel uzman', osgb: 'OSGB', corporate: 'Kurumsal', public: 'Kamu' }
 const TYPE_OPTIONS = [{ label: 'Bireysel uzman', value: 'expert' }, { label: 'OSGB', value: 'osgb' }, { label: 'Kurumsal', value: 'corporate' }]
 const money = (value: any) => value === null || value === undefined ? '—' : `${new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(Number(value))} TL`
 const formatDate = (value: string) => new Intl.DateTimeFormat('tr-TR').format(new Date(value))
@@ -181,7 +181,8 @@ const target = ref<any>(null)
 const assignOpen = ref(false)
 const assignForm = reactive({ choice: '' as string, note: '' })
 const assignOptions = computed(() => [
-  ...packages.value.filter(item => item.is_active && item.account_type === target.value?.tenant_type)
+  // Kamu hesabı kurumsal paketleri kullanır (kullanıcı 18 Ekim 2026).
+  ...packages.value.filter(item => item.is_active && item.account_type === (target.value?.tenant_type === 'public' ? 'corporate' : target.value?.tenant_type))
     .map(item => ({ label: `${item.name} · ${item.monthly_credits} kredi/ay · ${item.workplace_limit ?? 'sınırsız'} işyeri`, value: `package:${item.id}` })),
   { label: 'Sınırsız (geçiş)', value: 'unlimited' },
   { label: 'Paket yok (okuma ve yeni işyeri kapalı)', value: 'none' }

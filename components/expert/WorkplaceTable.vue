@@ -18,7 +18,7 @@
       </label>
       <label class="field">
         <span>Ara</span>
-        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Firma, lokasyon, NACE veya SGK no" /></div>
+        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'İşyeri, lokasyon, NACE veya SGK no' : 'Firma, lokasyon, NACE veya SGK no'" /></div>
       </label>
     </div>
 
@@ -33,7 +33,7 @@
       <table>
         <thead>
           <tr>
-            <th>Firma</th>
+            <th>{{ kamu ? 'İşyeri' : 'Firma' }}</th>
             <th v-if="!corporate">{{ multiUser ? 'Müşteri' : 'Organizasyon' }}</th>
             <th>Lokasyon</th>
             <th>NACE</th>
@@ -68,7 +68,7 @@
 interface WorkplaceRow { id: number; business_entity_id?: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
 const props = defineProps<{ workplaces: WorkplaceRow[]; loading?: boolean; error?: string }>()
-const { corporate, multiUser } = useAccount()
+const { corporate, kamu, multiUser } = useAccount()
 const { get } = useExpertApi()
 // İşletme adı varsa üstte o, altında firma (işveren).
 const { load: loadNames, nameOf, workplaceTitle, workplaceFirm } = useWorkplaceNames()

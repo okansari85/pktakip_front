@@ -59,6 +59,17 @@ export const useAuth = () => {
     if (!response.user.roles.includes('super-admin') && !response.user.is_expert) {
       throw new Error('Bu panel yalnızca yetkili kullanıcılar içindir.')
     }
+    // Süper adminin pasife aldığı hesap (kullanıcı 19 Ekim 2026): oturum açılmaz, alınan jeton kapatılır.
+    if (!response.user.roles.includes('super-admin')) {
+      try {
+        await $fetch(`${config.public.apiBaseUrl}/pk-account`, { headers: { Authorization: `Bearer ${response.token}`, Accept: 'application/json' } })
+      } catch (e: any) {
+        if (e?.data?.code === 'hesap_pasif') {
+          await $fetch(`${config.public.apiBaseUrl}/logout`, { method: 'POST', headers: { Authorization: `Bearer ${response.token}` } }).catch(() => undefined)
+          throw new Error(e.data.message)
+        }
+      }
+    }
     token.value = response.token
     user.value = response.user
     if (import.meta.client) {

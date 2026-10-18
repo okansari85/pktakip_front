@@ -22,14 +22,14 @@
 
     <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Özet hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
-    <div v-else-if="!groups.length" class="card state">Henüz size atanmış bir işyeri yok. Firmalarım'dan işyeri ekleyin.</div>
+    <div v-else-if="!groups.length" class="card state">Henüz size atanmış bir işyeri yok. {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan işyeri ekleyin.</div>
 
     <template v-else-if="data">
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
         <div class="kpis" :class="team ? 'four' : 'three'">
-          <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ cityCount }} ilde<template v-if="!corporate"> · {{ scopeCounts.customers }} müşteri</template></small></div>
+          <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ districtMode ? `${districtCount} ilçede` : `${cityCount} ilde` }}<template v-if="!corporate"> · {{ scopeCounts.customers }} müşteri</template></small></div>
           <div class="kpi"><span>Takip edilen ekipman</span><strong>{{ data.totals.equipment }}</strong><small>{{ scopeCounts.workplaces }} işyeri</small></div>
           <div class="kpi"><span>Tesisat</span><strong>{{ data.installations.length }}</strong><small>{{ installationKpiText }}</small></div>
           <!-- OSGB / kurumsal: yönetici ve operasyon yöneticisi -->
@@ -37,8 +37,15 @@
         </div>
         <div class="map-grid">
           <section class="card chart-card map-card">
-            <header><h3>Türkiye haritası</h3><small>İle tıklayınca sayfa o ile göre güncellenir; tekrar tıklayınca tüm iller.</small></header>
-            <ExpertTurkeyMap :cities="mapCities" :selected="selectedCity" @select="selectedCity = $event" />
+            <!-- Kamu hesabında bütün lokasyonlar tek ildeyse o ilin ilçe haritası (kullanıcı 18 Ekim 2026) -->
+            <template v-if="districtMode">
+              <header><h3>{{ districtMode.name }} ilçe haritası</h3><small>İlçeye tıklayınca sayfa o ilçeye göre güncellenir; tekrar tıklayınca tüm ilçeler.</small></header>
+              <ExpertDistrictMap :city-code="districtMode.code" :stats="mapDistricts" :selected="selectedDistrict" @select="selectedDistrict = $event" />
+            </template>
+            <template v-else>
+              <header><h3>Türkiye haritası</h3><small>İle tıklayınca sayfa o ile göre güncellenir; tekrar tıklayınca tüm iller.</small></header>
+              <ExpertTurkeyMap :cities="mapCities" :selected="selectedCity" @select="selectedCity = $event" />
+            </template>
             <div class="map-legend">
               <span><i class="bad" /> Gecikmiş ya da uygun değil var</span>
               <span><i class="warn" /> 60 gün içinde kontrol</span>
@@ -47,7 +54,7 @@
             </div>
           </section>
           <section class="card chart-card gauge-card">
-            <header><h3>Genel durum</h3><small>{{ selectedCityName || 'Tüm iller' }}</small></header>
+            <header><h3>Genel durum</h3><small>{{ districtMode ? selectedDistrict || `${districtMode.name} · tüm ilçeler` : selectedCityName || 'Tüm iller' }}</small></header>
             <ExpertScoreGauge class="gauge-fill" :score="data.score" />
           </section>
         </div>
@@ -297,16 +304,57 @@ const installationKpiText = computed(() => {
   return [`${types} türde`, nonconforming && `${nonconforming} uygun değil`, overdue && `${overdue} süresi geçmiş`].filter(Boolean).join(' · ')
 })
 const cityCount = computed(() =>new Set((data.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size)
-// Seçili ilin lokasyonları: sayfanın kapsamı (takvim listesi de dahil) bunlar.
-const cityLocationIds = computed(() => selectedCity.value
-  ? (fullData.value?.locations || []).filter((location: any) => location.city_id === selectedCity.value).map((location: any) => location.location_id)
-  : null)
+// İlçe haritası (kamu hesabı, bütün lokasyonlar tek ilde): lokasyonların ilçeleri hesabın lokasyon listesinden (kurum tek müşteri).
+const { kamu: kamuAccount } = useAccount()
+const districtMode = computed(() => {
+  const list = fullData.value?.locations || []
+  const codes = new Set(list.map((location: any) => location.city_id))
+  if (!kamuAccount.value || !list.length || codes.size !== 1 || !list[0].city_id) return null
+  return { code: list[0].city_id as number, name: list[0].city_name as string }
+})
+const districtOf = ref<Record<number, string>>({})
+watch(districtMode, async (mode) => {
+  if (!mode || Object.keys(districtOf.value).length) return
+  try {
+    const customers = await get<any>('/customers')
+    const list = Array.isArray(customers) ? customers : customers?.items || customers?.data || []
+    const result: Record<number, string> = {}
+    for (const customer of list) {
+      const locations = await get<any[]>(`/customers/${customer.id}/locations`)
+      for (const location of locations || []) if (location.district) result[location.id] = location.district
+    }
+    districtOf.value = result
+  } catch { districtOf.value = {} }
+}, { immediate: true })
+const selectedDistrict = ref<string | null>(null)
+const mapDistricts = computed(() => {
+  const map = new Map<string, { name: string; count: number; equipment: number; overdue: number; nonconforming: number; upcoming: number }>()
+  for (const location of fullData.value?.locations || []) {
+    const name = districtOf.value[location.location_id]
+    if (!name) continue
+    const item = map.get(name) || { name, count: 0, equipment: 0, overdue: 0, nonconforming: 0, upcoming: 0 }
+    item.count++
+    item.equipment += location.total
+    item.overdue += location.overdue
+    item.nonconforming += location.nonconforming
+    item.upcoming += location.upcoming
+    map.set(name, item)
+  }
+  return [...map.values()]
+})
+const districtCount = computed(() => new Set((data.value?.locations || []).map((location: any) => districtOf.value[location.location_id]).filter(Boolean)).size)
+// Seçili ilin (ilçe haritasında ilçenin) lokasyonları: sayfanın kapsamı (takvim listesi de dahil) bunlar.
+const cityLocationIds = computed(() => selectedDistrict.value
+  ? (fullData.value?.locations || []).filter((location: any) => districtOf.value[location.location_id] === selectedDistrict.value).map((location: any) => location.location_id)
+  : selectedCity.value
+    ? (fullData.value?.locations || []).filter((location: any) => location.city_id === selectedCity.value).map((location: any) => location.location_id)
+    : null)
 const viewQuery = computed(() => cityLocationIds.value ? { ...query.value, 'location_ids[]': cityLocationIds.value } : query.value)
-watch(selectedCity, async () => {
+watch([selectedCity, selectedDistrict], async () => {
   if (!cityLocationIds.value) { cityData.value = null; return }
   cityLoading.value = true
   try { cityData.value = await get('/pk-dashboard', viewQuery.value) }
-  catch (e: any) { selectedCity.value = null; error.value = errorMessage(e, 'İl özeti alınamadı.') }
+  catch (e: any) { selectedCity.value = null; selectedDistrict.value = null; error.value = errorMessage(e, 'İl özeti alınamadı.') }
   finally { cityLoading.value = false }
 })
 // Kapsamdaki müşteri ve işyeri sayısı (uzmanın işyeri listesinden).
@@ -384,7 +432,7 @@ onMounted(async () => {
 
 // --- OSGB / kurumsal hesabın yöneticisi ve operasyon yöneticisi: Uzmanlar sekmesi, Uzman kartı, OSGB'de müşteri özeti.
 // Bireysel uzmanda (ve diğer rollerde) hiçbiri yok, sekmeler aynı. ---
-const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
+const { multiUser, corporate, kamu, isManager, isOperation, load: loadAccount } = useAccount()
 const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
 const tabs = computed(() => [
   ...TABS,

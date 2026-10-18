@@ -33,7 +33,8 @@
           <i class="pi pi-map-marker" />
           <span v-if="!collapsed">Lokasyonlar</span>
         </NuxtLink>
-        <NuxtLink v-if="!multiUser || isManager || isOperation" to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
+        <!-- Kamu hesabında Firmalar yok: işyerleri Lokasyonlar → İşyerleri'nden yönetilir -->
+        <NuxtLink v-if="!kamu && (!multiUser || isManager || isOperation)" to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
           <i class="pi pi-briefcase" />
           <span v-if="!collapsed">Firmalar</span>
         </NuxtLink>
@@ -90,9 +91,9 @@
 
       <div class="sidebar-section">
         <nav class="sidebar-nav">
-          <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? 'Firmalarım' : undefined">
+          <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? (kamu ? 'İşyerlerim' : 'Firmalarım') : undefined">
             <i class="pi pi-briefcase" />
-            <span v-if="!collapsed">Firmalarım</span>
+            <span v-if="!collapsed">{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</span>
           </NuxtLink>
           <NuxtLink :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
@@ -120,7 +121,7 @@ const emit = defineEmits<{ toggle: [] }>()
 const { logout, superAdmin } = useAuth()
 // Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
 // Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
-const { multiUser, corporate, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
+const { multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
 
 const PERIODIC = [

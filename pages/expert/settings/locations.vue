@@ -22,7 +22,9 @@
             <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }}</option>
           </select>
         </label>
-        <label class="field">
+        <!-- Kamu hesabı: yüzlerce birim için üst menüdeki gibi aramalı ağaç (kullanıcı 18 Ekim 2026) -->
+        <ExpertKamuOrgPicker v-if="kamu" page :options="pickerOptions" :value="selectedOrganizationId ? String(selectedOrganizationId) : ''" :count="orgLocationCount" :total="locations.length" :buildings="locationItems" @organization="value => selectedOrganizationId = value ? Number(value) : null" @location="pickLocationRow" />
+        <label v-else class="field">
           <span>{{ corporate || multiUser ? 'Organizasyon' : 'Alt organizasyon' }}</span>
           <select v-model="selectedOrganizationId" :disabled="!selectedCustomerId">
             <option :value="null">{{ corporate || multiUser ? 'Tüm organizasyonlar' : 'Tümü' }}</option>
@@ -67,21 +69,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="location in filteredLocations" :key="location.id">
+            <tr v-for="location in pagedLocations" :key="location.id">
               <td><div class="location-name"><span class="location-icon"><i class="pi pi-map-marker" /></span><strong>{{ location.name }}</strong></div></td>
               <td>{{ location.organization_name || '—' }}</td>
               <td>{{ [location.city, location.district].filter(Boolean).join(' / ') || '—' }}</td>
               <td class="address-cell">{{ location.address || '—' }}</td>
               <td>{{ formatDate(location.created_at) }}</td>
               <td class="actions">
-                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
+                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ kamu ? 'İşyerleri' : multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
                 <!-- Alanlar (isteğe bağlı): operasyonel alanlar firmasıyla, ortak alanlar firmasız -->
                 <button class="row-button" type="button" @click="areaLocation = location"><i class="pi pi-th-large" /> Alanlar</button>
               </td>
             </tr>
           </tbody>
         </table>
-        <div class="table-footer"><span>Toplam {{ filteredLocations.length }} lokasyon</span></div>
+        <div class="table-footer">
+          <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filteredLocations.length) }} / toplam {{ filteredLocations.length }} lokasyon · sayfada {{ PAGE_SIZE }}</span>
+          <div class="pager">
+            <button type="button" :disabled="page === 1" @click="page--"><i class="pi pi-angle-left" /> Önceki</button>
+            <span>Sayfa {{ page }} / {{ pageCount }}</span>
+            <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <i class="pi pi-angle-right" /></button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -89,19 +98,19 @@
       <aside class="company-drawer">
         <div class="drawer-head">
           <div>
-            <h2>{{ multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
+            <h2>{{ kamu ? 'Lokasyon İşyerleri' : multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
             <div class="drawer-subtitle"><i class="pi pi-map-marker" /><div><strong>{{ companyLocation.name }}</strong><span>{{ selectedCustomer?.name }}</span></div></div>
           </div>
           <button class="close-button" type="button" @click="closeCompanies"><i class="pi pi-times" /></button>
         </div>
 
         <div v-if="canEditStructure" class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
+          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ kamu ? 'İşyeri Ekle' : multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
         </div>
 
-        <div v-if="companiesLoading" class="drawer-state">Firmalar yükleniyor...</div>
+        <div v-if="companiesLoading" class="drawer-state">{{ kamu ? 'İşyerleri' : 'Firmalar' }} yükleniyor...</div>
         <div v-else-if="companiesError" class="drawer-state error-state">{{ companiesError }}</div>
-        <div v-else-if="locationCompanies.length === 0" class="drawer-state">Bu lokasyona henüz firma eklenmemiş.</div>
+        <div v-else-if="locationCompanies.length === 0" class="drawer-state">Bu lokasyona henüz {{ kamu ? 'işyeri' : 'firma' }} eklenmemiş.</div>
         <ul v-else class="company-list">
           <li v-for="item in locationCompanies" :key="item.id" class="company-item">
             <div class="company-item-head">
@@ -109,7 +118,7 @@
               <div class="company-name">
                 <template v-if="nameEdit?.id === item.id">
                   <div class="name-edit">
-                    <input v-model="nameEdit.value" type="text" placeholder="İşletme adı (ör. B Blok Depo) — boşsa firma adı" @keyup.enter="saveName" />
+                    <input v-model="nameEdit.value" type="text" :placeholder="kamu ? 'İşyeri adı (ör. B Blok Arşiv)' : 'İşletme adı (ör. B Blok Depo) — boşsa firma adı'" @keyup.enter="saveName" />
                     <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><i class="pi pi-check" /></button>
                     <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><i class="pi pi-times" /></button>
                   </div>
@@ -145,7 +154,7 @@
     <!-- Lokasyona firma atama: bütün hesaplarda soru-cevap sihirbazı (kullanıcı 18 Ekim 2026: OSGB ve kurumsal da) -->
     <ExpertWorkplaceWizard
       v-if="companyFormOpen && companyLocation"
-      :account="corporate ? 'corporate' : multiUser ? 'osgb' : 'expert'"
+      :account="kamu ? 'public' : corporate ? 'corporate' : multiUser ? 'osgb' : 'expert'"
       :customer-id="selectedCustomerId"
       :customer-name="selectedCustomer?.name"
       :location="companyLocation"
@@ -230,7 +239,7 @@ const selectedCustomer = computed(() => customers.value.find(c => c.id === selec
 const { load: loadCustomerTypes } = useCustomerTypes()
 const customerTypes = ref<Record<string, string | null>>({})
 loadCustomerTypes().then(types => { customerTypes.value = types })
-const publicCustomer = computed(() => !!selectedCustomerId.value && customerTypes.value[String(selectedCustomerId.value)] === 'public')
+const publicCustomer = computed(() => kamu.value || !!selectedCustomerId.value && customerTypes.value[String(selectedCustomerId.value)] === 'public')
 
 // Ağacı girintili seçenek listesine çevirir.
 const organizationOptions = computed(() => {
@@ -260,6 +269,44 @@ const filteredLocations = computed(() => {
     (!q || location.name.toLocaleLowerCase('tr-TR').includes(q))
   )
 })
+
+// Sayfalama (kullanıcı 18 Ekim 2026): tablo 10’ar satır; filtre / arama / müşteri değişince ilk sayfa.
+const PAGE_SIZE = 10
+const page = ref(1)
+const pageCount = computed(() => Math.max(1, Math.ceil(filteredLocations.value.length / PAGE_SIZE)))
+const pageStart = computed(() => (page.value - 1) * PAGE_SIZE)
+const pagedLocations = computed(() => filteredLocations.value.slice(pageStart.value, pageStart.value + PAGE_SIZE))
+watch([search, selectedOrganizationId, selectedCustomerId], () => { page.value = 1 })
+watch(pageCount, count => { if (page.value > count) page.value = count })
+
+// Kamu seçicisi: ağaç düğümleri, her düğümün (alt birimleriyle) lokasyon sayısı, aramada çıkan binalar.
+const pickerOptions = computed(() => {
+  const list: { value: string; label: string; depth: number }[] = []
+  const walk = (nodes: OrganizationNode[], depth: number) => nodes.forEach(node => { list.push({ value: String(node.id), label: node.name, depth }); walk(node.children || [], depth + 1) })
+  walk(organizationTree.value, 0)
+  return list
+})
+const orgLocationCounts = computed(() => {
+  const own = new Map<number, number>()
+  locations.value.forEach(location => { if (location.organization_id != null) own.set(location.organization_id, (own.get(location.organization_id) || 0) + 1) })
+  const counts = new Map<string, number>()
+  const walk = (node: OrganizationNode): number => {
+    const total = (own.get(node.id) || 0) + (node.children || []).reduce((sum, child) => sum + walk(child), 0)
+    counts.set(String(node.id), total)
+    return total
+  }
+  organizationTree.value.forEach(walk)
+  return counts
+})
+const orgLocationCount = (value: string) => orgLocationCounts.value.get(value) || 0
+const locationItems = computed(() => locations.value.map(location => ({ key: location.id, name: location.name, sub: location.organization_name })))
+// Aramada bina seçilince: organizasyon filtresi kalkar, tablo o lokasyonun adıyla aranır.
+const pickLocationRow = (id: number) => {
+  const location = locations.value.find(item => item.id === id)
+  if (!location) return
+  selectedOrganizationId.value = null
+  search.value = location.name
+}
 
 const loadCustomers = async () => {
   customersLoading.value = true
@@ -357,7 +404,7 @@ const loadLocationCompanies = async () => {
     const data = await $fetch<LocationCompany[]>(api(companiesPath()), { headers: tenantHeaders() })
     locationCompanies.value = Array.isArray(data) ? data : []
   } catch (e: any) {
-    companiesError.value = e?.data?.message || 'Firmalar alınamadı.'
+    companiesError.value = e?.data?.message || (kamu.value ? 'İşyerleri alınamadı.' : 'Firmalar alınamadı.')
   } finally { companiesLoading.value = false }
 }
 
@@ -413,7 +460,7 @@ const saveName = async () => {
 }
 
 const removeCompany = async (item: LocationCompany) => {
-  if (!confirm(`"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
+  if (!confirm(kamu.value ? `"${item.name}" işyeri bu lokasyondan kaldırılsın mı?` : `"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
   try {
     await $fetch(api(`${companiesPath()}/${item.id}`), { method: 'DELETE', headers: tenantHeaders() })
     await loadLocationCompanies()
@@ -421,7 +468,7 @@ const removeCompany = async (item: LocationCompany) => {
     useBilling().load()
   } catch (e: any) {
     const errors = e?.data?.errors
-    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Firma kaldırılamadı.')
+    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || (kamu.value ? 'İşyeri kaldırılamadı.' : 'Firma kaldırılamadı.'))
   }
 }
 
@@ -430,7 +477,7 @@ const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR').
 onMounted(loadCustomers)
 
 // Kurumsal hesap: müşteri firmanın kendisi (tek müşteri); seçim kutusu yok, otomatik seçilir.
-const { corporate, multiUser, isManager, load: loadAccount } = useAccount()
+const { corporate, kamu, multiUser, isManager, load: loadAccount } = useAccount()
 const canEditStructure = computed(() => !multiUser.value || isManager.value)
 onMounted(loadAccount)
 watch([corporate, customers], () => {
@@ -448,6 +495,9 @@ watch([corporate, customers], () => {
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.07)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
+.pager{display:flex;align-items:center;gap:10px}.pager span{color:var(--admin-muted);font-size:12px;font-weight:700}
+.pager button{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pager button:disabled{opacity:.45;cursor:not-allowed}
 .toolbar{padding:18px 16px;border-bottom:1px solid var(--admin-border);display:grid;grid-template-columns:minmax(180px,260px) minmax(200px,320px) 1fr;gap:12px;align-items:start}
 .toolbar.no-customer{grid-template-columns:minmax(200px,320px) 1fr}
 .field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}
@@ -458,7 +508,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-muted)}th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft)}td strong{color:var(--admin-heading)}
 .address-cell{max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .location-name{display:flex;align-items:center;gap:10px}.location-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:7px;color:var(--admin-text);background:var(--admin-chip)}
-.table-footer{padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:var(--admin-danger-text)}
+.table-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;color:var(--admin-muted);font-size:12px}.state-row{padding:80px 20px;text-align:center;color:var(--admin-muted)}.empty-state{display:flex;flex-direction:column;align-items:center;gap:7px}.empty-state i{font-size:30px;margin-bottom:4px}.empty-state strong{color:var(--admin-heading)}.error-state{color:var(--admin-danger-text)}
 .modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay);display:grid;place-items:center;padding:20px}
 .modal-card{width:min(480px,100%);padding:22px;background:var(--admin-input);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:22px}.modal-head h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}

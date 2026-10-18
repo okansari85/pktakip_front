@@ -4,7 +4,7 @@
       <div>
         <span class="eyebrow">Tanımlamalar / Müşteriler</span>
         <h1>Müşteriler</h1>
-        <p>PKTakip müşterilerini (uzman, OSGB, kurumsal) yönetin.</p>
+        <p>PKTakip müşterilerini (uzman, OSGB, kurumsal, kamu) yönetin.</p>
       </div>
       <button type="button" class="new-expert-button" @click="openCreateDialog">
         <i class="pi pi-plus" />
@@ -14,12 +14,13 @@
 
     <AdminCustomerStats :total="accounts.length" :active="activeCount" :inactive="inactiveCount" :detail="typeDetail" />
 
-    <AdminCustomerTable :customers="accounts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" />
+    <AdminCustomerTable :customers="accounts" :loading="loading" @open="openTenant" @impersonate="impersonate" @sendInvite="sendInvite" @toggle-status="toggleStatus" @remove="openDelete" />
 
     <Message v-if="success" severity="success" :closable="false" class="feedback-message">{{ success }}</Message>
     <Message v-if="error" severity="error" :closable="false" class="feedback-message">{{ error }}</Message>
 
     <AdminAccountCreateDialog v-model="showCreate" @created="handleCreated" />
+    <AdminAccountDeleteDialog v-model="showDelete" :tenant="deleteTarget" @deleted="handleDeleted" />
   </div>
 </template>
 
@@ -35,7 +36,7 @@ const success = ref('')
 const showCreate = ref(false)
 
 // PKTakip hesapları: bireysel uzman, OSGB, kurumsal (Taşeron'un firma hesapları listelenmez).
-const ACCOUNT_TYPES: Record<string, string> = { expert: 'uzman', osgb: 'OSGB', corporate: 'kurumsal' }
+const ACCOUNT_TYPES: Record<string, string> = { expert: 'uzman', osgb: 'OSGB', corporate: 'kurumsal', public: 'kamu' }
 const accounts = computed(() => tenants.value.filter(tenant => tenant.tenant_type in ACCOUNT_TYPES))
 const activeCount = computed(() => accounts.value.filter(tenant => Boolean(tenant.status)).length)
 const inactiveCount = computed(() => accounts.value.filter(tenant => !tenant.status).length)
@@ -88,6 +89,27 @@ const sendInvite = async (tenant: any) => {
     error.value = e?.data?.message || 'Davet e-postası gönderilemedi.'
   }
 }
+
+// Pasife / aktife alma (kullanıcı 19 Ekim 2026): pasif hesabın kullanıcıları giriş yapamaz; veriler kalır.
+const toggleStatus = async (tenant: any) => {
+  error.value = ''
+  success.value = ''
+  const pasif = Boolean(tenant.status)
+  if (pasif && !confirm(`"${tenant.name}" pasife alınsın mı? Hesabın kullanıcıları giriş yapamaz; veriler silinmez.`)) return
+  try {
+    const response = await $fetch<{ message: string }>(`${config.public.apiBaseUrl}/pk-accounts/${tenant.id}/${pasif ? 'deactivate' : 'activate'}`, { method: 'POST', headers: authHeaders() })
+    success.value = response.message
+    await loadExperts()
+  } catch (e: any) {
+    error.value = e?.data?.message || 'Hesabın durumu değiştirilemedi.'
+  }
+}
+
+// Kalıcı silme: yalnız pasif hesapta; özet + hesabın adı yazılarak (AccountDeleteDialog).
+const showDelete = ref(false)
+const deleteTarget = ref<any>(null)
+const openDelete = (tenant: any) => { error.value = ''; success.value = ''; deleteTarget.value = tenant; showDelete.value = true }
+const handleDeleted = async (message: string) => { success.value = message; await loadExperts() }
 
 const openTenant = (tenant: any) => {
   console.log('tenant', tenant)

@@ -3,7 +3,8 @@
     <div class="section-head">
       <div>
         <h2>Uzman atamaları</h2>
-        <p>Firma (işyeri) başına uzman. Uzman, Firmalarım'da yalnızca atandığı firmaları görür.</p>
+        <p v-if="kamu">İşyeri başına uzman. Uzman, İşyerlerim'de yalnızca atandığı işyerlerini görür.</p>
+        <p v-else>Firma (işyeri) başına uzman. Uzman, Firmalarım'da yalnızca atandığı firmaları görür.</p>
       </div>
       <span v-if="unassignedCount" class="warn-badge"><i class="pi pi-exclamation-triangle" /> {{ unassignedCount }} firmanın uzmanı yok</span>
     </div>
@@ -74,7 +75,7 @@ interface Expert { id: number; name: string; email: string }
 
 const { get, patch, errorMessage } = useExpertApi()
 // Kurumsal hesapta müşteri firmanın kendisi: yalnızca lokasyon.
-const { corporate } = useAccount()
+const { corporate, kamu } = useAccount()
 // Aynı firmanın lokasyondaki işyerleri adlarıyla ayrılır: "Eskişehir Buzdolabı İşletmesi · Arçelik".
 // Satırın başlığı işletme adı; adı yoksa lokasyon (ör. Pişirici Cihazlar İşletmesi). Firma, tehlike sınıfı ve NACE altında rozet.
 // Tehlike sınıfı ve NACE hesabın işyeri listesinden (yönetici / operasyon için bütün işyerleri).

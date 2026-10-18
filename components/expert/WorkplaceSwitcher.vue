@@ -2,7 +2,9 @@
   <div class="switcher" :class="{ empty: !context && !showAll }">
     <!-- Yönetici: lokasyonların bağlı olduğu organizasyon (OSGB'de müşteri ve düğümleri), girintili ağaç -->
     <template v-if="orgVisible">
-      <label class="select-field">
+      <!-- Kamu hesabı: yüzlerce birim için aramalı ağaç (diğer hesaplarda düz kutu aynen) -->
+      <ExpertKamuOrgPicker v-if="kamu" :options="orgOptions" :value="orgScope" :count="orgCount" :total="groups.length" :buildings="buildingItems" @organization="applyOrganization" @location="pickLocationId" />
+      <label v-else class="select-field">
         <span><i class="pi pi-sitemap" /> Organizasyon</span>
         <select :value="orgScope" @change="onOrganizationChange">
           <option value="">Tüm organizasyon</option>
@@ -45,7 +47,7 @@
 <script setup lang="ts">
 const { context, setContext, allLocations, setAllLocations } = useWorkplaceContext()
 const { groups, loaded, load, selectLocation, selectWorkplace } = useMyWorkplaces()
-const { corporate, isManager } = useAccount()
+const { corporate, kamu, isManager } = useAccount()
 const { load: loadOrganizations, options: orgOptions, visible: orgVisible, scope: orgScope, setScope, locationIds: orgLocationIds, idsFor } = useOrganizationScope()
 // Seçeneğin kapsadığı, menüde olan (işyeri bulunan) lokasyon sayısı.
 const orgCount = (value: string) => {
@@ -84,14 +86,24 @@ const singleWorkplace = computed(() => showAll.value
 
 // Organizasyon değişince Genel Bakış / Durum Raporu onun bütün lokasyonlarına geçer. Seçili lokasyon onun dışındaysa: tek
 // lokasyonu varsa o seçilir, yoksa lokasyon seçimi boşalır (Ekipmanlar gibi sayfalar lokasyon ister).
-const onOrganizationChange = (event: Event) => {
-  setScope((event.target as HTMLSelectElement).value)
+const onOrganizationChange = (event: Event) => applyOrganization((event.target as HTMLSelectElement).value)
+const applyOrganization = (value: string) => {
+  setScope(value)
   if (!contextVisible.value) {
     const only = visibleGroups.value.length === 1 ? visibleGroups.value[0] : null
     if (only) selectLocation(only)
     else setContext(null)
   }
   setAllLocations(true)
+}
+
+// Kamu seçicisinde aramadan bina seçildi: seçili birimin dışındaysa organizasyon "tümü" olur, doğrudan o lokasyona gidilir.
+const buildingItems = computed(() => groups.value.map(group => ({ key: group.location_id, name: group.location_name, sub: group.organization_name })))
+const pickLocationId = (id: number) => { const group = groups.value.find(g => g.location_id === id); if (group) pickLocation(group) }
+const pickLocation = (group: WorkplaceGroup) => {
+  if (orgLocationIds.value && !orgLocationIds.value.has(group.location_id)) setScope('')
+  selectLocation(group)
+  setAllLocations(false)
 }
 
 // Lokasyon değişince context "tüm lokasyon" olur; firma ikinci kutudan daraltılır.

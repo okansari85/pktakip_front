@@ -3,7 +3,7 @@
 // gelene kadar) bugünkü yazılar ve menüler aynen kalır.
 export interface PkAccount { id: number; name: string; type: string; role?: string }
 
-const EDITIONS: Record<string, string> = { osgb: 'PKTakip OSGB', corporate: 'PKTakip Kurumsal' }
+const EDITIONS: Record<string, string> = { osgb: 'PKTakip OSGB', corporate: 'PKTakip Kurumsal', public: 'PKTakip Kamu' }
 // Süren istek: aynı anda çağıranlar (menü, üst seçici, sayfalar) aynı isteği bekler.
 let pending: { userId: number; promise: Promise<void> } | null = null
 export const ACCOUNT_ROLE_LABELS: Record<string, string> = { yonetici: 'Yönetici', operasyon: 'Operasyon yöneticisi', uzman: 'Uzman' }
@@ -24,15 +24,22 @@ export const useAccount = () => {
     account.value = null
     const promise = (async () => {
       try { account.value = await get<PkAccount | null>('/pk-account') }
-      catch { loadedFor.value = null }
+      catch (e: any) {
+        loadedFor.value = null
+        // Oturum açıkken hesap pasife alındıysa (kullanıcı 19 Ekim 2026): çıkış, giriş ekranında mesaj.
+        if (e?.data?.code === 'hesap_pasif') { await useAuth().logout(); await navigateTo('/login?pasif=1') }
+      }
       finally { pending = null }
     })()
     pending = { userId, promise }
     return promise
   }
 
-  const multiUser = computed(() => account.value?.type === 'osgb' || account.value?.type === 'corporate')
-  const corporate = computed(() => account.value?.type === 'corporate')
+  const multiUser = computed(() => ['osgb', 'corporate', 'public'].includes(account.value?.type || ''))
+  // Kamu hesabı (public) yapı olarak kurumsal gibidir: kurum tek müşteri, Organizasyon sayfası. Farklar `kamu` ile:
+  // firma yerine "işyeri" denir, Firmalar menüsü yok (kullanıcı 18 Ekim 2026).
+  const kamu = computed(() => account.value?.type === 'public')
+  const corporate = computed(() => account.value?.type === 'corporate' || kamu.value)
   // OSGB / kurumsal hesabın yöneticisi (yapı, kullanıcılar) ve operasyon yöneticisi (uzman atama, tüm hesap).
   const isManager = computed(() => multiUser.value && account.value?.role === 'yonetici')
   const isOperation = computed(() => multiUser.value && account.value?.role === 'operasyon')
@@ -46,5 +53,5 @@ export const useAccount = () => {
     : isManager.value ? (corporate.value ? '/expert/settings/organization' : '/expert/settings/customers')
     : isOperation.value ? '/expert/settings/locations' : '/expert/settings/catalog-requests')
 
-  return { account, multiUser, corporate, isManager, isOperation, edition, roleLabel, settingsHome, load }
+  return { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load }
 }

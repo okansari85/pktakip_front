@@ -1,7 +1,7 @@
 <template>
   <div class="table-card">
     <div class="table-head">
-      <div><strong>Müşteriler</strong><span><b>Uzman</b>, <b>OSGB</b> ve <b>kurumsal</b> hesaplar</span></div>
+      <div><strong>Müşteriler</strong><span><b>Uzman</b>, <b>OSGB</b>, <b>kurumsal</b> ve <b>kamu</b> hesaplar</span></div>
       <span class="count-badge">{{ customers.length }} kayıt</span>
     </div>
 
@@ -18,11 +18,15 @@
       <Column header="Durum">
         <template #body="{ data }"><Tag :value="data.status ? 'Aktif' : 'Pasif'" :severity="data.status ? 'success' : 'danger'" /></template>
       </Column>
-      <Column header="İşlemler" headerStyle="width: 150px">
+      <Column header="İşlemler" headerStyle="width: 230px">
         <template #body="{ data }">
           <div class="actions">
             <Button icon="pi pi-envelope" text rounded aria-label="Davet maili gönder" v-tooltip.top="'Davet maili gönder'" @click="sendInvite(data)" />
             <Button icon="pi pi-sign-in" text rounded aria-label="Hesaba giriş yap" v-tooltip.top="'Hesaba giriş yap'" @click="impersonate(data)" />
+            <!-- Pasife / aktife alma ve kalıcı silme (silme yalnız pasif hesapta; kullanıcı 19 Ekim 2026) -->
+            <Button v-if="data.status" icon="pi pi-ban" text rounded severity="warn" aria-label="Pasife al" v-tooltip.top="'Pasife al'" @click="emit('toggleStatus', data)" />
+            <Button v-else icon="pi pi-check-circle" text rounded severity="success" aria-label="Aktife al" v-tooltip.top="'Aktife al'" @click="emit('toggleStatus', data)" />
+            <Button v-if="!data.status" icon="pi pi-trash" text rounded severity="danger" aria-label="Hesabı sil" v-tooltip.top="'Hesabı sil'" @click="emit('remove', data)" />
             <Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" />
           </div>
         </template>
@@ -33,13 +37,14 @@
 
 <script setup lang="ts">
 defineProps<{ customers: any[]; loading: boolean }>()
-const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any]; sendInvite: [tenant: any] }>()
+const emit = defineEmits<{ open: [tenant: any]; impersonate: [tenant: any]; sendInvite: [tenant: any]; toggleStatus: [tenant: any]; remove: [tenant: any] }>()
 const initials = (name: string) => name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()
-// Hesap türü etiketi: uzman, OSGB, kurumsal.
+// Hesap türü etiketi: uzman, OSGB, kurumsal, kamu.
 const TYPES: Record<string, { label: string; severity: string }> = {
   expert: { label: 'Uzman', severity: 'warn' },
   osgb: { label: 'OSGB', severity: 'info' },
-  corporate: { label: 'Kurumsal', severity: 'contrast' }
+  corporate: { label: 'Kurumsal', severity: 'contrast' },
+  public: { label: 'Kamu', severity: 'success' }
 }
 const typeOf = (tenant: any) => TYPES[tenant.tenant_type] || TYPES.expert!
 const openTenant = (tenant: any) => emit('open', tenant)

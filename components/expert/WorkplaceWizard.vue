@@ -5,7 +5,7 @@
         <div class="head-title">
           <span class="head-icon"><i class="pi pi-briefcase" /></span>
           <div>
-            <h2>Lokasyona Firma Ata</h2>
+            <h2>{{ kamuAccount ? 'Lokasyona İşyeri Ekle' : 'Lokasyona Firma Ata' }}</h2>
             <p><i class="pi pi-map-marker" /> {{ location.name }}<template v-if="customerName"> · {{ customerName }}</template></p>
           </div>
         </div>
@@ -16,18 +16,18 @@
         <!-- Adım listesi -->
         <ol class="stepper" aria-label="Adımlar">
           <li v-for="(s, i) in steps" :key="s" :class="{ on: i === stepIndex, done: i < stepIndex }">
-            <span class="dot"><i :class="i < stepIndex ? 'pi pi-check' : STEP_META[s].icon" /></span>
-            <span class="name">{{ STEP_META[s].name }}</span>
+            <span class="dot"><i :class="i < stepIndex ? 'pi pi-check' : meta[s].icon" /></span>
+            <span class="name">{{ meta[s].name }}</span>
           </li>
         </ol>
 
         <div class="content">
           <div class="step-head">
-            <span class="step-icon"><i :class="STEP_META[step].icon" /></span>
+            <span class="step-icon"><i :class="meta[step].icon" /></span>
             <div>
               <p class="step-count">Adım {{ stepIndex + 1 }} / {{ steps.length }}</p>
               <h3>{{ stepTitle }}</h3>
-              <p class="step-desc">{{ STEP_META[step].desc }}</p>
+              <p class="step-desc">{{ meta[step].desc }}</p>
             </div>
           </div>
 
@@ -50,40 +50,56 @@
               <button type="button" class="card" :class="{ on: target === 'self' }" @click="target = 'self'">
                 <span class="card-icon"><i class="pi pi-flag" /></span>
                 <span class="card-text">
-                  <strong>{{ selfAttached ? 'Kurumun ayrı bir birimine' : 'Kurumun kendisine' }}</strong>
+                  <strong v-if="kamuAccount">{{ selfAttached ? 'Kurumun ayrı bir birimi' : 'Kurumun kendi birimi' }}</strong>
+                  <strong v-else>{{ selfAttached ? 'Kurumun ayrı bir birimine' : 'Kurumun kendisine' }}</strong>
                   <small v-if="selfAttached">"{{ location.name }}" zaten kayıtlı. Ayrı SGK sicilli başka bir birimse ayırt edici bir adla eklenir.</small>
-                  <small v-else>İşyeri "{{ location.name }}" adıyla açılır; firma sorulmaz.</small>
+                  <small v-else>İşyeri "{{ location.name }}" adıyla açılır{{ kamuAccount ? '.' : '; firma sorulmaz.' }}</small>
                 </span>
                 <i v-if="target === 'self'" class="pi pi-check-circle card-check" />
               </button>
               <button type="button" class="card" :class="{ on: target === 'firm' }" @click="target = 'firm'">
                 <span class="card-icon"><i class="pi pi-briefcase" /></span>
                 <span class="card-text">
-                  <strong>Lokasyondaki bir firmaya</strong>
-                  <small>Kantin, kafeterya, kiracı gibi lokasyonda faaliyet gösteren ayrı bir firma. Kurum için kayıt açılmaz.</small>
+                  <template v-if="kamuAccount">
+                    <strong>Lokasyondaki başka bir işyeri</strong>
+                    <small>Alt işveren (temizlik, güvenlik, yemek), kiracı ya da başka bir kamu idaresi gibi lokasyonda ayrı faaliyet gösteren işyeri.</small>
+                  </template>
+                  <template v-else>
+                    <strong>Lokasyondaki bir firmaya</strong>
+                    <small>Kantin, kafeterya, kiracı gibi lokasyonda faaliyet gösteren ayrı bir firma. Kurum için kayıt açılmaz.</small>
+                  </template>
                 </span>
                 <i v-if="target === 'firm'" class="pi pi-check-circle card-check" />
+              </button>
+              <!-- Kamu hesabı: kuruma bağlı başka birim (kullanıcı 18 Ekim 2026): firma / unvan sorulmaz, doğrudan işyeri adı -->
+              <button v-if="kamuAccount" type="button" class="card" :class="{ on: target === 'unit' }" @click="target = 'unit'">
+                <span class="card-icon"><i class="pi pi-sitemap" /></span>
+                <span class="card-text">
+                  <strong>Kuruma bağlı başka birim</strong>
+                  <small>Kurumun bu lokasyondaki başka bir birimi (ör. bir şube müdürlüğü). Firma ve unvan sorulmaz; birimin adını yazarsınız.</small>
+                </span>
+                <i v-if="target === 'unit'" class="pi pi-check-circle card-check" />
               </button>
             </div>
           </template>
 
           <!-- Firma: kurumsal müşteride ana firma ya da grup şirketi; kamuda lokasyondaki firma -->
           <template v-else-if="step === 'company'">
-            <label>Firma
+            <label>{{ kamuAccount ? 'İşyeri' : 'Firma' }}
               <select v-model="companySelection" @change="onCompanySelect">
                 <option v-if="customerType === 'corporate' && customerName" :value="SELF">{{ customerName }}</option>
-                <option v-else :value="null" disabled>Firma seçin</option>
-                <optgroup v-if="ownCompanies.length" :label="account === 'osgb' ? 'Bu müşterinin firmaları' : 'Bu organizasyonun firmaları'">
+                <option v-else :value="null" disabled>{{ kamuAccount ? 'İşyeri seçin' : 'Firma seçin' }}</option>
+                <optgroup v-if="ownCompanies.length" :label="kamuAccount ? 'Kayıtlı işyerleri' : account === 'osgb' ? 'Bu müşterinin firmaları' : 'Bu organizasyonun firmaları'">
                   <option v-for="c in ownCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
-                <optgroup v-if="freeCompanies.length" label="Henüz atama yapılmamış firmalar">
+                <optgroup v-if="freeCompanies.length" :label="kamuAccount ? 'Henüz atanmamış işyerleri' : 'Henüz atama yapılmamış firmalar'">
                   <option v-for="c in freeCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
-                <option :value="NEW_COMPANY">+ Yeni firma ekle</option>
+                <option :value="NEW_COMPANY">{{ kamuAccount ? '+ Yeni işyeri ekle' : '+ Yeni firma ekle' }}</option>
               </select>
             </label>
             <template v-if="companySelection === NEW_COMPANY">
-              <label>Firmanın adı nedir?
+              <label>{{ kamuAccount ? 'İşyerinin adı nedir?' : 'Firmanın adı nedir?' }}
                 <input ref="focusInput" v-model="newCompany.name" type="text" :placeholder="customerType === 'corporate' ? 'Örn. Örnek Enerji A.Ş.' : 'Örn. Örnek Yemek Hizmetleri'" @input="duplicateCompany = findDuplicate(newCompany.name)" />
               </label>
               <p v-if="duplicateCompany" class="hint warn">
@@ -95,7 +111,7 @@
                 <input v-model="newTitle" type="text" list="wizard-company-titles" placeholder="Örn. Örnek Yemek Hizmetleri Ltd. Şti." />
               </label>
               <datalist id="wizard-company-titles"><option v-for="t in titleNames" :key="t" :value="t" /></datalist>
-              <template v-if="customerType !== 'corporate'">
+              <template v-if="customerType !== 'corporate' && !kamuAccount">
                 <p class="question"><i class="pi pi-tag" /> Firmanın türü nedir?</p>
                 <div class="cards row">
                   <button v-for="t in FIRM_TYPES" :key="t.id" type="button" class="card" :class="{ on: newFirmType === t.id }" @click="newFirmType = t.id">
@@ -107,28 +123,37 @@
             </template>
           </template>
 
+          <!-- Kuruma bağlı başka birim: işyerinin adı (kamu hesabı) -->
+          <template v-else-if="step === 'uname'">
+            <label>İşyerinin (birimin) adı
+              <input ref="focusInput" v-model="unitName" type="text" placeholder="Örn. Destek Hizmetleri Birimi" @keydown.enter.prevent="next" />
+            </label>
+            <p v-if="unitAttached" class="hint warn"><i class="pi pi-exclamation-triangle" /> <span>"{{ unitName.trim() }}" bu lokasyonda zaten kayıtlı. Başka bir ad yazın.</span></p>
+          </template>
+
           <!-- 3. Kampüs: firma bu lokasyonda zaten var -->
           <template v-else-if="step === 'campus'">
             <div class="cards row">
               <button type="button" class="card" :class="{ on: separate === true }" @click="separate = true">
                 <span class="card-icon"><i class="pi pi-clone" /></span>
-                <span class="card-text"><strong>Evet, ayrı işletme</strong><small>Ayrı SGK sicili var (ör. kampüsteki yemekhane). Ayırt edici bir adla eklenir.</small></span>
+                <span v-if="kamuAccount" class="card-text"><strong>Evet, ayrı işyeri</strong><small>Ayrı SGK sicili ya da ayrı bir birim (ör. aynı binadaki başka bir şube müdürlüğü). Kendi adıyla eklenir.</small></span>
+                <span v-else class="card-text"><strong>Evet, ayrı işletme</strong><small>Ayrı SGK sicili var (ör. kampüsteki yemekhane). Ayırt edici bir adla eklenir.</small></span>
               </button>
               <button type="button" class="card" :class="{ on: separate === false }" @click="separate = false">
                 <span class="card-icon"><i class="pi pi-equals" /></span>
-                <span class="card-text"><strong>Hayır, aynı işletme</strong><small>Zaten kayıtlı olan işyeri; yeniden atamaya gerek yok.</small></span>
+                <span class="card-text"><strong>{{ kamuAccount ? 'Hayır, aynı işyeri' : 'Hayır, aynı işletme' }}</strong><small>Zaten kayıtlı olan işyeri; yeniden atamaya gerek yok.</small></span>
               </button>
             </div>
-            <label v-if="separate">Bu işletmeyi nasıl ayırt edelim?
-              <input v-model="displayName" type="text" placeholder="Örn. Yemekhane İşletmesi" />
+            <label v-if="separate">{{ kamuAccount ? 'Bu işyerinin adı nedir?' : 'Bu işletmeyi nasıl ayırt edelim?' }}
+              <input v-model="displayName" type="text" :placeholder="kamuAccount ? 'Örn. Arşiv Birimi' : 'Örn. Yemekhane İşletmesi'" />
             </label>
-            <p v-else-if="separate === false" class="hint ok"><i class="pi pi-check-circle" /> Bu işletme zaten kayıtlı. Pencereyi kapatabilirsiniz.</p>
+            <p v-else-if="separate === false" class="hint ok"><i class="pi pi-check-circle" /> Bu {{ kamuAccount ? 'işyeri' : 'işletme' }} zaten kayıtlı. Pencereyi kapatabilirsiniz.</p>
           </template>
 
           <!-- İşyeri adı (kullanıcı 18 Ekim 2026): firma lokasyonun bir bölümünde çalışıyor ve o bölüm özel bir adla anılıyorsa
                (ör. ABC A.Ş. → Depo) soru olarak sorulur. Kamu kurumunda (ad = lokasyon) ve şahısta (ad = şube) sorulmaz. -->
           <template v-else-if="step === 'wname'">
-            <div class="example">
+            <div v-if="!kamuAccount" class="example">
               <i class="pi pi-lightbulb" />
               <span><strong>Örnek:</strong> ABC A.Ş. bu lokasyonun bir bölümünde faaliyet gösteriyor ve orası <b>"Depo"</b> diye anılıyor.
                 Adı "Depo" girilirse işyeri listelerde <b>Depo · ABC A.Ş.</b> diye görünür; aynı firmanın başka bölümleriyle karışmaz.</span>
@@ -136,11 +161,11 @@
             <div class="cards row">
               <button type="button" class="card" :class="{ on: hasOwnName === false }" @click="hasOwnName = false; displayName = ''">
                 <span class="card-icon"><i class="pi pi-map" /></span>
-                <span class="card-text"><strong>Lokasyonun tamamında</strong><small>Firma bütün lokasyonda faaliyet gösteriyor. İşyeri listelerde "{{ chosenName }}" olarak görünür.</small></span>
+                <span class="card-text"><strong>Lokasyonun tamamında</strong><small>{{ kamuAccount ? 'İşyeri' : 'Firma' }} bütün lokasyonda faaliyet gösteriyor. İşyeri listelerde "{{ chosenName }}" olarak görünür.</small></span>
               </button>
               <button type="button" class="card" :class="{ on: hasOwnName === true }" @click="hasOwnName = true; focusLater()">
                 <span class="card-icon"><i class="pi pi-th-large" /></span>
-                <span class="card-text"><strong>Lokasyonun bir bölümünde</strong><small>Firma belli bir bölümde çalışıyor (Depo, Yemekhane, Üretim Binası…). Bölümün adını yazarsınız.</small></span>
+                <span class="card-text"><strong>Lokasyonun bir bölümünde</strong><small>{{ kamuAccount ? 'İşyeri' : 'Firma' }} belli bir bölümde çalışıyor (Depo, Yemekhane, Üretim Binası…). Bölümün adını yazarsınız.</small></span>
               </button>
             </div>
             <template v-if="hasOwnName">
@@ -211,9 +236,9 @@
           <!-- 8. Özet -->
           <template v-else>
             <dl class="summary">
-              <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> Firma</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · yeni firma</small></dd></template>
+              <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> {{ kamuAccount ? 'İşyeri' : 'Firma' }}</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · {{ kamuAccount ? 'yeni işyeri' : 'yeni firma' }}</small></dd></template>
               <template v-else-if="customerName"><dt><i class="pi pi-sitemap" /> {{ account === 'osgb' ? 'Müşteri' : 'Organizasyon' }}</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
-              <template v-if="isSelf && customerType === 'public'"><dt><i class="pi pi-building" /> İşyeri</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · Firmalar'a bu adla eklenir</small></dd></template>
+              <template v-if="isSelf && customerType === 'public'"><dt><i class="pi pi-building" /> İşyeri</dt><dd>{{ kamuAccount && alreadyAttached && displayName.trim() ? displayName.trim() : chosenName }}<small v-if="willCreateCompany && !kamuAccount"> · Firmalar'a bu adla eklenir</small></dd></template>
               <template v-if="askName && displayName.trim()"><dt><i class="pi pi-tag" /> İşyeri adı</dt><dd>{{ displayName.trim() }} <small>· listelerde "{{ displayName.trim() }} · {{ chosenName }}"</small></dd></template>
               <dt><i class="pi pi-map-marker" /> Lokasyon</dt><dd>{{ location.name }}</dd>
               <dt><i class="pi pi-search" /> Faaliyet</dt><dd>{{ selectedNace ? `${selectedNace.nace_code} ${selectedNace.activity_name}` : '—' }}</dd>
@@ -224,7 +249,7 @@
             <label v-if="!alreadyAttached && namedByLocation">İşyeri adı <small>(lokasyon adından gelir; isterseniz değiştirin)</small>
               <input v-model="displayName" type="text" :placeholder="location.name" />
             </label>
-            <p v-else-if="alreadyAttached" class="hint"><i class="pi pi-clone" /> "{{ displayName.trim() }}" adıyla ayrı işletme olarak eklenecek.</p>
+            <p v-else-if="alreadyAttached" class="hint"><i class="pi pi-clone" /> "{{ displayName.trim() }}" adıyla ayrı {{ kamuAccount ? 'işyeri' : 'işletme' }} olarak eklenecek.</p>
             <p class="hint"><i class="pi pi-user" /> Bu işyerine siz uzman olarak atanırsınız; ekipmanları bu işyerine ekleyebilirsiniz.</p>
           </template>
 
@@ -237,7 +262,7 @@
         <button v-else class="secondary-button" type="button" @click="close">İptal</button>
         <button v-if="step === 'campus' && separate === false" class="primary-button" type="button" @click="close">Kapat</button>
         <button v-else-if="step === 'sgk' && !sgkNumber.trim()" class="secondary-button" type="button" @click="next">Atla</button>
-        <button v-if="step === 'summary'" class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-check" /> {{ saving ? 'Atanıyor...' : 'Ata' }}</button>
+        <button v-if="step === 'summary'" class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-check" /> {{ kamuAccount ? (saving ? 'Ekleniyor...' : 'Ekle') : (saving ? 'Atanıyor...' : 'Ata') }}</button>
         <button v-else-if="!(step === 'campus' && separate === false) && !(step === 'sgk' && !sgkNumber.trim())" class="primary-button" type="button" :disabled="!ready || !canNext || savingType" @click="next">{{ savingType ? 'Kaydediliyor...' : 'İleri' }} <i class="pi pi-arrow-right" /></button>
       </div>
     </section>
@@ -254,11 +279,14 @@ import { CUSTOMER_TYPES, customerTypeLabel, useCustomerTypes, type CustomerType 
 
 // account: bireysel uzman (expert), OSGB (osgb; ekranda "müşteri" denir) ya da kurumsal hesap (corporate; müşteri firmanın
 // kendisi, tür sorulmaz, kurumsal firma gibi işler).
-const props = defineProps<{ customerId: number | null; customerName?: string | null; location: { id: number; name: string }; account?: 'expert' | 'osgb' | 'corporate' }>()
+const props = defineProps<{ customerId: number | null; customerName?: string | null; location: { id: number; name: string }; account?: 'expert' | 'osgb' | 'corporate' | 'public' }>()
+// Kamu hesabı (public): müşteri kurumun kendisi, türü hep kamu (sorulmaz); ekranda firma yerine "işyeri" denir,
+// lokasyona birden çok işyeri eklenebilir (kullanıcı 18 Ekim 2026). Diğer hesaplarda hiçbir şey değişmez.
+const kamuAccount = computed(() => props.account === 'public')
 const noun = computed(() => props.account === 'osgb' ? 'müşteri' : 'organizasyon')
 const emit = defineEmits<{ close: []; saved: [] }>()
 
-type Step = 'ctype' | 'target' | 'company' | 'wname' | 'campus' | 'nace' | 'hazard' | 'employees' | 'sgk' | 'summary'
+type Step = 'ctype' | 'target' | 'company' | 'uname' | 'wname' | 'campus' | 'nace' | 'hazard' | 'employees' | 'sgk' | 'summary'
 const SELF = -2
 const NEW_COMPANY = -1
 const FIRM_TYPES = [
@@ -279,6 +307,7 @@ const EMPLOYEE_BANDS = [
 const STEP_META: Record<Step, { name: string; icon: string; title: string; desc: string }> = {
   ctype: { name: 'Tür', icon: 'pi pi-tags', title: 'Ne tür bir organizasyon?', desc: 'Bir kez sorulur ve kaydedilir; sonraki sorular cevaba göre değişir.' },
   target: { name: 'Hizmet', icon: 'pi pi-compass', title: 'Bu lokasyonda kime hizmet veriyorsunuz?', desc: 'Kurumun kendisine mi, lokasyonda faaliyet gösteren bir firmaya mı? Firmaya hizmet veriyorsanız kurum için kayıt açılmaz.' },
+  uname: { name: 'Birim', icon: 'pi pi-sitemap', title: 'İşyerinin (birimin) adı nedir?', desc: 'İşyeri bu adla açılır; firma ve unvan sorulmaz.' },
   company: { name: 'Firma', icon: 'pi pi-briefcase', title: 'Lokasyona atanacak firmayı seçiniz', desc: 'Listeden seçin ya da yeni firma ekleyin.' },
   wname: { name: 'Faaliyet yeri', icon: 'pi pi-th-large', title: 'Lokasyonun tamamında mı, bir bölümünde mi faaliyet gösteriyor?', desc: 'Firma lokasyonun yalnız bir bölümünde çalışıyorsa o bölümün adı işyerinin adı olur; aynı firmanın farklı bölümleri böylece ayrılır.' },
   campus: { name: 'Ayrı işletme', icon: 'pi pi-clone', title: 'Bu lokasyonda zaten bir işyeri kayıtlı', desc: 'Aynı lokasyonda (ör. kampüs) ayrı SGK sicilli başka bir işletme olabilir. Bu ayrı bir işletme mi?' },
@@ -288,6 +317,19 @@ const STEP_META: Record<Step, { name: string; icon: string; title: string; desc:
   sgk: { name: 'SGK sicil', icon: 'pi pi-id-card', title: 'İşyerinin SGK sicil numarasını biliyor musunuz?', desc: 'İsteğe bağlıdır; bilmiyorsanız atlayın, sonra lokasyonun firma panelinden ekleyebilirsiniz.' },
   summary: { name: 'Özet', icon: 'pi pi-list-check', title: 'Kontrol edip atayın', desc: 'Bilgileri kontrol edin. Geri dönüp değiştirebilirsiniz.' }
 }
+
+// Kamu hesabında adım adları ve açıklamaları işyerine göre.
+const KAMU_META: Partial<Record<Step, Partial<{ name: string; title: string; desc: string }>>> = {
+  target: { name: 'İşyeri', title: 'Bu lokasyona hangi işyerini ekliyorsunuz?', desc: 'Kurumun kendi birimi mi, lokasyonda faaliyet gösteren başka bir işyeri mi (alt işveren, başka bir kamu idaresi)? Bir lokasyona birden çok işyeri eklenebilir.' },
+  company: { name: 'İşyeri', title: 'Lokasyona eklenecek işyerini seçiniz', desc: 'Listeden seçin ya da yeni işyeri ekleyin.' },
+  campus: { name: 'Ayrı işyeri', desc: 'Aynı lokasyonda ayrı SGK sicilli ya da ayrı bir birim olabilir. Bu ayrı bir işyeri mi?' },
+  wname: { desc: 'İşyeri lokasyonun yalnız bir bölümünde çalışıyorsa o bölümün adı işyerinin adı olur.' },
+  summary: { title: 'Kontrol edip ekleyin' }
+}
+type StepMeta = { name: string; icon: string; title: string; desc: string }
+const meta = computed<Record<Step, StepMeta>>(() => kamuAccount.value
+  ? Object.fromEntries((Object.keys(STEP_META) as Step[]).map(k => [k, { ...STEP_META[k], ...KAMU_META[k] }])) as Record<Step, StepMeta>
+  : STEP_META)
 
 const { get, post, patch, errorMessage } = useExpertApi()
 const newTitle = ref('')
@@ -308,7 +350,10 @@ const savingType = ref(false)
 const ready = ref(false)
 const companySelection = ref<number | null>(props.customerName ? SELF : null)
 // Kamu kurumu: kurumun kendisi (self) ya da lokasyondaki bir firma (firm).
-const target = ref<'self' | 'firm'>('self')
+const target = ref<'self' | 'firm' | 'unit'>('self')
+// Kuruma bağlı başka birim: yazılan ad (işyerinin ve arka plandaki kartın adı)
+const unitName = ref('')
+const isUnit = computed(() => kamuAccount.value && target.value === 'unit')
 const newFirmType = ref<string | null>(null)
 const newCompany = reactive({ name: '' })
 const duplicateCompany = ref<MyCompany | null>(null)
@@ -356,23 +401,27 @@ const namedByLocation = computed(() => customerType.value === 'individual')
 // Seçilen firmanın kimliği (yeni kart açılacaksa null).
 const chosenId = computed<number | null>(() => isSelf.value
   ? selfCompany.value?.business_entity_id ?? null
+  : isUnit.value ? findDuplicate(unitName.value)?.business_entity_id ?? null
   : companySelection.value && companySelection.value > 0 ? companySelection.value : null)
 const willCreateCompany = computed(() => chosenId.value === null)
 const selfAttached = computed(() => !!selfCompany.value && attachedIds.value.has(selfCompany.value.business_entity_id))
 const chosenName = computed(() => isSelf.value
   ? selfCompany.value?.name || selfCardName.value
-  : chosenId.value ? myCompanies.value.find(c => c.business_entity_id === chosenId.value)?.name || '' : newCompany.name.trim())
+  : chosenId.value ? myCompanies.value.find(c => c.business_entity_id === chosenId.value)?.name || '' : isUnit.value ? unitName.value.trim() : newCompany.name.trim())
 // Kart gerekirse: şahısta şahıs, diğerlerinde kurumsal (firma türünde kamu yok; kamu kurumu kurumsal görünür, kullanıcı onayladı).
 const chosenType = computed(() => isSelf.value ? (customerType.value === 'individual' ? 'individual' : 'corporate')
   : customerType.value === 'public' ? newFirmType.value || 'corporate' : 'corporate')
-const alreadyAttached = computed(() => chosenId.value !== null && attachedIds.value.has(chosenId.value))
+const alreadyAttached = computed(() => !isUnit.value && chosenId.value !== null && attachedIds.value.has(chosenId.value))
+// Birim adı bu lokasyonda zaten kayıtlıysa aynı adla ikinci kez eklenmez
+const unitAttached = computed(() => isUnit.value && chosenId.value !== null && attachedIds.value.has(chosenId.value))
 // İşyeri adı sorusu: kurumsal firmada ve lokasyondaki firmada (kamu kurumunun kendisinde ve şahısta sorulmaz; ayrı işletmede campus adımı sorar).
-const askName = computed(() => !alreadyAttached.value && !namedByLocation.value && !(customerType.value === 'public' && isSelf.value))
+const askName = computed(() => !alreadyAttached.value && !namedByLocation.value && !(customerType.value === 'public' && isSelf.value) && !isUnit.value)
 
 const steps = computed<Step[]>(() => [
   ...(typeAsked.value ? ['ctype' as Step] : []),
   ...(customerType.value === 'public' ? ['target' as Step] : []),
   ...(customerType.value === 'corporate' || (customerType.value === 'public' && target.value === 'firm') ? ['company' as Step] : []),
+  ...(isUnit.value ? ['uname' as Step] : []),
   ...(alreadyAttached.value ? ['campus' as Step] : []),
   ...(askName.value ? ['wname' as Step] : []),
   'nace', 'hazard', 'employees', 'sgk', 'summary'
@@ -384,15 +433,16 @@ const stepTitle = computed(() => {
   if (step.value === 'wname' && chosenName.value) return `"${chosenName.value}" lokasyonun tamamında mı, bir bölümünde mi faaliyet gösteriyor?`
   if (step.value === 'campus') return isSelf.value ? 'Bu lokasyonda zaten bir işyeri kayıtlı' : `"${chosenName.value}" bu lokasyonda zaten kayıtlı`
   if (step.value === 'nace' && !isSelf.value && chosenName.value) return `"${chosenName.value}" bu lokasyonda ne iş yapıyor?`
-  return STEP_META[step.value].title
+  return meta.value[step.value].title
 })
 
 const canNext = computed(() => {
   switch (step.value) {
     case 'ctype': return !!pickedType.value
     case 'target': return true
+    case 'uname': return !!unitName.value.trim() && !unitAttached.value
     case 'company': return companySelection.value === NEW_COMPANY
-      ? !!newCompany.name.trim() && !duplicateCompany.value && (customerType.value === 'corporate' || !!newFirmType.value)
+      ? !!newCompany.name.trim() && !duplicateCompany.value && (customerType.value === 'corporate' || kamuAccount.value || !!newFirmType.value)
       : !!companySelection.value
     case 'wname': return hasOwnName.value === false || (hasOwnName.value === true && !!displayName.value.trim())
     case 'campus': return separate.value === true && !!displayName.value.trim()
@@ -505,25 +555,26 @@ async function save() {
     try {
       if (workplaceId) await post(`/pk-workplace-employee-bands/${workplaceId}`, { band: employeeBand.value })
     } catch (e: any) {
-      error.value = errorMessage(e, 'Firma atandı ama çalışan sayısı kaydedilemedi; Genel Bakış → Ceza sekmesinden seçebilirsiniz.')
+      error.value = errorMessage(e, `${kamuAccount.value ? 'İşyeri eklendi' : 'Firma atandı'} ama çalışan sayısı kaydedilemedi; Genel Bakış → Ceza sekmesinden seçebilirsiniz.`)
       return
     }
     try {
       if (workplaceId && workplaceName && !alreadyAttached.value) await setWorkplaceName(workplaceId, workplaceName)
     } catch (e: any) {
-      error.value = errorMessage(e, 'Firma atandı ama işyeri adı kaydedilemedi; lokasyonun firma panelinden düzenleyebilirsiniz.')
+      error.value = errorMessage(e, kamuAccount.value ? 'İşyeri eklendi ama adı kaydedilemedi; lokasyonun İşyerleri panelinden düzenleyebilirsiniz.' : 'Firma atandı ama işyeri adı kaydedilemedi; lokasyonun firma panelinden düzenleyebilirsiniz.')
       return
     }
     emit('saved')
   } catch (e: any) {
-    error.value = errorMessage(e, 'Firma atanamadı.')
+    error.value = errorMessage(e, kamuAccount.value ? 'İşyeri eklenemedi.' : 'Firma atanamadı.')
   } finally { saving.value = false }
 }
 
 onMounted(async () => {
   // Kurumsal hesap: müşteri firmanın kendisi; tür sorulmaz, kurumsal firma gibi (ana firma ya da başka firma).
-  const types = props.account === 'corporate' ? {} : await loadCustomerTypes()
-  customerType.value = props.account === 'corporate' ? 'corporate' : props.customerId ? types[String(props.customerId)] ?? null : null
+  // Kamu hesabı: kurumun kendisi, tür hep kamu (sorulmaz).
+  const types = props.account === 'corporate' || kamuAccount.value ? {} : await loadCustomerTypes()
+  customerType.value = kamuAccount.value ? 'public' : props.account === 'corporate' ? 'corporate' : props.customerId ? types[String(props.customerId)] ?? null : null
   typeAsked.value = !customerType.value
   pickedType.value = customerType.value
   ready.value = true

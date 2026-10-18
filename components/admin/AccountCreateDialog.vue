@@ -33,13 +33,14 @@
 
 <script setup lang="ts">
 // Süper admin: yeni müşteri hesabı. Uzman: bugünkü uzman açılışı (/experts, uzman daveti) aynen. OSGB / kurumsal:
-// /pk-accounts; açılan kullanıcı hesabın yöneticisi olur, kurumsalda firma tek müşteri olarak eklenir.
-type AccountType = 'expert' | 'osgb' | 'corporate'
+// /pk-accounts; açılan kullanıcı hesabın yöneticisi olur, kurumsalda firma, kamuda kurum tek müşteri olarak eklenir.
+type AccountType = 'expert' | 'osgb' | 'corporate' | 'public'
 
 const TYPE_OPTIONS: { label: string; value: AccountType }[] = [
   { label: 'Uzman', value: 'expert' },
   { label: 'OSGB', value: 'osgb' },
-  { label: 'Kurumsal', value: 'corporate' }
+  { label: 'Kurumsal', value: 'corporate' },
+  { label: 'Kamu Kurumu', value: 'public' }
 ]
 const TEXTS: Record<AccountType, { intro: string; nameLabel: string; namePlaceholder: string; contactLabel: string; contactPlaceholder: string; emailPlaceholder: string; submit: string }> = {
   expert: {
@@ -59,6 +60,12 @@ const TEXTS: Record<AccountType, { intro: string; nameLabel: string; namePlaceho
     nameLabel: 'Firma Adı', namePlaceholder: 'Örn. ABC Holding',
     contactLabel: 'Yönetici (Müşteri Admini) Ad Soyad', contactPlaceholder: 'Örn. Mehmet Kaya',
     emailPlaceholder: 'isg@firma.com', submit: 'Kurumsal Hesabı Oluştur'
+  },
+  public: {
+    intro: 'Kamu kurumu hesabını oluşturun. Kurum, hesabın tek müşterisi olarak eklenir; daire başkanlıkları ve birimler organizasyon, binalar lokasyon olarak girilir. Yönetici davet e-postasıyla kendi şifresini belirler.',
+    nameLabel: 'Kurum Adı', namePlaceholder: 'Örn. Büyükşehir Belediyesi',
+    contactLabel: 'Yönetici Ad Soyad', contactPlaceholder: 'Örn. İSG birim sorumlusu',
+    emailPlaceholder: 'isg@kurum.gov.tr', submit: 'Kamu Hesabını Oluştur'
   }
 }
 
@@ -96,7 +103,7 @@ const submit = async () => {
 
   saving.value = true
   try {
-    // Uzman: bugünkü uzman açılışı; OSGB / kurumsal: PKTakip hesabı.
+    // Uzman: bugünkü uzman açılışı; OSGB / kurumsal / kamu: PKTakip hesabı.
     const response = form.type === 'expert'
       ? await $fetch(`${config.public.apiBaseUrl}/experts`, { method: 'POST', headers: authHeaders(), body: { expert_name: form.name, contact_name: form.contact_name, email: form.email } })
       : await $fetch(`${config.public.apiBaseUrl}/pk-accounts`, { method: 'POST', headers: authHeaders(), body: { type: form.type, account_name: form.name, contact_name: form.contact_name, email: form.email } })

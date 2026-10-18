@@ -2,8 +2,8 @@
   <div class="workplaces-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>Firmalarım</strong></div>
-        <h1>Firmalarım</h1>
+        <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></div>
+        <h1>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</h1>
         <p v-if="loaded && workplaces.length">
           <strong>{{ workplaces.length }}</strong> işyeri · <strong>{{ locationCount }}</strong> lokasyon<template v-if="!corporate"> · <strong>{{ customerCount }}</strong> müşteri</template>
         </p>
@@ -15,8 +15,9 @@
       <template #empty>
         <template v-if="workplaces.length === 0">
           <span v-if="multiUser && !isManager">Size atanmış işyeri yok. Yönetici atadığında burada görünür.</span>
+          <span v-else-if="kamu">Lokasyon ve işyeri tanımlarını Ayarlar → Lokasyonlar'dan yapabilirsiniz.</span>
           <span v-else>Müşteri, lokasyon ve firma tanımlarını Ayarlar'dan yapabilirsiniz.</span>
-          <NuxtLink v-if="!multiUser || isManager" to="/expert/settings/companies" class="secondary-link"><i class="pi pi-cog" /> Ayarlar'a git</NuxtLink>
+          <NuxtLink v-if="!multiUser || isManager" :to="kamu ? '/expert/settings/locations' : '/expert/settings/companies'" class="secondary-link"><i class="pi pi-cog" /> Ayarlar'a git</NuxtLink>
         </template>
         <span v-else>Aramanızla eşleşen işyeri yok.</span>
       </template>
@@ -32,7 +33,7 @@ const { workplaces, loaded, error, load } = useMyWorkplaces()
 const locationCount = computed(() => new Set(workplaces.value.map(w => w.location_id)).size)
 const customerCount = computed(() => new Set(workplaces.value.map(w => w.customer_name).filter(Boolean)).size)
 // Kurumsal hesapta müşteri firmanın kendisi: müşteri sayısı yazılmaz.
-const { corporate, multiUser, isManager } = useAccount()
+const { corporate, kamu, multiUser, isManager } = useAccount()
 
 // Sayfa her açıldığında listeyi tazeler (Ayarlar'da yapılan değişiklikler görünsün).
 onMounted(() => load(true))
