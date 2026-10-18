@@ -76,7 +76,7 @@
                 <optgroup v-if="ownCompanies.length" label="Bu organizasyonun firmaları">
                   <option v-for="c in ownCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
-                <optgroup v-if="freeCompanies.length" label="Henüz bir organizasyonda işyeri olmayan firmalar">
+                <optgroup v-if="freeCompanies.length" label="Henüz atama yapılmamış firmalar">
                   <option v-for="c in freeCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
                 <option :value="NEW_COMPANY">+ Yeni firma ekle</option>

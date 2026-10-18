@@ -44,7 +44,7 @@
           <optgroup v-if="ownTitled.length" label="Görünen adlı firmalar">
             <option v-for="company in ownTitled" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }} · {{ titleOf[company.business_entity_id] }}</option>
           </optgroup>
-          <optgroup v-if="freeCompanies.length" :label="multiUser ? 'Henüz bir müşteride işyeri olmayan firmalar' : 'Henüz bir organizasyonda işyeri olmayan firmalar'">
+          <optgroup v-if="freeCompanies.length" :label="multiUser ? 'Henüz bir müşteride işyeri olmayan firmalar' : 'Henüz atama yapılmamış firmalar'">
             <option v-for="company in freeCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}{{ titleOf[company.business_entity_id] ? ` · ${titleOf[company.business_entity_id]}` : '' }}</option>
           </optgroup>
           <option :value="NEW_COMPANY">+ Yeni firma oluştur</option>
