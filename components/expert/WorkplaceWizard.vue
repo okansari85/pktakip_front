@@ -69,9 +69,9 @@
 
           <!-- Firma: kurumsal müşteride ana firma ya da grup şirketi; kamuda lokasyondaki firma -->
           <template v-else-if="step === 'company'">
-            <label>{{ customerType === 'corporate' ? 'Şirket' : 'Firma' }}
+            <label>Firma
               <select v-model="companySelection" @change="onCompanySelect">
-                <option v-if="customerType === 'corporate' && customerName" :value="SELF">{{ customerName }} (ana firma)</option>
+                <option v-if="customerType === 'corporate' && customerName" :value="SELF">{{ customerName }}</option>
                 <option v-else :value="null" disabled>Firma seçin</option>
                 <optgroup v-if="ownCompanies.length" label="Bu organizasyonun firmaları">
                   <option v-for="c in ownCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
@@ -79,11 +79,11 @@
                 <optgroup v-if="freeCompanies.length" label="Henüz bir organizasyonda işyeri olmayan firmalar">
                   <option v-for="c in freeCompanies" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
                 </optgroup>
-                <option :value="NEW_COMPANY">{{ customerType === 'corporate' ? '+ Yeni şirket ekle (grup şirketi)' : '+ Yeni firma ekle' }}</option>
+                <option :value="NEW_COMPANY">+ Yeni firma ekle</option>
               </select>
             </label>
             <template v-if="companySelection === NEW_COMPANY">
-              <label>{{ customerType === 'corporate' ? 'Şirketin' : 'Firmanın' }} adı nedir?
+              <label>Firmanın adı nedir?
                 <input ref="focusInput" v-model="newCompany.name" type="text" :placeholder="customerType === 'corporate' ? 'Örn. Örnek Enerji A.Ş.' : 'Örn. Örnek Yemek Hizmetleri'" @input="duplicateCompany = findDuplicate(newCompany.name)" />
               </label>
               <p v-if="duplicateCompany" class="hint warn">
@@ -211,7 +211,7 @@
           <!-- 8. Özet -->
           <template v-else>
             <dl class="summary">
-              <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> {{ customerType === 'corporate' ? 'Şirket' : 'Firma' }}</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · yeni {{ customerType === 'corporate' ? 'şirket' : 'firma' }}</small></dd></template>
+              <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> Firma</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · yeni firma</small></dd></template>
               <template v-else-if="customerName"><dt><i class="pi pi-sitemap" /> Organizasyon</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
               <template v-if="isSelf && customerType === 'public'"><dt><i class="pi pi-building" /> İşyeri</dt><dd>{{ chosenName }}<small v-if="willCreateCompany"> · Firmalar'a bu adla eklenir</small></dd></template>
               <template v-if="askName && displayName.trim()"><dt><i class="pi pi-tag" /> İşyeri adı</dt><dd>{{ displayName.trim() }} <small>· listelerde "{{ displayName.trim() }} · {{ chosenName }}"</small></dd></template>
@@ -276,7 +276,7 @@ const EMPLOYEE_BANDS = [
 const STEP_META: Record<Step, { name: string; icon: string; title: string; desc: string }> = {
   ctype: { name: 'Tür', icon: 'pi pi-tags', title: 'Ne tür bir organizasyon?', desc: 'Bir kez sorulur ve kaydedilir; sonraki sorular cevaba göre değişir.' },
   target: { name: 'Hizmet', icon: 'pi pi-compass', title: 'Bu lokasyonda kime hizmet veriyorsunuz?', desc: 'Kurumun kendisine mi, lokasyonda faaliyet gösteren bir firmaya mı? Firmaya hizmet veriyorsanız kurum için kayıt açılmaz.' },
-  company: { name: 'Şirket', icon: 'pi pi-briefcase', title: 'Bu işyeri hangi şirkete ait?', desc: 'Genellikle ana firmanın kendisidir. Holdinglerde grup şirketini seçin ya da ekleyin.' },
+  company: { name: 'Firma', icon: 'pi pi-briefcase', title: 'Lokasyona atanacak firmayı seçiniz', desc: 'Listeden seçin ya da yeni firma ekleyin.' },
   wname: { name: 'Faaliyet yeri', icon: 'pi pi-th-large', title: 'Lokasyonun tamamında mı, bir bölümünde mi faaliyet gösteriyor?', desc: 'Firma lokasyonun yalnız bir bölümünde çalışıyorsa o bölümün adı işyerinin adı olur; aynı firmanın farklı bölümleri böylece ayrılır.' },
   campus: { name: 'Ayrı işletme', icon: 'pi pi-clone', title: 'Bu lokasyonda zaten bir işyeri kayıtlı', desc: 'Aynı lokasyonda (ör. kampüs) ayrı SGK sicilli başka bir işletme olabilir. Bu ayrı bir işletme mi?' },
   nace: { name: 'Faaliyet', icon: 'pi pi-search', title: 'Bu lokasyonda ne iş yapılıyor?', desc: 'NACE kodunu ya da faaliyeti yazın; seçtiğiniz faaliyetin tehlike sınıfı otomatik gelir.' },
@@ -378,7 +378,6 @@ const stepIndex = ref(0)
 const step = computed(() => steps.value[Math.min(stepIndex.value, steps.value.length - 1)]!)
 const stepTitle = computed(() => {
   if (step.value === 'ctype' && props.customerName) return `"${props.customerName}" ne tür bir organizasyon?`
-  if (step.value === 'company' && customerType.value !== 'corporate') return 'Hangi firma?'
   if (step.value === 'wname' && chosenName.value) return `"${chosenName.value}" lokasyonun tamamında mı, bir bölümünde mi faaliyet gösteriyor?`
   if (step.value === 'campus') return isSelf.value ? 'Bu lokasyonda zaten bir işyeri kayıtlı' : `"${chosenName.value}" bu lokasyonda zaten kayıtlı`
   if (step.value === 'nace' && !isSelf.value && chosenName.value) return `"${chosenName.value}" bu lokasyonda ne iş yapıyor?`
