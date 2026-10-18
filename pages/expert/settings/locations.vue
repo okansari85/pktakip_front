@@ -4,7 +4,7 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
         <h1>Lokasyonlar</h1>
-        <p>{{ corporate ? 'Organizasyon' : 'Müşteri ve organizasyon' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
+        <p>{{ corporate ? 'Organizasyon' : multiUser ? 'Müşteri ve organizasyon' : 'Organizasyon ve alt organizasyon' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
       </div>
       <button v-if="canEditStructure" class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
         <i class="pi pi-plus" />
@@ -16,16 +16,16 @@
       <div class="toolbar" :class="{ 'no-customer': corporate }">
         <!-- Kurumsal hesapta müşteri firmanın kendisi: seçim kutusu yok (otomatik seçili) -->
         <label v-if="!corporate" class="field">
-          <span>Müşteri</span>
+          <span>{{ multiUser ? 'Müşteri' : 'Organizasyon' }}</span>
           <select v-model="selectedCustomerId" @change="onCustomerChange">
-            <option :value="null" disabled>Müşteri seçin</option>
+            <option :value="null" disabled>{{ multiUser ? 'Müşteri seçin' : 'Organizasyon seçin' }}</option>
             <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }}</option>
           </select>
         </label>
         <label class="field">
-          <span>Organizasyon</span>
+          <span>{{ corporate || multiUser ? 'Organizasyon' : 'Alt organizasyon' }}</span>
           <select v-model="selectedOrganizationId" :disabled="!selectedCustomerId">
-            <option :value="null">Tüm organizasyonlar</option>
+            <option :value="null">{{ corporate || multiUser ? 'Tüm organizasyonlar' : 'Tümü' }}</option>
             <option v-for="option in organizationOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
           </select>
         </label>
@@ -38,18 +38,19 @@
         </label>
       </div>
 
-      <div v-if="customersLoading" class="state-row">Müşteriler yükleniyor...</div>
+      <div v-if="customersLoading" class="state-row">{{ multiUser ? 'Müşteriler' : 'Organizasyonlar' }} yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="!selectedCustomerId" class="state-row empty-state">
         <i class="pi pi-building" />
-        <strong>Müşteri seçin</strong>
-        <span>Lokasyonları görmek için önce bir müşteri seçin.</span>
+        <strong>{{ multiUser ? 'Müşteri seçin' : 'Organizasyon seçin' }}</strong>
+        <span>Lokasyonları görmek için önce bir {{ multiUser ? 'müşteri' : 'organizasyon' }} seçin.</span>
       </div>
       <div v-else-if="locationsLoading" class="state-row">Lokasyonlar yükleniyor...</div>
       <div v-else-if="filteredLocations.length === 0" class="state-row empty-state">
         <i class="pi pi-map-marker" />
         <strong>Lokasyon bulunmuyor</strong>
         <span v-if="organizationOptions.length === 0 && corporate">Henüz organizasyon yok. Önce Organizasyon sayfasından organizasyon ekleyin.</span>
+        <span v-else-if="organizationOptions.length === 0 && !multiUser">Bu organizasyonun yapısı boş. Önce Organizasyon Yönetimi sayfasından ekleyin.</span>
         <span v-else-if="organizationOptions.length === 0">Bu müşterinin organizasyonu yok. Önce Müşteriler sayfasından organizasyon ekleyin.</span>
         <span v-else>Seçili organizasyon için ilk lokasyonu ekleyebilirsiniz.</span>
       </div>
@@ -73,7 +74,7 @@
               <td class="address-cell">{{ location.address || '—' }}</td>
               <td>{{ formatDate(location.created_at) }}</td>
               <td class="actions">
-                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> Firmalar</button>
+                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
                 <!-- Alanlar (isteğe bağlı): operasyonel alanlar firmasıyla, ortak alanlar firmasız -->
                 <button class="row-button" type="button" @click="areaLocation = location"><i class="pi pi-th-large" /> Alanlar</button>
               </td>
@@ -84,18 +85,18 @@
       </div>
     </section>
 
-    <div v-if="companyLocation" class="drawer-backdrop" @click.self="closeCompanies">
+    <div v-if="companyLocation" class="drawer-backdrop">
       <aside class="company-drawer">
         <div class="drawer-head">
           <div>
-            <h2>Lokasyon Firmaları</h2>
+            <h2>{{ multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
             <div class="drawer-subtitle"><i class="pi pi-map-marker" /><div><strong>{{ companyLocation.name }}</strong><span>{{ selectedCustomer?.name }}</span></div></div>
           </div>
           <button class="close-button" type="button" @click="closeCompanies"><i class="pi pi-times" /></button>
         </div>
 
         <div v-if="canEditStructure" class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> Firma Ekle</button>
+          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
         </div>
 
         <div v-if="companiesLoading" class="drawer-state">Firmalar yükleniyor...</div>
@@ -108,7 +109,7 @@
               <div class="company-name">
                 <template v-if="nameEdit?.id === item.id">
                   <div class="name-edit">
-                    <input v-model="nameEdit.value" type="text" placeholder="İşletme adı (ör. Eskişehir Buzdolabı İşletmesi) — boşsa firma adı" @keyup.enter="saveName" />
+                    <input v-model="nameEdit.value" type="text" placeholder="İşletme adı (ör. B Blok Depo) — boşsa firma adı" @keyup.enter="saveName" />
                     <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><i class="pi pi-check" /></button>
                     <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><i class="pi pi-times" /></button>
                   </div>
@@ -116,7 +117,7 @@
                 </template>
                 <template v-else>
                   <strong>{{ workplaceTitle(item.id, item.name) }}<button v-if="canEditStructure" class="inline-edit" type="button" title="İşletme adını düzenle" @click="nameEdit = { id: item.id, value: nameOf(item.id) }; nameError = ''"><i class="pi pi-pencil" /></button></strong>
-                  <small v-if="workplaceFirm(item.id, item.name) || titleOf[item.business_entity_id]">{{ [workplaceFirm(item.id, item.name), titleOf[item.business_entity_id]].filter(Boolean).join(' · ') }}</small>
+                  <small v-if="!publicCustomer && (workplaceFirm(item.id, item.name) || titleOf[item.business_entity_id])">{{ [workplaceFirm(item.id, item.name), titleOf[item.business_entity_id]].filter(Boolean).join(' · ') }}</small>
                 </template>
               </div>
               <button v-if="canEditStructure" class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><i class="pi pi-trash" /></button>
@@ -141,8 +142,17 @@
     <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="selectedCustomer?.name" @close="areaLocation = null" />
     <ExpertWorkplaceUnitsModal v-if="unitWorkplace && companyLocation" :location="companyLocation" :workplace="unitWorkplace" @close="unitWorkplace = null" @changed="loadUnits(companyLocation.id)" />
 
+    <!-- Bireysel uzman: soru-cevap sihirbazı (kullanıcı 18 Ekim 2026); OSGB / kurumsal: bugünkü form -->
+    <ExpertWorkplaceWizard
+      v-if="companyFormOpen && companyLocation && !multiUser"
+      :customer-id="selectedCustomerId"
+      :customer-name="selectedCustomer?.name"
+      :location="companyLocation"
+      @close="companyFormOpen = false"
+      @saved="onWorkplaceSaved"
+    />
     <ExpertWorkplaceForm
-      v-if="companyFormOpen && companyLocation"
+      v-if="companyFormOpen && companyLocation && multiUser"
       :customer-id="selectedCustomerId"
       :location="companyLocation"
       @close="companyFormOpen = false"
@@ -222,6 +232,11 @@ const formError = ref('')
 const form = reactive({ organization_id: null as number | null, name: '', city_id: null as number | null, district_id: null as number | null, address: '' })
 
 const selectedCustomer = computed(() => customers.value.find(c => c.id === selectedCustomerId.value) || null)
+// Kamu kurumunda firma yok (kullanıcı 18 Ekim 2026): panelde işyerinin altında firma (organizasyon) adı yazılmaz.
+const { load: loadCustomerTypes } = useCustomerTypes()
+const customerTypes = ref<Record<string, string | null>>({})
+loadCustomerTypes().then(types => { customerTypes.value = types })
+const publicCustomer = computed(() => !!selectedCustomerId.value && customerTypes.value[String(selectedCustomerId.value)] === 'public')
 
 // Ağacı girintili seçenek listesine çevirir.
 const organizationOptions = computed(() => {
@@ -373,6 +388,8 @@ const closeCompanies = () => { companyLocation.value = null }
 const openCompanyForm = () => { companyFormOpen.value = true }
 const onWorkplaceSaved = async () => {
   companyFormOpen.value = false
+  // Sihirbaz türü boş müşteride türü kaydetmiş olabilir.
+  loadCustomerTypes().then(types => { customerTypes.value = types })
   await Promise.all([loadLocationCompanies(), loadTitles(), companyLocation.value ? loadUnits(companyLocation.value.id) : null])
 }
 

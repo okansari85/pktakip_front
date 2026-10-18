@@ -3,9 +3,9 @@
     <section class="modal-card">
       <div class="modal-head">
         <div>
-          <h2>İşyeri Ekle</h2>
+          <h2>{{ location && !multiUser ? 'Lokasyona Firma Ata' : 'İşyeri Ekle' }}</h2>
           <p v-if="location">{{ location.name }} lokasyonuna firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
-          <p v-else>{{ corporate ? 'Lokasyon' : 'Müşteri ve lokasyon' }} seçip firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
+          <p v-else>{{ corporate ? 'Lokasyon' : multiUser ? 'Müşteri ve lokasyon' : 'Organizasyon ve lokasyon' }} seçip firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
         </div>
         <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
       </div>
@@ -13,9 +13,9 @@
       <template v-if="!location">
         <div class="form-row">
           <!-- Kurumsal hesapta müşteri firmanın kendisi: otomatik seçili, kutu yok -->
-          <label v-if="!corporate">Müşteri <span>*</span>
+          <label v-if="!corporate">{{ multiUser ? 'Müşteri' : 'Organizasyon' }} <span>*</span>
             <select v-model="customerId" @change="onCustomerChange">
-              <option :value="null" disabled>Müşteri seçin</option>
+              <option :value="null" disabled>{{ multiUser ? 'Müşteri seçin' : 'Organizasyon seçin' }}</option>
               <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }}</option>
             </select>
           </label>
@@ -31,20 +31,20 @@
       <!-- İşletme adı: işyerinin (firmanın bu lokasyondaki kaydı, SGK sicili) adı, ör. Eskişehir Buzdolabı İşletmesi. Aynı firmanın
            lokasyonda birden çok işyeri varsa adıyla ayırt edilir; ayrı firma tanımı açılmaz. Boşsa firma adıyla görünür. -->
       <label>İşletme adı <small>(Opsiyonel)</small>
-        <input v-model="displayName" type="text" placeholder="Örn. Eskişehir Buzdolabı İşletmesi — boşsa firma adıyla görünür" />
+        <input v-model="displayName" type="text" placeholder="Örn. B Blok Depo — boşsa firma adıyla görünür" />
       </label>
 
-      <label>Firma (işveren) <span>*</span>
+      <label>Firma <span>*</span>
         <select v-model="companySelection" @change="onCompanySelect">
-          <option :value="null" disabled>{{ ownCompanies.length || freeCompanies.length ? 'Firma seçin' : 'Bu müşterinin firması yok — yeni firma oluşturun' }}</option>
-          <optgroup v-if="ownPlain.length" label="Bu müşterinin firmaları">
+          <option :value="null" disabled>{{ ownCompanies.length || freeCompanies.length ? 'Firma seçin' : (multiUser ? 'Bu müşterinin' : 'Bu organizasyonun') + ' firması yok — yeni firma oluşturun' }}</option>
+          <optgroup v-if="ownPlain.length" :label="multiUser ? 'Bu müşterinin firmaları' : 'Bu organizasyonun firmaları'">
             <option v-for="company in ownPlain" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}</option>
           </optgroup>
           <!-- Ünvanlı (görünen adlı) firmalar: adı · ünvanı -->
           <optgroup v-if="ownTitled.length" label="Görünen adlı firmalar">
             <option v-for="company in ownTitled" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }} · {{ titleOf[company.business_entity_id] }}</option>
           </optgroup>
-          <optgroup v-if="freeCompanies.length" label="Henüz bir müşteride işyeri olmayan firmalar">
+          <optgroup v-if="freeCompanies.length" :label="multiUser ? 'Henüz bir müşteride işyeri olmayan firmalar' : 'Henüz bir organizasyonda işyeri olmayan firmalar'">
             <option v-for="company in freeCompanies" :key="company.business_entity_id" :value="company.business_entity_id">{{ company.name }}{{ titleOf[company.business_entity_id] ? ` · ${titleOf[company.business_entity_id]}` : '' }}</option>
           </optgroup>
           <option :value="NEW_COMPANY">+ Yeni firma oluştur</option>
@@ -55,7 +55,7 @@
 
       <div v-if="companySelection === NEW_COMPANY" class="new-company">
         <div class="form-row">
-          <label>Firma Adı <span>*</span><input v-model="newCompany.name" type="text" placeholder="Örn. Arçelik A.Ş." @input="duplicateCompany = findDuplicate(newCompany.name)" /></label>
+          <label>Firma Adı <span>*</span><input v-model="newCompany.name" type="text" placeholder="Örn. ABC Gıda A.Ş." @input="duplicateCompany = findDuplicate(newCompany.name)" /></label>
           <label>Firma Türü <span>*</span>
             <select v-model="newCompany.company_type">
               <option value="corporate">Kurumsal</option>
@@ -64,7 +64,7 @@
           </label>
         </div>
         <p v-if="duplicateCompany" class="hint warn">
-          "{{ duplicateCompany.name }}" zaten kayıtlı<template v-if="otherCustomerIds.has(duplicateCompany.business_entity_id)"> (başka bir müşteride işyeri var)</template>.
+          "{{ duplicateCompany.name }}" zaten kayıtlı<template v-if="otherCustomerIds.has(duplicateCompany.business_entity_id)"> (başka bir {{ multiUser ? 'müşteride' : 'organizasyonda' }} işyeri var)</template>.
           <button type="button" class="link-button" @click="useExisting(duplicateCompany)">Bu firmayı seç</button>
         </p>
       </div>
@@ -323,7 +323,7 @@ onMounted(async () => {
   }
 })
 
-const { corporate, load: loadAccount } = useAccount()
+const { corporate, multiUser, load: loadAccount } = useAccount()
 
 </script>
 

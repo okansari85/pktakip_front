@@ -25,9 +25,9 @@
           <i class="pi pi-sitemap" />
           <span v-if="!collapsed">Organizasyon</span>
         </NuxtLink>
-        <NuxtLink v-else-if="!multiUser || isManager" to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
-          <i class="pi pi-users" />
-          <span v-if="!collapsed">Müşteriler</span>
+        <NuxtLink v-else-if="!multiUser || isManager" to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? (multiUser ? 'Müşteriler' : 'Organizasyon Yönetimi') : undefined">
+          <i :class="multiUser ? 'pi pi-users' : 'pi pi-sitemap'" />
+          <span v-if="!collapsed">{{ multiUser ? 'Müşteriler' : 'Organizasyon Yönetimi' }}</span>
         </NuxtLink>
         <NuxtLink v-if="!multiUser || isManager || isOperation" to="/expert/settings/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
           <i class="pi pi-map-marker" />
@@ -152,6 +152,9 @@ watch(periodicActive, active => { if (active) periodicOpen.value = true })
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
 .sidebar-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
 .sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; }
+/* Uzun adlar (ör. Organizasyon Yönetimi) kalınken de tek satır kalsın. */
+.sidebar-link > span { white-space: nowrap; }
+.sidebar-link.router-link-active > span { letter-spacing: -.3px; }
 .group-toggle { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
 .group-toggle .chevron { margin-left: auto; font-size: 11px; transition: transform .15s ease; }
 .sidebar-group:not(.open) .chevron { transform: rotate(-90deg); }

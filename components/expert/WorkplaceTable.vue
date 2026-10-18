@@ -3,9 +3,9 @@
     <div class="toolbar" :class="{ 'no-customer': corporate }">
       <!-- Kurumsal hesapta müşteri firmanın kendisi: müşteri filtresi ve sütunu yok -->
       <label v-if="!corporate" class="field">
-        <span>Müşteri</span>
+        <span>{{ multiUser ? 'Müşteri' : 'Organizasyon' }}</span>
         <select v-model="customerFilter">
-          <option :value="null">Tüm müşteriler</option>
+          <option :value="null">{{ multiUser ? 'Tüm müşteriler' : 'Tüm organizasyonlar' }}</option>
           <option v-for="name in customerNames" :key="name" :value="name">{{ name }}</option>
         </select>
       </label>
@@ -34,7 +34,7 @@
         <thead>
           <tr>
             <th>Firma</th>
-            <th v-if="!corporate">Müşteri</th>
+            <th v-if="!corporate">{{ multiUser ? 'Müşteri' : 'Organizasyon' }}</th>
             <th>Lokasyon</th>
             <th>NACE</th>
             <th>Tehlike Sınıfı</th>
@@ -66,7 +66,7 @@
 interface WorkplaceRow { id: number; business_entity_id?: number; company_name: string; customer_name?: string | null; location_name?: string | null; organization_name?: string | null; nace_code?: string | null; activity?: string | null; hazard_class: string; sgk_workplace_number?: string | null; experts?: string[] }
 
 const props = defineProps<{ workplaces: WorkplaceRow[]; loading?: boolean; error?: string }>()
-const { corporate } = useAccount()
+const { corporate, multiUser } = useAccount()
 const { get } = useExpertApi()
 // İşletme adı varsa üstte o, altında firma (işveren).
 const { load: loadNames, nameOf, workplaceTitle, workplaceFirm } = useWorkplaceNames()

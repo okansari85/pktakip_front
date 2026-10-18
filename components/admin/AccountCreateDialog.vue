@@ -56,7 +56,7 @@ const TEXTS: Record<AccountType, { intro: string; nameLabel: string; namePlaceho
   },
   corporate: {
     intro: 'Kurumsal firma hesabını oluşturun. Firma, hesabın tek müşterisi olarak eklenir. Yönetici (müşteri admini) davet e-postasıyla kendi şifresini belirler.',
-    nameLabel: 'Firma Adı', namePlaceholder: 'Örn. Koç Holding',
+    nameLabel: 'Firma Adı', namePlaceholder: 'Örn. ABC Holding',
     contactLabel: 'Yönetici (Müşteri Admini) Ad Soyad', contactPlaceholder: 'Örn. Mehmet Kaya',
     emailPlaceholder: 'isg@firma.com', submit: 'Kurumsal Hesabı Oluştur'
   }

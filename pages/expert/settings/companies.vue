@@ -30,7 +30,6 @@
             <tr>
               <th>Firma Adı</th>
               <th>Unvan</th>
-              <th>Kısa Ad</th>
               <th>Tür</th>
               <th>Lokasyon</th>
               <th>Oluşturma Tarihi</th>
@@ -41,7 +40,6 @@
             <tr v-for="company in filteredCompanies" :key="company.business_entity_id">
               <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ company.name }}</strong></div></td>
               <td>{{ titleOf[company.business_entity_id] || '—' }}</td>
-              <td>{{ company.short_name || '—' }}</td>
               <td>{{ companyTypeLabel(company.company_type) }}</td>
               <td>{{ company.locations_count ?? 0 }}</td>
               <td>{{ formatDate(company.created_at) }}</td>
@@ -60,23 +58,31 @@
     <ExpertWorkplaceAssignments v-if="canAssign" />
 
     <div v-if="companyFormOpen" class="modal-backdrop">
-      <section class="modal-card">
+      <section class="modal-card wide">
         <div class="modal-head">
-          <div><h2>{{ editingCompany ? 'Firmayı Düzenle' : 'Firma Tanımla' }}</h2><p>{{ editingCompany ? 'Firma bilgilerini güncelleyin.' : 'Yeni firma kaydı oluşturun.' }}</p></div>
+          <div class="head-title"><span class="head-icon"><i :class="editingCompany ? 'pi pi-pencil' : 'pi pi-briefcase'" /></span><div><h2>{{ editingCompany ? 'Firmayı Düzenle' : 'Firma Tanımla' }}</h2><p>{{ editingCompany ? 'Firma kartının bilgilerini güncelleyin; değişiklik firmanın bütün işyerlerinde görünür.' : 'Firma kartı, firmanın kimlik bilgileridir (ad, ünvan, tür).' }}</p></div></div>
           <button class="close-button" type="button" @click="closeCompanyForm"><i class="pi pi-times" /></button>
         </div>
-        <label>Firma Adı <span>*</span><input v-model="companyForm.name" type="text" placeholder="Örn. Arçelik A.Ş." /></label>
+        <div v-if="!editingCompany" class="info-box"><i class="pi pi-lightbulb" /><span>Firmayı bir lokasyona Lokasyonlar sayfasındaki <strong>Lokasyona Firma Tanımla</strong> ile atarsınız. Aynı firma birden fazla lokasyonda işyeri olabilir; firma kartı bir kez tanımlanır.</span></div>
+        <label>Firma Adı <span>*</span><input v-model="companyForm.name" type="text" placeholder="Örn. ABC Gıda A.Ş." /></label>
+        <p v-if="!duplicateCompany" class="field-hint"><i class="pi pi-info-circle" /> Listelerde ve raporlarda görünen ad.</p>
         <p v-if="duplicateCompany" class="hint warn">"{{ duplicateCompany.name }}" zaten kayıtlı.</p>
         <!-- Ünvan bir kez tanımlanır; aynı şirketin işletmeleri listeden aynı ünvanı seçer -->
-        <label>Unvan <small>(Opsiyonel)</small><input v-model="companyForm.title" type="text" list="company-titles" placeholder="Örn. Arçelik A.Ş." /></label>
+        <label>Unvan <small>(Opsiyonel)</small><input v-model="companyForm.title" type="text" list="company-titles" placeholder="Örn. ABC Gıda Sanayi ve Ticaret A.Ş." /></label>
         <datalist id="company-titles"><option v-for="title in titles" :key="title.id" :value="title.name" /></datalist>
-        <label>Kısa Ad <small>(Opsiyonel)</small><input v-model="companyForm.short_name" type="text" /></label>
-        <label>Firma Türü <span>*</span>
-          <select v-model="companyForm.company_type">
-            <option value="corporate">Kurumsal</option>
-            <option value="individual">Bireysel (Şahıs)</option>
-          </select>
-        </label>
+        <p class="field-hint"><i class="pi pi-info-circle" /> Resmî ünvan. Aynı şirketin birden fazla firması varsa hepsine aynı ünvanı seçin; daha önce girilenler öneri olarak çıkar.</p>
+        <!-- Kısa Ad formdan kaldırıldı (kullanıcı 18 Ekim 2026: PKTakip'te kullanılmıyor); düzenlemede mevcut değer aynen geri gönderilir. -->
+        <div class="type-field">
+          <span class="type-label">Firma Türü <span>*</span></span>
+          <div class="type-options">
+            <button type="button" class="type-option" :class="{ on: companyForm.company_type === 'corporate' }" @click="companyForm.company_type = 'corporate'">
+              <i class="pi pi-building" /><span><strong>Kurumsal</strong><small>Şirket (A.Ş., Ltd. Şti.) ya da kamu kurumu.</small></span>
+            </button>
+            <button type="button" class="type-option" :class="{ on: companyForm.company_type === 'individual' }" @click="companyForm.company_type = 'individual'">
+              <i class="pi pi-user" /><span><strong>Bireysel (Şahıs)</strong><small>Tek kişiye ait işletme.</small></span>
+            </button>
+          </div>
+        </div>
         <p v-if="companyFormError" class="form-error">{{ companyFormError }}</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" @click="closeCompanyForm">İptal</button>
@@ -87,9 +93,9 @@
 
     <!-- Firma silme: önce bağlı kayıtlar kontrol edilir; verisi olan firma silinmez -->
     <div v-if="deleteTarget" class="modal-backdrop">
-      <section class="modal-card">
+      <section class="modal-card wide">
         <div class="modal-head">
-          <div><h2>Firmayı Sil</h2><p>{{ deleteTarget.name }}</p></div>
+          <div class="head-title"><span class="head-icon danger"><i class="pi pi-trash" /></span><div><h2>Firmayı Sil</h2><p>"{{ deleteTarget.name }}" firma kartı kalıcı olarak silinir. Verisi (işyeri, ekipman, rapor) olan firma, kayıtlar kaybolmasın diye silinmez.</p></div></div>
           <button class="close-button" type="button" :disabled="deleting" @click="closeDelete"><i class="pi pi-times" /></button>
         </div>
         <p v-if="deleteLoading" class="delete-text"><i class="pi pi-spin pi-spinner" /> Firmanın kayıtları kontrol ediliyor...</p>
@@ -269,6 +275,23 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .modal-card input,.modal-card select{width:100%;height:42px;margin-top:7px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;background:var(--admin-input);font:inherit;font-size:13px;color:var(--admin-heading)}
 .modal-card input:focus,.modal-card select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
 .hint{margin:-8px 0 14px;font-size:12px}.hint.warn{color:var(--admin-warning-text)}
+/* Organizasyon ve firma pencereleri (kullanıcı 18 Ekim 2026): geniş, ikonlu başlık ve alan açıklamaları; yalnız X / İptal ile kapanır. */
+.modal-card.wide{width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px 26px;border-radius:14px}
+.head-title{display:flex;align-items:flex-start;gap:14px}
+.head-icon{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--pk-yellow);color:#111827;font-size:19px}
+.head-icon.danger{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.modal-card.wide .modal-head p{font-size:12.5px;line-height:1.55}
+.field-hint{display:flex;gap:7px;margin:-10px 0 16px;color:var(--admin-muted);font-size:12px;line-height:1.5}.field-hint .pi{margin-top:2px}
+.info-box{display:flex;gap:10px;margin:0 0 18px;padding:12px 14px;border-radius:10px;background:var(--admin-accent-soft);color:var(--admin-text);font-size:12.5px;line-height:1.55}.info-box .pi{margin-top:3px;color:#b58900}
+.info-box.danger{background:var(--admin-danger-bg);color:var(--admin-danger-text)}.info-box.danger .pi{color:var(--admin-danger-text)}
+.type-field{margin-bottom:16px}.type-label{display:block;margin-bottom:7px;color:var(--admin-heading);font-size:12px;font-weight:700}.type-label span{color:var(--admin-danger-text)}
+.type-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-option{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:9px;background:var(--admin-input);text-align:left;cursor:pointer;font:inherit}
+.type-option > .pi{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;background:var(--admin-chip);color:var(--admin-heading)}
+.type-option span{display:flex;flex-direction:column;gap:2px}.type-option strong{color:var(--admin-heading);font-size:12.5px}.type-option small{color:var(--admin-muted);font-size:11.5px}
+.type-option:hover{border-color:#d7a900}.type-option.on{border-color:#d7a900;background:var(--admin-accent-soft)}.type-option.on > .pi{background:var(--pk-yellow);color:#111827}
+@media(max-width:560px){.type-options{grid-template-columns:1fr}}
+
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:900px){.toolbar{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.primary-button{align-self:flex-end}}
