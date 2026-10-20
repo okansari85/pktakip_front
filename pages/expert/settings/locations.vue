@@ -76,7 +76,7 @@
               <td class="address-cell">{{ location.address || '—' }}</td>
               <td>{{ formatDate(location.created_at) }}</td>
               <td class="actions">
-                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ kamu ? 'İşyerleri' : multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
+                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ isyeri ? (multiUser ? 'İşyerleri' : 'Lokasyona İşyeri Tanımla') : multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
                 <!-- Alanlar (isteğe bağlı): operasyonel alanlar firmasıyla, ortak alanlar firmasız -->
                 <button class="row-button" type="button" @click="areaLocation = location"><i class="pi pi-th-large" /> Alanlar</button>
               </td>
@@ -98,19 +98,19 @@
       <aside class="company-drawer">
         <div class="drawer-head">
           <div>
-            <h2>{{ kamu ? 'Lokasyon İşyerleri' : multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
+            <h2>{{ isyeri ? (multiUser ? 'Lokasyon İşyerleri' : 'Lokasyona İşyeri Tanımla') : multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
             <div class="drawer-subtitle"><i class="pi pi-map-marker" /><div><strong>{{ companyLocation.name }}</strong><span>{{ selectedCustomer?.name }}</span></div></div>
           </div>
           <button class="close-button" type="button" @click="closeCompanies"><i class="pi pi-times" /></button>
         </div>
 
         <div v-if="canEditStructure" class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ kamu ? 'İşyeri Ekle' : multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
+          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ isyeri ? (multiUser ? 'İşyeri Ekle' : 'İşyeri Tanımla') : multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
         </div>
 
-        <div v-if="companiesLoading" class="drawer-state">{{ kamu ? 'İşyerleri' : 'Firmalar' }} yükleniyor...</div>
+        <div v-if="companiesLoading" class="drawer-state">{{ isyeri ? 'İşyerleri' : 'Firmalar' }} yükleniyor...</div>
         <div v-else-if="companiesError" class="drawer-state error-state">{{ companiesError }}</div>
-        <div v-else-if="locationCompanies.length === 0" class="drawer-state">Bu lokasyona henüz {{ kamu ? 'işyeri' : 'firma' }} eklenmemiş.</div>
+        <div v-else-if="locationCompanies.length === 0" class="drawer-state">Bu lokasyona henüz {{ isyeri ? 'işyeri' : 'firma' }} eklenmemiş.</div>
         <ul v-else class="company-list">
           <li v-for="item in locationCompanies" :key="item.id" class="company-item">
             <div class="company-item-head">
@@ -118,7 +118,7 @@
               <div class="company-name">
                 <template v-if="nameEdit?.id === item.id">
                   <div class="name-edit">
-                    <input v-model="nameEdit.value" type="text" :placeholder="kamu ? 'İşyeri adı (ör. B Blok Arşiv)' : 'İşletme adı (ör. B Blok Depo) — boşsa firma adı'" @keyup.enter="saveName" />
+                    <input v-model="nameEdit.value" type="text" :placeholder="isyeri ? 'İşyeri adı (ör. B Blok Arşiv)' : 'İşletme adı (ör. B Blok Depo) — boşsa firma adı'" @keyup.enter="saveName" />
                     <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><i class="pi pi-check" /></button>
                     <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><i class="pi pi-times" /></button>
                   </div>
@@ -240,6 +240,8 @@ const { load: loadCustomerTypes } = useCustomerTypes()
 const customerTypes = ref<Record<string, string | null>>({})
 loadCustomerTypes().then(types => { customerTypes.value = types })
 const publicCustomer = computed(() => kamu.value || !!selectedCustomerId.value && customerTypes.value[String(selectedCustomerId.value)] === 'public')
+// Kamu hesabında ve (uzman / OSGB'de) kamu müşterisinde firma yerine "işyeri" denir (kullanıcı 20 Ekim 2026).
+const isyeri = computed(() => publicCustomer.value)
 
 // Ağacı girintili seçenek listesine çevirir.
 const organizationOptions = computed(() => {
@@ -404,7 +406,7 @@ const loadLocationCompanies = async () => {
     const data = await $fetch<LocationCompany[]>(api(companiesPath()), { headers: tenantHeaders() })
     locationCompanies.value = Array.isArray(data) ? data : []
   } catch (e: any) {
-    companiesError.value = e?.data?.message || (kamu.value ? 'İşyerleri alınamadı.' : 'Firmalar alınamadı.')
+    companiesError.value = e?.data?.message || (isyeri.value ? 'İşyerleri alınamadı.' : 'Firmalar alınamadı.')
   } finally { companiesLoading.value = false }
 }
 
@@ -460,7 +462,7 @@ const saveName = async () => {
 }
 
 const removeCompany = async (item: LocationCompany) => {
-  if (!confirm(kamu.value ? `"${item.name}" işyeri bu lokasyondan kaldırılsın mı?` : `"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
+  if (!confirm(isyeri.value ? `"${item.name}" işyeri bu lokasyondan kaldırılsın mı?` : `"${item.name}" firması bu lokasyondan kaldırılsın mı?`)) return
   try {
     await $fetch(api(`${companiesPath()}/${item.id}`), { method: 'DELETE', headers: tenantHeaders() })
     await loadLocationCompanies()
@@ -468,7 +470,7 @@ const removeCompany = async (item: LocationCompany) => {
     useBilling().load()
   } catch (e: any) {
     const errors = e?.data?.errors
-    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || (kamu.value ? 'İşyeri kaldırılamadı.' : 'Firma kaldırılamadı.'))
+    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || (isyeri.value ? 'İşyeri kaldırılamadı.' : 'Firma kaldırılamadı.'))
   }
 }
 

@@ -5,7 +5,7 @@
         <div class="head-title">
           <span class="head-icon"><i class="pi pi-briefcase" /></span>
           <div>
-            <h2>{{ kamuAccount ? 'Lokasyona İşyeri Ekle' : 'Lokasyona Firma Ata' }}</h2>
+            <h2>{{ kamuAccount ? 'Lokasyona İşyeri Ekle' : customerType === 'public' ? 'Lokasyona İşyeri Ata' : 'Lokasyona Firma Ata' }}</h2>
             <p><i class="pi pi-map-marker" /> {{ location.name }}<template v-if="customerName"> · {{ customerName }}</template></p>
           </div>
         </div>
