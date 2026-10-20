@@ -304,28 +304,35 @@ const installationKpiText = computed(() => {
   return [`${types} türde`, nonconforming && `${nonconforming} uygun değil`, overdue && `${overdue} süresi geçmiş`].filter(Boolean).join(' · ')
 })
 const cityCount = computed(() =>new Set((data.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size)
-// İlçe haritası (kamu hesabı, bütün lokasyonlar tek ilde): lokasyonların ilçeleri hesabın lokasyon listesinden (kurum tek müşteri).
-const { kamu: kamuAccount } = useAccount()
-const districtMode = computed(() => {
-  const list = fullData.value?.locations || []
-  const codes = new Set(list.map((location: any) => location.city_id))
-  if (!kamuAccount.value || !list.length || codes.size !== 1 || !list[0].city_id) return null
-  return { code: list[0].city_id as number, name: list[0].city_name as string }
-})
-const districtOf = ref<Record<number, string>>({})
-watch(districtMode, async (mode) => {
-  if (!mode || Object.keys(districtOf.value).length) return
+// İlçe haritası: kamu hesabında ve bireysel uzmanda bütün lokasyonlar tek ildeyse o ilin ilçeleri (kullanıcı 18 / 20 Ekim 2026);
+// OSGB ve kurumsalda Türkiye haritası. Lokasyonların ilçeleri müşterilerin lokasyon listesinden.
+const { kamu: kamuAccount, account: pkAccount } = useAccount()
+// Karar filtreye göre değil, uzmanın hizmet verdiği bütün lokasyonlara (işyeri olan lokasyonlar) göre: hepsi tek ildeyse il haritası,
+// değilse Türkiye haritası (kullanıcı 20 Ekim 2026: "sadece tek ilde bakıyorsa il haritası").
+const districtEnabled = computed(() => kamuAccount.value || pkAccount.value?.type === 'expert')
+// Müşterilerin lokasyonları: lokasyon → il ve ilçe adı (bir kez alınır).
+const locationPlaces = ref<Record<number, { city: string; district: string }> | null>(null)
+watch(districtEnabled, async (enabled) => {
+  if (!enabled || locationPlaces.value) return
   try {
     const customers = await get<any>('/customers')
     const list = Array.isArray(customers) ? customers : customers?.items || customers?.data || []
-    const result: Record<number, string> = {}
+    const result: Record<number, { city: string; district: string }> = {}
     for (const customer of list) {
       const locations = await get<any[]>(`/customers/${customer.id}/locations`)
-      for (const location of locations || []) if (location.district) result[location.id] = location.district
+      for (const location of locations || []) result[location.id] = { city: location.city || '', district: location.district || '' }
     }
-    districtOf.value = result
-  } catch { districtOf.value = {} }
+    locationPlaces.value = result
+  } catch { locationPlaces.value = {} }
 }, { immediate: true })
+// Uzmanın hizmet verdiği iller (bütün işyerlerinin lokasyonları; seçili filtreden bağımsız).
+const serviceCities = computed(() => new Set(groups.value.map(group => locationPlaces.value?.[group.location_id]?.city).filter(Boolean)))
+const districtMode = computed(() => {
+  if (!districtEnabled.value || !locationPlaces.value || serviceCities.value.size !== 1) return null
+  const located = (fullData.value?.locations || []).find((location: any) => location.city_id)
+  return located ? { code: located.city_id as number, name: located.city_name as string } : null
+})
+const districtOf = computed<Record<number, string>>(() => Object.fromEntries(Object.entries(locationPlaces.value || {}).map(([id, place]) => [id, place.district])))
 const selectedDistrict = ref<string | null>(null)
 const mapDistricts = computed(() => {
   const map = new Map<string, { name: string; count: number; equipment: number; overdue: number; nonconforming: number; upcoming: number }>()
