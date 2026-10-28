@@ -69,6 +69,19 @@
           <span v-if="!equipment.length">"Yeni Ekipman" ile ilk ekipmanınızı ekleyin.</span>
         </div>
         <div v-else class="table-wrap">
+          <!-- Tür seçiliyken o türün bütün bulguları (son raporlardan), satırı ekipmana götürür -->
+          <div v-if="typeFindings.length" class="type-findings">
+            <div class="type-findings-head">
+              <strong>{{ selectedTypeName }}: {{ typeFindings.length }} bulgu, {{ typeFindingEquipment }} ekipmanda</strong>
+              <button v-if="typeFindings.length > 10" class="link-button" type="button" @click="showAllFindings = !showAllFindings">{{ showAllFindings ? 'Daha az göster' : 'Tümünü göster' }}</button>
+            </div>
+            <ul>
+              <li v-for="(row, index) in (showAllFindings ? typeFindings : typeFindings.slice(0, 10))" :key="index">
+                <NuxtLink :to="`/expert/equipment/${row.id}`"><strong>{{ row.label }}</strong></NuxtLink>
+                <span>{{ row.text }}</span>
+              </li>
+            </ul>
+          </div>
           <div v-if="selected.length" class="bulk-bar">
             <strong>{{ selected.length }} ekipman seçildi</strong>
             <button class="link-button" type="button" @click="selected = []">Seçimi temizle</button>
@@ -115,7 +128,14 @@
                   <span v-if="!item.is_active" class="passive-tag" :title="passiveTitle(item)">Pasif</span>
                   <span v-else class="days" :class="daysKey(item.days_left)">{{ daysText(item.days_left) }}</span>
                 </td>
-                <td><span class="status-badge" :class="item.status">{{ STATUS_LABELS[item.status] }}</span></td>
+                <td>
+                  <span class="status-badge" :class="item.status">{{ STATUS_LABELS[item.status] }}</span>
+                  <!-- Son raporun bulguları: sayı + üstüne gelince / odaklanınca liste -->
+                  <span v-if="item.findings_count" class="findings-info" tabindex="0" :aria-label="`${item.findings_count} bulgu: ${item.findings.join('; ')}`"
+                    @click.stop @mouseenter="showFindings(item, $event)" @focus="showFindings(item, $event)" @mouseleave="hoverFindings = null" @blur="hoverFindings = null">
+                    {{ item.findings_count }} bulgu <i class="pi pi-info-circle" />
+                  </span>
+                </td>
                 <td class="actions-col" @click.stop>
                   <div class="row-actions">
                     <button class="icon-button" type="button" title="Önizle" aria-label="Önizle" @click="previewItem = item"><i class="pi pi-eye" /></button>
@@ -136,6 +156,13 @@
       </section>
     </template>
 
+    <!-- Bulgu kutusu tablonun dışında (tablo kaydırmalı; içeride kesilirdi), sayının hizasında ekrana sabit -->
+    <Teleport to="body">
+      <div v-if="hoverFindings" class="findings-pop" role="tooltip" :style="{ top: `${hoverFindings.top}px`, left: `${hoverFindings.left}px` }">
+        <strong>Son raporun bulguları</strong>
+        <span v-for="(finding, index) in hoverFindings.findings" :key="index">{{ finding }}</span>
+      </div>
+    </Teleport>
     <ExpertEquipmentPreviewModal v-if="previewItem" :summary="previewItem" @close="previewItem = null" @upload="fromPreview('report', $event)" @pending="fromPreview('pending', $event)" />
     <ExpertEquipmentFromReportModal v-if="fromReportOpen" :context="context" :catalog="equipmentCategories" :workplaces="locationWorkplaces" :equipment="equipment" @close="fromReportOpen = false" @continue="onFromReportContinue" @bulk="onFromReportBulk" />
     <ExpertBulkReportModal v-if="bulkOpen" :context="context" :preload="bulkPreload" @close="closeBulk" @saved="onBulkSaved" />
@@ -212,7 +239,8 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'expert', middleware: 'expert' })
+// keepalive: detaydan geri dönünce liste, filtreler ve kaydırma konumu olduğu gibi; liste arkada tazelenir (onActivated).
+definePageMeta({ layout: 'expert', middleware: 'expert', keepalive: true })
 
 interface CatalogType { id: number; slug?: string; name: string; default_period_months: number | null; default_scope: 'location' | 'workplace'; variants?: string[]; variant_label?: string | null }
 interface CatalogCategory { slug: string; name: string; kind: 'equipment' | 'installation'; types: CatalogType[] }
@@ -286,6 +314,22 @@ const filtered = computed(() => {
 })
 
 const selectCategory = (slug: string) => { categoryFilter.value = slug; typeFilter.value = null }
+
+// Durum sütunundaki "3 bulgu": kutu sayının altında, ekranın sağından taşmayacak şekilde.
+const hoverFindings = ref<{ findings: string[]; top: number; left: number } | null>(null)
+const showFindings = (item: any, event: Event) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  hoverFindings.value = { findings: item.findings, top: rect.bottom + 6, left: Math.max(8, Math.min(rect.right - 340, window.innerWidth - 348)) }
+}
+
+// Seçili türün bulguları (filtredeki aktif ekipmanların son raporlarından); ilk 10, istenirse tümü.
+const showAllFindings = ref(false)
+const selectedTypeName = computed(() => filtered.value.find(item => item.type?.id === typeFilter.value)?.type?.name || '')
+const typeFindings = computed(() => !typeFilter.value ? [] : filtered.value
+  .filter(item => item.is_active && item.findings_count)
+  .flatMap(item => (item.findings as string[]).map(text => ({ id: item.id, label: item.code || item.name || item.type?.name, text }))))
+const typeFindingEquipment = computed(() => new Set(typeFindings.value.map(row => row.id)).size)
+watch(typeFilter, () => { showAllFindings.value = false })
 
 // --- Seçim ve toplu silme ---
 const selected = ref<number[]>([])
@@ -439,7 +483,8 @@ const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('t
 
 const loadEquipment = async () => {
   if (!context.value) { equipment.value = []; return }
-  loading.value = true
+  // Liste zaten varsa (detaydan dönüş) eski liste görünür kalır, arkada tazelenir.
+  loading.value = !equipment.value.length
   error.value = ''
   try {
     const [list] = await Promise.all([
@@ -552,8 +597,9 @@ watch([categoryFilter, typeFilter, tubeTab, activeFilter, statusFilter, search],
   router.replace({ query })
 })
 
-watch(() => context.value && `${context.value.location_id}-${context.value.workplace_id ?? ''}`, () => {
-  typeFilter.value = null
+watch(() => context.value && `${context.value.location_id}-${context.value.workplace_id ?? ''}`, (current, previous) => {
+  // Tür seçimi yalnız lokasyon / işyeri değişince sıfırlanır; sayfa açılırken (bağlam ilk kez gelince) adresteki tür korunur.
+  if (previous) typeFilter.value = null
   loadEquipment()
   loadMatchingCount()
 })
@@ -564,6 +610,12 @@ onMounted(async () => {
   loadWorkplaces()
   try { catalog.value = await get('/equipment-catalog') } catch { catalog.value = [] }
   loadEquipment()
+})
+// Sayfaya geri dönüş (keepalive): ilk açılış onMounted'da; sonrakilerde liste sessizce tazelenir.
+let activatedOnce = false
+onActivated(() => {
+  if (activatedOnce) loadEquipment()
+  activatedOnce = true
 })
 </script>
 
@@ -616,6 +668,12 @@ tbody tr.passive td:not(.check-col):not(.actions-col){opacity:.6}
 .name-cell{display:flex;flex-direction:column;gap:3px}.name-cell strong{color:var(--admin-heading);font-size:13px}.name-cell small{color:var(--admin-muted);font-size:11px}
 .days{font-weight:700;white-space:nowrap}.days.overdue{color:var(--admin-danger-text)}.days.soon{color:var(--admin-warning-text)}.days.ok{color:var(--admin-text)}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.findings-info{position:relative;display:inline-flex;align-items:center;gap:4px;margin-left:6px;color:var(--admin-danger-text);font-size:11px;font-weight:700;white-space:nowrap;cursor:help;outline:none}
+.findings-info .pi{font-size:12px}
+.type-findings{margin:0 0 14px;padding:12px 14px;border:1px solid var(--admin-border);border-left:3px solid var(--admin-danger-text);border-radius:10px}
+.type-findings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;color:var(--admin-heading);font-size:13px}
+.type-findings ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.type-findings li{display:flex;gap:10px;font-size:12px;line-height:1.45}.type-findings li a{min-width:70px;color:var(--admin-heading);text-decoration:none}.type-findings li a:hover{text-decoration:underline}
 .status-badge.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-badge.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status-badge.rapor_yok,.status-badge.belirtilmemis{background:var(--admin-chip);color:var(--admin-muted)}
 .state{padding:60px 20px;text-align:center;color:var(--admin-muted)}.table-footer{padding:12px 16px;color:var(--admin-muted);font-size:12px}
@@ -632,4 +690,10 @@ label > span{color:var(--admin-danger-text)}label small{font-weight:400;color:va
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 @media(max-width:800px){.page-head{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:1fr}.search-box{width:100%}.filter-right{width:100%;flex-direction:column}}
+</style>
+
+<style>
+/* Teleport ile body'de (scoped stil ulaşmaz) */
+.findings-pop{position:fixed;z-index:1000;width:340px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card,#fff);box-shadow:0 10px 30px rgba(0,0,0,.14);color:var(--admin-text);display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.findings-pop strong{color:var(--admin-heading);font-size:12px}.findings-pop span{font-size:12px;line-height:1.45;padding-left:10px;border-left:2px solid var(--admin-danger-text)}
 </style>
