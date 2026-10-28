@@ -26,10 +26,36 @@
         </div>
       </section>
 
+      <!-- Okuma yöntemi: tek uzun talimat (eski) ya da küçük ajanlar (yeni, Docling) -->
+      <section class="card">
+        <h2>Okuma yöntemi</h2>
+        <div class="providers">
+          <label class="provider" :class="{ active: !form.agents }">
+            <input v-model="form.agents" type="radio" :value="false" />
+            <span class="provider-body">
+              <strong>Tek talimat</strong>
+              <small>Rapor tek seferde, uzun talimatla okunur. Büyük bulut modelleri (Gemini, gpt-luna) için; bugüne kadarki okumalar bununla.</small>
+            </span>
+          </label>
+          <label class="provider" :class="{ active: form.agents }">
+            <input v-model="form.agents" type="radio" :value="true" />
+            <span class="provider-body">
+              <strong>Çok ajanlı (Docling)</strong>
+              <small>PDF Docling ile bölümlere ayrılır, her bölümü tek işi olan küçük bir ajan okur. Yerel sunucu (NuExtract3) için gerekli.</small>
+              <span v-if="form.agents && !doclingReady" class="key-state warn">Docling kurulu değil: tesisat raporları düz metinle okunur</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
       <!-- Her istemcinin modeli ve API anahtarı -->
       <section v-for="item in providers" :key="item.key" class="card">
         <h2>{{ item.label }} <span v-if="item.key === form.provider" class="badge">Varsayılan</span></h2>
         <div class="fields">
+          <label v-if="item.key === 'local'">Sunucu adresi
+            <input v-model="form.localUrl" type="text" :placeholder="localUrlDefault || 'http://127.0.0.1:8090/v1'" />
+            <small>OpenAI uyumlu adres, sonu /v1. Laptop: http://127.0.0.1:8090/v1. Boş bırakılırsa .env'deki: {{ localUrlDefault || '—' }}</small>
+          </label>
           <label>Model
             <input v-model="form.models[item.key]" type="text" :placeholder="item.default_model || 'Model adı'" />
             <small>Boş bırakılırsa .env'deki model kullanılır: {{ item.default_model || '—' }}</small>
@@ -62,15 +88,19 @@
 </template>
 
 <script setup lang="ts">
-// Ayarlar → Yapay zeka: rapor okuyan varsayılan istemci (Gemini / OpenAI / NVIDIA), modelleri ve API anahtarları.
+// Ayarlar → Yapay zeka: rapor okuyan varsayılan istemci (Gemini / OpenAI / NVIDIA / yerel sunucu), okuma yöntemi (tek talimat /
+// çok ajanlı), modelleri ve API anahtarları.
 // Anahtarlar sunucuda şifreli; sayfaya yalnızca son 4 karakteri gelir. Şimdilik tüm uzmanlara açık (ileride süper admin).
 definePageMeta({ layout: 'expert-settings', middleware: ['expert', 'expert-super-admin'] })
 
 interface Provider {
   key: string; label: string; note: string; key_env: string; key_source: 'db' | 'env' | null; key_hint: string | null; env_key_set: boolean
-  model: string | null; custom_model: boolean; default_model: string | null; suggestions: { id: string; note: string }[]
+  model: string | null; custom_model: boolean; default_model: string | null; suggestions: { id: string; note: string }[]; key_optional: boolean
 }
-interface Settings { provider: string; providers: Provider[]; updated_by: string | null; updated_at: string | null }
+interface Settings {
+  provider: string; providers: Provider[]; updated_by: string | null; updated_at: string | null
+  agents: boolean; local_url: string | null; local_url_default: string | null; docling_ready: boolean
+}
 
 const { get, patch, errorMessage } = useExpertApi()
 
@@ -82,13 +112,20 @@ const loadError = ref('')
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
-const form = reactive({ provider: '', models: {} as Record<string, string>, keys: {} as Record<string, string>, clear: [] as string[] })
+const localUrlDefault = ref<string | null>(null)
+const doclingReady = ref(false)
+const form = reactive({ provider: '', agents: false, localUrl: '', models: {} as Record<string, string>, keys: {} as Record<string, string>, clear: [] as string[] })
 
 const apply = (settings: Settings) => {
   providers.value = settings.providers
   updatedBy.value = settings.updated_by
   updatedAt.value = settings.updated_at
   form.provider = settings.provider
+  form.agents = settings.agents
+  // Adres alanı yalnızca sayfadan girilmişse dolu; boşsa .env'deki geçerli.
+  form.localUrl = settings.local_url || ''
+  localUrlDefault.value = settings.local_url_default
+  doclingReady.value = settings.docling_ready
   // Model alanı yalnızca sayfadan seçilmişse dolu; boşsa .env'deki model geçerli.
   form.models = Object.fromEntries(settings.providers.map(item => [item.key, item.custom_model ? item.model || '' : '']))
   form.keys = {}
@@ -101,7 +138,7 @@ const keyState = (item: Provider) => {
   if (form.clear.includes(item.key)) return item.env_key_set ? { tone: 'warn', text: 'Kaldırılacak, .env\'deki kullanılacak' } : { tone: 'missing', text: 'Kaldırılacak, anahtar kalmayacak' }
   if (item.key_source === 'db') return { tone: 'ok', text: `Anahtar kayıtlı (${item.key_hint})` }
   if (item.key_source === 'env') return { tone: 'ok', text: `Anahtar .env'de (${item.key_hint})` }
-  return { tone: 'missing', text: 'Anahtar yok' }
+  return item.key_optional ? { tone: 'ok', text: 'Anahtar gerekmez' } : { tone: 'missing', text: 'Anahtar yok' }
 }
 const toggleClear = (key: string) => {
   form.clear = form.clear.includes(key) ? form.clear.filter(item => item !== key) : [...form.clear, key]
@@ -122,7 +159,7 @@ const save = async () => {
   error.value = ''
   const keys = Object.fromEntries(Object.entries(form.keys).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value))
   try {
-    apply(await patch<Settings>('/pk-ai-settings', { provider: form.provider, models: form.models, keys, clear_keys: form.clear }))
+    apply(await patch<Settings>('/pk-ai-settings', { provider: form.provider, agents: form.agents, local_url: form.localUrl.trim() || null, models: form.models, keys, clear_keys: form.clear }))
     saved.value = true
   } catch (e: any) {
     error.value = errorMessage(e, 'Ayarlar kaydedilemedi.')

@@ -27,6 +27,7 @@
           <span>Rapor türü</span>
           <select v-model="kind" :disabled="running">
             <option value="equipment">Ekipman raporu — tür, etiket ve teknik özellikler katalogla</option>
+            <option value="short">Tek ekipman raporu — kısa talimat (deneme, yerel model için; tür seçilir)</option>
             <option value="installation">Tesisat raporu</option>
             <option value="electrical">Elektrik iç tesisatı raporu — elektriğin kendi talimatıyla</option>
             <option value="grounding">Topraklama tesisatı raporu — topraklamanın kendi talimatıyla</option>
@@ -37,7 +38,16 @@
             <option value="transformer">Trafo merkezi raporu — trafonun kendi talimatıyla</option>
           </select>
         </label>
-        <button class="primary-button" type="button" :disabled="running || (!file && !legacyId)" @click="runAnalysis">
+        <label v-if="kind === 'short'" class="field">
+          <span>Ekipman türü</span>
+          <select v-model="shortType" :disabled="running">
+            <option value="">Seçiniz</option>
+            <optgroup v-for="category in equipmentCategories" :key="category.name" :label="category.name">
+              <option v-for="type in category.types" :key="type.slug" :value="type.slug">{{ type.name }}</option>
+            </optgroup>
+          </select>
+        </label>
+        <button class="primary-button" type="button" :disabled="running || (!file && !legacyId) || (kind === 'short' && !shortType)" @click="runAnalysis">
           <i :class="running ? 'pi pi-spin pi-spinner' : 'pi pi-play'" />
           {{ running ? `Analiz ediliyor... ${elapsed} sn` : 'Analiz Et' }}
         </button>
@@ -115,7 +125,16 @@ const legacyId = ref('')
 // Ekipman raporu: yapay zekaya tüm katalog verilir (tür, etiket, teknik özellikler); rapor pencerelerinde test verisi olarak kullanılır.
 // Elektrik iç tesisatı / topraklama tesisatı / yangın algılama raporu: tesisatın kendi talimatıyla okunur; o tesisatın Kontrol Ekle
 // penceresinde kullanılır.
-const kind = ref<'equipment' | 'installation' | 'electrical' | 'grounding' | 'detection' | 'ventilation' | 'lightning' | 'battery' | 'transformer'>('equipment')
+const kind = ref<'equipment' | 'short' | 'installation' | 'electrical' | 'grounding' | 'detection' | 'ventilation' | 'lightning' | 'battery' | 'transformer'>('equipment')
+// Kısa talimat denemesi: tür önceden seçilir (yalnız o türün kataloğu gider), metin pdfium ile alınır.
+const shortType = ref('')
+const catalog = ref<{ kind: string; name: string; types: { slug?: string; name: string }[] }[]>([])
+// Kategoriye göre gruplu, alfabetik (75 tür tek listede bulunmuyordu).
+const equipmentCategories = computed(() => catalog.value
+  .filter(c => c.kind === 'equipment')
+  .map(c => ({ name: c.name, types: c.types.filter(t => t.slug).sort((a, b) => a.name.localeCompare(b.name, 'tr')) }))
+  .filter(c => c.types.length)
+  .sort((a, b) => a.name.localeCompare(b.name, 'tr')))
 const FAMILY_TYPES: Record<string, string> = { electrical: 'elektrik-ic-tesisati', grounding: 'topraklama', detection: 'yangin-algilama', ventilation: 'havalandirma-klima', lightning: 'paratoner', battery: 'akumulator', transformer: 'trafo' }
 const running = ref(false)
 const runError = ref('')
@@ -170,8 +189,9 @@ const runAnalysis = async () => {
   // Elektrik ailesi: tesisat türü (talimat bundan).
   const family = !!FAMILY_TYPES[kind.value]
   if (family) form.append('type', FAMILY_TYPES[kind.value])
+  if (kind.value === 'short') form.append('type', shortType.value)
   try {
-    const fixture = await postForm(family ? '/pk-report-analyses/electrical' : '/pk-report-analyses', form)
+    const fixture = await postForm(kind.value === 'short' ? '/pk-report-analyses/short' : family ? '/pk-report-analyses/electrical' : '/pk-report-analyses', form)
     selected.value = fixture
     file.value = null
     legacyId.value = ''
@@ -199,7 +219,10 @@ const rereadTables = async () => {
 
 const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—'
 
-onMounted(loadList)
+onMounted(async () => {
+  loadList()
+  try { catalog.value = await get('/equipment-catalog') } catch { catalog.value = [] }
+})
 onBeforeUnmount(() => clearInterval(timer))
 </script>
 
