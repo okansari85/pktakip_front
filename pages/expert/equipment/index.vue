@@ -87,7 +87,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in filtered" :key="item.id" :class="{ selected: selected.includes(item.id), passive: !item.is_active }" @click="navigateTo(`/expert/equipment/${item.id}`)">
+              <tr v-for="item in pagedItems" :key="item.id" :class="{ selected: selected.includes(item.id), passive: !item.is_active }" @click="navigateTo(`/expert/equipment/${item.id}`)">
                 <td class="check-col" @click.stop><input v-model="selected" type="checkbox" :value="item.id" /></td>
                 <td class="no-col"><strong v-if="item.code">{{ item.code }}</strong><span v-else class="muted">—</span></td>
                 <td>
@@ -131,7 +131,14 @@
               </tr>
             </tbody>
           </table>
-          <div class="table-footer">Toplam {{ filtered.length }} ekipman</div>
+          <div class="table-footer">
+            <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filtered.length) }} / toplam {{ filtered.length }} ekipman · sayfada {{ PAGE_SIZE }}</span>
+            <div v-if="pageCount > 1" class="pager">
+              <button type="button" :disabled="page === 1" @click="page--"><i class="pi pi-angle-left" /> Önceki</button>
+              <span>Sayfa {{ page }} / {{ pageCount }}</span>
+              <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <i class="pi pi-angle-right" /></button>
+            </div>
+          </div>
         </div>
       </section>
     </template>
@@ -284,6 +291,15 @@ const filtered = computed(() => {
     (!q || [item.code, item.name, item.brand, item.model, item.serial_no, item.place, item.type?.name, item.variant].some(v => trLower(v).includes(q)))
   ))
 })
+
+// Sayfalama (kullanıcı 28 Ekim 2026): yüzlerce satır birden çizilince sayfa geç açılıyordu; filtre / arama / lokasyon değişince ilk sayfa.
+const PAGE_SIZE = 50
+const page = ref(1)
+const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
+const pageStart = computed(() => (page.value - 1) * PAGE_SIZE)
+const pagedItems = computed(() => filtered.value.slice(pageStart.value, pageStart.value + PAGE_SIZE))
+watch([search, statusFilter, categoryFilter, typeFilter, activeFilter, context], () => { page.value = 1 })
+watch(pageCount, count => { if (page.value > count) page.value = count })
 
 const selectCategory = (slug: string) => { categoryFilter.value = slug; typeFilter.value = null }
 
@@ -618,7 +634,10 @@ tbody tr.passive td:not(.check-col):not(.actions-col){opacity:.6}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
 .status-badge.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-badge.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status-badge.rapor_yok,.status-badge.belirtilmemis{background:var(--admin-chip);color:var(--admin-muted)}
-.state{padding:60px 20px;text-align:center;color:var(--admin-muted)}.table-footer{padding:12px 16px;color:var(--admin-muted);font-size:12px}
+.state{padding:60px 20px;text-align:center;color:var(--admin-muted)}.table-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;color:var(--admin-muted);font-size:12px}
+.pager{display:flex;align-items:center;gap:10px}.pager span{color:var(--admin-muted);font-size:12px;font-weight:700}
+.pager button{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pager button:disabled{opacity:.45;cursor:not-allowed}
 .error-text{color:var(--admin-danger-text);font-size:12px}.muted{color:var(--admin-muted);font-size:12px}.hint{margin:6px 0 10px;color:var(--admin-muted);font-size:12px}
 .modal-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay)}
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
