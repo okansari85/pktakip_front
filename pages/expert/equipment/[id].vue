@@ -13,7 +13,6 @@
         </div>
         <div class="head-side">
           <span class="status-badge big" :class="equipment.status">{{ STATUS_LABELS[equipment.status] }}</span>
-          <button class="secondary-button" type="button" @click="qrOpen = true"><i class="pi pi-qrcode" /> Karekod üret</button>
           <button v-if="equipment.is_active" class="secondary-button" type="button" @click="deactivateOpen = true"><i class="pi pi-ban" /> Pasife al</button>
           <button v-else class="secondary-button" type="button" :disabled="activating" @click="activate"><i class="pi pi-check-circle" /> Aktife al</button>
         </div>
@@ -58,10 +57,20 @@
           <div class="tabs">
             <button type="button" :class="{ active: tab === 'info' }" @click="tab = 'info'">Bilgiler</button>
             <button type="button" :class="{ active: tab === 'specs' }" @click="tab = 'specs'; editing = false">Teknik özellikler <span class="count">{{ equipment.properties?.length || 0 }}</span></button>
+            <button type="button" :class="{ active: tab === 'qr' }" @click="tab = 'qr'; editing = false"><i class="pi pi-qrcode" /> Karekod</button>
             <button v-if="tab === 'info' && !editing" class="link-button tab-action" type="button" @click="startEdit"><i class="pi pi-pencil" /> Düzenle</button>
           </div>
 
-          <ExpertEquipmentProperties v-if="tab === 'specs'" :equipment-id="equipment.id" :properties="equipment.properties || []" :pending-specs="equipment.pending_specs || []" @updated="equipment = $event" />
+          <!-- Karekod hep hazır (ekipman sayfasının adresi); yazdırma / PNG için etiket penceresi -->
+          <div v-if="tab === 'qr'" class="qr-tab">
+            <QrcodeVue :value="qrUrl" :size="168" level="M" render-as="svg" :margin="1" />
+            <div>
+              <p>Karekod okutulunca bu ekipmanın sayfası açılır (giriş gerekir).</p>
+              <button class="secondary-button" type="button" @click="qrOpen = true"><i class="pi pi-print" /> Etiketi yazdır / indir</button>
+            </div>
+          </div>
+
+          <ExpertEquipmentProperties v-else-if="tab === 'specs'" :equipment-id="equipment.id" :properties="equipment.properties || []" :pending-specs="equipment.pending_specs || []" @updated="equipment = $event" />
 
           <dl v-else-if="!editing" class="info">
             <dt>Ekipman no</dt><dd>{{ equipment.code || '—' }}</dd>
@@ -247,8 +256,11 @@
 </template>
 
 <script setup lang="ts">
-// Karekod etiketi penceresi
+import QrcodeVue from 'qrcode.vue'
+
+// Karekod: Karekod sekmesinde hep görünür; etiket penceresi yazdırma / PNG için.
 const qrOpen = ref(false)
+const qrUrl = computed(() => (import.meta.client ? `${window.location.origin}/expert/equipment/${useRoute().params.id}` : ''))
 definePageMeta({ layout: 'expert', middleware: 'expert' })
 
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', belirtilmemis: 'Belirtilmemiş', rapor_yok: 'Rapor yok' }
@@ -330,7 +342,7 @@ const removePhoto = async () => {
 }
 
 // --- Bilgileri düzenle ---
-const tab = ref<'info' | 'specs'>('info')
+const tab = ref<'info' | 'specs' | 'qr'>('info')
 const editing = ref(false)
 const savingEdit = ref(false)
 const editError = ref('')
@@ -508,6 +520,8 @@ tbody tr:last-child td{border-bottom:0}.tabs{display:flex;align-items:center;gap
 .tabs button{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
 .tabs .tab-action{margin-left:auto;border-bottom:0;font-size:12px;color:var(--admin-link)}
+.qr-tab{display:flex;align-items:center;gap:20px;padding:6px 0}.qr-tab svg{border:1px solid var(--admin-border);border-radius:8px;padding:6px;background:#fff}
+.qr-tab p{margin:0 0 12px;color:var(--admin-muted);font-size:13px}
 .row-delete{width:1%}.row-delete .icon-button{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer;opacity:.45}
 tr:hover .row-delete .icon-button{opacity:1}.row-delete .icon-button:hover{background:var(--admin-hover);color:var(--admin-danger-text)}
 .row-actions{display:flex;gap:2px}.row-delete .icon-button.edit:hover{color:var(--admin-link)}
