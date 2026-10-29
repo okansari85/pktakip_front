@@ -70,6 +70,10 @@
           <i class="pi pi-home" />
           <span v-if="!collapsed">Genel Bakış</span>
         </NuxtLink>
+        <NuxtLink to="/expert/calendar" class="sidebar-link" :title="collapsed ? 'Kontrol Takvimi' : undefined">
+          <i class="pi pi-calendar" />
+          <span v-if="!collapsed">Kontrol Takvimi</span>
+        </NuxtLink>
         <!-- Periyodik Kontroller: ekipmanlar + tesisatlar (daraltılmış menüde yalnızca simgeler) -->
         <template v-if="collapsed">
           <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>

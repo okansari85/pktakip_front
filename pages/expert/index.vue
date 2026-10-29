@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, takvim, tesisat ve formlar -->
+    <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, tesisat ve formlar (takvim sol menüde: Kontrol Takvimi) -->
     <div class="tabs">
       <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
     </div>
@@ -182,11 +182,6 @@
       </div>
       </template>
 
-      <!-- 3) Kontrol takvimi: yıllık takvim; gün + lokasyon başına gruplu (tesisat ve tüpler tek kalem, diğerleri türe göre). -->
-      <template v-else-if="tab === 'calendar'">
-        <ExpertControlCalendar :agenda="data.agenda || []" :undated="data.undated" :query="viewQuery" />
-      </template>
-
       <!-- OSGB / kurumsal: Uzmanlar (yönetici ve operasyon yöneticisi) -->
       <template v-else-if="tab === 'fines' && fineScope">
         <ExpertFineSummary :location-id="fineScope.locationId" :workplace-id="fineScope.workplaceId" />
@@ -238,7 +233,6 @@ const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degi
 const TABS = [
   { key: 'locations', label: 'Lokasyonlar', icon: 'pi pi-map' },
   { key: 'status', label: 'Genel durum', icon: 'pi pi-chart-pie' },
-  { key: 'calendar', label: 'Kontrol takvimi', icon: 'pi pi-calendar' },
   { key: 'installations', label: 'Tesisatlar ve formlar', icon: 'pi pi-sitemap' }
 ] as const
 const route = useRoute()
