@@ -9,6 +9,36 @@
       </div>
     </div>
 
+    <!-- Bireysel uzman: sayılar, harita, kontrol durumu ve tarih kartları üstte; alttaki sekme ve tablolar aynen kalır. -->
+    <template v-if="individual && data && groups.length">
+      <div class="top-kpis">
+        <div v-for="kpi in topKpis" :key="kpi.label" class="top-kpi">
+          <span class="top-kpi-icon" :class="kpi.tone"><i :class="kpi.icon" /></span>
+          <div><small>{{ kpi.label }}</small><strong>{{ kpi.value }}</strong><span>{{ kpi.text }}</span></div>
+        </div>
+      </div>
+      <div class="map-grid">
+        <section class="card chart-card map-card">
+          <template v-if="districtMode">
+            <header><h3>{{ districtMode.name }} ilçe haritası</h3><small>İlçeye tıklayınca sayfa o ilçeye göre güncellenir; tekrar tıklayınca tüm ilçeler.</small></header>
+            <ExpertDistrictMap :city-code="districtMode.code" :stats="mapDistricts" :selected="selectedDistrict" @select="selectedDistrict = $event" />
+          </template>
+          <template v-else>
+            <header><h3>Türkiye haritası</h3><small>İle tıklayınca sayfa o ile göre güncellenir; tekrar tıklayınca tüm iller.</small></header>
+            <ExpertTurkeyMap :cities="mapCities" :selected="selectedCity" @select="selectedCity = $event" />
+          </template>
+          <div class="map-legend">
+            <span><i class="bad" /> Gecikmiş ya da uygun değil var</span>
+            <span><i class="warn" /> 60 gün içinde kontrol</span>
+            <span><i class="ok" /> Sorunsuz</span>
+            <span><i class="empty" /> Ekipman yok</span>
+          </div>
+        </section>
+        <ExpertOverviewStatus :timing="data.timing" :installations="data.installations" :scope="districtMode ? selectedDistrict || `${districtMode.name} · tüm ilçeler` : selectedCityName || 'Tüm firmalar'" />
+      </div>
+      <ExpertOverviewControls :agenda="data.agenda || []" :groups="groups" :query="viewQuery" />
+    </template>
+
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, tesisat ve formlar (takvim sol menüde: Kontrol Takvimi) -->
     <div class="tabs">
       <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
@@ -22,20 +52,20 @@
 
     <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Özet hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
-    <div v-else-if="!groups.length" class="card state">Henüz size atanmış bir işyeri yok. {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan işyeri ekleyin.</div>
+    <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
 
     <template v-else-if="data">
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
-        <div class="kpis" :class="team ? 'four' : 'three'">
+        <div v-if="!individual" class="kpis" :class="team ? 'four' : 'three'">
           <div class="kpi"><span>Aktif lokasyon</span><strong>{{ data.locations.length }}</strong><small>{{ districtMode ? `${districtCount} ilçede` : `${cityCount} ilde` }}<template v-if="!corporate"> · {{ scopeCounts.customers }} müşteri</template></small></div>
           <div class="kpi"><span>Takip edilen ekipman</span><strong>{{ data.totals.equipment }}</strong><small>{{ scopeCounts.workplaces }} işyeri</small></div>
           <div class="kpi"><span>Tesisat</span><strong>{{ data.installations.length }}</strong><small>{{ installationKpiText }}</small></div>
           <!-- OSGB / kurumsal: yönetici ve operasyon yöneticisi -->
           <div v-if="team" class="kpi" :class="{ warn: team.counts.unassigned, loading: teamLoading }"><span>Uzman</span><strong>{{ team.counts.experts }}</strong><small>{{ team.counts.unassigned ? `${team.counts.unassigned} firmanın uzmanı yok` : 'bütün firmaların uzmanı var' }}</small></div>
         </div>
-        <div class="map-grid">
+        <div v-if="!individual" class="map-grid">
           <section class="card chart-card map-card">
             <!-- Kamu hesabında bütün lokasyonlar tek ildeyse o ilin ilçe haritası (kullanıcı 18 Ekim 2026) -->
             <template v-if="districtMode">
@@ -435,6 +465,15 @@ onMounted(async () => {
 // Bireysel uzmanda (ve diğer rollerde) hiçbiri yok, sekmeler aynı. ---
 const { multiUser, corporate, kamu, isManager, isOperation, load: loadAccount } = useAccount()
 const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
+// Bireysel uzmanın üst bölümü: gerçek sayılar; hesap bilgisi gelmeden gösterilmez.
+const individual = computed(() => !!pkAccount.value && !multiUser.value)
+const trNumber = (value: number) => new Intl.NumberFormat('tr-TR').format(value)
+const topKpis = computed(() => [
+  { label: 'Firmalar', value: trNumber(scopeCounts.value.customers), text: 'Takip edilen firmalar', icon: 'pi pi-building', tone: 'blue' },
+  { label: 'Lokasyonlar', value: trNumber(data.value?.locations?.length || 0), text: `${trNumber(scopeCounts.value.workplaces)} işyeri`, icon: 'pi pi-map-marker', tone: 'amber' },
+  { label: 'Ekipmanlar', value: trNumber(data.value?.totals?.equipment || 0), text: 'Takip edilen ekipman', icon: 'pi pi-wrench', tone: 'green' },
+  { label: 'Tesisatlar', value: trNumber(data.value?.installations?.length || 0), text: installationKpiText.value, icon: 'pi pi-sitemap', tone: 'purple' }
+])
 const tabs = computed(() => [
   ...TABS,
   ...(teamView.value ? [{ key: 'team', label: 'Uzmanlar', icon: 'pi pi-users' }] : []),
@@ -472,6 +511,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.top-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.top-kpi { min-width: 0; display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); }
+.top-kpi-icon { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; }
+.top-kpi-icon.blue { background: #d1e9ff; color: #175cd3; } .top-kpi-icon.amber { background: #fef0c7; color: #b54708; } .top-kpi-icon.green { background: #dcfae6; color: #067647; } .top-kpi-icon.purple { background: #ebe9fe; color: #5925dc; }
+.top-kpi > div { min-width: 0; display: grid; gap: 1px; }
+.top-kpi small { color: var(--admin-heading); font-size: 13px; font-weight: 700; }
+.top-kpi strong { color: var(--admin-heading); font-size: 26px; line-height: 1.15; }
+.top-kpi span { color: var(--admin-muted); font-size: 12px; }
+@media (max-width: 1100px) { .top-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .top-kpis { grid-template-columns: minmax(0, 1fr); } }
 .expert-dashboard{max-width:1500px;margin:0 auto;display:grid;gap:16px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:4px}
 .eyebrow{display:block;margin-bottom:7px;color:var(--pk-yellow-dark);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}

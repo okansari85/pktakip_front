@@ -1,5 +1,7 @@
 <template>
-  <div class="workplaces-page">
+  <!-- Bireysel uzman: firma merkezli liste ve Firma Ekle. OSGB / kurumsal / kamu aşağıdaki tabloyu görmeye devam eder. -->
+  <ExpertFirmList v-if="account && !multiUser" />
+  <div v-else-if="account || accountFailed" class="workplaces-page">
     <div class="page-head">
       <div>
         <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></div>
@@ -33,10 +35,16 @@ const { workplaces, loaded, error, load } = useMyWorkplaces()
 const locationCount = computed(() => new Set(workplaces.value.map(w => w.location_id)).size)
 const customerCount = computed(() => new Set(workplaces.value.map(w => w.customer_name).filter(Boolean)).size)
 // Kurumsal hesapta müşteri firmanın kendisi: müşteri sayısı yazılmaz.
-const { corporate, kamu, multiUser, isManager } = useAccount()
+const { account, corporate, kamu, multiUser, isManager, load: loadAccount } = useAccount()
+// Hesap bilgisi alınamazsa bugünkü liste gösterilir; hesap gelmeden hiçbir görünüm açılmaz (yanlış ekran yanıp sönmesin).
+const accountFailed = ref(false)
 
 // Sayfa her açıldığında listeyi tazeler (Ayarlar'da yapılan değişiklikler görünsün).
-onMounted(() => load(true))
+onMounted(async () => {
+  load(true)
+  await loadAccount()
+  accountFailed.value = !account.value
+})
 </script>
 
 <style scoped>

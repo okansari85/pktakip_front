@@ -13,7 +13,8 @@
       <span v-if="!collapsed">Menüyü daralt</span>
     </button>
 
-    <template v-if="mode === 'settings'">
+    <!-- Bireysel uzmanda ayrı Ayarlar menüsü yok: Ayarlar sayfalarında da aynı tek menü görünür (aşağıda Ayarlar grubu). -->
+    <template v-if="mode === 'settings' && !individual">
       <NuxtLink to="/expert/workplaces" class="back-link" :title="collapsed ? 'Panele dön' : undefined">
         <i class="pi pi-arrow-left" />
         <span v-if="!collapsed">Panele dön</span>
@@ -104,7 +105,25 @@
             <i class="pi pi-briefcase" />
             <span v-if="!collapsed">{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</span>
           </NuxtLink>
-          <NuxtLink :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
+          <template v-if="individual">
+            <template v-if="collapsed">
+              <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
+            </template>
+            <div v-else class="sidebar-group" :class="{ open: settingsOpen, active: settingsActive }">
+              <button class="sidebar-link group-toggle" type="button" :aria-expanded="settingsOpen" @click="settingsOpen = !settingsOpen">
+                <i class="pi pi-cog" />
+                <span>Ayarlar</span>
+                <i class="pi pi-chevron-down chevron" />
+              </button>
+              <div v-show="settingsOpen" class="sidebar-children">
+                <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link child">
+                  <i :class="item.icon" />
+                  <span>{{ item.label }}</span>
+                </NuxtLink>
+              </div>
+            </div>
+          </template>
+          <NuxtLink v-else :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
@@ -143,6 +162,23 @@ const periodicActive = computed(() => PERIODIC.some(item => route.path.startsWit
 // Grup açık gelir; kapatılabilir, içindeki bir sayfaya gidilince yeniden açılır.
 const periodicOpen = ref(true)
 watch(periodicActive, active => { if (active) periodicOpen.value = true })
+
+// Bireysel uzman: tek katlı menü. Hesap bilgisi gelmeden false kalır; OSGB / kurumsal / kamu bugünkü iki menüyü görür.
+const individual = computed(() => !!account.value && !multiUser.value)
+// Organizasyon Yönetimi, Lokasyonlar ve Firmalar bireysel menüde yok (kullanıcı 1 Kasım 2026); firma işleri Firmalarım'da toplanır.
+// Sayfalar silinmedi, adresleri çalışır. DİKKAT: yeni Firma Ekle akışı bitmeden bu dal canlıya çıkmaz.
+const individualSettings = computed(() => [
+  { to: '/expert/settings/catalog-requests', label: 'Katalog talepleri', icon: 'pi pi-inbox' },
+  { to: '/expert/settings/analyses', label: 'Analiz geçmişi', icon: 'pi pi-history' },
+  ...(superAdmin.value ? [
+    { to: '/expert/settings/ai', label: 'Yapay zeka', icon: 'pi pi-sparkles' },
+    { to: '/expert/test', label: 'Test', icon: 'pi pi-code' }
+  ] : [])
+])
+const settingsActive = computed(() => individualSettings.value.some(item => route.path.startsWith(item.to)))
+// Ayarlar kapalı gelir (menü kısa kalsın); içindeki bir sayfadayken açık olur.
+const settingsOpen = ref(settingsActive.value)
+watch(settingsActive, active => { if (active) settingsOpen.value = true })
 </script>
 
 <style scoped>
