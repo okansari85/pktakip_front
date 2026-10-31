@@ -53,5 +53,11 @@ export const useAccount = () => {
     : isManager.value ? (corporate.value ? '/expert/settings/organization' : '/expert/settings/customers')
     : isOperation.value ? '/expert/settings/locations' : '/expert/settings/catalog-requests')
 
-  return { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load }
+  // Girişten sonraki ilk sayfa: bireysel uzmanda Ana Sayfa; diğer hesaplarda ve hesap bilgisi alınamazsa Genel Bakış.
+  const panelHome = async () => {
+    await load()
+    return account.value && !multiUser.value ? '/expert/anasayfa' : '/expert'
+  }
+
+  return { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load, panelHome }
 }

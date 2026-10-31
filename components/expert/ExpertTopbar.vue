@@ -1,6 +1,6 @@
 <template>
   <header class="expert-topbar">
-    <ExpertWorkplaceSwitcher v-if="!title.startsWith('Ayarlar')" />
+    <ExpertWorkplaceSwitcher v-if="!title.startsWith('Ayarlar') && !route.meta.hideWorkplaceSwitcher" />
     <div v-else />
 
     <div class="topbar-actions">
@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 withDefaults(defineProps<{ title?: string }>(), { title: 'Uzman Paneli' })
+const route = useRoute()
 const { user, impersonating, stopImpersonation } = useAuth()
 const { roleLabel } = useAccount()
 const isDark = ref(false)

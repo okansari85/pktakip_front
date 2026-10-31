@@ -66,8 +66,13 @@
     <template v-else>
       <div v-if="!collapsed" class="sidebar-label">UZMAN PANELİ</div>
       <nav class="sidebar-nav">
-        <NuxtLink to="/expert" class="sidebar-link" active-class="" exact-active-class="router-link-active" :title="collapsed ? 'Genel Bakış' : undefined">
+        <!-- Yalnızca bireysel uzman; hesap bilgisi gelmeden gösterilmez (OSGB / kurumsalda bir an görünmesin) -->
+        <NuxtLink v-if="account && !multiUser" to="/expert/anasayfa" class="sidebar-link" :title="collapsed ? 'Ana Sayfa' : undefined">
           <i class="pi pi-home" />
+          <span v-if="!collapsed">Ana Sayfa</span>
+        </NuxtLink>
+        <NuxtLink to="/expert" class="sidebar-link" active-class="" exact-active-class="router-link-active" :title="collapsed ? 'Genel Bakış' : undefined">
+          <i class="pi pi-th-large" />
           <span v-if="!collapsed">Genel Bakış</span>
         </NuxtLink>
         <NuxtLink to="/expert/calendar" class="sidebar-link" :title="collapsed ? 'Kontrol Takvimi' : undefined">
@@ -125,7 +130,7 @@ const emit = defineEmits<{ toggle: [] }>()
 const { logout, superAdmin } = useAuth()
 // Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
 // Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
-const { multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
+const { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
 
 const PERIODIC = [
