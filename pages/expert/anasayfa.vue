@@ -48,12 +48,12 @@ onMounted(async () => {
 /* Layout'un iç boşluğu sıfırlanır: arka plan görseli içerik alanının tamamını kaplasın. */
 .home-page { min-height: calc(100vh - 72px); margin: -30px -34px -40px; padding: 44px 34px 40px; background: url('/anasayfa/arkaplan.svg') right -80px / 1300px auto no-repeat; }
 /* Geniş ekranda yazı ve kartlar birlikte ortalanır; yazı kartların sol kenarıyla hizalı kalır. */
-.home-head { max-width: 1240px; margin: 0 auto 34px; }
+.home-head { max-width: 1500px; margin: 0 auto 34px; }
 .home-welcome { margin: 0; color: var(--admin-muted); font-size: 24px; }
 .home-head h1 { margin: 4px 0; color: var(--admin-heading); font-size: 48px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; }
 .home-head h2 { margin: 0 0 10px; color: #7288a8; font-size: 34px; font-weight: 700; letter-spacing: -.5px; line-height: 1.15; }
 .home-lead { margin: 0; color: var(--admin-muted); font-size: 16px; }
-.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1240px; margin: 0 auto; }
+.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1500px; margin: 0 auto; }
 .home-card { display: flex; flex-direction: column; gap: 16px; padding: 22px 24px; border: 1px solid var(--admin-border); border-radius: 16px; color: inherit; text-decoration: none; box-shadow: 0 10px 28px rgba(40, 70, 110, .08); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
 .home-card:hover, .home-card:focus-visible { transform: translateY(-2px); border-color: var(--pk-yellow); box-shadow: 0 14px 32px rgba(40, 70, 110, .14); }
 .home-card.blue { background: linear-gradient(135deg, #ffffff 40%, #eaf2fd); }

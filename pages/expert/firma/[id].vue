@@ -270,7 +270,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.firm-detail { max-width: 1000px; margin: 0 auto; }
+.firm-detail { max-width: 1500px; margin: 0 auto; }
 .back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--admin-muted); font-size: 13.5px; font-weight: 600; }
 .back:hover { color: var(--admin-heading); }
 .page-head { margin-bottom: 16px; }

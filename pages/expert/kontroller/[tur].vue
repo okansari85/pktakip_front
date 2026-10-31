@@ -11,6 +11,9 @@
       <label>Firma
         <select v-model="firm"><option value="">Tüm Firmalar</option><option v-for="name in firms" :key="name" :value="name">{{ name }}</option></select>
       </label>
+      <label>Lokasyon
+        <select v-model="location"><option value="">Tüm Lokasyonlar</option><option v-for="name in locations" :key="name" :value="name">{{ name }}</option></select>
+      </label>
       <label>Tür
         <select v-model="kind"><option value="">Tümü</option><option value="Ekipman">Ekipman</option><option value="Tesisat">Tesisat</option></select>
       </label>
@@ -52,6 +55,7 @@ const agenda = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
 const firm = ref('')
+const location = ref('')
 const kind = ref('')
 const search = ref('')
 const page = ref(1)
@@ -60,13 +64,16 @@ const PAGE_SIZE = 10
 
 const rows = computed(() => rowsOf(controlRows(agenda.value, groups.value), key.value))
 const firms = computed(() => [...new Set(rows.value.map(r => r.firm).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr')))
+// Firma seçilince yalnız o firmanın lokasyonları listelenir.
+const locations = computed(() => [...new Set(rows.value.filter(r => !firm.value || r.firm === firm.value).map(r => r.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr')))
+watch(firm, () => { location.value = '' })
 const filtered = computed(() => {
   const q = search.value.trim().toLocaleLowerCase('tr-TR')
-  return rows.value.filter(r => (!firm.value || r.firm === firm.value) && (!kind.value || r.kind === kind.value) && (!q || r.item.toLocaleLowerCase('tr-TR').includes(q)))
+  return rows.value.filter(r => (!firm.value || r.firm === firm.value) && (!location.value || r.location === location.value) && (!kind.value || r.kind === kind.value) && (!q || r.item.toLocaleLowerCase('tr-TR').includes(q)))
 })
 const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
 const paged = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
-watch([firm, kind, search], () => { page.value = 1 })
+watch([firm, location, kind, search], () => { page.value = 1 })
 watch(pageCount, (count) => { if (page.value > count) page.value = count })
 const entriesOn = (value: string) => agenda.value.filter(entry => entry.date === value)
 
@@ -88,7 +95,7 @@ onMounted(async () => { await load(); loadData() })
 </script>
 
 <style scoped>
-.control-page { max-width: 1200px; margin: 0 auto; }
+.control-page { max-width: 1500px; margin: 0 auto; }
 .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; color: var(--admin-muted); font-size: 12.5px; }
 .crumbs a:hover { color: var(--admin-heading); }
 h1 { margin: 0 0 14px; color: var(--admin-heading); font-size: 28px; letter-spacing: -.6px; }

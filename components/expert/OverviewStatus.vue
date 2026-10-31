@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
-// Ekipman ve tesisatların kontrol tarihi durumu. "Güncel": kontrol zamanına 60 günden çok var. Grafik kütüphanesi gerekmez.
+// Ekipman ve tesisatların kontrol tarihi durumu. "Tamamlanan": sonraki kontrole 60 günden çok var. Grafik kütüphanesi gerekmez.
 const props = defineProps<{ timing: Record<string, number>; installations: { days_left?: number | null }[]; scope: string }>()
 const SLICES = [
-  { key: 'ok', label: 'Kontrolü güncel', color: '#12805c' },
+  { key: 'ok', label: 'Kontrolü tamamlanan', color: '#12805c' },
   { key: 'soon', label: 'Kontrol zamanı yaklaşan', color: '#f5b800' },
   { key: 'overdue', label: 'Kontrol süresi geçen', color: '#d92d20' },
   { key: 'none', label: 'PK tarihi girilmemiş', color: '#a8b3c2' }
@@ -60,18 +60,18 @@ const blocks = computed(() => {
 </script>
 
 <style scoped>
-.status-card { min-width: 0; padding: 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); }
-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.status-card { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
 h3 { margin: 0; color: var(--admin-heading); font-size: 15.5px; }
 header small { color: var(--admin-muted); font-size: 11.5px; }
-.status-block { display: flex; align-items: center; gap: 18px; padding: 12px 0; }
+.status-block { flex: 1; min-height: 0; display: flex; align-items: center; gap: 18px; padding: 3px 0; }
 .status-block + .status-block { border-top: 1px solid var(--admin-border); }
-.donut { flex: none; width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; }
-.donut-center { width: 76px; height: 76px; display: grid; place-content: center; border-radius: 50%; background: var(--admin-card); text-align: center; }
-.donut-center small { color: var(--admin-muted); font-size: 10.5px; }
-.donut-center strong { color: var(--admin-heading); font-size: 18px; }
-ul { flex: 1; min-width: 0; display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 38px; align-items: center; gap: 8px; color: var(--admin-heading); font-size: 12.5px; }
+.donut { flex: none; width: clamp(64px, calc((100vh - 630px) / 2), 118px); aspect-ratio: 1; height: auto; display: grid; place-items: center; border-radius: 50%; }
+.donut-center { width: 66%; height: 66%; display: grid; place-content: center; border-radius: 50%; background: var(--admin-card); text-align: center; }
+.donut-center small { color: var(--admin-muted); font-size: clamp(8.5px, 1.2vh, 10.5px); }
+.donut-center strong { color: var(--admin-heading); font-size: clamp(14px, 2vh, 18px); line-height: 1.1; }
+ul { flex: 1; min-width: 0; display: grid; gap: clamp(1px, .7vh, 8px); margin: 0; padding: 0; list-style: none; }
+li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 38px; align-items: center; gap: 8px; color: var(--admin-heading); font-size: clamp(11.5px, 1.5vh, 12.5px); line-height: 1.25; }
 li i { width: 10px; height: 10px; border-radius: 50%; }
 li em { color: var(--admin-muted); font-style: normal; text-align: right; }
 @media (max-width: 480px) { .status-block { flex-direction: column; align-items: stretch; } .donut { align-self: center; } }

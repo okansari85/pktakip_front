@@ -1,16 +1,20 @@
 <template>
   <!-- Lokasyon / il değişince her kart kendi içinde yükleniyor gösterir (eski değer soluk, ortada dönen gösterge) -->
-  <div class="expert-dashboard" :class="{ reloading: (loading || cityLoading) && !!data }">
+  <div class="expert-dashboard" :class="{ reloading: (loading || cityLoading) && !!data, fit: showSummary }">
     <div class="page-head">
       <div>
         <span class="eyebrow">Hoş geldiniz, {{ user?.name }}</span>
         <h1>Genel Bakış</h1>
-        <p>{{ scopeLabel }}</p>
+        <p :class="{ 'summary-sub': individual }">{{ individual ? 'Tüm firma ve lokasyonlarınızın periyodik kontrol takip özeti' : scopeLabel }}</p>
+      </div>
+      <div v-if="individual" class="view-switch" role="group" aria-label="Görünüm">
+        <button type="button" :class="{ on: view === 'ozet' }" :aria-pressed="view === 'ozet'" @click="view = 'ozet'"><i class="pi pi-th-large" /> Özet</button>
+        <button type="button" :class="{ on: view === 'detay' }" :aria-pressed="view === 'detay'" @click="view = 'detay'"><i class="pi pi-table" /> Detaylı Tablolar</button>
       </div>
     </div>
 
     <!-- Bireysel uzman: sayılar, harita, kontrol durumu ve tarih kartları üstte; alttaki sekme ve tablolar aynen kalır. -->
-    <template v-if="individual && data && groups.length">
+    <template v-if="showSummary">
       <div class="top-kpis">
         <div v-for="kpi in topKpis" :key="kpi.label" class="top-kpi">
           <span class="top-kpi-icon" :class="kpi.tone"><i :class="kpi.icon" /></span>
@@ -21,11 +25,11 @@
         <section class="card chart-card map-card">
           <template v-if="districtMode">
             <header><h3>{{ districtMode.name }} ilçe haritası</h3><small>İlçeye tıklayınca sayfa o ilçeye göre güncellenir; tekrar tıklayınca tüm ilçeler.</small></header>
-            <ExpertDistrictMap :city-code="districtMode.code" :stats="mapDistricts" :selected="selectedDistrict" @select="selectedDistrict = $event" />
+            <div class="map-slot"><ExpertDistrictMap :city-code="districtMode.code" :stats="mapDistricts" :selected="selectedDistrict" @select="selectedDistrict = $event" /></div>
           </template>
           <template v-else>
             <header><h3>Türkiye haritası</h3><small>İle tıklayınca sayfa o ile göre güncellenir; tekrar tıklayınca tüm iller.</small></header>
-            <ExpertTurkeyMap :cities="mapCities" :selected="selectedCity" @select="selectedCity = $event" />
+            <div class="map-slot"><ExpertTurkeyMap :cities="mapCities" :selected="selectedCity" @select="selectedCity = $event" /></div>
           </template>
           <div class="map-legend">
             <span><i class="bad" /> Gecikmiş ya da uygun değil var</span>
@@ -40,11 +44,11 @@
     </template>
 
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, tesisat ve formlar (takvim sol menüde: Kontrol Takvimi) -->
-    <div class="tabs">
+    <div v-if="!individual || view === 'detay'" class="tabs">
       <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
     </div>
     <!-- Haritada il seçiliyken sayfanın tamamı o ile göre -->
-    <div v-if="selectedCity" class="city-bar">
+    <div v-if="selectedCity && (!individual || view === 'detay')" class="city-bar">
       <i :class="cityLoading ? 'pi pi-spin pi-spinner' : 'pi pi-map-marker'" />
       <span>Sayfa <strong>{{ selectedCityName }}</strong> iline göre gösteriliyor.</span>
       <button class="link-button" type="button" @click="selectedCity = null">Tüm iller</button>
@@ -54,7 +58,7 @@
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
 
-    <template v-else-if="data">
+    <template v-else-if="data && (!individual || view === 'detay')">
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
@@ -269,6 +273,8 @@ const route = useRoute()
 const router = useRouter()
 const tab = ref<string>([...TABS.map(item => item.key), 'team', 'fines'].includes(String(route.query.sekme)) ? String(route.query.sekme) : 'locations')
 watch(tab, value => router.replace({ query: value === 'locations' ? {} : { sekme: value } }))
+// Özet (tek ekran) ve Detaylı Tablolar (eski sekmeler aynen); ?sekme= ile gelindiyse tablolar açılır.
+const view = ref<'ozet' | 'detay'>(route.query.sekme ? 'detay' : 'ozet')
 
 const { user } = useAuth()
 const { get, errorMessage } = useExpertApi()
@@ -403,7 +409,8 @@ const typesError = ref('')
 let typesKey = ''
 let typesRequest = 0
 const loadTypes = async () => {
-  if (tab.value !== 'locations' || !groups.value.length) return
+  // Bireysel uzmanın Özet görünümünde tablo yok; gereksiz istek atılmaz.
+  if (tab.value !== 'locations' || !groups.value.length || (pkAccount.value && !multiUser.value && view.value === 'ozet')) return
   const key = JSON.stringify(viewQuery.value)
   if (key === typesKey) return
   typesKey = key
@@ -420,7 +427,7 @@ const loadTypes = async () => {
     if (request === typesRequest) typesLoading.value = false
   }
 }
-watch([tab, viewQuery], loadTypes, { deep: true })
+watch([tab, viewQuery, () => view.value], loadTypes, { deep: true })
 
 // Genel durum: kategori (yangın hariç) ve yangın ekipmanı türü başına "yüzde kaçı uygun" ilerleme çubuğu; altında geri kalanlar.
 const progressBoxes = computed(() => [
@@ -467,6 +474,7 @@ const { multiUser, corporate, kamu, isManager, isOperation, load: loadAccount } 
 const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
 // Bireysel uzmanın üst bölümü: gerçek sayılar; hesap bilgisi gelmeden gösterilmez.
 const individual = computed(() => !!pkAccount.value && !multiUser.value)
+const showSummary = computed(() => individual.value && view.value === 'ozet' && !!data.value && groups.value.length > 0)
 const trNumber = (value: number) => new Intl.NumberFormat('tr-TR').format(value)
 const topKpis = computed(() => [
   { label: 'Firmalar', value: trNumber(scopeCounts.value.customers), text: 'Takip edilen firmalar', icon: 'pi pi-building', tone: 'blue' },
@@ -511,6 +519,27 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.view-switch { flex: none; display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card); }
+.view-switch button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.view-switch button.on { background: var(--pk-yellow); color: #111827; }
+.page-head p.summary-sub { color: var(--admin-heading); font-size: 15px; font-weight: 600; }
+.map-slot { flex: 1; min-height: 0; display: flex; }
+.map-slot > * { flex: 1; min-width: 0; }
+/* Özet tek ekrana sığar: harita ve halkalar kalan yüksekliği paylaşır; küçük ekranda normal kaydırma. */
+@media (min-width: 1100px) and (min-height: 820px) {
+  .expert-dashboard.fit { height: calc(100vh - 72px - 30px - 12px); margin-bottom: -28px; display: flex; flex-direction: column; gap: 10px; }
+  .fit > * { flex: none; }
+  .fit > .map-grid { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .fit .map-card { min-height: 0; overflow: hidden; padding-top: 12px; padding-bottom: 10px; }
+  .fit .map-slot :deep(.district-map), .fit .map-slot :deep(.turkey-map) { height: 100%; }
+  .fit .map-slot :deep(svg) { width: 100%; height: 100%; max-height: none; }
+  .fit .map-legend { padding-top: 4px; }
+  .fit .page-head h1 { font-size: 24px; }
+  .fit .page-head p { margin-top: 2px; }
+  .fit .top-kpi { padding: 9px 14px; }
+  .fit .top-kpi-icon { width: 42px; height: 42px; font-size: 19px; }
+  .fit .top-kpi strong { font-size: 21px; }
+}
 .top-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .top-kpi { min-width: 0; display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); }
 .top-kpi-icon { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; }

@@ -38,8 +38,7 @@ tbody tr[tabindex]:hover, tbody tr[tabindex]:focus-visible { outline: 0; backgro
 .nowrap { white-space: nowrap; }
 .empty { padding: 24px 10px; color: var(--admin-muted); text-align: center; }
 .priority { display: inline-block; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.priority.blue { background: #fee4e2; color: #b42318; }
-.priority.amber { background: #fecdca; color: #912018; }
-.priority.slate { background: #fef0c7; color: #93370d; }
-.priority.red { background: #d92d20; color: #fff; }
+.priority.blue, .priority.amber { background: #fda29b; color: #7a271a; }
+.priority.slate { background: #fedf89; color: #7a2e0e; }
+.priority.red { background: #7a271a; color: #fff; }
 </style>
