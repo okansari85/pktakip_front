@@ -303,8 +303,22 @@
             </ol>
             <button class="link-button" type="button" @click="generalFindings.push('')"><i class="pi pi-plus" /> Bulgu ekle</button>
           </div>
+          <!-- Yapay zekanın kusur saymadığı satırlar: kaçan kusur uzmanın önüne gelsin -->
+          <div v-if="notKusurLines.length" class="findings-edit">
+            <small class="muted">Rapordaki not ve sonuç satırları (yapay zeka kusur saymadı; kusur olanı ekleyin):</small>
+            <ul>
+              <li v-for="(line, index) in notKusurLines" :key="index">
+                <span class="muted">{{ line }}</span>
+                <button class="link-button" type="button" @click="generalFindings.push(line); notKusurLines.splice(index, 1)"><i class="pi pi-plus" /> Bulguya ekle</button>
+              </li>
+            </ul>
+          </div>
         </div>
       </template>
+
+      <ul v-if="readWarnings.length" class="error-text">
+        <li v-for="(warning, index) in readWarnings" :key="index">{{ warning }}</li>
+      </ul>
 
       <p v-if="error" class="error-text">{{ error }}</p>
       <div class="modal-actions">
@@ -426,6 +440,8 @@ const analysis = ref<any>(null)
 const installations = ref<any[]>([])
 const systems = ref<SystemRow[]>([])
 const generalFindings = ref<string[]>([])
+const notKusurLines = ref<string[]>([])
+const readWarnings = ref<string[]>([])
 const equipmentRows = ref<EquipmentRow[]>([])
 let uid = 0
 const emptyForm = () => ({ installation_type_id: (props.installation?.type?.id ?? null) as number | null, status: '', control_date: '', next_control_date: '', report_no: '', inspection_body: '', conclusion: '', notes: '' })
@@ -684,6 +700,8 @@ const analyze = async () => {
       request: false
     }))
     generalFindings.value = [...(data.general_findings || [])]
+    notKusurLines.value = [...(data.not_kusur_lines || [])]
+    readWarnings.value = [...(data.warnings || [])]
     // Tesisat sayfasından açıldıysa tür sabit: sistemler o türün listesinde aynı adla aranır.
     const mismatch = !!props.installation && data.installation_type?.id !== props.installation.type?.id
     if (mismatch) onTypeChange()
