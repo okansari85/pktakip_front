@@ -155,59 +155,40 @@
                 </form>
                 <div v-else class="title-row">
                   <h2>{{ selected.name }}</h2>
-                  <button class="edit-button" type="button" :aria-label="`${selected.name} adını düzenle`" @click="startRename"><i class="pi pi-pencil" /> Adı düzenle</button>
+                  <button v-if="!isLocked(selected)" class="edit-button" type="button" :aria-label="`${selected.name} adını düzenle`" @click="startRename"><i class="pi pi-pencil" /> Adı düzenle</button>
                 </div>
                 <small>{{ nodeSummary(selected) }}</small>
                 <p v-if="renameError" class="form-error" role="alert">{{ renameError }}</p>
+                <p v-if="isLocked(selected)" class="form-error" role="note">Bu kayıt önceki bir sürümde "şirket" türüyle açıldı; sistem bu türdeki kaydın adının değiştirilmesine ve silinmesine izin vermiyor. Düzeltilmesi için türünün organizasyona çevrilmesi gerekiyor.</p>
               </div>
-              <button v-if="path.length > 1" class="detail-delete" type="button" @click="openRemove({ name: selected.name, node: selected })"><i class="pi pi-trash" /> Sil</button>
+              <button v-if="path.length > 1 && !subtreeLocked(selected)" class="detail-delete" type="button" @click="openRemove({ name: selected.name, node: selected })"><i class="pi pi-trash" /> Sil</button>
             </div>
           </div>
 
-          <!-- Gruplar (kamuda birimler): yalnız holdingin / kurumun altında. -->
-          <div v-if="showGroupsCard(selected)" class="card detail">
-            <h3 class="card-title"><span class="title-icon k-group"><i class="pi pi-sitemap" /></span>{{ firm.type === 'public' ? 'Birimler' : 'Gruplar' }}</h3>
-            <ul v-if="groupChildren(selected).length" class="rows">
-              <li v-for="child in groupChildren(selected)" :key="child.id">
+          <!-- Alt organizasyonlar: her düğümün altına sınırsız eklenir (grup, şirket, marka, bölge… hepsi organizasyon). -->
+          <div v-if="canBranchAt(selected)" class="card detail">
+            <h3 class="card-title"><span class="title-icon k-org"><i class="pi pi-sitemap" /></span>{{ selected.name }} altındaki organizasyonlar</h3>
+            <p class="card-hint">Grup, şirket, marka ya da bölge: hepsi organizasyon olarak eklenir ve alt alta istediğiniz kadar iner. Örn. Ata Holding › TAB Gıda › Burger King.</p>
+            <ul v-if="selected.children?.length" class="rows">
+              <li v-for="child in selected.children" :key="child.id">
                 <button class="list-card clickable" type="button" @click="selectNode(child)">
-                  <span class="list-main with-icon"><i class="pi pi-sitemap k-text-group" /><strong>{{ child.name }}</strong></span><small>{{ nodeSummary(child) }} ›</small>
+                  <span class="list-main with-icon"><i class="pi pi-sitemap k-text-org" /><strong>{{ child.name }}</strong></span><small>{{ nodeSummary(child) }} ›</small>
                 </button>
               </li>
             </ul>
-            <p v-else class="empty">Henüz {{ firm.type === 'public' ? 'birim' : 'grup' }} yok. Aşağıdan ekleyin.</p>
-            <form class="inline-form" @submit.prevent="saveChild('group')">
-              <label class="field grow">{{ firm.type === 'public' ? 'Yeni birimin adı' : 'Yeni grubun adı' }}
-                <input ref="groupInput" v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. İtfaiye Daire Başkanlığı' : 'Örn. Dayanıklı Tüketim Grubu'" />
+            <p v-else class="empty">Henüz alt organizasyon yok.</p>
+            <form class="inline-form" @submit.prevent="saveChild">
+              <label class="field grow">Yeni alt organizasyonun adı
+                <input ref="groupInput" v-model="groupName" type="text" placeholder="Örn. Dayanıklı Tüketim Grubu, Arçelik A.Ş., Burger King" />
               </label>
-              <button class="secondary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Birim ekle' : 'Grup ekle' }}</button>
+              <button class="secondary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Alt organizasyon ekle</button>
             </form>
-            <p v-if="childError.group" class="form-error" role="alert">{{ childError.group }}</p>
-          </div>
-
-          <!-- Şirketler (tüzel kişiler): holdingin doğrudan altında da, grubun altında da aynı şekilde eklenir. -->
-          <div v-if="showCompaniesCard(selected)" class="card detail">
-            <h3 class="card-title"><span class="title-icon k-company"><i class="pi pi-briefcase" /></span>Şirketler (tüzel kişiler)</h3>
-            <p class="card-hint">{{ kindOf(selected) === 'root' ? `${selected.name} altına doğrudan bağlı şirketler (ör. holdingin kendi A.Ş.'si).` : 'Bu gruptaki şirketler.' }} İşyeri eklerken listeden seçilirler; aynı şirket istediğiniz kadar işyerinde kullanılabilir.</p>
-            <ul v-if="companyChildren(selected).length" class="rows">
-              <li v-for="child in companyChildren(selected)" :key="child.id">
-                <button class="list-card clickable" type="button" @click="selectNode(child)">
-                  <span class="list-main with-icon"><i class="pi pi-briefcase k-text-company" /><strong>{{ child.name }}</strong></span><small>{{ companyUsage(child.name) }} işyerinde kullanılıyor ›</small>
-                </button>
-              </li>
-            </ul>
-            <p v-else class="empty">Henüz şirket yok. Aşağıdan ekleyin.</p>
-            <form class="inline-form" @submit.prevent="saveChild('company')">
-              <label class="field grow">Yeni şirket ünvanı
-                <input ref="companyInput" v-model="companyName" type="text" :placeholder="kindOf(selected) === 'root' ? 'Örn. Koç Holding A.Ş.' : 'Örn. Arçelik Pazarlama A.Ş.'" />
-              </label>
-              <button class="primary-button" type="submit" :disabled="!companyName.trim() || saving"><i class="pi pi-plus" /> Şirket ekle</button>
-            </form>
-            <p v-if="childError.company" class="form-error" role="alert">{{ childError.company }}</p>
+            <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
           </div>
 
           <!-- Lokasyonlar: listede tıklanınca içine girilir; ekleme formu kartın altında. -->
           <div class="card detail">
-            <h3 class="card-title"><span class="title-icon k-location"><i class="pi pi-map-marker" /></span>{{ kindOf(selected) === 'company' ? `${selected.name} firmasının faaliyet gösterdiği lokasyonlar` : `${selected.name} altındaki lokasyonlar` }}</h3>
+            <h3 class="card-title"><span class="title-icon k-location"><i class="pi pi-map-marker" /></span>{{ selected.name }} lokasyonları</h3>
             <ul v-if="panelLocations.length" class="rows">
               <li v-for="location in panelLocations" :key="location.id">
                 <button class="list-card clickable" type="button" @click="selectLocation(location)">
@@ -216,9 +197,9 @@
                 </button>
               </li>
             </ul>
-            <p v-else class="empty">{{ kindOf(selected) === 'company' ? 'Bu firmanın henüz işyeri olduğu bir lokasyon yok. Aşağıdan yeni lokasyon ekleyin ya da var olan bir lokasyona girip işyeri eklerken bu firmayı seçin.' : 'Burada henüz lokasyon yok. Aşağıdan ekleyin.' }}</p>
+            <p v-else class="empty">Henüz lokasyon yok. Aşağıdan ekleyin.</p>
             <form class="add-row" @submit.prevent="saveLocation">
-              <h3>{{ kindOf(selected) === 'company' ? `${selected.name} için yeni lokasyon ekle` : `${selected.name} altına lokasyon ekle` }}</h3>
+              <h3>{{ selected.name }} altına lokasyon ekle</h3>
               <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" location-only />
               <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
               <div class="add-actions">
@@ -328,8 +309,8 @@ const path = computed(() => selected.value ? pathTo(nodes.value, selected.value.
 const selectedLocations = computed(() => locations.value.filter(l => String(l.organization_id) === String(selected.value?.id)))
 const canBranch = computed(() => firm.value?.type === 'corporate' || firm.value?.type === 'public')
 const hasBranches = computed(() => nodes.value.some(n => n.children?.length))
-// Alt düğüm eklenebilen yerler: kök (grup/birim ve şirket), grup (şirket), kamuda üst birim (alt birim). Şirketin altına düğüm eklenmez.
-const canBranchAt = (node: FirmNode) => canBranch.value && (kindOf(node) === 'root' || kindOf(node) === 'group' || (kindOf(node) === 'unit' && depthOf(node) < 2))
+// Holding / kurum yapısında her düğümün altına sınırsız alt organizasyon eklenir (eski yapıdaki gibi).
+const canBranchAt = (_node: FirmNode) => canBranch.value
 const workplacesOf = (location: FirmLocation) => workplaces.value.filter(w => String(w.location_id) === String(location.id))
 const firmsOf = (location: FirmLocation) => workplacesOf(location).map(w => w.company_name)
 
@@ -344,9 +325,7 @@ function selectNode(node: FirmNode) {
   selectedLocationId.value = null
   resetLocationForm()
   groupName.value = ''
-  companyName.value = ''
-  childError.group = ''
-  childError.company = ''
+  childError.value = ''
   renaming.value = false
   renameError.value = ''
 }
@@ -388,17 +367,17 @@ async function load() {
   } finally { loading.value = false }
 }
 
-// Lokasyon kartı: grupta ve kökte o düğüme bağlı lokasyonlar; şirkette şirketin faaliyet gösterdiği (işyeri olan) lokasyonlar,
-// lokasyon hangi düğüme bağlı olursa olsun. Sayı şirkette yalnız o şirketin işyerleridir.
-const isCompanyNode = (node: FirmNode | null) => !!node && kindOf(node) === 'company'
+// Lokasyon kartı: o düğüme bağlı lokasyonlar; kök dışında, adı düğümle aynı firmanın işyeri olduğu lokasyonlar da gelir
+// (ör. "Arçelik A.Ş." organizasyonunda, gruba bağlı Beylikdüzü Kampüsü). Sayı bağlı lokasyonda bütün işyerleri, diğerinde o firmanınkiler.
 const ofCompany = (location: FirmLocation, name: string) => workplacesOf(location).filter(w => normalizeCompanyName(w.company_name) === normalizeCompanyName(name))
+const isAttached = (location: FirmLocation, node: FirmNode) => String(location.organization_id) === String(node.id)
 const panelLocations = computed(() => {
   const node = selected.value
   if (!node) return []
-  if (!isCompanyNode(node)) return selectedLocations.value
-  return locations.value.filter(l => String(l.organization_id) === String(node.id) || ofCompany(l, node.name).length)
+  if (kindOf(node) === 'root') return selectedLocations.value
+  return locations.value.filter(l => isAttached(l, node) || ofCompany(l, node.name).length)
 })
-const panelCount = (location: FirmLocation) => isCompanyNode(selected.value) ? ofCompany(location, selected.value!.name).length : workplacesOf(location).length
+const panelCount = (location: FirmLocation) => selected.value && !isAttached(location, selected.value) ? ofCompany(location, selected.value.name).length : workplacesOf(location).length
 
 // --- Lokasyon: seçili düğümün kartındaki satır içi form ---
 const newDraft = (): LocationDraft => ({ name: '', cityId: null, districtId: null, address: '', hazard: '', company: '', naceCode: null, activity: null })
@@ -418,14 +397,11 @@ function resetLocationForm() {
 // Ağaçtaki + Ekle: düğüm seçilir; sağdaki kartta ekleme kutusu hazırdır (dal eklenebiliyorsa onunkine, yoksa lokasyonunkine odaklanır).
 function startAdd(node: FirmNode) {
   selectNode(node)
-  nextTick(() => (showGroupsCard(node) ? groupInput.value : showCompaniesCard(node) ? companyInput.value : document.querySelector<HTMLInputElement>('.node-panel .add-row input'))?.focus())
+  nextTick(() => (canBranchAt(node) ? groupInput.value : document.querySelector<HTMLInputElement>('.node-panel .add-row input'))?.focus())
 }
 
 async function saveLocation() {
-  // Şirket için açılan lokasyon şirketin grubuna (ya da holdinge) bağlanır; şirket orada faaliyet gösterir ve işyeri formunda seçili gelir.
-  const company = isCompanyNode(selected.value) ? selected.value : null
-  const chain = company ? pathTo(nodes.value, company.id) : []
-  const node = company ? chain[chain.length - 2] ?? company : selected.value
+  const node = selected.value
   if (!canSaveLocation.value || !firm.value || !node || saving.value) return
   saving.value = true
   formError.value = ''
@@ -438,7 +414,6 @@ async function saveLocation() {
     // Yeni lokasyon seçilir; işyeri formu hazır gelir.
     const created = locations.value.find(l => String(l.id) === String(id))
     if (created) {
-      if (company) lastCompany.value = company.name
       selectLocation(created)
       rowNotice.value = `${created.name} eklendi. Şimdi içine işyerlerini ekleyin.`
       nextTick(() => rowNameInput.value?.focus())
@@ -467,27 +442,20 @@ const companyOptions = computed(() => {
   if (!hasBranches.value && firm.value) push(firm.value.name)
   const location = selectedLocation.value
   if (location) {
-    const owner = flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))
-    if (owner && kindOf(owner) === 'company') {
-      const chain = pathTo(nodes.value, owner.id)
-      push(owner.name)
-      chain[chain.length - 2] && companyChildren(chain[chain.length - 2]).forEach(c => push(c.name))
-    } else if (owner) companyChildren(owner).forEach(c => push(c.name))
     workplacesOf(location).forEach(w => push(w.company_name))
+    // Aynı organizasyondaki diğer lokasyonlarda kullanılan firmalar (ör. Burger King restoranlarında TAB Gıda A.Ş.).
+    const siblings = locations.value.filter(l => String(l.organization_id) === String(location.organization_id) && String(l.id) !== String(location.id))
+    siblings.forEach(l => workplacesOf(l).forEach(w => push(w.company_name)))
+    const owner = flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))
+    if (owner) {
+      ;[...pathTo(nodes.value, owner.id)].reverse().filter(n => kindOf(n) !== 'root').forEach(n => push(n.name))
+      flatten(owner.children || []).forEach(n => push(n.name))
+    }
   }
   firmWorkplaces.value.forEach(w => push(w.company_name))
-  flatten(nodes.value).filter(n => kindOf(n) === 'company').forEach(n => push(n.name))
+  flatten(nodes.value).filter(n => kindOf(n) !== 'root').forEach(n => push(n.name))
   return out
 })
-// Yeni yazılan firma, lokasyonun bağlı olduğu gruba (ya da holdinge) şirket olarak da eklenir; şirketler kartında görünür.
-const hasNodeNamed = (name: string) => flatten(nodes.value).some(n => normalizeCompanyName(n.name) === normalizeCompanyName(name))
-const groupOfLocation = (location: FirmLocation) => {
-  const owner = flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))
-  if (!owner || firm.value?.type !== 'corporate') return null
-  if (kindOf(owner) !== 'company') return owner
-  const chain = pathTo(nodes.value, owner.id)
-  return chain[chain.length - 2] ?? null
-}
 const row = reactive<WorkplaceRowDraft>({ name: '', company: '', sgk: '', hazard: '', naceCode: null, activity: null })
 const companyChoice = ref('')
 const newCompany = ref('')
@@ -552,12 +520,6 @@ async function saveRow() {
       here.push(company)
       done++
     }
-    const group = companyChoice.value === '__new' ? groupOfLocation(location) : null
-    if (group && !hasNodeNamed(company)) {
-      await addNode(firm.value.id, company, group.id, 'company').catch(() => {})
-      const structure = await loadStructure(String(firm.value.id)).catch(() => null)
-      if (structure) nodes.value = structure.nodes
-    }
   } catch (e: any) {
     rowError.value = errorMessage(e, e?.message || 'İşyeri eklenemedi. Tekrar deneyin.')
   } finally {
@@ -594,74 +556,52 @@ function selectNace(item: NaceItem) {
   naceOpen.value = false
 }
 
-// --- Düğüm türleri: kök (holding / şirket / kurum), grup, şirket (tüzel kişi), kamuda birim ---
-// Tür backend'deki organizations.type alanından okunur (group | company). Eski kayıtlarda grubun altındaki düğümler şirket sayılır.
-type NodeKind = 'root' | 'group' | 'company' | 'unit'
-const KIND: Record<NodeKind | 'location', { icon: string }> = {
-  root: { icon: 'pi pi-building' }, group: { icon: 'pi pi-sitemap' }, unit: { icon: 'pi pi-sitemap' },
-  company: { icon: 'pi pi-briefcase' }, location: { icon: 'pi pi-map-marker' }
-}
+// --- Düğüm türleri: kök (holding / firma / kurum) ve organizasyon (grup, şirket, marka… hepsi aynı; kamuda birim) ---
+type NodeKind = 'root' | 'org'
+const KIND: Record<NodeKind | 'location', { icon: string }> = { root: { icon: 'pi pi-building' }, org: { icon: 'pi pi-sitemap' }, location: { icon: 'pi pi-map-marker' } }
 const depthOf = (node: FirmNode) => pathTo(nodes.value, node.id).length - 1
-const kindOf = (node: FirmNode): NodeKind => {
-  const depth = depthOf(node)
-  if (depth <= 0) return 'root'
-  if (firm.value?.type === 'public') return 'unit'
-  return node.type === 'company' || depth >= 2 ? 'company' : 'group'
-}
-const kindLabel = (node: FirmNode) => {
-  const kind = kindOf(node)
-  if (kind === 'root') return firm.value?.type === 'public' ? 'Kurum' : hasBranches.value ? 'Holding / Grup' : 'Firma'
-  return { group: 'Grup', company: 'Şirket', unit: 'Birim' }[kind]
-}
-const groupChildren = (node: FirmNode) => (node.children || []).filter(c => kindOf(c) === 'group' || kindOf(c) === 'unit')
-const companyChildren = (node: FirmNode) => (node.children || []).filter(c => kindOf(c) === 'company')
-const showGroupsCard = (node: FirmNode) => canBranch.value && (kindOf(node) === 'root' || (kindOf(node) === 'unit' && depthOf(node) < 2))
-const showCompaniesCard = (node: FirmNode) => firm.value?.type === 'corporate' && (kindOf(node) === 'root' || kindOf(node) === 'group')
+const kindOf = (node: FirmNode): NodeKind => depthOf(node) <= 0 ? 'root' : 'org'
+const kindLabel = (node: FirmNode) => kindOf(node) === 'root'
+  ? (firm.value?.type === 'public' ? 'Kurum' : hasBranches.value ? 'Holding / Grup' : 'Firma')
+  : (firm.value?.type === 'public' ? 'Birim' : 'Organizasyon')
+// Önceki sürümde "şirket"/"marka" türüyle açılan düğümleri backend doğrudan düzenletmez ve sildirmez.
+const isLocked = (node: FirmNode) => node.type === 'company' || node.type === 'brand'
+const subtreeLocked = (node: FirmNode) => flatten([node]).some(isLocked)
 const firmWorkplaces = computed(() => locations.value.flatMap(l => workplacesOf(l)))
-const companyUsage = (name: string) => firmWorkplaces.value.filter(w => normalizeCompanyName(w.company_name) === normalizeCompanyName(name)).length
-// "2 grup · 3 şirket · 2 lokasyon · 5 işyeri" (boş olan grup/şirket yazılmaz).
+// "2 alt organizasyon · 2 lokasyon · 5 işyeri"
 const nodeSummary = (node: FirmNode) => {
   const locs = locationsUnder(node)
   const count = locs.reduce((sum, l) => sum + workplacesOf(l).length, 0)
   const parts: string[] = []
-  const groups = groupChildren(node).length
-  const companies = companyChildren(node).length
-  if (groups) parts.push(`${groups} ${firm.value?.type === 'public' ? 'birim' : 'grup'}`)
-  if (companies) parts.push(`${companies} şirket`)
+  if (node.children?.length) parts.push(`${node.children.length} alt ${firm.value?.type === 'public' ? 'birim' : 'organizasyon'}`)
   parts.push(`${locs.length} lokasyon`, `${count} işyeri`)
   return parts.join(' · ')
 }
 const headerStats = computed(() => {
-  const all = flatten(nodes.value)
+  const orgs = flatten(nodes.value).length - nodes.value.length
   const parts: string[] = []
-  const groups = all.filter(n => kindOf(n) === 'group' || kindOf(n) === 'unit').length
-  const companies = all.filter(n => kindOf(n) === 'company').length
-  if (groups) parts.push(`${groups} ${firm.value?.type === 'public' ? 'birim' : 'grup'}`)
-  if (companies) parts.push(`${companies} şirket`)
+  if (orgs) parts.push(`${orgs} ${firm.value?.type === 'public' ? 'birim' : 'organizasyon'}`)
   parts.push(`${locations.value.length} lokasyon`, `${firmWorkplaces.value.length} işyeri`)
   return parts.join(' · ')
 })
 
-// Satır içi ekleme: grup kartında grup, şirket kartında şirket.
+// Satır içi alt organizasyon ekleme (backend varsayılanı "group" türüyle; silinebilir ve adı düzenlenebilir).
 const groupName = ref('')
-const companyName = ref('')
 const groupInput = ref<HTMLInputElement | null>(null)
-const companyInput = ref<HTMLInputElement | null>(null)
-const childError = reactive<{ group: string; company: string }>({ group: '', company: '' })
-async function saveChild(kind: 'group' | 'company') {
+const childError = ref('')
+async function saveChild() {
   const parent = selected.value
-  const field = kind === 'group' ? groupName : companyName
-  const name = field.value.trim()
+  const name = groupName.value.trim()
   if (!name || !firm.value || !parent || saving.value) return
   saving.value = true
-  childError[kind] = ''
+  childError.value = ''
   try {
-    await addNode(firm.value.id, name, parent.id, kind)
-    field.value = ''
+    await addNode(firm.value.id, name, parent.id)
+    groupName.value = ''
     await load()
-    nextTick(() => (kind === 'group' ? groupInput : companyInput).value?.focus())
+    nextTick(() => groupInput.value?.focus())
   } catch (e: any) {
-    childError[kind] = errorMessage(e, 'Eklenemedi. Tekrar deneyin.')
+    childError.value = errorMessage(e, 'Eklenemedi. Tekrar deneyin.')
   } finally { saving.value = false }
 }
 
@@ -907,13 +847,13 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .kind-badge { justify-self: start; display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
 .kind-badge i { font-size: 11px; }
 .kind-badge.k-root, .title-icon.k-root { background: #f4f3ff; color: #5925dc; }
-.kind-badge.k-group, .kind-badge.k-unit, .title-icon.k-group { background: #eff8ff; color: #175cd3; }
+.kind-badge.k-org, .title-icon.k-org, .kind-badge.k-group, .kind-badge.k-unit, .title-icon.k-group { background: #eff8ff; color: #175cd3; }
 .kind-badge.k-company, .title-icon.k-company { background: #ecfdf3; color: #067647; }
 .kind-badge.k-location, .title-icon.k-location { background: #fffaeb; color: #b54708; }
 .title-icon.k-workplace { background: var(--pk-yellow); color: #111827; }
 .title-icon { flex: none; width: 30px; height: 30px; display: inline-grid; place-items: center; margin-right: 10px; border-radius: 8px; font-size: 14px; vertical-align: middle; }
 .card-title, .add-row-head h3 { display: flex; align-items: center; }
-.k-text-group { color: #175cd3; }
+.k-text-group, .k-text-org { color: #175cd3; }
 .k-text-company { color: #067647; }
 .k-text-location { color: #b54708; font-size: 12px; }
 .list-main.with-icon { display: flex; align-items: center; gap: 10px; }

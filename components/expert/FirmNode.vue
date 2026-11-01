@@ -3,9 +3,9 @@
     <div class="tree-row" :class="{ on: selectedLocationId == null && String(selectedId) === String(node.id) }">
       <button class="tree-item" type="button" :aria-current="selectedLocationId == null && String(selectedId) === String(node.id) ? 'true' : undefined" @click="emit('select', node)">
         <i :class="[ICON[kind], `k-${kind}`]" />
-        <span>{{ node.name }}<small v-if="kind === 'company'" class="kind-tag">şirket</small></span>
+        <span>{{ node.name }}</span>
       </button>
-      <button v-if="kind !== 'company'" class="tree-add" type="button" :aria-label="`${node.name} altına ekle`" @click="emit('add', node)"><i class="pi pi-plus" /> Ekle</button>
+      <button class="tree-add" type="button" :aria-label="`${node.name} altına ekle`" @click="emit('add', node)"><i class="pi pi-plus" /> Ekle</button>
     </div>
     <ul v-if="ownLocations.length || visibleChildren.length" class="branch">
       <li v-for="location in ownLocations" :key="location.id">
@@ -33,12 +33,12 @@ import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'
 const props = defineProps<{ node: FirmNode; depth: number; locations: FirmLocation[]; firmsOf: (l: FirmLocation) => string[]; selectedId: number | string | null; selectedLocationId?: number | string | null; kindOf?: (n: FirmNode) => string }>()
 const emit = defineEmits<{ select: [node: FirmNode]; add: [node: FirmNode]; 'select-location': [location: FirmLocation] }>()
 const ownLocations = computed(() => props.locations.filter(l => String(l.organization_id) === String(props.node.id)))
-// Tür renkleri firma sayfasındakiyle aynı: holding mor, grup mavi, şirket yeşil, lokasyon turuncu.
-const ICON: Record<string, string> = { root: 'pi pi-building', group: 'pi pi-sitemap', unit: 'pi pi-sitemap', company: 'pi pi-briefcase' }
-const kindOfNode = (n: FirmNode, depth: number) => props.kindOf ? props.kindOf(n) : depth === 0 ? 'root' : 'group'
+// Renkler firma sayfasındakiyle aynı: kök mor, organizasyon mavi, lokasyon turuncu.
+const ICON: Record<string, string> = { root: 'pi pi-building', org: 'pi pi-sitemap' }
+const kindOfNode = (n: FirmNode, depth: number) => props.kindOf ? props.kindOf(n) : depth === 0 ? 'root' : 'org'
 const kind = computed(() => kindOfNode(props.node, props.depth))
-// Şirketler (tüzel kişiler) kendi kartında listelenir; ağaçta yalnız altında lokasyon olan şirket görünür.
-const visibleChildren = computed(() => (props.node.children || []).filter(c => kindOfNode(c, props.depth + 1) !== 'company' || c.children?.length || props.locations.some(l => String(l.organization_id) === String(c.id))))
+// Alt organizasyonların hepsi ağaçta görünür (sınırsız derinlik).
+const visibleChildren = computed(() => props.node.children || [])
 </script>
 
 <style scoped>
@@ -64,7 +64,7 @@ const visibleChildren = computed(() => (props.node.children || []).filter(c => k
 .tree-item span { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
 .kind-tag { padding: 1px 6px; border-radius: 999px; background: #ecfdf3; color: #067647; font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
 .k-root { color: #5925dc; }
-.k-group, .k-unit { color: #175cd3; }
+.k-org, .k-group, .k-unit { color: #175cd3; }
 .k-company { color: #067647; }
 .k-location { color: #b54708; }
 .tree-row.on i, .tree-location.on i { color: #111827; }
