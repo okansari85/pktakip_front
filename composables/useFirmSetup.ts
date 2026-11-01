@@ -23,7 +23,7 @@ const unwrap = (response: any) => response?.data?.data ?? response?.data ?? resp
 const toList = (data: any, key?: string) => Array.isArray(data) ? data : (key && data?.[key]) || data?.items || []
 
 export const useFirmSetup = () => {
-  const { get, post } = useExpertApi()
+  const { get, post, patch } = useExpertApi()
   const { load: loadTypes, save: saveType } = useCustomerTypes()
   const { status: billing, load: loadBilling } = useBilling()
   const { setName, addAdditional } = useWorkplaceNames()
@@ -62,7 +62,12 @@ export const useFirmSetup = () => {
       // Tür kaydedilemezse firma yine çalışır; ilk gereken yerde yeniden sorulur.
       await saveType(progress.customerId, type).catch(() => {})
     }
-    if (!progress.rootId) progress.rootId = await addNode(progress.customerId, name, null)
+    if (!progress.rootId) {
+      progress.rootId = await addNode(progress.customerId, name, null)
+      // Sihirbaz seçimi kök düğümün türü olur (backend'de ikisi de "corporate"); kaydedilemezse firma yine çalışır, tür boş kalır.
+      const label = kind === 'limited' ? 'Şirket' : kind === 'holding' ? 'Holding' : null
+      if (label) await patch(`/customers/${progress.customerId}/pk-organizations/${progress.rootId}/label`, { label }).catch(() => {})
+    }
     return progress as Required<FirmProgress>
   }
 

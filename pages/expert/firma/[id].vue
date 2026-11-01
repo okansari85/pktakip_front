@@ -34,7 +34,7 @@
                     <span class="row-text"><span class="name-line"><strong>{{ item.node.name }}</strong><span v-if="labelOf(item.node)" class="type-badge">{{ labelOf(item.node) }}</span></span><small>{{ nodeSummary(item.node) }}</small></span>
                   </button>
                   <div class="row-actions">
-                    <button v-if="canBranch" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
+                    <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
                     <button v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
                     <button v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
                     <button v-tooltip.top="item.depth ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
@@ -655,6 +655,8 @@ async function saveChild() {
 const NODE_LABELS = ['Holding', 'Grup', 'Şirket', 'Marka', 'Bölge']
 const nodeLabels = ref<Record<string, string>>({})
 const labelOf = (node: FirmNode) => nodeLabels.value[String(node.id)] || ''
+// Ltd. / A.Ş.: şube lokasyondur, alt organizasyon gerekmez. Tür Holding / Grup yapılırsa ya da altında düğüm varsa simge görünür; türü boş eski kayıtlar değişmez.
+const singleCompany = computed(() => firm.value?.type === 'corporate' && !hasBranches.value && nodes.value.some(node => labelOf(node) === 'Şirket'))
 const editName = ref('')
 const editLabel = ref('')
 const editSaving = ref(false)
