@@ -43,14 +43,13 @@
                     <span class="row-text"><strong>{{ item.node.name }}</strong><small>{{ nodeSummary(item.node) }}</small></span>
                   </button>
                   <div class="row-actions">
-                    <button v-if="canBranch" class="row-button" type="button" @click="startOrg(item.node)"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle' }}</button>
-                    <button class="row-button" type="button" @click="startLocation(item.node)"><i class="pi pi-map-marker" /> Lokasyon ekle</button>
-                    <button
-                      class="row-button icon" type="button" :disabled="isLocked(item.node)"
-                      :title="isLocked(item.node) ? 'Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.' : 'Adı düzenle'"
-                      :aria-label="`${item.node.name} adını düzenle`" @click="startRename(item.node)"
-                    ><i class="pi pi-pencil" /></button>
-                    <button class="row-button icon remove" type="button" title="Sil" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
+                    <button v-if="canBranch" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
+                    <button v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
+                    <!-- Kapalı düğme baloncuk açmaz: baloncuk sarmalayıcıda. -->
+                    <span v-tooltip.top="isLocked(item.node) ? 'Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.' : 'Adı düzenle'" class="tip-wrap">
+                      <button class="row-button icon" type="button" :disabled="isLocked(item.node)" :aria-label="`${item.node.name} adını düzenle`" @click="startRename(item.node)"><i class="pi pi-pencil" /></button>
+                    </span>
+                    <button v-tooltip.top="item.depth ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
                   </div>
                 </template>
               </template>
@@ -66,9 +65,9 @@
                   </span>
                 </button>
                 <div class="row-actions">
-                  <button class="row-button" type="button" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /> İşyeri ekle</button>
-                  <button v-if="workplacesOf(item.location).length" class="row-button" type="button" @click="goEquipment(item.location)"><i class="pi pi-wrench" /> Ekipmanlar</button>
-                  <button class="row-button icon remove" type="button" title="Sil" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
+                  <button v-tooltip.top="'İşyeri ekle'" class="row-button icon add" type="button" :aria-label="`${item.location.name} içine işyeri ekle`" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /><i class="pi pi-plus mini" /></button>
+                  <button v-if="workplacesOf(item.location).length" v-tooltip.top="'Ekipmanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} ekipmanları`" @click="goEquipment(item.location)"><i class="pi pi-wrench" /></button>
+                  <button v-tooltip.top="'Sil'" class="row-button icon remove" type="button" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
                 </div>
               </template>
 
@@ -85,20 +84,23 @@
                   <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
                 </div>
                 <div class="row-actions">
-                  <button class="row-button remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /> Çıkar</button>
+                  <button v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
                 </div>
               </template>
             </li>
 
             <!-- Alt organizasyon formu -->
             <li v-if="item.kind === 'node' && adding === 'org' && String(selected?.id) === String(item.node.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <form class="add-row" @submit.prevent="saveChild">
+              <form class="add-row float-card" @submit.prevent="saveChild">
+                <div class="add-row-head">
+                  <h3>{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'organizasyon' }} ekle</h3>
+                  <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+                </div>
                 <div class="inline-form">
-                  <label class="field grow">{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'organizasyon' }} adı
+                  <label class="field grow">{{ firm.type === 'public' ? 'Birimin adı' : 'Organizasyonun adı' }}
                     <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
                   </label>
                   <button class="primary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
-                  <button class="secondary-button" type="button" :disabled="saving" @click="closeForm">Vazgeç</button>
                 </div>
                 <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
               </form>
@@ -106,26 +108,30 @@
 
             <!-- Lokasyon formu -->
             <li v-if="item.kind === 'node' && adding === 'location' && String(selected?.id) === String(item.node.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <form class="add-row" @submit.prevent="saveLocation">
-                <h3>{{ item.node.name }} altına lokasyon ekle</h3>
+              <form class="add-row float-card" @submit.prevent="saveLocation">
+                <div class="add-row-head">
+                  <h3>{{ item.node.name }} altına lokasyon ekle</h3>
+                  <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+                </div>
                 <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" location-only autofocus />
                 <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
                 <div class="add-actions">
                   <button class="primary-button" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
-                  <button class="secondary-button" type="button" :disabled="saving" @click="closeForm">Vazgeç</button>
-                  <small>Eklenince işyeri ekleme formu açılır.</small>
                 </div>
               </form>
             </li>
 
             <!-- İşyeri formu: firma ↔ lokasyon eşleştirmesi eklerken yapılır. -->
             <li v-if="item.kind === 'location' && adding === 'workplace' && String(selectedLocation?.id) === String(item.location.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
-              <form class="add-row" @submit.prevent="saveRow">
+              <form class="add-row float-card" @submit.prevent="saveRow">
                 <div class="add-row-head">
                   <h3>{{ item.location.name }} içine işyeri ekle</h3>
-                  <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir işyeri)' }}</button>
+                  <div class="head-end">
+                    <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir işyeri)' }}</button>
+                    <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><i class="pi pi-times" /></button>
+                  </div>
                 </div>
+                <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
                 <div class="add-grid">
                   <label v-if="!bulk" class="field">İşyeri adı <small v-if="!nameRequired">(isteğe bağlı)</small><span v-else class="req">*</span>
                     <input v-model="row.name" type="text" :placeholder="nameRequired ? 'Örn. Antrepo' : 'Örn. Antrepo · boşsa firma adı görünür'" />
@@ -165,7 +171,6 @@
                 <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
                 <div class="add-actions">
                   <button class="primary-button" type="submit" :disabled="rowSaving || limitFull"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
-                  <button class="secondary-button" type="button" :disabled="rowSaving" @click="closeForm">Kapat</button>
                   <small>{{ firm.type === 'corporate' ? 'Firma seçimi bir sonraki kayıt için hatırlanır.' : 'Eklenen işyeri listeye hemen düşer.' }}</small>
                 </div>
               </form>
@@ -337,30 +342,33 @@ function toggleNode(key: string) {
   if (closed.value.has(key)) closed.value.delete(key)
   else closed.value.add(key)
 }
-// İşyeri yoksa açılacak bir şey de yok: doğrudan ekleme formu açılır.
 function toggleLocation(location: FirmLocation) {
   const key = `l${location.id}`
-  if (!workplacesOf(location).length) return startWorkplace(location)
+  if (!workplacesOf(location).length) return
   if (openLocations.value.has(key)) openLocations.value.delete(key)
   else openLocations.value.add(key)
 }
-const focusForm = () => nextTick(() => document.querySelector<HTMLInputElement>('.tree-form input')?.focus())
-// Aynı anda tek form açık olur.
+// Kart ağacı itmez, üstünde durur: ekranın altında kalırsa görünene kadar kaydırılır.
+const focusForm = () => nextTick(() => {
+  document.querySelector('.float-card')?.scrollIntoView({ block: 'nearest' })
+  document.querySelector<HTMLInputElement>('.float-card input')?.focus({ preventScroll: true })
+})
+// Aynı anda tek kart açık olur; aynı simgeye yeniden basmak kapatır.
 const adding = ref<'org' | 'location' | 'workplace' | null>(null)
 function openNodeForm(node: FirmNode, kind: 'org' | 'location') {
+  if (adding.value === kind && String(selected.value?.id) === String(node.id)) return closeForm()
   selectNode(node)
   renaming.value = false
+  childError.value = ''
+  formError.value = ''
   adding.value = kind
   closed.value.delete(`n${node.id}`)
-}
-function startOrg(node: FirmNode) {
-  openNodeForm(node, 'org')
   focusForm()
 }
-function startLocation(node: FirmNode) {
-  openNodeForm(node, 'location')
-}
+const startOrg = (node: FirmNode) => openNodeForm(node, 'org')
+const startLocation = (node: FirmNode) => openNodeForm(node, 'location')
 function startWorkplace(location: FirmLocation) {
+  if (adding.value === 'workplace' && String(selectedLocationId.value) === String(location.id)) return closeForm()
   selectLocation(location)
   renaming.value = false
   adding.value = 'workplace'
@@ -371,6 +379,26 @@ function closeForm() {
   adding.value = null
   selectedLocationId.value = null
 }
+// Dışarı tıklama yalnız boş kartı kapatır: yazılan kaybolmasın. Satır düğmeleri kendi işini yapar. Esc her zaman kapatır.
+const formDirty = computed(() => adding.value === 'org' ? !!groupName.value.trim()
+  : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId)
+  : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || newCompany.value.trim() || bulkText.value.trim() || naceQuery.value.trim()))
+const dialogOpen = () => !!removing.value || deleteOpen.value
+function onPagePointer(event: PointerEvent) {
+  if (!adding.value || formDirty.value || dialogOpen()) return
+  if (!(event.target as Element).closest?.('.float-card, .row-actions')) closeForm()
+}
+function onPageKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && adding.value && !dialogOpen()) closeForm()
+}
+onMounted(() => {
+  document.addEventListener('pointerdown', onPagePointer)
+  document.addEventListener('keydown', onPageKey)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onPagePointer)
+  document.removeEventListener('keydown', onPageKey)
+})
 // "Firmaya göre"den gelince: üstleri açılır, lokasyon görünür hâle gelir.
 function revealLocation(location: FirmLocation) {
   treeView.value = 'yer'
@@ -434,13 +462,8 @@ async function saveLocation() {
     const id = progress.value.locationId
     await load()
     resetLocationForm()
-    // Yeni lokasyonun işyeri formu açılır.
-    const created = locations.value.find(l => String(l.id) === String(id))
-    if (created) {
-      startWorkplace(created)
-      rowNotice.value = `${created.name} eklendi. Şimdi içine işyerlerini ekleyin.`
-    }
-    else closeForm()
+    closeForm()
+    nextTick(() => document.querySelector(`[data-key="l${id}"]`)?.scrollIntoView({ block: 'nearest' }))
   } catch (e: any) {
     formError.value = errorMessage(e, e?.message || 'Lokasyon eklenemedi. Tekrar deneyin.')
   } finally { saving.value = false }
@@ -795,8 +818,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .view-toggle button.on { background: var(--admin-input); color: var(--admin-heading); box-shadow: 0 1px 2px var(--admin-shadow); }
 
 /* Ağaç: girinti ve kılavuz çizgileri derinlikten */
-.tree { --step: 26px; display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.tree-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; min-height: 52px; padding: 5px 8px 5px calc(var(--depth) * var(--step) + 6px); border-radius: 9px; background-image: repeating-linear-gradient(90deg, var(--admin-border) 0 1px, transparent 1px var(--step)); background-position: 15px 0; background-size: calc(var(--depth) * var(--step)) 100%; background-repeat: no-repeat; }
+.tree { --step: 26px; margin: 0; padding: 0; list-style: none; }
+.tree-row { margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; min-height: 52px; padding: 5px 8px 5px calc(var(--depth) * var(--step) + 6px); border-radius: 9px; background-image: repeating-linear-gradient(90deg, var(--admin-border) 0 1px, transparent 1px var(--step)); background-position: 15px 0; background-size: calc(var(--depth) * var(--step)) 100%; background-repeat: no-repeat; }
 .tree-row:hover { background-color: var(--admin-soft); }
 .row-main { flex: 1 1 280px; min-width: 0; min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 0; border: 0; background: none; color: var(--admin-heading); font: inherit; text-align: left; cursor: pointer; }
 .row-main.static { cursor: default; flex-wrap: wrap; }
@@ -816,7 +839,10 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .row-button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .row-button:hover:not(:disabled) { border-color: #d7a900; }
 .row-button:disabled { opacity: .45; cursor: not-allowed; }
-.row-button.icon { width: 36px; justify-content: center; padding: 0; color: var(--admin-muted); }
+.row-button.icon { position: relative; width: 36px; justify-content: center; padding: 0; color: var(--admin-muted); }
+.row-button.icon.add { color: var(--admin-heading); }
+.row-button .mini { position: absolute; right: 3px; bottom: 3px; padding: 1px; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 7px; }
+.tip-wrap { display: inline-flex; }
 .row-button.remove { color: #b42318; }
 .row-button.remove:hover:not(:disabled) { border-color: #d92d20; }
 .company-chip { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #eef4ff; color: #3538cd; font-size: 12px; font-weight: 600; }
@@ -829,7 +855,10 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .rename-row .form-error { flex-basis: 100%; margin: 0; }
 
 /* Satırın altında açılan form */
-.tree-form { display: grid; gap: 8px; padding: 2px 8px 10px calc(var(--depth) * var(--step) + 6px); }
+/* Yüksekliksiz satır: kart ağacı itmez, sonraki satırların üstünde durur. */
+.tree-form { position: relative; z-index: 20; height: 0; }
+.float-card { position: absolute; top: 2px; right: 8px; width: min(900px, calc(100% - 16px)); max-height: calc(100vh - 110px); overflow: auto; box-shadow: 0 16px 40px var(--admin-shadow); }
+.head-end { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .add-row { display: grid; gap: 12px; padding: 14px; border: 2px solid var(--pk-yellow); border-radius: 12px; background: var(--admin-input); }
 .add-row h3 { margin: 0; color: var(--admin-heading); font-size: 14.5px; }
 .add-row-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
