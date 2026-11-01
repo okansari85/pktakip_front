@@ -207,18 +207,18 @@
 
           <!-- Lokasyonlar: listede tıklanınca içine girilir; ekleme formu kartın altında. -->
           <div class="card detail">
-            <h3 class="card-title"><span class="title-icon k-location"><i class="pi pi-map-marker" /></span>{{ selected.name }} altındaki lokasyonlar</h3>
-            <ul v-if="selectedLocations.length" class="rows">
-              <li v-for="location in selectedLocations" :key="location.id">
+            <h3 class="card-title"><span class="title-icon k-location"><i class="pi pi-map-marker" /></span>{{ kindOf(selected) === 'company' ? `${selected.name} firmasının faaliyet gösterdiği lokasyonlar` : `${selected.name} altındaki lokasyonlar` }}</h3>
+            <ul v-if="panelLocations.length" class="rows">
+              <li v-for="location in panelLocations" :key="location.id">
                 <button class="list-card clickable" type="button" @click="selectLocation(location)">
                   <span class="list-main"><strong><i class="pi pi-map-marker k-text-location" /> {{ location.name }}</strong><small v-if="location.city">{{ location.city }}<template v-if="location.district"> / {{ location.district }}</template></small></span>
-                  <small :class="{ 'no-firm': !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'Henüz işyeri yok' }} ›</small>
+                  <small :class="{ 'no-firm': !panelCount(location) }">{{ panelCount(location) ? `${panelCount(location)} işyeri` : 'Henüz işyeri yok' }} ›</small>
                 </button>
               </li>
             </ul>
-            <p v-else class="empty">Burada henüz lokasyon yok. Aşağıdan ekleyin.</p>
+            <p v-else class="empty">{{ kindOf(selected) === 'company' ? 'Bu firmanın henüz işyeri olduğu bir lokasyon yok. Aşağıdan yeni lokasyon ekleyin ya da var olan bir lokasyona girip işyeri eklerken bu firmayı seçin.' : 'Burada henüz lokasyon yok. Aşağıdan ekleyin.' }}</p>
             <form class="add-row" @submit.prevent="saveLocation">
-              <h3>{{ selected.name }} altına lokasyon ekle</h3>
+              <h3>{{ kindOf(selected) === 'company' ? `${selected.name} için yeni lokasyon ekle` : `${selected.name} altına lokasyon ekle` }}</h3>
               <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" location-only />
               <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
               <div class="add-actions">
@@ -388,6 +388,18 @@ async function load() {
   } finally { loading.value = false }
 }
 
+// Lokasyon kartı: grupta ve kökte o düğüme bağlı lokasyonlar; şirkette şirketin faaliyet gösterdiği (işyeri olan) lokasyonlar,
+// lokasyon hangi düğüme bağlı olursa olsun. Sayı şirkette yalnız o şirketin işyerleridir.
+const isCompanyNode = (node: FirmNode | null) => !!node && kindOf(node) === 'company'
+const ofCompany = (location: FirmLocation, name: string) => workplacesOf(location).filter(w => normalizeCompanyName(w.company_name) === normalizeCompanyName(name))
+const panelLocations = computed(() => {
+  const node = selected.value
+  if (!node) return []
+  if (!isCompanyNode(node)) return selectedLocations.value
+  return locations.value.filter(l => String(l.organization_id) === String(node.id) || ofCompany(l, node.name).length)
+})
+const panelCount = (location: FirmLocation) => isCompanyNode(selected.value) ? ofCompany(location, selected.value!.name).length : workplacesOf(location).length
+
 // --- Lokasyon: seçili düğümün kartındaki satır içi form ---
 const newDraft = (): LocationDraft => ({ name: '', cityId: null, districtId: null, address: '', hazard: '', company: '', naceCode: null, activity: null })
 const draft = reactive<LocationDraft>(newDraft())
@@ -410,7 +422,10 @@ function startAdd(node: FirmNode) {
 }
 
 async function saveLocation() {
-  const node = selected.value
+  // Şirket için açılan lokasyon şirketin grubuna (ya da holdinge) bağlanır; şirket orada faaliyet gösterir ve işyeri formunda seçili gelir.
+  const company = isCompanyNode(selected.value) ? selected.value : null
+  const chain = company ? pathTo(nodes.value, company.id) : []
+  const node = company ? chain[chain.length - 2] ?? company : selected.value
   if (!canSaveLocation.value || !firm.value || !node || saving.value) return
   saving.value = true
   formError.value = ''
@@ -423,6 +438,7 @@ async function saveLocation() {
     // Yeni lokasyon seçilir; işyeri formu hazır gelir.
     const created = locations.value.find(l => String(l.id) === String(id))
     if (created) {
+      if (company) lastCompany.value = company.name
       selectLocation(created)
       rowNotice.value = `${created.name} eklendi. Şimdi içine işyerlerini ekleyin.`
       nextTick(() => rowNameInput.value?.focus())
