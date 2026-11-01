@@ -95,7 +95,7 @@
               <form class="add-row" @submit.prevent="saveChild">
                 <div class="inline-form">
                   <label class="field grow">{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'organizasyon' }} adı
-                    <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Dayanıklı Tüketim Grubu, Burger King'" />
+                    <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
                   </label>
                   <button class="primary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
                   <button class="secondary-button" type="button" :disabled="saving" @click="closeForm">Vazgeç</button>
@@ -130,14 +130,14 @@
                   <label v-if="!bulk" class="field">İşyeri adı <small v-if="!nameRequired">(isteğe bağlı)</small><span v-else class="req">*</span>
                     <input v-model="row.name" type="text" :placeholder="nameRequired ? 'Örn. Antrepo' : 'Örn. Antrepo · boşsa firma adı görünür'" />
                   </label>
-                  <label v-if="firm.type === 'corporate'" class="field">Hangi firma adına? <span class="req">*</span>
+                  <label v-if="firm.type === 'corporate' && companyOptions.length" class="field">Firma <span class="req">*</span>
                     <select v-model="companyChoice">
                       <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
                       <option value="__new">+ Yeni firma ekle…</option>
                     </select>
                   </label>
                   <label v-if="firm.type === 'corporate' && companyChoice === '__new'" class="field">Yeni firmanın ünvanı <span class="req">*</span>
-                    <input v-model="newCompany" type="text" placeholder="Örn. Arçelik Pazarlama A.Ş." />
+                    <input v-model="newCompany" type="text" placeholder="Örn. ABC Gıda A.Ş." />
                   </label>
                   <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
                     <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
@@ -452,8 +452,8 @@ async function saveLocation() {
 const flatten = (list: FirmNode[]): FirmNode[] => list.flatMap(n => [n, ...flatten(n.children || [])])
 const nodeNames = computed(() => flatten(nodes.value).map(n => n.name))
 const showCompanyColumn = computed(() => firm.value?.type === 'corporate')
-// Seçenekler: önce lokasyonun bağlı olduğu grubun şirketleri, sonra bu lokasyondaki ve müşterideki diğer firmalar,
-// sonra başka gruplardaki şirketler (aynı ad bir kez). Tek şirketlik yapıda firmanın kendisi.
+// Seçenekler yalnız gerçek firmalar: bu lokasyondakiler ve üstteki ilk organizasyonla onun alt dallarındaki lokasyonlardakiler (aynı ad bir kez).
+// Yukarı doğru gidilmez: alttaki lokasyonda üst grubun firması görünmez. Firma, işyeri açıldığı lokasyon üzerinden o organizasyona bağlanır. Tek şirketlik yapıda firmanın kendisi.
 const companyOptions = computed(() => {
   const seen = new Set<string>()
   const out: string[] = []
@@ -465,17 +465,9 @@ const companyOptions = computed(() => {
   const location = selectedLocation.value
   if (location) {
     workplacesOf(location).forEach(w => push(w.company_name))
-    // Aynı organizasyondaki diğer lokasyonlarda kullanılan firmalar (ör. Burger King restoranlarında TAB Gıda A.Ş.).
-    const siblings = locations.value.filter(l => String(l.organization_id) === String(location.organization_id) && String(l.id) !== String(location.id))
-    siblings.forEach(l => workplacesOf(l).forEach(w => push(w.company_name)))
     const owner = flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))
-    if (owner) {
-      ;[...pathTo(nodes.value, owner.id)].reverse().filter(n => kindOf(n) !== 'root').forEach(n => push(n.name))
-      flatten(owner.children || []).forEach(n => push(n.name))
-    }
+    if (owner) locationsUnder(owner).forEach(l => workplacesOf(l).forEach(w => push(w.company_name)))
   }
-  firmWorkplaces.value.forEach(w => push(w.company_name))
-  flatten(nodes.value).filter(n => kindOf(n) !== 'root').forEach(n => push(n.name))
   return out
 })
 const row = reactive<WorkplaceRowDraft>({ name: '', company: '', sgk: '', hazard: '', naceCode: null, activity: null })
