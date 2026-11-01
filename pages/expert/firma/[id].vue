@@ -29,29 +29,17 @@
             <li class="tree-row" :class="`r-${item.kind}`" :style="{ '--depth': item.depth }" :data-key="item.key">
               <!-- Organizasyon -->
               <template v-if="item.kind === 'node'">
-                <form v-if="renaming && String(selected?.id) === String(item.node.id)" class="rename-row" @submit.prevent="saveRename">
-                  <label class="sr-only" for="rename-input">Yeni ad</label>
-                  <input id="rename-input" v-model="renameText" type="text" @keydown.esc="renaming = false" />
-                  <button class="primary-button" type="submit" :disabled="!renameText.trim() || renameSaving">{{ renameSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
-                  <button class="secondary-button" type="button" :disabled="renameSaving" @click="renaming = false">Vazgeç</button>
-                  <p v-if="renameError" class="form-error" role="alert">{{ renameError }}</p>
-                </form>
-                <template v-else>
                   <button class="row-main" type="button" :aria-expanded="hasContent(item.node) ? !closed.has(item.key) : undefined" @click="toggleNode(item.key)">
                     <i class="chevron" :class="!hasContent(item.node) ? '' : closed.has(item.key) ? 'pi pi-chevron-right' : 'pi pi-chevron-down'" />
                     <i :class="item.depth ? 'pi pi-sitemap k-org' : 'pi pi-building k-root'" />
-                    <span class="row-text"><strong>{{ item.node.name }}</strong><small>{{ nodeSummary(item.node) }}</small></span>
+                    <span class="row-text"><span class="name-line"><strong>{{ item.node.name }}</strong><span v-if="labelOf(item.node)" class="type-badge">{{ labelOf(item.node) }}</span></span><small>{{ nodeSummary(item.node) }}</small></span>
                   </button>
                   <div class="row-actions">
                     <button v-if="canBranch" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
                     <button v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
-                    <!-- Kapalı düğme baloncuk açmaz: baloncuk sarmalayıcıda. -->
-                    <span v-tooltip.top="isLocked(item.node) ? 'Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.' : 'Adı düzenle'" class="tip-wrap">
-                      <button class="row-button icon" type="button" :disabled="isLocked(item.node)" :aria-label="`${item.node.name} adını düzenle`" @click="startRename(item.node)"><i class="pi pi-pencil" /></button>
-                    </span>
+                    <button v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
                     <button v-tooltip.top="item.depth ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
                   </div>
-                </template>
               </template>
 
               <!-- Lokasyon -->
@@ -87,6 +75,32 @@
                   <button v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
                 </div>
               </template>
+            </li>
+
+            <!-- Düzeltme kartı: ad ve isteğe bağlı tür -->
+            <li v-if="item.kind === 'node' && adding === 'edit' && String(selected?.id) === String(item.node.id)" class="tree-form">
+              <form class="add-row float-card" @submit.prevent="saveEdit">
+                <div class="add-row-head">
+                  <h3>{{ item.node.name }} düzenle</h3>
+                  <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><i class="pi pi-times" /></button>
+                </div>
+                <div class="add-grid">
+                  <label class="field">Ad <span class="req">*</span>
+                    <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(item.node)" />
+                  </label>
+                  <label class="field">Tür <small>(isteğe bağlı)</small>
+                    <select v-model="editLabel">
+                      <option value="">Yok</option>
+                      <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
+                    </select>
+                  </label>
+                </div>
+                <small v-if="isLocked(item.node)" class="field-note">Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</small>
+                <p v-if="editError" class="form-error" role="alert">{{ editError }}</p>
+                <div class="add-actions">
+                  <button class="primary-button" type="submit" :disabled="!editName.trim() || editSaving">{{ editSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
+                </div>
+              </form>
             </li>
 
             <!-- Alt organizasyon formu -->
@@ -299,8 +313,6 @@ function selectNode(node: FirmNode) {
   resetLocationForm()
   groupName.value = ''
   childError.value = ''
-  renaming.value = false
-  renameError.value = ''
 }
 function selectLocation(location: FirmLocation) {
   if (location.organization_id != null) selectedId.value = location.organization_id
@@ -355,11 +367,10 @@ const focusForm = () => nextTick(() => {
   document.querySelector<HTMLInputElement>('.float-card input')?.focus({ preventScroll: true })
 })
 // Aynı anda tek kart açık olur; aynı simgeye yeniden basmak kapatır.
-const adding = ref<'org' | 'location' | 'workplace' | null>(null)
+const adding = ref<'org' | 'location' | 'workplace' | 'edit' | null>(null)
 function openNodeForm(node: FirmNode, kind: 'org' | 'location') {
   if (adding.value === kind && String(selected.value?.id) === String(node.id)) return closeForm()
   selectNode(node)
-  renaming.value = false
   childError.value = ''
   formError.value = ''
   adding.value = kind
@@ -371,7 +382,6 @@ const startLocation = (node: FirmNode) => openNodeForm(node, 'location')
 function startWorkplace(location: FirmLocation) {
   if (adding.value === 'workplace' && String(selectedLocationId.value) === String(location.id)) return closeForm()
   selectLocation(location)
-  renaming.value = false
   adding.value = 'workplace'
   openLocations.value.add(`l${location.id}`)
   focusForm()
@@ -381,7 +391,8 @@ function closeForm() {
   selectedLocationId.value = null
 }
 // Dışarı tıklama yalnız boş kartı kapatır: yazılan kaybolmasın. Satır düğmeleri kendi işini yapar. Esc her zaman kapatır.
-const formDirty = computed(() => adding.value === 'org' ? !!groupName.value.trim()
+const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && (editName.value.trim() !== selected.value.name || editLabel.value !== labelOf(selected.value)))
+  : adding.value === 'org' ? !!groupName.value.trim()
   : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId)
   : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || newCompany.value.trim() || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
@@ -427,11 +438,12 @@ async function load() {
     await loadAccount()
     // Bu ekran yalnız bireysel uzman içindir; diğer hesaplar kendi sayfalarına döner.
     if (multiUser.value) return navigateTo('/expert/workplaces', { replace: true })
-    const [firms, structure] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), loadWorkplaces(true), loadNames()])
+    const [firms, structure, labels] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), get<Record<string, string>>(`/customers/${route.params.id}/pk-organization-labels`).catch(() => ({} as Record<string, string>)), loadWorkplaces(true), loadNames()])
     firm.value = firms.find(f => String(f.id) === String(route.params.id)) || null
     if (!firm.value) { error.value = 'Firma bulunamadı.'; return }
     nodes.value = structure.nodes
     locations.value = structure.locations
+    nodeLabels.value = labels || {}
     // Üstteki Organizasyon kutusu da güncel kalsın; hatasını kendi yutar.
     loadOrganizationScope(true)
   } catch (e: any) {
@@ -639,37 +651,47 @@ async function saveChild() {
   } finally { saving.value = false }
 }
 
-// Ad düzeltme: satırdaki kalem. Kökte firmanın (müşteri) adı da birlikte değişir.
-const renaming = ref(false)
-const renameText = ref('')
-const renameSaving = ref(false)
-const renameError = ref('')
-function startRename(node: FirmNode) {
+// Düzeltme kartı (satırdaki kalem): ad ve tür. Kökte firmanın (müşteri) adı da birlikte değişir. Tür yalnız gösterim etiketidir;
+// backend'in organizations.type alanı değildir (o alan düğümü kilitler).
+const NODE_LABELS = ['Holding', 'Grup', 'Şirket', 'Marka', 'Bölge']
+const nodeLabels = ref<Record<string, string>>({})
+const labelOf = (node: FirmNode) => nodeLabels.value[String(node.id)] || ''
+const editName = ref('')
+const editLabel = ref('')
+const editSaving = ref(false)
+const editError = ref('')
+function startEdit(node: FirmNode) {
+  if (adding.value === 'edit' && String(selected.value?.id) === String(node.id)) return closeForm()
   selectNode(node)
-  closeForm()
-  renameText.value = node.name
-  renameError.value = ''
-  renaming.value = true
-  nextTick(() => document.querySelector<HTMLInputElement>('#rename-input')?.select())
+  editName.value = node.name
+  editLabel.value = labelOf(node)
+  editError.value = ''
+  adding.value = 'edit'
+  nextTick(() => {
+    document.querySelector('.float-card')?.scrollIntoView({ block: 'nearest' })
+    document.querySelector<HTMLInputElement>('#edit-name')?.select()
+  })
 }
-async function saveRename() {
+async function saveEdit() {
   const node = selected.value
-  const name = renameText.value.trim()
-  if (!node || !firm.value || !name || renameSaving.value) return
-  if (name === node.name) { renaming.value = false; return }
-  renameSaving.value = true
-  renameError.value = ''
+  const name = editName.value.trim()
+  if (!node || !firm.value || !name || editSaving.value) return
+  editSaving.value = true
+  editError.value = ''
   try {
-    await patch(`/customers/${firm.value.id}/organizations/${node.id}`, { name })
-    if (kindOf(node) === 'root') {
-      await patch(`/customers/${firm.value.id}`, { name })
-      firm.value = { ...firm.value, name }
+    if (name !== node.name && !isLocked(node)) {
+      await patch(`/customers/${firm.value.id}/organizations/${node.id}`, { name })
+      if (kindOf(node) === 'root') {
+        await patch(`/customers/${firm.value.id}`, { name })
+        firm.value = { ...firm.value, name }
+      }
     }
-    renaming.value = false
+    if (editLabel.value !== labelOf(node)) await patch(`/customers/${firm.value.id}/pk-organizations/${node.id}/label`, { label: editLabel.value || null })
+    closeForm()
     await load()
   } catch (e: any) {
-    renameError.value = errorMessage(e, 'Ad değiştirilemedi. Tekrar deneyin.')
-  } finally { renameSaving.value = false }
+    editError.value = errorMessage(e, 'Kaydedilemedi. Tekrar deneyin.')
+  } finally { editSaving.value = false }
 }
 // Eski kayıtta kök düğüm yoksa (yarım kalmış kurulum) aynı adla açılır.
 async function repairRoot() {
@@ -845,7 +867,6 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .row-button.icon { position: relative; width: 36px; justify-content: center; padding: 0; color: var(--admin-muted); }
 .row-button.icon.add { color: var(--admin-heading); }
 .row-button .mini { position: absolute; right: 3px; bottom: 3px; padding: 1px; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 7px; }
-.tip-wrap { display: inline-flex; }
 .row-button.remove { color: #b42318; }
 .row-button.remove:hover:not(:disabled) { border-color: #d92d20; }
 .company-chip { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #eef4ff; color: #3538cd; font-size: 12px; font-weight: 600; }
@@ -853,9 +874,10 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .hazard-badge.low { background: var(--admin-success-bg); color: var(--admin-success-text); }
 .hazard-badge.high { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
 .hazard-badge.very-high { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
-.rename-row { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.rename-row input { flex: 1 1 260px; min-height: 44px; padding: 0 12px; border: 1px solid #d7a900; border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 15px; font-weight: 700; }
-.rename-row .form-error { flex-basis: 100%; margin: 0; }
+.name-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.type-badge { padding: 1px 7px; border-radius: 999px; background: var(--admin-soft); color: var(--admin-muted); font-size: 10.5px; font-weight: 700; }
+.field-note { color: var(--admin-muted); font-size: 12px; }
+.add-row .field input:disabled { opacity: .6; cursor: not-allowed; }
 
 /* Satırın altında açılan form */
 /* Yüksekliksiz satır: kart ağacı itmez, sonraki satırların üstünde durur. */
