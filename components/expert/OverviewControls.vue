@@ -1,11 +1,11 @@
 <template>
   <div class="controls">
-    <!-- Kartın üzerine gelince önizleme alttaki tabloların üstünde süzülür; sayfa kaymaz. Dokunmatikte kart doğrudan detaya gider. -->
-    <div class="cards-wrap" @mouseleave="closeLater" @mouseenter="cancelClose" @focusout="onFocusOut" @keydown.esc="active = null">
+    <!-- Önizleme haritadaki gibi fareyle gezer; tıklama alttaki karta geçer ve detay açılır. Klavyede kartın altında sabit durur. Dokunmatikte kart doğrudan detaya gider. -->
+    <div class="cards-wrap" @focusout="onFocusOut" @keydown.esc="active = null">
       <div class="cards">
         <NuxtLink
           v-for="key in CONTROL_BUCKET_KEYS" :key="key" :to="`/expert/kontroller/${key}`" class="bucket" :class="[CONTROL_BUCKETS[key].tone, { active: active === key }]"
-          :aria-expanded="active === key" @mouseenter="open(key)" @focus="open(key)"
+          :aria-expanded="active === key" @mousemove="follow($event, key)" @mouseleave="active = null" @focus="onFocus($event, key)"
         >
           <span class="bucket-icon"><i :class="CONTROL_BUCKETS[key].icon" /></span>
           <span class="bucket-text"><small>{{ CONTROL_BUCKETS[key].label }}</small><strong>{{ counts[key] }} <em>kontrol</em></strong></span>
@@ -13,10 +13,10 @@
         </NuxtLink>
       </div>
 
-      <section v-if="active" class="popover" :class="popoverSide" role="group" :aria-label="CONTROL_BUCKETS[active].title">
-        <header><h3>{{ CONTROL_BUCKETS[active].title }} ({{ counts[active] }})</h3><NuxtLink :to="`/expert/kontroller/${active}`">Tümünü Gör <i class="pi pi-arrow-right" /></NuxtLink></header>
+      <section v-if="active" ref="popover" class="popover" :class="[popoverSide, { following: pos }]" :style="pos || undefined" role="group" :aria-label="CONTROL_BUCKETS[active].title">
+        <header><h3>{{ CONTROL_BUCKETS[active].title }} ({{ counts[active] }})</h3><NuxtLink v-if="!pos" :to="`/expert/kontroller/${active}`">Tümünü Gör <i class="pi pi-arrow-right" /></NuxtLink></header>
         <ExpertControlRowsTable :rows="previewRows" empty="Bu aralıkta kontrol yok." @select="date = $event" />
-        <p v-if="counts[active] > previewRows.length" class="popover-note"><i class="pi pi-info-circle" /> Bu listede en fazla 3 kayıt gösterilir. Tüm kayıtlar için "Tümünü Gör"e tıklayın.</p>
+        <p v-if="counts[active] > previewRows.length" class="popover-note"><i class="pi pi-info-circle" /> Bu listede en fazla 3 kayıt gösterilir. Tüm kayıtlar için {{ pos ? 'karta' : '"Tümünü Gör"e' }} tıklayın.</p>
       </section>
     </div>
 
@@ -80,15 +80,32 @@ const popoverSide = computed(() => active.value && CONTROL_BUCKET_KEYS.indexOf(a
 const attentionRows = computed(() => [...byBucket.value['suresi-gecen'], ...byBucket.value.bugun, ...byBucket.value['7-gun'], ...byBucket.value['8-30-gun']].slice(0, 3))
 const entriesOn = (value: string) => props.agenda.filter(entry => entry.date === value)
 
-let closeTimer: ReturnType<typeof setTimeout> | undefined
-function open(key: ControlBucket) { cancelClose(); active.value = key }
-function cancelClose() { clearTimeout(closeTimer) }
-// Küçük gecikme: fare karttan pencereye geçerken kapanmasın.
-function closeLater() { cancelClose(); closeTimer = setTimeout(() => { active.value = null }, 180) }
+const popover = ref<HTMLElement | null>(null)
+const pos = ref<{ left: string; top: string } | null>(null)
+async function follow(event: MouseEvent, key: ControlBucket) {
+  const { clientX: x, clientY: y } = event
+  if (active.value !== key) {
+    active.value = key
+    await nextTick()
+  }
+  const box = popover.value
+  if (!box) return
+  // İmlecin sağ altında durur; ekrana sığmazsa içeri çekilir ya da imlecin üstüne geçer.
+  const below = y + 14 + box.offsetHeight <= window.innerHeight - 8
+  pos.value = {
+    left: `${Math.max(8, Math.min(x + 14, window.innerWidth - box.offsetWidth - 8))}px`,
+    top: `${Math.max(8, below ? y + 14 : y - 14 - box.offsetHeight)}px`
+  }
+}
+// Fareyle tıklamada da odak gelir; yalnız klavye odağı sabit pencereyi açar.
+function onFocus(event: FocusEvent, key: ControlBucket) {
+  if (!(event.target as HTMLElement).matches(':focus-visible')) return
+  pos.value = null
+  active.value = key
+}
 function onFocusOut(event: FocusEvent) {
   if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) active.value = null
 }
-onBeforeUnmount(cancelClose)
 
 // shortcut: tarih ve tesisat için backend'de "eklenme tarihi" yok; yeni kayıt ekipman numarasından bulunur ve en çok 15 lokasyon okunur. Backend aşamasında tek uca alınacak.
 interface RecentRow { id: number; date: string | null; place: string; name: string }
@@ -133,6 +150,7 @@ watch(locationIds, loadRecent, { immediate: true })
 .red { background: #fef3f2; border-color: #fecdca; } .red .bucket-text small, .red .bucket-icon { color: #b42318; } .red.active { border-color: #d92d20; }
 .popover { position: absolute; top: calc(100% + 8px); z-index: 30; width: min(760px, 100%); padding: 10px 12px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); box-shadow: 0 18px 44px var(--admin-shadow); }
 .popover.left { left: 0; } .popover.right { right: 0; }
+.popover.following { position: fixed; right: auto; width: min(760px, calc(100vw - 16px)); pointer-events: none; }
 .popover :deep(th), .popover :deep(td) { padding-top: 4px; padding-bottom: 4px; font-size: 12.5px; }
 .popover header { margin-bottom: 6px; }
 .popover-note { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; padding: 4px 8px; border-radius: 8px; background: var(--admin-soft); color: var(--admin-muted); font-size: 12px; }
