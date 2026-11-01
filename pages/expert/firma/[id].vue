@@ -17,7 +17,6 @@
       <!-- Tek pencere: bütün yapı ağaçta; ekleme, düzenleme ve silme ilgili satırın altında açılır. -->
       <section v-if="nodes.length" class="card tree-card">
         <div v-if="canBranch" class="tree-head">
-          <h2>Organizasyon</h2>
           <div class="view-toggle" role="group" aria-label="Görünüm">
             <button type="button" :class="{ on: treeView === 'yer' }" :aria-pressed="treeView === 'yer'" @click="treeView = 'yer'">Yere göre</button>
             <button type="button" :class="{ on: treeView === 'firma' }" :aria-pressed="treeView === 'firma'" @click="treeView = 'firma'">Firmaya göre</button>
@@ -836,8 +835,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .chip { padding: 3px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-heading); font-size: 12px; font-weight: 600; }
 .card { padding: 14px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card, var(--admin-input)); }
 .tree-card { min-height: calc(100vh - 230px); padding: 18px; }
-.tree-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.tree-head h2 { margin: 0; color: var(--admin-heading); font-size: 16px; }
+.tree-head { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }
 .view-toggle button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .view-toggle button.on { background: var(--admin-input); color: var(--admin-heading); box-shadow: 0 1px 2px var(--admin-shadow); }
