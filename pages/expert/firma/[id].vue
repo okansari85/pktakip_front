@@ -13,28 +13,130 @@
         </div>
       </div>
 
-      <ol v-if="!setupDone" class="steps" aria-label="Kurulum adımları">
-        <li v-for="(step, index) in setupSteps" :key="step.title" :class="{ done: step.done, now: index === currentStep }">
-          <span class="step-no"><i v-if="step.done" class="pi pi-check" /><template v-else>{{ index + 1 }}</template></span>
-          <div><strong>{{ step.title }}</strong><small>{{ step.text }}</small></div>
-        </li>
-      </ol>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
       <div class="firm-layout" :class="{ 'has-tree': canBranch }">
         <aside v-if="canBranch && nodes.length" class="card tree-card">
-          <h2>Organizasyon Ağacı</h2>
-          <p>Bir satıra tıklayın, ayrıntısı yanda açılır. Altına bir şey eklemek için <strong>+ Ekle</strong>'ye basın.</p>
-          <ul class="tree">
-            <ExpertFirmNode v-for="node in nodes" :key="node.id" :node="node" :depth="0" :locations="locations" :firms-of="firmsOf" :selected-id="selected?.id ?? null" @select="selectedId = $event.id" @add="startAdd" />
-          </ul>
+          <div class="tree-head">
+            <h2>Organizasyon</h2>
+            <div class="view-toggle" role="group" aria-label="Görünüm">
+              <button type="button" :class="{ on: treeView === 'yer' }" :aria-pressed="treeView === 'yer'" @click="treeView = 'yer'">Yere göre</button>
+              <button type="button" :class="{ on: treeView === 'firma' }" :aria-pressed="treeView === 'firma'" @click="treeView = 'firma'">Firmaya göre</button>
+            </div>
+          </div>
+          <template v-if="treeView === 'yer'">
+            <p>Lokasyona tıklayın: içindeki işyerleri yanda açılır, hemen ekleyebilirsiniz. Yeni grup ya da lokasyon için <strong>+ Ekle</strong>.</p>
+            <ul class="tree">
+              <ExpertFirmNode
+                v-for="node in nodes" :key="node.id" :node="node" :depth="0" :locations="locations" :firms-of="firmsOf"
+                :selected-id="selected?.id ?? null" :selected-location-id="selectedLocation?.id ?? null"
+                @select="selectNode($event)" @add="startAdd" @select-location="selectLocation($event)"
+              />
+            </ul>
+          </template>
+          <template v-else>
+            <p>Aynı firmanın hangi lokasyonlarda işyeri olduğunu gösterir. Satıra tıklayınca o lokasyon açılır.</p>
+            <p v-if="!byCompany.length" class="empty">Henüz işyeri yok.</p>
+            <div v-for="group in byCompany" :key="group.company" class="company-group">
+              <div class="company-head"><strong>{{ group.company }}</strong><small>{{ group.items.length }} işyeri</small></div>
+              <button v-for="item in group.items" :key="item.id" class="company-item" :class="{ on: String(selectedLocation?.id) === String(item.location.id) }" type="button" @click="selectLocation(item.location)">
+                <span>{{ item.title }}</span><small>{{ item.location.name }}</small>
+              </button>
+            </div>
+          </template>
         </aside>
 
-        <section v-if="selected" class="card detail">
+        <!-- Lokasyon seçili: işyerleri tablosu ve satır içi ekleme. Eşleştirme (firma ↔ lokasyon) eklerken yapılır. -->
+        <section v-if="selectedLocation" class="card detail">
+          <nav class="crumbs" aria-label="Bulunduğunuz yer">
+            <template v-for="item in path" :key="item.id">
+              <button type="button" @click="selectNode(item)">{{ item.name }}</button>
+              <i class="pi pi-angle-right" />
+            </template>
+            <span>{{ selectedLocation.name }}</span>
+          </nav>
+          <div class="detail-head">
+            <div class="location-title">
+              <h2>{{ selectedLocation.name }}</h2>
+              <small><template v-if="selectedLocation.city">{{ selectedLocation.city }}<template v-if="selectedLocation.district"> / {{ selectedLocation.district }}</template> · </template>{{ locationWorkplaces.length }} işyeri</small>
+            </div>
+            <div class="head-buttons">
+              <button v-if="locationWorkplaces.length" class="row-button" type="button" @click="goEquipment(selectedLocation)"><i class="pi pi-wrench" /> Ekipmanlar</button>
+              <button class="detail-delete" type="button" @click="openRemove({ name: selectedLocation.name, location: selectedLocation })"><i class="pi pi-trash" /> Sil</button>
+            </div>
+          </div>
+
+          <div class="wp-wrap">
+            <table class="wp-table">
+              <thead><tr><th scope="col">İşyeri</th><th v-if="showCompanyColumn" scope="col">{{ companyWord }}</th><th scope="col">SGK sicil no</th><th scope="col">Tehlike sınıfı</th></tr></thead>
+              <tbody>
+                <tr v-for="workplace in locationWorkplaces" :key="workplace.id" :class="{ fresh: freshIds.includes(workplace.id) }">
+                  <td><strong>{{ nameOf(workplace.id) || workplace.company_name }}</strong></td>
+                  <td v-if="showCompanyColumn"><span class="company-chip">{{ workplace.company_name }}</span></td>
+                  <td :class="{ muted: !workplace.sgk_workplace_number }">{{ workplace.sgk_workplace_number || 'Girilmedi' }}</td>
+                  <td><span class="hazard-badge" :class="hazardClassKey(workplace.hazard_class)">{{ workplace.hazard_class }}</span></td>
+                </tr>
+                <tr v-if="!locationWorkplaces.length"><td :colspan="showCompanyColumn ? 4 : 3" class="empty-cell">Bu lokasyonda henüz işyeri yok. Hemen aşağıdan ekleyin.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
+
+          <form class="add-row" @submit.prevent="saveRow">
+            <div class="add-row-head">
+              <h3>{{ selectedLocation.name }} içine işyeri ekle</h3>
+              <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir işyeri)' }}</button>
+            </div>
+            <div class="add-grid">
+              <label v-if="!bulk" class="field">İşyeri adı <small v-if="!nameRequired">(isteğe bağlı)</small><span v-else class="req">*</span>
+                <input ref="rowNameInput" v-model="row.name" type="text" :placeholder="nameRequired ? 'Örn. Antrepo' : 'Örn. Antrepo · boşsa firma adı görünür'" />
+              </label>
+              <label v-if="firm.type === 'corporate'" class="field">Hangi firma adına? <span class="req">*</span>
+                <select v-model="companyChoice">
+                  <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
+                  <option value="__new">+ Yeni firma ekle…</option>
+                </select>
+              </label>
+              <label v-if="firm.type === 'corporate' && companyChoice === '__new'" class="field">Yeni firmanın ünvanı <span class="req">*</span>
+                <input v-model="newCompany" type="text" placeholder="Örn. Arçelik Pazarlama A.Ş." />
+              </label>
+              <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
+                <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
+              </label>
+              <label class="field">Tehlike sınıfı <span class="req">*</span>
+                <select v-model="row.hazard">
+                  <option value="" disabled>Seçin</option>
+                  <option v-for="h in HAZARD_CLASSES" :key="h" :value="h">{{ h }}</option>
+                </select>
+              </label>
+            </div>
+            <div class="nace-line">
+              <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
+              <span v-if="row.naceCode" class="nace-picked"><i class="pi pi-check-circle" /> {{ row.naceCode }} {{ row.activity }}</span>
+            </div>
+            <div v-if="naceOpen" class="nace-box">
+              <input v-model="naceQuery" type="text" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
+              <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
+                <li v-for="item in naceResults" :key="item.id"><button type="button" @click="selectNace(item)"><strong>{{ item.nace_code }}</strong> {{ item.activity_name }} <em>{{ item.hazard_class }}</em></button></li>
+              </ul>
+            </div>
+            <label v-if="bulk" class="field">Her satıra bir işyeri adı yazın (Excel'den yapıştırabilirsiniz)
+              <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
+            </label>
+            <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
+            <div class="add-actions">
+              <button class="primary-button" type="submit" :disabled="rowSaving || limitFull"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
+              <small>{{ firm.type === 'corporate' ? 'Firma seçimi bir sonraki kayıt için hatırlanır.' : 'Eklenen işyeri tabloya hemen düşer.' }}</small>
+            </div>
+          </form>
+        </section>
+
+        <section v-else-if="selected" class="card detail">
           <nav v-if="path.length > 1" class="crumbs" aria-label="Bulunduğunuz yer">
             <template v-for="(item, index) in path" :key="item.id">
               <i v-if="index" class="pi pi-angle-right" />
-              <button type="button" :disabled="index === path.length - 1" @click="selectedId = item.id">{{ item.name }}</button>
+              <button type="button" :disabled="index === path.length - 1" @click="selectNode(item)">{{ item.name }}</button>
             </template>
           </nav>
           <div class="detail-head">
@@ -44,7 +146,7 @@
 
           <div class="actions">
             <button class="action main" type="button" @click="openLocation(selected)">
-              <i class="pi pi-map-marker" /><span><strong>Lokasyon Ekle</strong><small>Bina, fabrika ya da şube. Boş açılır, firmayı sonra eklersiniz.</small></span>
+              <i class="pi pi-map-marker" /><span><strong>Lokasyon Ekle</strong><small>Bina, kampüs, fabrika ya da şube. Eklenince içine işyerlerini girersiniz.</small></span>
             </button>
             <button v-if="canBranchAt(selected)" class="action" type="button" @click="openNode(selected)">
               <i class="pi pi-sitemap" /><span><strong>{{ branchLabel(selected) }}</strong><small>{{ firm.type === 'public' ? 'Bu kurumun altındaki birim.' : path.length === 1 ? 'Bu firmanın altındaki grup ya da şirket.' : 'Bu grubun altındaki şirket.' }}</small></span>
@@ -58,13 +160,14 @@
               <div class="location-text">
                 <strong>{{ location.name }}</strong>
                 <small v-if="location.city">{{ location.city }}<template v-if="location.district"> / {{ location.district }}</template></small>
-                <small v-if="!workplacesOf(location).length" class="no-firm">Henüz firma yok. Burada çalışan firmayı ekleyin.</small>
+                <small v-if="!workplacesOf(location).length" class="no-firm">Henüz işyeri yok.</small>
                 <div v-else-if="firm.type === 'corporate'" class="firms">
-                  <span v-for="workplace in workplacesOf(location)" :key="workplace.id" class="firm">{{ workplace.company_name }}</span>
+                  <span v-for="workplace in workplacesOf(location)" :key="workplace.id" class="firm">{{ nameOf(workplace.id) ? `${nameOf(workplace.id)} · ${workplace.company_name}` : workplace.company_name }}</span>
                 </div>
               </div>
-              <button v-if="!workplacesOf(location).length" class="row-button warn" type="button" @click="openFirm(location)"><i class="pi pi-plus" /> Firma Ekle</button>
-              <button v-else-if="firm.type === 'corporate'" class="row-button" type="button" @click="openFirm(location)"><i class="pi pi-plus" /> Firma Ekle</button>
+              <button class="row-button" :class="{ warn: !workplacesOf(location).length }" type="button" @click="selectLocation(location)">
+                <i :class="workplacesOf(location).length ? 'pi pi-list' : 'pi pi-plus'" /> {{ workplacesOf(location).length ? 'İşyerleri' : 'İşyeri Ekle' }}
+              </button>
               <button v-if="workplacesOf(location).length" class="row-button" type="button" @click="goEquipment(location)"><i class="pi pi-wrench" /> Ekipmanlar</button>
               <button class="row-button icon" type="button" :aria-label="`${location.name} lokasyonunu sil`" title="Sil" @click="openRemove({ name: location.name, location })"><i class="pi pi-trash" /></button>
             </li>
@@ -75,7 +178,7 @@
             <h3>{{ firm.type === 'public' ? 'Altındaki birimler' : 'Altındaki gruplar ve şirketler' }}</h3>
             <ul class="rows">
               <li v-for="child in selected.children" :key="child.id">
-                <button class="child-row" type="button" @click="selectedId = child.id"><i class="pi pi-sitemap" /><strong>{{ child.name }}</strong><i class="pi pi-angle-right" /></button>
+                <button class="child-row" type="button" @click="selectNode(child)"><i class="pi pi-sitemap" /><strong>{{ child.name }}</strong><i class="pi pi-angle-right" /></button>
               </li>
             </ul>
           </template>
@@ -119,7 +222,7 @@
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="location-title">
         <div class="modal-head">
           <span class="head-icon"><i class="pi pi-map-marker" /></span>
-          <div><h2 id="location-title">Lokasyon Ekle</h2><p>{{ locationNode.name }} altına bağlanacak. Önce yeri ekliyoruz, firmayı sonraki adımda soracağız.</p></div>
+          <div><h2 id="location-title">Lokasyon Ekle</h2><p>{{ locationNode.name }} altına bağlanacak. Kaydedince doğrudan içine işyeri eklemeye geçersiniz.</p></div>
           <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeLocation"><i class="pi pi-times" /></button>
         </div>
         <ExpertFirmLocationFields :draft="draft" location-only autofocus />
@@ -127,24 +230,6 @@
         <div class="modal-actions">
           <button class="secondary-button" type="button" :disabled="saving" @click="closeLocation">İptal</button>
           <button class="primary-button" type="button" :disabled="!canSaveLocation || saving" @click="saveLocation">{{ saving ? 'Ekleniyor...' : 'Devam Et' }}</button>
-        </div>
-      </section>
-    </div>
-
-    <!-- Lokasyona firma: yeni lokasyondan sonra kendiliğinden açılır, atlanabilir -->
-    <div v-if="firmLocation" class="modal-backdrop">
-      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="firm-title">
-        <div class="modal-head">
-          <span class="head-icon"><i class="pi pi-briefcase" /></span>
-          <div><h2 id="firm-title">{{ firmAfterLocation ? 'Lokasyon eklendi. Şimdi firmayı ekleyin' : 'Firma Ekle' }}</h2><p>"{{ firmLocation.name }}" lokasyonunda çalışan firma. Sonra başka firma da ekleyebilirsiniz.</p></div>
-          <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="firmLocation = null"><i class="pi pi-times" /></button>
-        </div>
-        <ExpertFirmLocationFields :draft="draft" company-only :show-company="firm?.type === 'corporate'" :suggestions="nodeNames" :excluded="firmsOf(firmLocation)" autofocus />
-        <p v-if="firmDuplicate" class="form-error" role="alert">Bu firma bu lokasyonda zaten kayıtlı.</p>
-        <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
-        <div class="modal-actions">
-          <button class="secondary-button" type="button" :disabled="saving" @click="firmLocation = null">{{ firmAfterLocation ? 'Şimdilik Atla' : 'İptal' }}</button>
-          <button class="primary-button" type="button" :disabled="!canSaveFirm || saving || limitFull" @click="saveFirm">{{ saving ? 'Ekleniyor...' : 'Firmayı Ekle' }}</button>
         </div>
       </section>
     </div>
@@ -218,15 +303,16 @@
 <script setup lang="ts">
 // Bireysel uzmanın firma sayfası: organizasyon ağacı solda, seçili yerin işlemleri sağda. Lokasyon herhangi bir düğüme bağlanan boş bir yerdir; firmalar lokasyonda faaliyet gösterir.
 import { customerTypeLabel } from '~/composables/useCustomerTypes'
-import { normalizeCompanyName } from '~/composables/useExpertApi'
-import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress } from '~/composables/useFirmSetup'
+import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, type NaceItem } from '~/composables/useExpertApi'
+import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress, WorkplaceRowDraft } from '~/composables/useFirmSetup'
 
 definePageMeta({ layout: 'expert', middleware: 'expert' })
 
 const route = useRoute()
 const { get, del, errorMessage } = useExpertApi()
-const { listFirms, loadStructure, addNode, addLocation, addWorkplace, workplaceLimitMessage } = useFirmSetup()
+const { listFirms, loadStructure, addNode, addLocation, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
+const { load: loadNames, nameOf } = useWorkplaceNames()
 const { multiUser, load: loadAccount } = useAccount()
 const goToEquipment = useGoToEquipment()
 
@@ -257,16 +343,36 @@ const canBranchAt = (node: FirmNode) => canBranch.value && pathTo(nodes.value, n
 const workplacesOf = (location: FirmLocation) => workplaces.value.filter(w => String(w.location_id) === String(location.id))
 const firmsOf = (location: FirmLocation) => workplacesOf(location).map(w => w.company_name)
 
-// İlk firma eklenene kadar yol gösterir. Adım 1 isteğe bağlı olduğu için lokasyon eklenince de tamamlanmış sayılır.
-const hasFirm = computed(() => locations.value.some(l => workplacesOf(l).length > 0))
-const setupDone = computed(() => hasFirm.value)
-const setupSteps = computed(() => [
-  ...(canBranch.value ? [{ title: firm.value?.type === 'public' ? 'Birimleri ekleyin' : 'Grup ve şirketleri ekleyin', text: 'Varsa ağaca ekleyin. Yoksa bu adımı geçin.', done: hasBranches.value || locations.value.length > 0 }] : []),
-  { title: 'Lokasyon ekleyin', text: 'Bina, fabrika ya da şube. Ağaçta istediğiniz yere bağlayabilirsiniz.', done: locations.value.length > 0 },
-  { title: 'Firmayı ekleyin', text: 'Lokasyonda çalışan firma. Bir lokasyonda birden çok firma olabilir.', done: hasFirm.value },
-  { title: 'Ekipmanları girin', text: 'Firma eklenince lokasyonun yanında "Ekipmanlar" düğmesi çıkar.', done: false }
-])
-const currentStep = computed(() => setupSteps.value.findIndex(step => !step.done))
+// Lokasyon seçimi: seçiliyse sağ panel o lokasyonun işyerlerini ve satır içi ekleme formunu gösterir; düğüm seçilince kapanır.
+// Lokasyon silinirse bulunamaz ve panel kendiliğinden düğüme döner.
+const selectedLocationId = ref<number | string | null>(null)
+const selectedLocation = computed(() => selectedLocationId.value == null ? null : locations.value.find(l => String(l.id) === String(selectedLocationId.value)) ?? null)
+const locationWorkplaces = computed(() => selectedLocation.value ? workplacesOf(selectedLocation.value) : [])
+function selectNode(node: FirmNode) {
+  selectedId.value = node.id
+  selectedLocationId.value = null
+}
+function selectLocation(location: FirmLocation) {
+  if (location.organization_id != null) selectedId.value = location.organization_id
+  if (String(selectedLocationId.value) === String(location.id)) return
+  selectedLocationId.value = location.id
+  resetRow(true)
+  rowNotice.value = ''
+  freshIds.value = []
+}
+
+// "Firmaya göre": aynı firmanın bu müşterideki bütün işyerleri, lokasyonlarıyla.
+const treeView = ref<'yer' | 'firma'>('yer')
+const byCompany = computed(() => {
+  const map = new Map<string, { company: string; items: { id: number; title: string; location: FirmLocation }[] }>()
+  for (const location of locations.value) {
+    for (const w of workplacesOf(location)) {
+      if (!map.has(w.company_name)) map.set(w.company_name, { company: w.company_name, items: [] })
+      map.get(w.company_name)!.items.push({ id: w.id, title: nameOf(w.id) || w.company_name, location })
+    }
+  }
+  return [...map.values()].sort((a, b) => a.company.localeCompare(b.company, 'tr'))
+})
 
 async function load() {
   error.value = ''
@@ -274,7 +380,7 @@ async function load() {
     await loadAccount()
     // Bu ekran yalnız bireysel uzman içindir; diğer hesaplar kendi sayfalarına döner.
     if (multiUser.value) return navigateTo('/expert/workplaces', { replace: true })
-    const [firms, structure] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), loadWorkplaces(true)])
+    const [firms, structure] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), loadWorkplaces(true), loadNames()])
     firm.value = firms.find(f => String(f.id) === String(route.params.id)) || null
     if (!firm.value) { error.value = 'Firma bulunamadı.'; return }
     nodes.value = structure.nodes
@@ -323,46 +429,135 @@ async function saveLocation() {
     const id = progress.value.locationId
     locationNode.value = null
     await load()
+    // Ayrı bir "firma ekle" penceresi yerine yeni lokasyon seçilir; satır içi form hazır gelir.
     const created = locations.value.find(l => String(l.id) === String(id))
-    if (created) openFirm(created, true)
+    if (created) {
+      selectLocation(created)
+      rowNotice.value = `${created.name} eklendi. Şimdi içine işyerlerini ekleyin.`
+      nextTick(() => rowNameInput.value?.focus())
+    }
   } catch (e: any) {
     formError.value = errorMessage(e, e?.message || 'Lokasyon eklenemedi. Tekrar deneyin.')
   } finally { saving.value = false }
 }
 
-// --- Lokasyona firma: lokasyon hazır olduğundan addWorkplace yalnız firmayı bağlar ---
-const firmLocation = ref<FirmLocation | null>(null)
-const firmAfterLocation = ref(false)
+// --- Lokasyona işyeri: satır içi form (tek ya da toplu) ---
+// Firma (tüzel kişi) listeden seçilir ya da yazılır; bağ kayıtla birlikte kurulur. Şahıs işletmesinde firma kendisidir,
+// kamuda kart lokasyonun adıyla açılır (mevcut kural). Tehlike sınıfı için varsayılan verilmez: her kayıtta seçilir.
 const flatten = (list: FirmNode[]): FirmNode[] => list.flatMap(n => [n, ...flatten(n.children || [])])
 const nodeNames = computed(() => flatten(nodes.value).map(n => n.name))
-const firmDuplicate = computed(() => firm.value?.type === 'corporate' && !!firmLocation.value && firmsOf(firmLocation.value).some(name => normalizeCompanyName(name) === normalizeCompanyName(draft.company.trim())))
-const canSaveFirm = computed(() => !!draft.hazard && !firmDuplicate.value && (firm.value?.type !== 'corporate' || !!draft.company.trim()))
-function openFirm(location: FirmLocation, afterLocation = false) {
-  // Şahıs işletmesinde firma kendisidir; kamuda kart lokasyon adıyla açılır. Tek şirkette ilk firma varsayılan gelir.
+const companyWord = computed(() => firm.value?.type === 'public' ? 'Kart' : 'Firma')
+const showCompanyColumn = computed(() => firm.value?.type === 'corporate')
+// Seçenekler: bu müşterinin işyerlerindeki firmalar, sonra ağaçtaki grup/şirket adları (aynı ad bir kez).
+const companyOptions = computed(() => {
+  const seen = new Set<string>()
+  const out: string[] = []
+  const push = (name?: string | null) => {
+    const key = name ? normalizeCompanyName(name) : ''
+    if (key && !seen.has(key)) { seen.add(key); out.push(name!.trim()) }
+  }
+  locations.value.forEach(l => workplacesOf(l).forEach(w => push(w.company_name)))
+  nodeNames.value.forEach(push)
+  return out
+})
+const row = reactive<WorkplaceRowDraft>({ name: '', company: '', sgk: '', hazard: '', naceCode: null, activity: null })
+const companyChoice = ref('')
+const newCompany = ref('')
+const lastCompany = ref('')
+const bulk = ref(false)
+const bulkText = ref('')
+const rowSaving = ref(false)
+const rowError = ref('')
+const rowNotice = ref('')
+const freshIds = ref<number[]>([])
+const rowNameInput = ref<HTMLInputElement | null>(null)
+const companyFor = (location: FirmLocation) => {
   const type = firm.value?.type
-  const company = type === 'individual' || (type === 'corporate' && !hasBranches.value && !workplacesOf(location).length) ? firm.value!.name : ''
-  Object.assign(draft, newDraft(), { name: location.name, company })
-  firmAfterLocation.value = afterLocation
-  progress.value = { locationId: location.id }
-  formError.value = ''
-  limitFull.value = false
-  firmLocation.value = location
-  workplaceLimitMessage().then((message) => { limitFull.value = !!message; formError.value = message }).catch(() => {})
+  if (type === 'individual') return firm.value!.name
+  if (type === 'public') return location.name
+  return companyChoice.value === '__new' ? newCompany.value.trim() : companyChoice.value
 }
-async function saveFirm() {
-  if (!firm.value || !firmLocation.value || !canSaveFirm.value || saving.value) return
-  saving.value = true
-  formError.value = ''
+// Aynı firma bu lokasyonda zaten varsa ikinci işyeri "ek işyeri" olur ve adı zorunludur.
+const nameRequired = computed(() => {
+  if (!selectedLocation.value || bulk.value) return false
+  const key = normalizeCompanyName(companyFor(selectedLocation.value) || '')
+  return !!key && firmsOf(selectedLocation.value).some(n => normalizeCompanyName(n) === key)
+})
+function resetRow(keepNothing = false) {
+  Object.assign(row, { name: '', sgk: '', hazard: '', naceCode: null, activity: null })
+  newCompany.value = ''
+  bulkText.value = ''
+  rowError.value = ''
+  naceOpen.value = false
+  naceQuery.value = ''
+  naceResults.value = []
+  if (keepNothing || !companyChoice.value || companyChoice.value === '__new') {
+    // Son seçilen firma öne gelir; tek şirkette firmanın kendisi; hiç yoksa yeni firma yazılır.
+    const options = companyOptions.value
+    companyChoice.value = options.includes(lastCompany.value) ? lastCompany.value
+      : !hasBranches.value && firm.value ? firm.value.name
+      : options[0] ?? '__new'
+  }
+  limitFull.value = false
+  workplaceLimitMessage().then((message) => { limitFull.value = !!message; if (message) rowError.value = message }).catch(() => {})
+}
+function toggleBulk() { bulk.value = !bulk.value; rowError.value = '' }
+
+async function saveRow() {
+  const location = selectedLocation.value
+  if (!firm.value || !location || rowSaving.value) return
+  const company = companyFor(location)
+  const names = bulk.value ? bulkText.value.split('\n').map(s => s.trim()).filter(Boolean) : [row.name.trim()]
+  rowError.value = ''
+  if (!company) { rowError.value = 'Firmanın adını yazın.'; return }
+  if (bulk.value && !names.length) { rowError.value = 'En az bir işyeri adı yazın.'; return }
+  if (!row.hazard) { rowError.value = 'Tehlike sınıfını seçin.'; return }
+  rowSaving.value = true
+  const before = new Set(workplacesOf(location).map(w => w.id))
+  const here = firmsOf(location)
+  let done = 0
   try {
     const limit = await workplaceLimitMessage()
-    if (limit) { formError.value = limit; return }
-    await addWorkplace(firm.value.id, firmLocation.value.organization_id ?? '', draft, firm.value.type, progress.value)
-    // Pencere liste yenilendikten sonra kapanır; satır bir an firmasız görünmez.
-    await load()
-    firmLocation.value = null
+    if (limit) { rowError.value = limit; limitFull.value = true; return }
+    for (const name of names) {
+      await addWorkplaceRow(firm.value.id, location.id, { ...row, name, company, sgk: bulk.value ? '' : row.sgk }, firm.value.type, here)
+      here.push(company)
+      done++
+    }
   } catch (e: any) {
-    formError.value = errorMessage(e, e?.message || 'Firma eklenemedi. Tekrar deneyin.')
-  } finally { saving.value = false }
+    rowError.value = errorMessage(e, e?.message || 'İşyeri eklenemedi. Tekrar deneyin.')
+  } finally {
+    if (done) {
+      await loadWorkplaces(true).catch(() => {})
+      freshIds.value = workplacesOf(location).map(w => w.id).filter(id => !before.has(id))
+      const label = names.length === 1 ? (names[0] || company) : `${done} işyeri`
+      rowNotice.value = firm.value!.type === 'corporate' ? `${label} eklendi · ${company} adına` : `${label} eklendi`
+      if (firm.value!.type === 'corporate') { lastCompany.value = company; companyChoice.value = company }
+      if (!rowError.value) { resetRow(); nextTick(() => rowNameInput.value?.focus()) }
+      else bulkText.value = names.slice(done).join('\n')
+    }
+    rowSaving.value = false
+  }
+}
+
+// NACE isteğe bağlı: seçilirse tehlike sınıfı kendiliğinden gelir, değiştirilebilir.
+const naceOpen = ref(false)
+const naceQuery = ref('')
+const naceResults = ref<NaceItem[]>([])
+let naceTimer: ReturnType<typeof setTimeout> | undefined
+function searchNace() {
+  clearTimeout(naceTimer)
+  const q = naceQuery.value.trim()
+  if (q.length < 2) { naceResults.value = []; return }
+  naceTimer = setTimeout(async () => {
+    try { naceResults.value = await get<NaceItem[]>('/nace-hazard-classes', { search: q }) } catch { naceResults.value = [] }
+  }, 250)
+}
+function selectNace(item: NaceItem) {
+  Object.assign(row, { naceCode: item.nace_code, activity: item.activity_name, hazard: item.hazard_class })
+  naceQuery.value = ''
+  naceResults.value = []
+  naceOpen.value = false
 }
 
 // --- Grup / şirket / birim ---
@@ -512,15 +707,55 @@ onMounted(async () => {
 h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.6px; overflow-wrap: anywhere; }
 .page-head p { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; color: var(--admin-muted); font-size: 13.5px; }
 .chip { padding: 3px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-heading); font-size: 12px; font-weight: 600; }
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 0 0 14px; padding: 0; list-style: none; }
-.steps li { display: flex; gap: 10px; padding: 11px 12px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card, var(--admin-input)); }
-.steps li.now { border-color: var(--pk-yellow); box-shadow: 0 0 0 2px var(--admin-accent-soft); }
-.steps div { display: grid; gap: 2px; min-width: 0; }
-.steps strong { color: var(--admin-heading); font-size: 13.5px; }
-.steps small { color: var(--admin-muted); font-size: 12px; line-height: 1.4; }
-.step-no { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-soft); color: var(--admin-heading); font-size: 12.5px; font-weight: 700; }
-.steps li.now .step-no { background: var(--pk-yellow); color: #111827; }
-.steps li.done .step-no { background: #ecfdf3; color: #027a48; }
+.tree-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }
+.view-toggle button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.view-toggle button.on { background: var(--admin-input); color: var(--admin-heading); box-shadow: 0 1px 2px var(--admin-shadow); }
+.company-group { display: grid; gap: 2px; margin-bottom: 10px; }
+.company-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 8px; color: var(--admin-heading); font-size: 13.5px; }
+.company-head small { color: var(--admin-muted); font-size: 12px; }
+.company-item { display: grid; gap: 1px; width: 100%; min-height: 40px; padding: 7px 10px 7px 20px; border: 0; border-radius: 8px; background: none; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
+.company-item small { color: var(--admin-muted); font-size: 11.5px; font-weight: 500; }
+.company-item:hover { background: var(--admin-soft); }
+.company-item.on { background: var(--pk-yellow); color: #111827; }
+.company-item.on small { color: #3d3a2a; }
+.crumbs span { color: var(--admin-muted); font-weight: 600; }
+.location-title { display: grid; gap: 3px; min-width: 0; }
+.location-title small { color: var(--admin-muted); font-size: 13px; }
+.head-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.wp-wrap { margin: 16px 0 0; border: 1px solid var(--admin-border); border-radius: 10px; overflow-x: auto; }
+.wp-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 13.5px; }
+.wp-table th { padding: 9px 12px; background: var(--admin-soft); color: var(--admin-muted); font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+.wp-table td { padding: 11px 12px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); }
+.wp-table td.muted { color: var(--admin-muted); }
+.wp-table tr.fresh td { background: #ecfdf3; }
+.empty-cell { color: var(--admin-muted) !important; text-align: center; }
+.company-chip { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #eef4ff; color: #3538cd; font-size: 12px; font-weight: 600; }
+.hazard-badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.hazard-badge.low { background: var(--admin-success-bg); color: var(--admin-success-text); }
+.hazard-badge.high { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
+.hazard-badge.very-high { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
+.row-notice { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 10px 12px; border-radius: 9px; background: #ecfdf3; color: #027a48; font-size: 13px; font-weight: 600; }
+.add-row { display: grid; gap: 12px; margin-top: 16px; padding: 16px; border: 2px solid var(--pk-yellow); border-radius: 12px; background: var(--admin-input); }
+.add-row-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.add-row-head h3 { margin: 0; font-size: 15px; }
+.add-row .link-button { color: #b54708; font-size: 13px; font-weight: 600; }
+.add-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.field small { color: var(--admin-muted); font-weight: 400; }
+.field select, .field textarea { width: 100%; margin-top: 6px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 400; }
+.field select { min-height: 44px; padding: 0 10px; }
+.field textarea { padding: 10px 12px; resize: vertical; }
+.field select:focus, .field textarea:focus { border-color: #d7a900; }
+.nace-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.nace-picked { display: inline-flex; align-items: center; gap: 6px; color: #027a48; font-size: 12.5px; font-weight: 600; }
+.nace-box input { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
+.nace-results { max-height: 190px; overflow: auto; margin: 6px 0 0; padding: 4px; list-style: none; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-input); }
+.nace-results button { width: 100%; min-height: 40px; padding: 7px 9px; border: 0; border-radius: 7px; background: none; color: var(--admin-heading); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.nace-results button:hover { background: var(--admin-accent-soft); }
+.nace-results em { margin-left: 4px; color: var(--admin-muted); font-size: 12px; font-style: normal; font-weight: 600; }
+.add-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.add-actions small { color: var(--admin-muted); font-size: 12px; }
+.add-row .form-error { margin: 0; }
 .choice-list { display: grid; gap: 10px; }
 .no-firm { color: #b54708; }
 .card { padding: 14px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card, var(--admin-input)); }

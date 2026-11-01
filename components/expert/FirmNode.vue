@@ -1,7 +1,7 @@
 <template>
   <li class="node">
-    <div class="tree-row" :class="{ on: String(selectedId) === String(node.id) }">
-      <button class="tree-item" type="button" :aria-current="String(selectedId) === String(node.id) ? 'true' : undefined" @click="emit('select', node)">
+    <div class="tree-row" :class="{ on: selectedLocationId == null && String(selectedId) === String(node.id) }">
+      <button class="tree-item" type="button" :aria-current="selectedLocationId == null && String(selectedId) === String(node.id) ? 'true' : undefined" @click="emit('select', node)">
         <i :class="depth === 0 ? 'pi pi-building' : 'pi pi-sitemap'" />
         <span>{{ node.name }}</span>
       </button>
@@ -9,14 +9,19 @@
     </div>
     <ul v-if="ownLocations.length || node.children?.length" class="branch">
       <li v-for="location in ownLocations" :key="location.id">
-        <button class="tree-location" type="button" @click="emit('select', node)">
+        <!-- Lokasyon seçilince sağda işyerleri ve satır içi ekleme formu açılır. -->
+        <button
+          class="tree-location" :class="{ on: String(selectedLocationId) === String(location.id) }" type="button"
+          :aria-current="String(selectedLocationId) === String(location.id) ? 'true' : undefined" @click="emit('select-location', location)"
+        >
           <i class="pi pi-map-marker" />
-          <span>{{ location.name }}<small>{{ firmsOf(location).length ? firmsOf(location).join(', ') : 'Henüz firma yok' }}</small></span>
+          <span>{{ location.name }}<small :class="{ empty: !firmsOf(location).length }">{{ firmsOf(location).length ? `${firmsOf(location).length} işyeri` : 'Henüz işyeri yok' }}</small></span>
         </button>
       </li>
       <ExpertFirmNode
         v-for="child in node.children" :key="child.id" :node="child" :depth="depth + 1" :locations="locations"
-        :firms-of="firmsOf" :selected-id="selectedId" @select="emit('select', $event)" @add="emit('add', $event)"
+        :firms-of="firmsOf" :selected-id="selectedId" :selected-location-id="selectedLocationId"
+        @select="emit('select', $event)" @add="emit('add', $event)" @select-location="emit('select-location', $event)"
       />
     </ul>
   </li>
@@ -25,8 +30,8 @@
 <script setup lang="ts">
 import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'
 
-const props = defineProps<{ node: FirmNode; depth: number; locations: FirmLocation[]; firmsOf: (l: FirmLocation) => string[]; selectedId: number | string | null }>()
-const emit = defineEmits<{ select: [node: FirmNode]; add: [node: FirmNode] }>()
+const props = defineProps<{ node: FirmNode; depth: number; locations: FirmLocation[]; firmsOf: (l: FirmLocation) => string[]; selectedId: number | string | null; selectedLocationId?: number | string | null }>()
+const emit = defineEmits<{ select: [node: FirmNode]; add: [node: FirmNode]; 'select-location': [location: FirmLocation] }>()
 const ownLocations = computed(() => props.locations.filter(l => String(l.organization_id) === String(props.node.id)))
 </script>
 
@@ -43,8 +48,11 @@ const ownLocations = computed(() => props.locations.filter(l => String(l.organiz
 .tree-item, .tree-location { width: 100%; display: flex; align-items: flex-start; gap: 8px; border: 0; border-radius: 8px; background: none; font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .tree-item { min-height: 38px; padding: 9px 10px; color: var(--admin-heading); font-size: 13.5px; font-weight: 700; }
 .tree-location:hover { background: var(--admin-soft); }
+.tree-location.on, .tree-location.on:hover { background: var(--pk-yellow); }
+.tree-location.on span, .tree-location.on small, .tree-location.on i { color: #111827; }
 .tree-item i, .tree-location i { flex: none; margin-top: 2px; }
-.tree-location { min-height: 34px; padding: 7px 10px; color: var(--admin-muted); font-size: 12.5px; }
-.tree-location span { display: grid; gap: 1px; color: var(--admin-heading); }
-.tree-location small { color: var(--admin-muted); font-size: 11.5px; }
+.tree-location { min-height: 38px; padding: 7px 10px; color: var(--admin-muted); font-size: 13px; }
+.tree-location span { display: grid; gap: 1px; color: var(--admin-heading); font-weight: 600; }
+.tree-location small { color: var(--admin-muted); font-size: 11.5px; font-weight: 500; }
+.tree-location small.empty { color: #b54708; }
 </style>
