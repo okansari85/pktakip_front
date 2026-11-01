@@ -1,6 +1,6 @@
 <template>
   <div class="switcher" :class="{ empty: !context && !showAll }">
-    <!-- Yönetici: lokasyonların bağlı olduğu organizasyon (OSGB'de müşteri ve düğümleri), girintili ağaç -->
+    <!-- Yönetici ve bireysel uzman: lokasyonların bağlı olduğu organizasyon, girintili ağaç -->
     <template v-if="orgVisible">
       <!-- Kamu hesabı: yüzlerce birim için aramalı ağaç (diğer hesaplarda düz kutu aynen) -->
       <ExpertKamuOrgPicker v-if="kamu" :options="orgOptions" :value="orgScope" :count="orgCount" :total="groups.length" :buildings="buildingItems" @organization="applyOrganization" @location="pickLocationId" />
@@ -47,8 +47,8 @@
 <script setup lang="ts">
 const { context, setContext, allLocations, setAllLocations } = useWorkplaceContext()
 const { groups, loaded, load, selectLocation, selectWorkplace } = useMyWorkplaces()
-const { corporate, kamu, isManager } = useAccount()
-const { load: loadOrganizations, options: orgOptions, visible: orgVisible, scope: orgScope, setScope, locationIds: orgLocationIds, idsFor } = useOrganizationScope()
+const { corporate, kamu } = useAccount()
+const { load: loadOrganizations, available: orgAvailable, options: orgOptions, visible: orgVisible, scope: orgScope, setScope, locationIds: orgLocationIds, idsFor } = useOrganizationScope()
 // Seçeneğin kapsadığı, menüde olan (işyeri bulunan) lokasyon sayısı.
 const orgCount = (value: string) => {
   const ids = idsFor(value)
@@ -126,8 +126,8 @@ const onWorkplaceChange = (event: Event) => {
 onMounted(() => load())
 const { load: loadNames, workplaceLabel } = useWorkplaceNames()
 onMounted(() => loadNames())
-// Organizasyon ağacı yalnızca yöneticide (hesap bilgisi gelince).
-watch(isManager, manager => { if (manager) loadOrganizations() }, { immediate: true })
+// Organizasyon ağacı hesap bilgisi gelince.
+watch(orgAvailable, on => { if (on) loadOrganizations() }, { immediate: true })
 </script>
 
 <style scoped>

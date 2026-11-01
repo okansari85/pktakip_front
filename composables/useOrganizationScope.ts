@@ -1,4 +1,4 @@
-// Üstteki menünün Organizasyon kutusu (yalnızca OSGB / kurumsal hesabın yöneticisi): seçilen müşteri ya da organizasyon
+// Üstteki menünün Organizasyon kutusu (OSGB / kurumsal hesabın yöneticisi ve bireysel uzman): seçilen müşteri ya da organizasyon
 // düğümü (alt düğümleriyle) lokasyon listesini daraltır; Genel Bakış ve Durum Raporu "Tüm lokasyonlar"da bunun lokasyonlarını
 // gösterir. OSGB'de de kurumsalda da liste müşterilerin kök organizasyon düğümlerinden başlar (müşteri satırı yok).
 // Seçim tarayıcıda saklanır.
@@ -18,7 +18,9 @@ export const useOrganizationScope = () => {
     scopeLoaded.value = true
     try { scope.value = localStorage.getItem(SCOPE_KEY) || '' } catch {}
   }
-  const { isManager } = useAccount()
+  const { isManager, account } = useAccount()
+  const individual = computed(() => account.value?.type === 'expert')
+  const available = computed(() => isManager.value || individual.value)
   const { get } = useExpertApi()
 
   const setScope = (value: string) => {
@@ -38,12 +40,14 @@ export const useOrganizationScope = () => {
     for (const customer of data.value?.customers || []) walk(customer.nodes, 0)
     return list
   })
-  const visible = computed(() => isManager.value && options.value.length > 0)
+  // Bireysel uzmanda alt organizasyon yoksa seçilecek bir şey de yok: kutu gizli.
+  const visible = computed(() => individual.value ? options.value.some(option => option.depth > 0) : isManager.value && options.value.length > 0)
 
-  const load = async () => {
-    if (!isManager.value || data.value || loading.value) return
+  // force: firma sayfasında yapı değişince liste tazelenir.
+  const load = async (force = false) => {
+    if (!available.value || (data.value && !force) || loading.value) return
     loading.value = true
-    try { data.value = await get<OrganizationData>('/pk-account/organizations') }
+    try { data.value = await get<OrganizationData>(individual.value ? '/pk-expert/organizations' : '/pk-account/organizations') }
     catch { data.value = { customers: [], location_nodes: {} } }
     finally { loading.value = false }
     // Hatırlanan seçim artık yoksa (düğüm silinmiş): tüm organizasyon.
@@ -77,5 +81,5 @@ export const useOrganizationScope = () => {
   const locationIds = computed<Set<number> | null>(() => visible.value && scope.value ? idsFor(scope.value) : null)
   const label = computed(() => locationIds.value ? options.value.find(option => option.value === scope.value)?.label || '' : '')
 
-  return { load, options, visible, scope, setScope, locationIds, label, idsFor }
+  return { load, available, options, visible, scope, setScope, locationIds, label, idsFor }
 }

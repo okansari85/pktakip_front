@@ -263,6 +263,7 @@ const { get, patch, del, errorMessage } = useExpertApi()
 const { listFirms, loadStructure, addNode, addLocation, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
 const { load: loadNames, nameOf } = useWorkplaceNames()
+const { load: loadOrganizationScope } = useOrganizationScope()
 const { multiUser, load: loadAccount } = useAccount()
 const goToEquipment = useGoToEquipment()
 
@@ -431,6 +432,8 @@ async function load() {
     if (!firm.value) { error.value = 'Firma bulunamadı.'; return }
     nodes.value = structure.nodes
     locations.value = structure.locations
+    // Üstteki Organizasyon kutusu da güncel kalsın; hatasını kendi yutar.
+    loadOrganizationScope(true)
   } catch (e: any) {
     error.value = errorMessage(e, 'Firma bilgileri alınamadı.')
   } finally { loading.value = false }
