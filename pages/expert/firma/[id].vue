@@ -126,7 +126,7 @@
                   <h3>{{ item.node.name }} altına lokasyon ekle</h3>
                   <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
                 </div>
-                <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" location-only autofocus />
+                <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
                 <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
                 <div class="add-actions">
                   <button class="primary-button" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
@@ -273,7 +273,7 @@ definePageMeta({ layout: 'expert', middleware: 'expert' })
 
 const route = useRoute()
 const { get, patch, del, errorMessage } = useExpertApi()
-const { listFirms, loadStructure, addNode, addLocation, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
+const { listFirms, loadStructure, addNode, addLocation, addWorkplace, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
 const { load: loadNames, nameOf } = useWorkplaceNames()
 const { load: loadOrganizationScope } = useOrganizationScope()
@@ -377,7 +377,14 @@ function openNodeForm(node: FirmNode, kind: 'org' | 'location') {
   focusForm()
 }
 const startOrg = (node: FirmNode) => openNodeForm(node, 'org')
-const startLocation = (node: FirmNode) => openNodeForm(node, 'location')
+function startLocation(node: FirmNode) {
+  openNodeForm(node, 'location')
+  locationLimitFull.value = false
+  // Hak doluysa uyarı verilir; lokasyon yine eklenir, işyeri açılmaz (tehlike sınıfı da sorulmaz).
+  if (adding.value === 'location' && autoWorkplace.value) {
+    workplaceLimitMessage().then((message) => { locationLimitFull.value = !!message; if (message) formError.value = `${message} Lokasyon işyerisiz eklenir.` }).catch(() => {})
+  }
+}
 function startWorkplace(location: FirmLocation) {
   if (adding.value === 'workplace' && String(selectedLocationId.value) === String(location.id)) return closeForm()
   selectLocation(location)
@@ -392,7 +399,7 @@ function closeForm() {
 // Dışarı tıklama yalnız boş kartı kapatır: yazılan kaybolmasın. Satır düğmeleri kendi işini yapar. Esc her zaman kapatır.
 const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && (editName.value.trim() !== selected.value.name || editLabel.value !== labelOf(selected.value)))
   : adding.value === 'org' ? !!groupName.value.trim()
-  : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId)
+  : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId || draft.hazard)
   : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || newCompany.value.trim() || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
 function onPagePointer(event: PointerEvent) {
@@ -457,7 +464,10 @@ const progress = ref<WorkplaceProgress>({})
 const saving = ref(false)
 const formError = ref('')
 const locationFormKey = ref(0)
-const canSaveLocation = computed(() => !!draft.name.trim() && !!draft.cityId)
+// Tek firmalı yapıda (Ltd. / A.Ş., şahıs) lokasyondaki işyeri firmanın kendisidir: lokasyonla birlikte açılır, tehlike sınıfı her lokasyonda sorulur (kullanıcı 1 Kas 2026).
+const locationLimitFull = ref(false)
+const autoWorkplace = computed(() => (singleCompany.value || firm.value?.type === 'individual') && !locationLimitFull.value)
+const canSaveLocation = computed(() => !!draft.name.trim() && !!draft.cityId && (!autoWorkplace.value || !!draft.hazard))
 const limitFull = ref(false)
 function resetLocationForm() {
   Object.assign(draft, newDraft())
@@ -471,8 +481,12 @@ async function saveLocation() {
   saving.value = true
   formError.value = ''
   try {
-    // Kayıt sonrası yenileme başarısız olup tekrar denenirse ikinci lokasyon açılmaz.
-    if (!progress.value.locationId) progress.value.locationId = await addLocation(firm.value.id, node.id, draft)
+    // Kayıt sonrası yenileme başarısız olup tekrar denenirse ikinci lokasyon ya da işyeri açılmaz.
+    if (autoWorkplace.value) {
+      // Yardım amaçlı: başka işyeri "İşyeri ekle" ile eklenir, satırdan silinir.
+      if (!progress.value.workplaceDone) await addWorkplace(firm.value.id, node.id, { ...draft, company: firm.value.name }, firm.value.type, progress.value)
+    }
+    else if (!progress.value.locationId) progress.value.locationId = await addLocation(firm.value.id, node.id, draft)
     const id = progress.value.locationId
     await load()
     resetLocationForm()
