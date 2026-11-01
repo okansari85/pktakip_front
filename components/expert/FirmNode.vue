@@ -7,7 +7,7 @@
       </button>
       <button class="tree-add" type="button" :aria-label="`${node.name} altına ekle`" @click="emit('add', node)"><i class="pi pi-plus" /> Ekle</button>
     </div>
-    <ul v-if="ownLocations.length || node.children?.length" class="branch">
+    <ul v-if="ownLocations.length || visibleChildren.length" class="branch">
       <li v-for="location in ownLocations" :key="location.id">
         <!-- Lokasyon seçilince sağda işyerleri ve satır içi ekleme formu açılır. -->
         <button
@@ -19,7 +19,7 @@
         </button>
       </li>
       <ExpertFirmNode
-        v-for="child in node.children" :key="child.id" :node="child" :depth="depth + 1" :locations="locations"
+        v-for="child in visibleChildren" :key="child.id" :node="child" :depth="depth + 1" :locations="locations"
         :firms-of="firmsOf" :selected-id="selectedId" :selected-location-id="selectedLocationId"
         @select="emit('select', $event)" @add="emit('add', $event)" @select-location="emit('select-location', $event)"
       />
@@ -33,6 +33,8 @@ import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'
 const props = defineProps<{ node: FirmNode; depth: number; locations: FirmLocation[]; firmsOf: (l: FirmLocation) => string[]; selectedId: number | string | null; selectedLocationId?: number | string | null }>()
 const emit = defineEmits<{ select: [node: FirmNode]; add: [node: FirmNode]; 'select-location': [location: FirmLocation] }>()
 const ownLocations = computed(() => props.locations.filter(l => String(l.organization_id) === String(props.node.id)))
+// Grubun şirketleri (tüzel kişiler) grup kartında listelenir; ağaçta yalnız altında lokasyon olan şirket görünür.
+const visibleChildren = computed(() => (props.node.children || []).filter(c => props.depth + 1 < 2 || c.children?.length || props.locations.some(l => String(l.organization_id) === String(c.id))))
 </script>
 
 <style scoped>
