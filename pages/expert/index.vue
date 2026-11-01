@@ -527,16 +527,15 @@ onMounted(async () => {
 .map-slot > * { flex: 1; min-width: 0; }
 /* Özet tek ekrana sığar: harita ve halkalar kalan yüksekliği paylaşır; küçük ekranda normal kaydırma. */
 @media (min-width: 1100px) and (min-height: 820px) {
-  .expert-dashboard.fit { height: calc(100vh - 72px - 30px - 12px); margin-bottom: -28px; display: flex; flex-direction: column; gap: 10px; }
+  .expert-dashboard.fit { height: calc(100vh - 72px - 30px - 12px); margin-bottom: -28px; display: flex; flex-direction: column; gap: 8px; }
   .fit > * { flex: none; }
+  .fit > .page-head { margin-bottom: 0; }
   .fit > .map-grid { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
   .fit .map-card { min-height: 0; overflow: hidden; padding-top: 12px; padding-bottom: 10px; }
   .fit .map-slot :deep(.district-map), .fit .map-slot :deep(.turkey-map) { height: 100%; }
   .fit .map-slot :deep(svg) { width: 100%; height: 100%; max-height: none; }
   .fit .map-legend { padding-top: 4px; }
-  .fit .page-head h1 { font-size: 24px; }
-  .fit .page-head p { margin-top: 2px; }
-  .fit .top-kpi { padding: 9px 14px; }
+  .fit .top-kpi { padding: 7px 14px; }
   .fit .top-kpi-icon { width: 42px; height: 42px; font-size: 19px; }
   .fit .top-kpi strong { font-size: 21px; }
 }

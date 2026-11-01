@@ -1,5 +1,6 @@
 <template>
   <div class="fields">
+    <template v-if="!companyOnly">
     <label>Lokasyonun adı <span class="req">*</span>
       <input ref="nameInput" v-model="draft.name" type="text" placeholder="Örn. Merkez, Fabrika, Şube" />
     </label>
@@ -19,13 +20,15 @@
         </select>
       </label>
     </div>
+    </template>
 
     <label v-if="showCompany">Burada hangi firma çalışıyor? <span class="req">*</span>
-      <input v-model="draft.company" type="text" list="firm-location-companies" placeholder="Örn. ABC Enerji A.Ş." />
-      <datalist id="firm-location-companies"><option v-for="n in companyNames" :key="n" :value="n" /></datalist>
+      <input ref="companyInput" v-model="draft.company" type="text" list="firm-location-companies" placeholder="Örn. ABC Enerji A.Ş." />
+      <datalist id="firm-location-companies"><option v-for="n in allCompanyNames" :key="n" :value="n" /></datalist>
     </label>
 
     <!-- NACE isteğe bağlı: seçilirse tehlike sınıfı kendiliğinden gelir, değiştirilebilir. -->
+    <template v-if="!locationOnly">
     <div class="nace">
       <label>Ne iş yapıyor? <small>(isteğe bağlı)</small>
         <input v-model="naceQuery" type="text" placeholder="Faaliyeti ya da NACE kodunu yazın: lokanta, 56.10" autocomplete="off" @input="searchNace" />
@@ -40,6 +43,7 @@
 
     <div class="hazard">
       <span class="question">Tehlike sınıfı <span class="req">*</span></span>
+      <p class="hint hazard-hint">Firmanın burada yaptığı işe göre seçin. Yukarıdan faaliyet seçerseniz kendiliğinden gelir.</p>
       <div class="hazard-options" role="radiogroup" aria-label="Tehlike sınıfı">
         <button
           v-for="h in HAZARD_CLASSES" :key="h" type="button" role="radio" :aria-checked="draft.hazard === h"
@@ -47,6 +51,7 @@
         >{{ h }}</button>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -56,13 +61,15 @@
 import { HAZARD_CLASSES, hazardClassKey, useExpertApi, type MyCompany, type NaceItem } from '~/composables/useExpertApi'
 import type { LocationDraft } from '~/composables/useFirmSetup'
 
-const props = defineProps<{ draft: LocationDraft; showCompany?: boolean; autofocus?: boolean }>()
+const props = defineProps<{ draft: LocationDraft; showCompany?: boolean; autofocus?: boolean; companyOnly?: boolean; locationOnly?: boolean; suggestions?: string[]; excluded?: string[] }>()
 const { get } = useExpertApi()
 const unwrap = (r: any) => r?.data?.data ?? r?.data ?? r ?? []
 const cities = ref<{ id: number; name: string }[]>([])
 const districts = ref<{ id: number; name: string }[]>([])
 const companyNames = ref<string[]>([])
 const nameInput = ref<HTMLInputElement | null>(null)
+const companyInput = ref<HTMLInputElement | null>(null)
+const allCompanyNames = computed(() => [...new Set([...(props.suggestions || []), ...companyNames.value])].filter(n => !props.excluded?.includes(n)))
 
 const naceQuery = ref('')
 const naceResults = ref<NaceItem[]>([])
@@ -92,8 +99,10 @@ async function onCity() {
 }
 
 onMounted(async () => {
-  if (props.autofocus) nextTick(() => nameInput.value?.focus())
-  try { cities.value = unwrap(await get('/cities')) } catch { cities.value = [] }
+  if (props.autofocus) nextTick(() => (props.companyOnly ? companyInput : nameInput).value?.focus())
+  if (!props.companyOnly) {
+    try { cities.value = unwrap(await get('/cities')) } catch { cities.value = [] }
+  }
   if (props.showCompany) {
     try { companyNames.value = (await get<MyCompany[]>('/my-companies')).map(c => c.name) } catch { companyNames.value = [] }
   }
@@ -109,6 +118,7 @@ input, select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px soli
 input:focus, select:focus { border-color: #d7a900; box-shadow: 0 0 0 3px var(--admin-accent-soft); }
 select:disabled { opacity: .55; }
 .hint { margin: -6px 0 0; color: var(--admin-muted); font-size: 12px; }
+.hazard-hint { margin: -2px 0 8px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 label small { color: var(--admin-muted); font-weight: 400; }
 .nace-results { max-height: 190px; overflow: auto; margin: 6px 0 0; padding: 4px; list-style: none; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-input); }

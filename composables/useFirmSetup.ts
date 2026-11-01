@@ -14,7 +14,7 @@ export interface LocationDraft { name: string; cityId: number | null; districtId
 export const FIRM_KINDS: { id: FirmKind; type: CustomerType; title: string; text: string; icon: string; tone: string; nameLabel: string; placeholder: string; hasTree: boolean }[] = [
   { id: 'sahis', type: 'individual', title: 'Şahıs işletmesi', text: 'Vergi dairesine kayıtlı, tek kişiye ait işletme.', icon: 'pi pi-user', tone: 'green', nameLabel: 'İşletmenin adı', placeholder: 'Örn. ABC Mobilya', hasTree: false },
   { id: 'limited', type: 'corporate', title: 'Limited / Anonim şirket', text: 'Tek şirket: Ltd. Şti. ya da A.Ş.', icon: 'pi pi-building', tone: 'blue', nameLabel: 'Şirketin adı', placeholder: 'Örn. ABC Ltd. Şti.', hasTree: false },
-  { id: 'holding', type: 'corporate', title: 'Holding (grup şirketleri)', text: 'Birden fazla şirketi olan grup ya da holding.', icon: 'pi pi-sitemap', tone: 'purple', nameLabel: 'Holdingin adı', placeholder: 'Örn. ABC Holding', hasTree: true },
+  { id: 'holding', type: 'corporate', title: 'Holding ya da grup', text: 'Birden fazla şirketi olan yapı. En tepeden başlamanız gerekmez, yalnız bir grubu da ekleyebilirsiniz.', icon: 'pi pi-sitemap', tone: 'purple', nameLabel: 'Holdingin ya da grubun adı', placeholder: 'Örn. ABC Holding ya da ABC Enerji Grubu', hasTree: true },
   { id: 'kamu', type: 'public', title: 'Kamu kurumu', text: 'Belediye, il müdürlüğü, hastane, okul.', icon: 'pi pi-flag', tone: 'orange', nameLabel: 'Kurumun adı', placeholder: 'Örn. ABC Belediyesi', hasTree: true }
 ]
 
@@ -69,20 +69,25 @@ export const useFirmSetup = () => {
     const b = billing.value
     const limit = b?.unlimited ? null : b?.workplace_limit
     return limit != null && (b?.active_workplaces ?? 0) >= limit
-      ? `İşyeri hakkınız doldu (${b?.active_workplaces} / ${limit}). Yeni lokasyon eklemek için paketinizi yükseltin.`
+      ? `İşyeri hakkınız doldu (${b?.active_workplaces} / ${limit}). Yeni firma eklemek için paketinizi yükseltin.`
       : ''
+  }
+
+  // Lokasyon boş bir yerdir: ağacın herhangi bir düğümüne bağlanır, firma sonra eklenir.
+  const addLocation = async (customerId: number | string, nodeId: number | string, draft: LocationDraft) => {
+    const locationName = draft.name.trim()
+    const created = unwrap(await post(`/customers/${customerId}/organizations/${nodeId}/locations`, {
+      name: locationName, city_id: draft.cityId, district_id: draft.districtId, address: draft.address.trim() || null
+    }))
+    const id = created?.id ?? (await loadStructure(customerId)).locations.find(l => l.name === locationName)?.id
+    if (!id) throw new Error('Lokasyon oluşturulamadı.')
+    return id as number | string
   }
 
   // Lokasyon ve işyeri: düğüme lokasyon eklenir, firma kartı bulunur ya da açılır, lokasyona işyeri bağlanır.
   const addWorkplace = async (customerId: number | string, nodeId: number | string, draft: LocationDraft, type: CustomerType | null, progress: WorkplaceProgress) => {
     const locationName = draft.name.trim()
-    if (!progress.locationId) {
-      const created = unwrap(await post(`/customers/${customerId}/organizations/${nodeId}/locations`, {
-        name: locationName, city_id: draft.cityId, district_id: draft.districtId, address: draft.address.trim() || null
-      }))
-      progress.locationId = created?.id ?? (await loadStructure(customerId)).locations.find(l => l.name === locationName)?.id
-      if (!progress.locationId) throw new Error('Lokasyon oluşturulamadı.')
-    }
+    if (!progress.locationId) progress.locationId = await addLocation(customerId, nodeId, draft)
     // Kamu kurumunda her birimin kartı lokasyonun adıyla açılır (mevcut sihirbazla aynı kural).
     const companyName = (type === 'public' ? locationName : draft.company).trim()
     const companies = await get<MyCompany[]>('/my-companies')
@@ -103,7 +108,7 @@ export const useFirmSetup = () => {
     return progress.locationId
   }
 
-  return { listFirms, loadStructure, addNode, createFirm, addWorkplace, workplaceLimitMessage }
+  return { listFirms, loadStructure, addNode, createFirm, addLocation, addWorkplace, workplaceLimitMessage }
 }
 
 // Yeni eklenen işyerini aktif çalışma alanı yapıp ekipman sayfasını açar.
