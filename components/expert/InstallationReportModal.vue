@@ -115,7 +115,7 @@
           <label class="wide">Kontrolü yapan kuruluş<input v-model="form.inspection_body" type="text" placeholder="Periyodik kontrolü yapan firma" /></label>
           <label class="wide">Sonuç ve kanaat<textarea v-model="form.conclusion" rows="2" placeholder="Raporun sonuç ve kanaat bölümü" /></label>
           <!-- Elektrik ailesi: raporun notlar bölümü (tesisat sayfasında Notlar kartı) -->
-          <label v-if="isElectrical" class="wide">Notlar<textarea v-model="form.notes" rows="2" placeholder="Raporun notlar bölümü" /></label>
+          <label v-if="isElectrical" class="wide">Kusur açıklamaları / Notlar<textarea v-model="form.notes" rows="2" placeholder="Raporun kusur açıklamaları ve notlar bölümü" /></label>
         </div>
         <p v-if="analysis && !analysis.status && !(fixedSystem && form.status)" class="hint warn">Raporun genel sonucu net okunamadı, siz seçin.</p>
         <p v-if="analysis?.next_control_source === 'period'" class="hint">Raporda geçerlilik tarihi bulunamadı; gelecek kontrol 12 aylık periyoda göre hesaplandı.</p>
@@ -158,7 +158,7 @@
                 <option value="uygun_degil">Uygun değil</option>
               </select>
               <button class="link-button" type="button" @click="system.open = !system.open">
-                {{ system.findings.length }} bulgu <i :class="system.open ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                Bulgular <i :class="system.open ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
               </button>
               <button v-if="!fixedSystem || index > 0" class="icon-button" type="button" title="Sistemi çıkar" aria-label="Sistemi çıkar" @click="systems.splice(index, 1)"><i class="pi pi-times" /></button>
             </div>
