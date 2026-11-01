@@ -159,9 +159,9 @@
                 </div>
                 <small>{{ nodeSummary(selected) }}</small>
                 <p v-if="renameError" class="form-error" role="alert">{{ renameError }}</p>
-                <p v-if="isLocked(selected)" class="form-error" role="note">Bu kayıt önceki bir sürümde "şirket" türüyle açıldı; sistem bu türdeki kaydın adının değiştirilmesine ve silinmesine izin vermiyor. Düzeltilmesi için türünün organizasyona çevrilmesi gerekiyor.</p>
+                <p v-if="isLocked(selected)" class="form-error" role="note">Bu kayıt önceki bir sürümde "şirket" türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</p>
               </div>
-              <button v-if="path.length > 1 && !subtreeLocked(selected)" class="detail-delete" type="button" @click="openRemove({ name: selected.name, node: selected })"><i class="pi pi-trash" /> Sil</button>
+              <button v-if="path.length > 1" class="detail-delete" type="button" @click="openRemove({ name: selected.name, node: selected })"><i class="pi pi-trash" /> Sil</button>
             </div>
           </div>
 
@@ -564,9 +564,8 @@ const kindOf = (node: FirmNode): NodeKind => depthOf(node) <= 0 ? 'root' : 'org'
 const kindLabel = (node: FirmNode) => kindOf(node) === 'root'
   ? (firm.value?.type === 'public' ? 'Kurum' : hasBranches.value ? 'Holding / Grup' : 'Firma')
   : (firm.value?.type === 'public' ? 'Birim' : 'Organizasyon')
-// Önceki sürümde "şirket"/"marka" türüyle açılan düğümleri backend doğrudan düzenletmez ve sildirmez.
+// Önceki sürümde "şirket"/"marka" türüyle açılan düğümlerin adını backend değiştirtmez (silme yeni PK ucuyla yapılır).
 const isLocked = (node: FirmNode) => node.type === 'company' || node.type === 'brand'
-const subtreeLocked = (node: FirmNode) => flatten([node]).some(isLocked)
 const firmWorkplaces = computed(() => locations.value.flatMap(l => workplacesOf(l)))
 // "2 alt organizasyon · 2 lokasyon · 5 işyeri"
 const nodeSummary = (node: FirmNode) => {
@@ -716,7 +715,8 @@ async function confirmRemove() {
     else if (target.node) {
       for (const location of locationsUnder(target.node)) await removeLocation(location)
       // Backend dolu düğümü silmez: önce en alttakiler.
-      for (const node of subtreeOf(target.node).reverse()) await del(`/organizations/${node.id}`)
+      // Yeni PK ucu: türden bağımsız siler, engelleri okunur mesajla (422) bildirir.
+      for (const node of subtreeOf(target.node).reverse()) await del(`/customers/${firm.value.id}/pk-organizations/${node.id}`)
     }
     // Pencere liste yenilendikten sonra kapanır; çıkarılan firma bir an görünmeye devam etmez.
     await load()

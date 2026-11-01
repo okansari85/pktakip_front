@@ -353,9 +353,13 @@ const deleteOrganization = async (node: OrganizationNode) => {
   if (node.children?.length) { alert('Alt organizasyonları bulunan bir organizasyon silinemez. Önce alt organizasyonları silin.'); return }
   if (!confirm(`"${node.name}" organizasyonu silinsin mi?`)) return
   try {
-    await $fetch(`${config.public.apiBaseUrl}/organizations/${node.id}`, { method: 'DELETE', headers: tenantHeaders() })
+    // pktakip ucu: türden bağımsız siler; lokasyon ya da başka bağ varsa sebebi yazar (500 yerine 422).
+    await $fetch(`${config.public.apiBaseUrl}/customers/${selectedCustomer.value.id}/pk-organizations/${node.id}`, { method: 'DELETE', headers: tenantHeaders() })
     await openOrganization(selectedCustomer.value)
-  } catch (e: any) { alert(e?.data?.message || 'Organizasyon silinemedi.') }
+  } catch (e: any) {
+    const errors = e?.data?.errors
+    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Organizasyon silinemedi.')
+  }
 }
 
 // --- Müşteri silme: önce altındakiler sayılır; kayıt varsa onay için müşteri adı yazılır ---
