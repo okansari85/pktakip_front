@@ -49,8 +49,8 @@ export const useFirmSetup = () => {
     return { nodes: toList(treeData, 'organizations') as FirmNode[], locations: toList(unwrap(locations)) as FirmLocation[] }
   }
 
-  // type: backend'in organizations.type alanı (group | company). Verilmezse backend 'group' kaydeder (mevcut çağrılar değişmez).
-  const addNode = async (customerId: number | string, name: string, parentId: number | string | null, type?: 'group' | 'company') =>
+  // type: backend'in organizations.type alanı (group | company | brand). Verilmezse backend 'group' kaydeder (mevcut çağrılar değişmez).
+  const addNode = async (customerId: number | string, name: string, parentId: number | string | null, type?: 'group' | 'company' | 'brand') =>
     unwrap(await post(`/customers/${customerId}/organizations`, { name, parent_id: parentId, color: '#465FFF', ...(type ? { type } : {}) }))?.id as number | string
 
   // Firma: müşteri kaydı, türü ve aynı adlı kök düğüm. progress dolu gelirse yapılmış adımlar atlanır.
