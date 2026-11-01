@@ -5,7 +5,7 @@ import { useCustomerTypes, type CustomerType } from '~/composables/useCustomerTy
 
 export type FirmKind = 'sahis' | 'limited' | 'holding' | 'kamu'
 export interface Firm { id: number | string; name: string; type: CustomerType | null; locations_count: number; workplaces_count: number }
-export interface FirmNode { id: number | string; name: string; children?: FirmNode[] }
+export interface FirmNode { id: number | string; name: string; type?: string | null; children?: FirmNode[] }
 export interface FirmLocation { id: number | string; name: string; city?: string | null; district?: string | null; organization_id?: number | string | null }
 export interface FirmProgress { customerId?: number | string; rootId?: number | string }
 export interface WorkplaceProgress { locationId?: number | string; workplaceDone?: boolean }
@@ -49,8 +49,9 @@ export const useFirmSetup = () => {
     return { nodes: toList(treeData, 'organizations') as FirmNode[], locations: toList(unwrap(locations)) as FirmLocation[] }
   }
 
-  const addNode = async (customerId: number | string, name: string, parentId: number | string | null) =>
-    unwrap(await post(`/customers/${customerId}/organizations`, { name, parent_id: parentId, color: '#465FFF' }))?.id as number | string
+  // type: backend'in organizations.type alanı (group | company). Verilmezse backend 'group' kaydeder (mevcut çağrılar değişmez).
+  const addNode = async (customerId: number | string, name: string, parentId: number | string | null, type?: 'group' | 'company') =>
+    unwrap(await post(`/customers/${customerId}/organizations`, { name, parent_id: parentId, color: '#465FFF', ...(type ? { type } : {}) }))?.id as number | string
 
   // Firma: müşteri kaydı, türü ve aynı adlı kök düğüm. progress dolu gelirse yapılmış adımlar atlanır.
   const createFirm = async (kind: FirmKind, name: string, progress: FirmProgress) => {
