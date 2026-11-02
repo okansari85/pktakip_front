@@ -115,7 +115,7 @@
           <label class="wide">Kontrolü yapan kuruluş<input v-model="form.inspection_body" type="text" placeholder="Periyodik kontrolü yapan firma" /></label>
           <label class="wide">Sonuç ve kanaat<textarea v-model="form.conclusion" rows="2" placeholder="Raporun sonuç ve kanaat bölümü" /></label>
           <!-- Elektrik ailesi: raporun notlar bölümü (tesisat sayfasında Notlar kartı) -->
-          <label v-if="isElectrical" class="wide">Kusur açıklamaları / Notlar<textarea v-model="form.notes" rows="2" placeholder="Raporun kusur açıklamaları ve notlar bölümü" /></label>
+          <label v-if="isElectrical || analysis?.notes" class="wide">Kusur açıklamaları / Notlar<textarea v-model="form.notes" rows="2" placeholder="Raporun kusur açıklamaları ve notlar bölümü" /></label>
         </div>
         <p v-if="analysis && !analysis.status && !(fixedSystem && form.status)" class="hint warn">Raporun genel sonucu net okunamadı, siz seçin.</p>
         <p v-if="analysis?.next_control_source === 'period'" class="hint">Raporda geçerlilik tarihi bulunamadı; gelecek kontrol 12 aylık periyoda göre hesaplandı.</p>
@@ -817,8 +817,8 @@ const save = async () => {
     name: system.source_names.join(' / '), status: system.status, findings: clean(system.findings)
   }))))
   body.append('findings', JSON.stringify(clean(generalFindings.value)))
+  if (form.notes.trim()) body.append('notes', form.notes.trim())
   if (isElectrical.value) {
-    if (form.notes.trim()) body.append('notes', form.notes.trim())
     // Bina sorusunda "diğer kayıt" seçildiyse rapor binanın (ya da tesis genelinin) kaydına; kaydı yoksa önce aynı lokasyon ve
     // firmada yeni tesisat açılır (bina adıyla; tesis geneli ise adsız). Rapor kaydedilemezse açılan kayıt geri silinir.
     let created: number | null = null
