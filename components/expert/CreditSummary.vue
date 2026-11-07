@@ -1,5 +1,5 @@
 <template>
-  <!-- Paketim: kalan kredi ve işyeri doluluğu (salt okunur; satın alma ödeme adımında gelir) -->
+  <!-- Paketim: kalan kredi ve işyeri doluluğu (salt okunur; satın alma Paketim sayfasında) -->
   <div v-if="status" class="credit-summary" :class="{ compact }">
     <div v-if="status.unlimited" class="row">
       <span class="label">Paket</span><strong>Sınırsız</strong>
@@ -16,6 +16,7 @@
         </div>
         <div class="bar"><span :style="{ width: `${workplacePercent}%` }" /></div>
       </template>
+      <small v-if="!compact && status.paid_until">Ödenen dönem bitişi: {{ formatDay(status.paid_until) }}</small>
       <small v-if="!compact && status.mode === 'package' && status.next_grant_at">Sıradaki yükleme {{ formatDate(status.next_grant_at) }} · +{{ status.monthly_credits }} kredi</small>
     </template>
   </div>

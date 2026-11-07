@@ -7,6 +7,16 @@ export type AuthUser = {
   tenant_id: number | null
 }
 
+// pktakip.com ile ortak çerez: canlıda (pktakip.com / *.pktakip.com) tüm alt alan adlarına, yerelde domain'siz.
+// maxAge 0 siler (yazıldığı domain / path ile).
+export const siteCookie = (name: string, value: string, maxAge: number) => {
+  if (!import.meta.client) return
+  const live = location.hostname === 'pktakip.com' || location.hostname.endsWith('.pktakip.com')
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax${live ? '; domain=.pktakip.com; Secure' : ''}`
+}
+// Site "Giriş yap" yerine "Hesabım" göstersin: yalnız "1" yazılır, token ya da kişisel veri çereze yazılmaz.
+export const setLoginMark = (on: boolean) => siteCookie('pk_logged_in', on ? '1' : '', on ? 31536000 : 0)
+
 export const useAuth = () => {
   const token = useState<string | null>('auth-token', () => null)
   const user = useState<AuthUser | null>('auth-user', () => null)
@@ -28,6 +38,7 @@ export const useAuth = () => {
     }
     impersonating.value = Boolean(localStorage.getItem('pktakip_admin_token'))
     readAdminRoles()
+    setLoginMark(!!token.value)
   }
   // Süper admin: kendi oturumu süper admin ya da bir hesaba süper admin olarak girmiş (Yapay zeka ayarı, Test sayfası).
   const superAdmin = computed(() => !!user.value?.roles?.includes('super-admin') || (impersonating.value && adminRoles.value.includes('super-admin')))
@@ -75,6 +86,7 @@ export const useAuth = () => {
     if (import.meta.client) {
       localStorage.setItem('pktakip_token', response.token)
       localStorage.setItem('pktakip_user', JSON.stringify(response.user))
+      setLoginMark(true)
       // Yeni giriş: önceden kalmış süper admin oturumu varsa bu kullanıcıya geçmez.
       clearAdminSession()
     }
@@ -88,6 +100,7 @@ export const useAuth = () => {
     if (import.meta.client) {
       localStorage.removeItem('pktakip_token')
       localStorage.removeItem('pktakip_user')
+      setLoginMark(false)
       // Süper admin bir hesaptayken çıkarsa saklanan kendi oturumu da kapanır.
       await revoke(localStorage.getItem('pktakip_admin_token'))
       clearAdminSession()

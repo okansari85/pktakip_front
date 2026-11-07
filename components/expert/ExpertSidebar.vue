@@ -127,13 +127,22 @@
             <i class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
+          <!-- Tüm hesap türlerinde: Paketim (satın alma yalnız ödeme yapabilende) ve Hesabım (profil, fatura, ödemeler) -->
+          <NuxtLink to="/expert/paketim" class="sidebar-link" :title="collapsed ? 'Paketim' : undefined">
+            <i class="pi pi-box" />
+            <span v-if="!collapsed">Paketim</span>
+          </NuxtLink>
+          <NuxtLink to="/expert/hesabim" class="sidebar-link" :title="collapsed ? 'Hesabım' : undefined">
+            <i class="pi pi-user" />
+            <span v-if="!collapsed">Hesabım</span>
+          </NuxtLink>
         </nav>
       </div>
     </template>
 
     <div class="sidebar-bottom">
-      <!-- Paketim: kalan kredi ve işyeri doluluğu; tıklayınca kredi hareketleri -->
-      <NuxtLink v-if="!collapsed" to="/expert/settings/analyses?tab=credits" class="credit-link" title="Kredi hareketleri"><ExpertCreditSummary compact /></NuxtLink>
+      <!-- Kalan kredi ve işyeri doluluğu; tıklayınca Paketim (kredi hareketleri oradan) -->
+      <NuxtLink v-if="!collapsed" to="/expert/paketim" class="credit-link" title="Paketim"><ExpertCreditSummary compact /></NuxtLink>
       <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>{{ roleLabel }}</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">
         <i class="pi pi-sign-out" />

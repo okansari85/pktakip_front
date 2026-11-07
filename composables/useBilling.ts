@@ -10,7 +10,35 @@ export interface BillingStatus {
   active_workplaces?: number
   next_grant_at?: string | null
   resets_at?: string | null
+  started_at?: string | null
+  // Ödenen dönemin bitişi (satın alınan paket); yoksa null.
+  paid_until?: string | null
 }
+// Fiyatlar KDV hariç; backend string ("1249.00") ya da sayı gönderebilir.
+export interface PkPackage { id: number; name: string; monthly_price: string | number; yearly_price: string | number; monthly_credits: number; workplace_limit: number | null }
+export interface PackagesResponse { can_pay: boolean; cannot_pay_reason: string | null; packages: PkPackage[]; status: BillingStatus }
+export interface BillingProfile { invoice_type: 'bireysel' | 'kurumsal'; name: string; tckn?: string | null; tax_number?: string | null; tax_office?: string | null; phone: string; address: string; billing_address: string }
+export interface PkOrder {
+  merchant_oid: string
+  status: 'pending' | 'paid' | 'failed' | 'attention'
+  package: { id: number; name: string } | null
+  period: 'monthly' | 'yearly'
+  net_amount: string | number
+  vat_amount: string | number
+  total_amount: string | number
+  created_at: string
+  paid_at: string | null
+}
+export const ORDER_STATUS: Record<PkOrder['status'], { label: string; severity: string }> = {
+  paid: { label: 'Ödendi', severity: 'success' },
+  failed: { label: 'Başarısız', severity: 'danger' },
+  pending: { label: 'Bekliyor', severity: 'warn' },
+  attention: { label: 'İnceleniyor', severity: 'info' }
+}
+export const PERIOD_LABELS: Record<string, string> = { monthly: 'Aylık', yearly: 'Yıllık' }
+// "1.249,00 ₺"
+export const formatTl = (value: string | number) => `${Number(value).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`
+export const formatDay = (value: string) => new Intl.DateTimeFormat('tr-TR').format(new Date(value.replace(' ', 'T')))
 export interface CreditEntry {
   id: number
   amount: number
@@ -48,5 +76,8 @@ export const useBilling = () => {
   }
   const entries = (page = 1) => get<{ data: CreditEntry[]; total: number; current_page: number; last_page: number }>('/pk-billing/entries', { page })
 
-  return { status, load, entries }
+  const packages = () => get<PackagesResponse>('/pk-billing/packages')
+  const orders = (page = 1) => get<{ data: PkOrder[]; total: number; current_page: number; last_page: number }>('/pk-billing/orders', { page })
+
+  return { status, load, entries, packages, orders }
 }

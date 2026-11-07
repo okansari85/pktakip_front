@@ -44,14 +44,17 @@ const error = ref('')
 const loading = ref(false)
 const { login, user } = useAuth()
 const { panelHome } = useAccount()
+const route = useRoute()
 // Oturum açıkken hesap pasife alındıysa buraya ?pasif=1 ile gelinir (kullanıcı 19 Ekim 2026).
-if (useRoute().query.pasif) error.value = 'Hesabınız pasife alınmıştır. Ayrıntı için bizimle iletişime geçin.'
+if (route.query.pasif) error.value = 'Hesabınız pasife alınmıştır. Ayrıntı için bizimle iletişime geçin.'
 const submit = async () => {
   error.value = ''
   loading.value = true
   try {
     await login(email.value, password.value)
-    await navigateTo(user.value?.is_expert ? await panelHome() : '/customers')
+    // ?r=: giriş isteyen uzman sayfasından gelindiyse oraya dönülür (yalnız /expert altı).
+    const back = String(route.query.r || '')
+    await navigateTo(user.value?.is_expert ? (back.startsWith('/expert') ? back : await panelHome()) : '/customers')
   } catch (e: any) {
     error.value = e?.data?.message || e?.message || 'Giriş yapılamadı.'
   } finally {

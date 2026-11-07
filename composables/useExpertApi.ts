@@ -34,6 +34,8 @@ export const useExpertApi = () => {
     $fetch<T>(url(path), { method: 'POST', headers: headers(), body })
   const patch = <T = any>(path: string, body: Record<string, any>) =>
     $fetch<T>(url(path), { method: 'PATCH', headers: headers(), body })
+  const put = <T = any>(path: string, body: Record<string, any>) =>
+    $fetch<T>(url(path), { method: 'PUT', headers: headers(), body })
   const del = <T = any>(path: string) =>
     $fetch<T>(url(path), { method: 'DELETE', headers: headers() })
   // Yetki isteyen dosyalar (kontrol raporu gibi) için: dosya Blob olarak alınır.
@@ -45,5 +47,5 @@ export const useExpertApi = () => {
     return (errors && (Object.values(errors).flat()[0] as string)) || e?.data?.message || fallback
   }
 
-  return { get, post, postForm, patch, del, getBlob, errorMessage }
+  return { get, post, postForm, patch, put, del, getBlob, errorMessage }
 }
