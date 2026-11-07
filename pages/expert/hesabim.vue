@@ -23,19 +23,8 @@
       <ExpertBillingProfileForm @forbidden="canPay = false" />
     </section>
 
-    <!-- Paketim özeti -->
-    <section v-else-if="tab === 'package'" class="card wide">
-      <div class="card-head">
-        <span class="card-icon"><i class="pi pi-box" /></span>
-        <div><h2>Paketim</h2><p>Kalan krediniz, işyeri doluluğu ve ödenen dönemin bitişi. Kredi yalnız rapor okumada düşer.</p></div>
-      </div>
-      <ExpertCreditSummary class="package-summary" />
-      <div class="package-actions">
-        <NuxtLink v-if="canPay" to="/expert/paketim" class="primary-button"><i class="pi pi-arrow-up-right" /> Paketi yenile / yükselt</NuxtLink>
-        <NuxtLink to="/expert/settings/analyses?tab=credits" class="link"><i class="pi pi-history" /> Kredi hareketleri</NuxtLink>
-      </div>
-      <p v-if="!canPay && cannotPayReason" class="muted">{{ cannotPayReason }}</p>
-    </section>
+    <!-- Paketim: durum, paketler ve satın alma (yenile / yükselt) -->
+    <ExpertPackageShop v-else-if="tab === 'package'" />
 
     <!-- Ödemelerim: paket siparişleri -->
     <section v-else-if="tab === 'orders'" class="orders">
@@ -165,7 +154,6 @@ const router = useRouter()
 
 // Ödeme yapabilir mi (GET /pk-billing/packages can_pay); alınamazsa fatura ve ödeme bölümleri görünmez.
 const canPay = ref(false)
-const cannotPayReason = ref('')
 const tabs = computed(() => [
   { value: 'profile', label: 'Profil', icon: 'pi pi-user' },
   ...(canPay.value ? [{ value: 'billing', label: 'Fatura bilgileri', icon: 'pi pi-file' }] : []),
@@ -220,7 +208,7 @@ const save = async () => {
 
 onMounted(() => {
   load()
-  packages().then((res) => { canPay.value = res.can_pay; cannotPayReason.value = res.cannot_pay_reason || '' }).catch(() => {})
+  packages().then((res) => { canPay.value = res.can_pay }).catch(() => {})
 })
 </script>
 
@@ -234,10 +222,6 @@ onMounted(() => {
 .tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs button.active { background: var(--admin-accent-soft); color: var(--admin-heading); }
 .card.wide { max-width: 980px; }
-.package-summary { max-width: 420px; }
-.package-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 16px; }
-.package-actions .primary-button { text-decoration: none; }
-.link { display: inline-flex; align-items: center; gap: 6px; color: var(--admin-link); font-size: 13.5px; font-weight: 600; }
 .muted { margin: 12px 0 0; color: var(--admin-muted); font-size: 13px; line-height: 1.55; }
 .orders { display: grid; gap: 12px; }
 .orders .muted { margin: 0; }

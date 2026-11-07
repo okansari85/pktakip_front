@@ -1,13 +1,5 @@
 <template>
   <div class="package-page">
-    <header class="page-head">
-      <span class="head-icon"><i class="pi pi-box" /></span>
-      <div>
-        <h1>Paketim</h1>
-        <p>Paketinizi, kalan kredinizi ve işyeri doluluğunu görün; paketinizi yenileyin ya da yükseltin.</p>
-      </div>
-    </header>
-
     <div v-if="loading" class="state">Yükleniyor...</div>
     <div v-else-if="loadError" class="state error">{{ loadError }} <button class="secondary-button" type="button" @click="load">Tekrar Dene</button></div>
 
@@ -130,10 +122,9 @@
 </template>
 
 <script setup lang="ts">
-// Paketim (7 Kas 2026): satın alma uygulamanın içinden, PayTR iFrame ile (site yalnız ücretsiz üyelik açar).
+// Paketim (7 Kas 2026; Hesabım → Paketim sekmesi): satın alma uygulamanın içinden, PayTR iFrame ile (site yalnız ücretsiz üyelik açar).
 // Akış: paket kartı → 1. fatura bilgileri → 2. özet + sözleşme onayı → 3. POST /pk-billing/paytr/start → PayTR kutusu →
 // PayTR sonunda /expert/odeme-sonuc'u açar. Tutar ve KDV sunucuda hesaplanır; burada fiyat × 1,20 yalnız ön gösterimdir.
-definePageMeta({ layout: 'expert', middleware: 'expert', hideWorkplaceSwitcher: true })
 
 type Action = 'buy' | 'renew' | 'upgrade'
 const SITE = 'https://pktakip.com'
@@ -243,7 +234,7 @@ onMounted(async () => {
   if (!plan || !data.value) return
   if (route.query.period === 'yearly' || route.query.period === 'monthly') period.value = route.query.period
   const pkg = data.value.packages.find(p => p.name.trim().toLocaleLowerCase('tr-TR') === plan)
-  router.replace({ query: {} })
+  router.replace({ query: { tab: 'package' } })
   if (!pkg) return
   highlightId.value = pkg.id
   if (canBuy.value) choose(pkg)
@@ -251,11 +242,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.package-page { max-width: 1500px; margin: 0 auto; display: grid; gap: 20px; }
-.page-head { display: flex; align-items: center; gap: 16px; }
-.head-icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 14px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 24px; }
-.page-head h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.7px; }
-.page-head p { margin: 6px 0 0; color: var(--admin-muted); font-size: 14px; }
+.package-page { display: grid; gap: 20px; }
 .card { padding: 22px 24px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 8px 24px rgba(40, 70, 110, .06); }
 .card-head { display: flex; gap: 14px; margin-bottom: 16px; }
 .card-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--admin-soft); color: var(--admin-link); }

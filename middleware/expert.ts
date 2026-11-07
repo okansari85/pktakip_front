@@ -11,13 +11,13 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo({ path: '/login', query: to.fullPath === '/expert' ? undefined : { r: to.fullPath } })
   }
 
-  // Sitede üyelikte seçilen paket (pk_plan çerezi, 7 gün): bir kez okunur, silinir, Paketim o paketle açılır.
+  // Sitede üyelikte seçilen paket (pk_plan çerezi, 7 gün): bir kez okunur, silinir, Hesabım → Paketim o paketle açılır (çerez önce silinir, döngü olmaz).
   const raw = document.cookie.split('; ').find(item => item.startsWith('pk_plan='))?.slice(8)
   if (raw) {
     siteCookie('pk_plan', '', 0)
     try {
       const plan = JSON.parse(decodeURIComponent(raw))
-      if (plan?.name && to.path !== '/expert/paketim') return navigateTo({ path: '/expert/paketim', query: { plan: String(plan.name), period: plan.period === 'yearly' ? 'yearly' : 'monthly' } })
+      if (plan?.name) return navigateTo({ path: '/expert/hesabim', query: { tab: 'package', plan: String(plan.name), period: plan.period === 'yearly' ? 'yearly' : 'monthly' } })
     } catch { /* bozuk çerez: yok sayılır */ }
   }
 })

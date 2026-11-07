@@ -7,12 +7,12 @@
         <p v-if="applied">Paketiniz tanımlandı: <strong>{{ status?.package?.name }}</strong><template v-if="status?.paid_until"> · ödenen dönem bitişi {{ formatDay(status.paid_until) }}</template>.</p>
         <p v-else-if="waiting"><i class="pi pi-spin pi-spinner" /> Paketiniz birkaç saniye içinde tanımlanır, lütfen bekleyin...</p>
         <p v-else>Ödemeniz alındı; paketinizin tanımlanması biraz gecikebilir. Birkaç dakika sonra Paketim sayfasından kontrol edin.</p>
-        <NuxtLink to="/expert/paketim" class="primary-button">Paketim'e dön</NuxtLink>
+        <NuxtLink to="/expert/hesabim?tab=package" class="primary-button">Paketim'e dön</NuxtLink>
       </template>
       <template v-else>
         <h1>Ödeme tamamlanamadı</h1>
         <p>Kartınızdan çekim yapılmadı. Kart bilgilerinizi kontrol edip yeniden deneyebilirsiniz.</p>
-        <NuxtLink to="/expert/paketim" class="primary-button">Tekrar dene</NuxtLink>
+        <NuxtLink to="/expert/hesabim?tab=package" class="primary-button">Tekrar dene</NuxtLink>
       </template>
     </section>
   </div>
