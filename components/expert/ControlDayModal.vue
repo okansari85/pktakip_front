@@ -4,9 +4,21 @@
       <div class="modal-head">
         <div>
           <h2>{{ longDate }}</h2>
-          <p><span class="days" :class="timingOf(daysLeft)">{{ daysText(daysLeft) }}</span> · {{ total }} ekipmanın kontrolü dolar</p>
+          <p><span class="days" :class="timingOf(daysLeft)">{{ daysText(daysLeft) }}</span> · {{ summary }}</p>
         </div>
         <button class="close-button" type="button" @click="emit('close')"><i class="pi pi-times" /></button>
+      </div>
+
+      <!-- Bulgu Takip: o gün tekrar kontrolü planlanan bulgular -->
+      <div v-if="rechecks?.length" class="entry">
+        <h3><i class="pi pi-list-check" /> Bulgu tekrar kontrolleri</h3>
+        <ul class="rechecks">
+          <li v-for="item in rechecks" :key="item.id">
+            <strong>{{ item.text }}</strong>
+            <small>{{ [item.subject?.name, item.subject?.code, item.subject?.detail].filter(Boolean).join(' · ') }} · {{ locationLabel(item.location?.id, item.location?.name) }}<template v-if="item.responsible"> · Sorumlu: {{ item.responsible.name }}</template></small>
+          </li>
+        </ul>
+        <NuxtLink class="link-button" to="/expert/bulgu-takip">Bulgu Takip <i class="pi pi-arrow-right" /></NuxtLink>
       </div>
 
       <div v-for="entry in entries" :key="entry.location_id ?? 0" class="entry">
@@ -32,7 +44,8 @@
 <script setup lang="ts">
 // Kontrol takviminde bir gün: o gün kontrolü dolan ekipman lokasyona göre, gruplu (tesisat, tüp, tür). Gruba tıklayınca
 // ekipmanları açılır (satır ekipmana gider).
-const props = defineProps<{ date: string; entries: AgendaEntry[]; query: Record<string, any> }>()
+// rechecks: o gün tekrar kontrolü planlanan bulgular (yalnız Kontrol Takvimi verir).
+const props = defineProps<{ date: string; entries: AgendaEntry[]; query: Record<string, any>; rechecks?: any[] }>()
 const emit = defineEmits<{ close: [] }>()
 
 const { get, errorMessage } = useExpertApi()
@@ -42,8 +55,10 @@ const timingOf = agendaTiming
 const groupText = agendaGroupText
 const shortName = agendaShortName
 const longDate = computed(() => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }).format(agendaDate(props.date)))
-const daysLeft = computed(() => props.entries[0]?.days_left ?? null)
+const daysLeft = computed(() => props.entries[0]?.days_left
+  ?? Math.round((agendaDate(props.date).getTime() - new Date(new Date().setHours(0, 0, 0, 0)).getTime()) / 86400000))
 const total = computed(() => props.entries.reduce((sum, entry) => sum + entry.total, 0))
+const summary = computed(() => [total.value ? `${total.value} ekipmanın kontrolü dolar` : '', props.rechecks?.length ? `${props.rechecks.length} bulgunun tekrar kontrolü` : ''].filter(Boolean).join(' · '))
 const daysText = (days: number | null) => days === null ? '—' : days < 0 ? `${-days} gün geçti` : days === 0 ? 'Bugün' : `${days} gün kaldı`
 
 // Açık gruplar ve ekipman listeleri (lokasyon + grup başına bir kez alınır).
@@ -90,5 +105,6 @@ h3{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--admin-head
 .group-toggle i{color:var(--admin-muted);font-size:10px}.group-toggle strong{color:var(--admin-heading);font-size:13px}.group-toggle small{color:var(--admin-muted);font-size:11px}
 .group-body{display:grid;gap:8px;padding:2px 10px 12px}
 .link-button{justify-self:start;display:inline-flex;align-items:center;gap:6px;color:var(--admin-link);font-size:12px;font-weight:700;text-decoration:none}
+.rechecks{display:grid;gap:8px;margin:0 0 10px;padding:0;list-style:none}.rechecks li{display:grid;gap:3px;padding:9px 10px;border-radius:9px;background:var(--admin-soft)}.rechecks strong{color:var(--admin-heading);font-size:13px}.rechecks small{color:var(--admin-muted);font-size:11.5px}
 .muted{margin:0;color:var(--admin-muted);font-size:12px}.error-text{margin:0;color:var(--admin-danger-text);font-size:12px}
 </style>

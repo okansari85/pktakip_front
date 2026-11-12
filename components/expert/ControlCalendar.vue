@@ -79,7 +79,7 @@
       <ExpertAgendaTable v-else :entries="soon" :limit="12" @select="openDay" />
     </section>
 
-    <ExpertControlDayModal v-if="selectedDate" :date="selectedDate" :entries="entriesOn(selectedDate)" :query="query" @close="selectedDate = null" />
+    <ExpertControlDayModal v-if="selectedDate" :date="selectedDate" :entries="entriesOn(selectedDate)" :rechecks="rechecksOn(selectedDate)" :query="query" @close="selectedDate = null" />
   </div>
 </template>
 
@@ -87,7 +87,8 @@
 // Genel Bakış > Kontrol takvimi: yıllık takvim (PrimeVue DatePicker, her ay ayrı), kontrolü dolan günler renkli; her ayın
 // altında o ayın günleri gruplu ("5 Kas · 3 Forklift, 2 Transpalet"). Tesisata bağlı ekipman tesisat, tüpler tek kalem.
 // Güne tıklayınca o günün kontrolleri (lokasyona göre) pencerede açılır.
-const props = defineProps<{ agenda: AgendaEntry[]; undated?: number; query: Record<string, any> }>()
+// rechecks: Bulgu Takip'te tekrar kontrol tarihi girilmiş, kapanmamış bulgular (yalnız Kontrol Takvimi sayfası verir).
+const props = defineProps<{ agenda: AgendaEntry[]; undated?: number; query: Record<string, any>; rechecks?: any[] }>()
 
 const { locationLabel } = useDashboardScope()
 
@@ -109,19 +110,31 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('tr-TR').format(ag
 const dayLabel = (value: string) => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' }).format(agendaDate(value))
 
 // Günler (birden çok lokasyon birleşik): renk, ay satırı ve ipucu metni.
-interface CalendarDay { date: string; days_left: number; entries: AgendaEntry[]; text: string; place: string }
+interface CalendarDay { date: string; days_left: number; entries: AgendaEntry[]; rechecks: any[]; text: string; place: string }
+const daysUntil = (date: string) => Math.round((agendaDate(date).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
 const days = computed(() => {
   const byDate = new Map<string, AgendaEntry[]>()
   for (const entry of props.agenda || []) byDate.set(entry.date, [...(byDate.get(entry.date) || []), entry])
-  return new Map<string, CalendarDay>([...byDate].map(([date, entries]): [string, CalendarDay] => [date, {
-    date,
-    days_left: entries[0]!.days_left,
-    entries,
-    text: agendaGroupsText(entries),
-    place: entries.length > 1 ? `${entries.length} lokasyon` : locationLabel(entries[0]!.location_id, entries[0]!.location_name)
-  }]))
+  const rechecksByDate = new Map<string, any[]>()
+  for (const item of props.rechecks || []) rechecksByDate.set(item.recheck_date, [...(rechecksByDate.get(item.recheck_date) || []), item])
+  const dates = [...new Set([...byDate.keys(), ...rechecksByDate.keys()])].sort()
+  return new Map<string, CalendarDay>(dates.map((date): [string, CalendarDay] => {
+    const entries = byDate.get(date) || []
+    const rechecks = rechecksByDate.get(date) || []
+    const places = new Set([...entries.map(entry => entry.location_id), ...rechecks.map(item => item.location?.id)])
+    const first = entries[0]
+    return [date, {
+      date,
+      days_left: first ? first.days_left : daysUntil(date),
+      entries,
+      rechecks,
+      text: [entries.length ? agendaGroupsText(entries) : '', rechecks.length ? `${rechecks.length} bulgu tekrar kontrolü` : ''].filter(Boolean).join(', '),
+      place: places.size > 1 ? `${places.size} lokasyon` : first ? locationLabel(first.location_id, first.location_name) : locationLabel(rechecks[0]?.location?.id, rechecks[0]?.location?.name)
+    }]
+  }))
 })
 const entriesOn = (date: string) => days.value.get(date)?.entries || []
+const rechecksOn = (date: string) => days.value.get(date)?.rechecks || []
 
 // Seçili yılın ayları: her DatePicker kendi ayında sabit (başlığı gizli); kontrolü olmayan günler seçilemez.
 const months = computed(() => MONTH_NAMES.map((name, index) => {

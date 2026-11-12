@@ -10,7 +10,7 @@
     <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Takvim hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
-    <ExpertControlCalendar v-else-if="data" :agenda="data.agenda || []" :undated="data.undated" :query="query" />
+    <ExpertControlCalendar v-else-if="data" :agenda="data.agenda || []" :undated="data.undated" :query="query" :rechecks="rechecks" />
   </div>
 </template>
 
@@ -24,6 +24,8 @@ const { groups, load, query, scopeLabel } = useDashboardScope()
 const { kamu, multiUser } = useAccount()
 
 const data = ref<any>(null)
+// Bulgu Takip: tekrar kontrol tarihi girilmiş bulgular (takvimde ayrıca görünür; alınamazsa takvim yine çalışır).
+const rechecks = ref<any[]>([])
 const loading = ref(false)
 const error = ref('')
 
@@ -36,6 +38,7 @@ const loadData = async () => {
   lastKey = key
   loading.value = true
   error.value = ''
+  get('/pk-findings/rechecks', query.value).then(items => { rechecks.value = items }).catch(() => { rechecks.value = [] })
   try { data.value = await get('/pk-dashboard', query.value) }
   catch (e: any) { lastKey = ''; error.value = errorMessage(e, 'Takvim alınamadı.') }
   finally { loading.value = false }

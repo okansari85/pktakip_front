@@ -80,6 +80,11 @@
           <i class="pi pi-calendar" />
           <span v-if="!collapsed">Kontrol Takvimi</span>
         </NuxtLink>
+        <NuxtLink to="/expert/bulgu-takip" class="sidebar-link" :title="collapsed ? 'Bulgu Takip' : undefined">
+          <i class="pi pi-list-check" />
+          <span v-if="!collapsed">Bulgu Takip</span>
+          <b v-if="findingCount" class="count-badge" :class="{ dot: collapsed }">{{ collapsed ? '' : findingCount }}</b>
+        </NuxtLink>
         <!-- Periyodik Kontroller: ekipmanlar + tesisatlar (daraltılmış menüde yalnızca simgeler) -->
         <template v-if="collapsed">
           <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
@@ -156,6 +161,9 @@ const { logout, superAdmin } = useAuth()
 // Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
 const { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
+// Bulgu Takip rozeti: kullanıcının lokasyonlarındaki kapanmamış bulgular.
+const { open: findingCount, refresh: refreshFindingCount } = useFindingCount()
+onMounted(refreshFindingCount)
 
 const PERIODIC = [
   { to: '/expert/equipment', label: 'Ekipmanlar', icon: 'pi pi-wrench' },
@@ -205,6 +213,8 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; }
 /* Uzun adlar (ör. Organizasyon Yönetimi) kalınken de tek satır kalsın. */
 .sidebar-link > span { white-space: nowrap; }
+.count-badge { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; }
+.count-badge.dot { position: absolute; margin: -18px 0 0 18px; min-width: 9px; width: 9px; height: 9px; padding: 0; }
 .sidebar-link.router-link-active > span { letter-spacing: -.3px; }
 .group-toggle { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
 .group-toggle .chevron { margin-left: auto; font-size: 11px; transition: transform .15s ease; }
