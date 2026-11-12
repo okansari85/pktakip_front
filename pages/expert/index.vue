@@ -334,12 +334,14 @@ const installationKpiText = computed(() => {
   return [`${types} türde`, nonconforming && `${nonconforming} uygun değil`, overdue && `${overdue} süresi geçmiş`].filter(Boolean).join(' · ')
 })
 const cityCount = computed(() =>new Set((data.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size)
-// İlçe haritası: kamu hesabında ve bireysel uzmanda bütün lokasyonlar tek ildeyse o ilin ilçeleri (kullanıcı 18 / 20 Ekim 2026);
-// OSGB ve kurumsalda Türkiye haritası. Lokasyonların ilçeleri müşterilerin lokasyon listesinden.
+// İlçe haritası: bütün lokasyonlar tek ildeyse o ilin ilçeleri (kullanıcı 18 / 20 Ekim, 12 Kas 2026: bütün hesaplarda).
+// Lokasyonların ilçeleri müşterilerin lokasyon listesinden.
 const { kamu: kamuAccount, account: pkAccount } = useAccount()
 // Karar filtreye göre değil, uzmanın hizmet verdiği bütün lokasyonlara (işyeri olan lokasyonlar) göre: hepsi tek ildeyse il haritası,
 // değilse Türkiye haritası (kullanıcı 20 Ekim 2026: "sadece tek ilde bakıyorsa il haritası").
-const districtEnabled = computed(() => kamuAccount.value || pkAccount.value?.type === 'expert')
+// OSGB ve kurumsalda da (kullanıcı 12 Kas 2026); orada müşteri listesi uzun olabilir, lokasyonlar tek ilde görünmeden çekilmez.
+const districtEnabled = computed(() => kamuAccount.value || pkAccount.value?.type === 'expert'
+  || new Set((fullData.value?.locations || []).map((location: any) => location.city_id).filter(Boolean)).size === 1)
 // Müşterilerin lokasyonları: lokasyon → il ve ilçe adı (bir kez alınır).
 const locationPlaces = ref<Record<number, { city: string; district: string }> | null>(null)
 watch(districtEnabled, async (enabled) => {

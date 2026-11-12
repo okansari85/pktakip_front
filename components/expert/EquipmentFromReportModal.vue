@@ -22,7 +22,7 @@
           </template>
           <template v-else>
             <i class="pi pi-sparkles" />
-            <span><strong>Yapay zeka raporu okuyacak</strong><small>Rapor mevcut bir ekipmanla eşleşirse ona eklenir, eşleşmezse yeni ekipman tanımlanır.</small></span>
+            <span><strong>Analiz et</strong><small>Rapor mevcut bir ekipmanla eşleşirse ona eklenir, eşleşmezse yeni ekipman tanımlanır.</small></span>
             <button class="ai-button" type="button" :disabled="!file || analyzing" @click="analyze">Analiz et</button>
           </template>
         </div>

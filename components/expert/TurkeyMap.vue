@@ -102,9 +102,10 @@ onMounted(async () => {
 .turkey-map{position:relative;width:100%}
 svg{display:block;width:100%;height:auto}
 .map-loading{display:flex;align-items:center;justify-content:center;gap:8px;min-height:260px;color:var(--admin-muted);font-size:12px}
-.province path{fill:var(--admin-soft);stroke:var(--admin-border);stroke-width:.8;transition:fill .15s}
+.province path{fill:#e2e8f0;stroke:#94a3b8;stroke-width:.8;transition:fill .15s}
+:global(.dark-theme) .province path{fill:var(--admin-soft);stroke:#475569}
 .province.none path{cursor:default}
-.province.ok path{fill:#bbf7d0;stroke:#16a34a}.province.warn path{fill:#fde68a;stroke:#d97706}.province.bad path{fill:#fecaca;stroke:#dc2626}.province.empty path{fill:#bfdbfe;stroke:#2563eb}
+.province.ok path{fill:#86efac;stroke:#16a34a}.province.warn path{fill:#fcd34d;stroke:#d97706}.province.bad path{fill:#fca5a5;stroke:#dc2626}.province.empty path{fill:#93c5fd;stroke:#2563eb}
 .province:not(.none){cursor:pointer}.province:not(.none):hover path{filter:brightness(.95)}
 .province.active path{stroke-width:2.2}
 .bubble{cursor:pointer}
