@@ -221,7 +221,7 @@ onMounted(() => {
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; margin-bottom: 20px; padding: 4px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card); }
 .tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs button.active { background: var(--admin-accent-soft); color: var(--admin-heading); }
-.card.wide { max-width: 980px; }
+.card.wide { max-width: none; }
 .muted { margin: 12px 0 0; color: var(--admin-muted); font-size: 13px; line-height: 1.55; }
 .orders { display: grid; gap: 12px; }
 .orders .muted { margin: 0; }
