@@ -263,7 +263,7 @@ onMounted(async () => {
 .reason { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 18px; border-radius: 12px; background: var(--admin-soft); color: var(--admin-heading); font-size: 14px; font-weight: 600; }
 .period-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .muted { color: var(--admin-muted); font-size: 13px; }
-.packages { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
 .package { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 22px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); }
 .package.current { border-color: var(--pk-yellow); }
 .package.highlight { outline: 2px solid var(--admin-link); outline-offset: 2px; }
