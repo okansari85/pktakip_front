@@ -239,7 +239,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.report-page{max-width:1500px;margin:0 auto;display:grid;gap:16px}
+.report-page{margin:0 auto;display:grid;gap:16px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--admin-muted);font-size:12px}.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:28px;letter-spacing:-.6px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}

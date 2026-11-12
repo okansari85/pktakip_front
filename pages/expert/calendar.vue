@@ -49,7 +49,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.calendar-page{max-width:1500px;margin:0 auto;display:grid;gap:16px}
+.calendar-page{margin:0 auto;display:grid;gap:16px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:4px}
 .page-head h1{margin:0;color:var(--admin-heading);font-size:30px;line-height:1.15;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;min-width:0}

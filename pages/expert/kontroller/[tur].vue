@@ -95,7 +95,7 @@ onMounted(async () => { await load(); loadData() })
 </script>
 
 <style scoped>
-.control-page { max-width: 1500px; margin: 0 auto; }
+.control-page { margin: 0 auto; }
 .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; color: var(--admin-muted); font-size: 12.5px; }
 .crumbs a:hover { color: var(--admin-heading); }
 h1 { margin: 0 0 14px; color: var(--admin-heading); font-size: 28px; letter-spacing: -.6px; }

@@ -213,7 +213,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-page { max-width: 1500px; margin: 0 auto; }
+.profile-page { margin: 0 auto; }
 .page-head { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
 .head-icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 14px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 24px; }
 .page-head h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.7px; }

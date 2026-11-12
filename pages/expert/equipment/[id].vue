@@ -474,7 +474,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-page { max-width: 1500px; margin: 0 auto; display: grid; gap: 16px; }
+.profile-page { margin: 0 auto; display: grid; gap: 16px; }
 .back-link{display:inline-flex;align-items:center;gap:7px;width:max-content;color:var(--admin-muted);font-size:12px;font-weight:700}.back-link:hover{color:var(--admin-heading)}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
 .head-side{display:flex;align-items:center;gap:10px;flex-wrap:wrap}

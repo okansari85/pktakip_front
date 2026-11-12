@@ -83,7 +83,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.firm-page { max-width: 1500px; margin: 0 auto; }
+.firm-page { margin: 0 auto; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
 h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.7px; }
 .page-head p { margin: 6px 0 0; color: var(--admin-muted); font-size: 14px; }

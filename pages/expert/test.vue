@@ -227,7 +227,7 @@ onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.test-page { max-width: 1500px; margin: 0 auto; display: grid; gap: 16px; }
+.test-page { margin: 0 auto; display: grid; gap: 16px; }
 .page-head { margin-bottom: 8px; }
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}

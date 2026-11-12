@@ -549,7 +549,7 @@ onMounted(async () => {
 .top-kpi span { color: var(--admin-muted); font-size: 12px; }
 @media (max-width: 1100px) { .top-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .top-kpis { grid-template-columns: minmax(0, 1fr); } }
-.expert-dashboard{max-width:1500px;margin:0 auto;display:grid;gap:16px}
+.expert-dashboard{margin:0 auto;display:grid;gap:16px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:4px}
 .eyebrow{display:block;margin-bottom:7px;color:var(--pk-yellow-dark);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .page-head h1{margin:0;color:var(--admin-heading);font-size:30px;line-height:1.15;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}

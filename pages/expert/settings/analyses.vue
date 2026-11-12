@@ -228,7 +228,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.analyses-page { max-width: 1500px; margin: 0 auto; display: grid; gap: 14px; }
+.analyses-page { margin: 0 auto; display: grid; gap: 14px; }
 .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:6px; }
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;max-width:820px;color:var(--admin-muted);font-size:13px}

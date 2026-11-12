@@ -39,8 +39,8 @@
           </div>
         </div>
 
-        <!-- 2. Özet ve onay -->
-        <div v-else-if="step === 2" class="step-body">
+        <!-- 2. Özet ve onay (3. adımda ödeme kutusu bunun üstünde açılır) -->
+        <div v-else class="step-body">
           <h3>Özet ve onay</h3>
           <p class="explain">{{ actionExplain }}</p>
           <dl class="sum">
@@ -67,25 +67,31 @@
           </div>
         </div>
 
-        <!-- 3. Ödeme (PayTR kutusu) -->
-        <div v-else-if="paytr" class="step-body">
-          <h3>Ödeme</h3>
+      </section>
+
+      <!-- 3. Ödeme: PayTR kart ekranı açılır pencerede; yalnız X ile kapanır, kapanınca özet adımına dönülür -->
+      <div v-if="step === 3 && chosen && paytr" class="modal-backdrop">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+          <div class="modal-head">
+            <div><h2 id="pay-title">Kart ile ödeme</h2><p>{{ chosen.pkg.name }} paketi ({{ PERIOD_LABELS[period].toLocaleLowerCase('tr-TR') }}) · Sipariş no: {{ paytr.merchant_oid }}</p></div>
+            <button class="close-button" type="button" aria-label="Kapat" @click="closePayment"><i class="pi pi-times" /></button>
+          </div>
           <dl class="sum">
-            <div><dt>{{ chosen.pkg.name }} paketi ({{ PERIOD_LABELS[period].toLocaleLowerCase('tr-TR') }})</dt><dd>{{ formatTl(paytr.amounts.net) }}</dd></div>
+            <div><dt>Paket bedeli (KDV hariç)</dt><dd>{{ formatTl(paytr.amounts.net) }}</dd></div>
             <div><dt>KDV (%20)</dt><dd>{{ formatTl(paytr.amounts.vat) }}</dd></div>
             <div class="total"><dt>Toplam</dt><dd>{{ formatTl(paytr.amounts.total) }}</dd></div>
           </dl>
           <iframe id="paketim-paytr" :src="`https://www.paytr.com/odeme/guvenli/${paytr.token}`" title="PayTR güvenli ödeme" class="paytr" frameborder="0" scrolling="no" />
-          <p class="hint">Kart bilgileriniz PayTR güvenli ödeme sayfasında işlenir, PKTakip'e iletilmez. Ödeme onaylanınca paketiniz birkaç saniye içinde tanımlanır. Sipariş no: {{ paytr.merchant_oid }}</p>
-        </div>
-      </section>
+          <p class="hint">Kart bilgileriniz PayTR güvenli ödeme sayfasında işlenir, PKTakip'e iletilmez. Ödeme onaylanınca paketiniz birkaç saniye içinde tanımlanır.</p>
+        </section>
+      </div>
 
       <template v-else>
         <!-- Kurallar -->
         <section class="rules">
           <i class="pi pi-info-circle" />
           <ul>
-            <li><strong>Yenileme:</strong> yeni dönem, mevcut döneminizin sonuna eklenir.</li>
+            <li><strong>Yenileme:</strong> yeni dönem, mevcut döneminizin sonuna eklenir; bir aylık kredi hemen yüklenir.</li>
             <li><strong>Yükseltme:</strong> yeni paket bugün başlar; kalan krediniz silinmez.</li>
             <li><strong>Cayma:</strong> satın almadan sonraki 14 gün içinde koşulsuz cayabilirsiniz.</li>
             <li>Fiyatlara KDV dahil değildir; ödeme adımında %20 KDV ile toplam tutar gösterilir.</li>
@@ -188,6 +194,7 @@ const choose = (pkg: PkPackage) => {
 }
 const closeFlow = () => { chosen.value = null; paytr.value = null }
 const goSummary = () => { flowError.value = ''; step.value = 2 }
+const closePayment = () => { paytr.value = null; step.value = 2 }
 
 const startPayment = async () => {
   if (!chosen.value || starting.value) return
@@ -292,6 +299,13 @@ onMounted(async () => {
 .check a { color: var(--admin-link); font-weight: 600; }
 .step-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
 .paytr { width: 100%; min-height: 420px; border: 0; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: var(--admin-overlay); }
+.modal-card { display: grid; gap: 14px; width: min(720px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 22px; background: var(--admin-card); border-radius: 12px; box-shadow: 0 20px 60px var(--admin-shadow); }
+.modal-head { display: flex; justify-content: space-between; gap: 15px; }
+.modal-head h2 { margin: 0; color: var(--admin-heading); font-size: 18px; }
+.modal-head p { margin: 5px 0 0; color: var(--admin-muted); font-size: 12px; }
+.close-button { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.close-button:hover { background: var(--admin-hover); color: var(--admin-heading); }
 .error { margin: 0; color: var(--admin-danger-text); font-size: 13.5px; }
 .primary-button, .secondary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .primary-button { border: 0; background: var(--pk-yellow); color: #1b1b1b; }

@@ -134,7 +134,7 @@ const impersonate = async (tenant: any) => {
 </script>
 
 <style scoped>
-.customers-page { max-width: 1500px; margin: 0 auto; }
+.customers-page { margin: 0 auto; }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
 .eyebrow { display: block; margin-bottom: 7px; color: var(--pk-yellow-dark); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .page-head h1 { margin: 0; color: var(--admin-heading); font-size: 30px; line-height: 1.15; letter-spacing: -.7px; }
