@@ -1,5 +1,7 @@
 <template>
-  <section class="table-card assignments">
+  <!-- only: firma ağacındaki işyeri satırından yalnız o işyerinin Uzman Ata penceresi (tablo yok). -->
+  <section :class="only ? null : 'table-card assignments'">
+    <template v-if="!only">
     <div class="section-head">
       <div>
         <h2>Uzman atamaları</h2>
@@ -42,14 +44,16 @@
       </table>
       <div class="table-footer"><span>Toplam {{ shown.length }} firma</span></div>
     </div>
+    </template>
 
-    <div v-if="target" class="modal-backdrop">
+    <div v-if="target || only" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
-          <div><h2>Uzman Ata</h2><p>{{ titleOf(target) }} · {{ target.company_name }}<template v-if="titleOf(target) !== target.location_name"> · {{ target.location_name }}</template></p></div>
+          <div><h2>Uzman Ata</h2><p v-if="target">{{ titleOf(target) }} · {{ target.company_name }}<template v-if="titleOf(target) !== target.location_name"> · {{ target.location_name }}</template></p></div>
           <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
         </div>
-        <p v-if="!experts.length" class="hint">Hesapta aktif uzman yok. Uzmanları Kullanıcılar sayfasından eklersiniz.</p>
+        <p v-if="!target" :class="error ? 'form-error' : 'hint'">{{ error || 'Atamalar yükleniyor...' }}</p>
+        <p v-else-if="!experts.length" class="hint">Hesapta aktif uzman yok. Uzmanları Kullanıcılar sayfasından eklersiniz.</p>
         <div v-else class="expert-list">
           <label v-for="person in experts" :key="person.id" class="expert-option">
             <input v-model="selected" type="checkbox" :value="person.id" />
@@ -59,7 +63,7 @@
         <p v-if="formError" class="form-error">{{ formError }}</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" @click="close">İptal</button>
-          <button class="primary-button" type="button" :disabled="saving || !experts.length" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
+          <button class="primary-button" type="button" :disabled="saving || !experts.length || !target" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
         </div>
       </section>
     </div>
@@ -73,6 +77,8 @@ interface AssignedUser { id: number; name: string; role: string; passive: boolea
 interface AssignmentWorkplace { id: number; company_name: string; location_name: string; customer_name?: string | null; users: AssignedUser[] }
 interface Expert { id: number; name: string; email: string }
 
+const props = defineProps<{ only?: number }>()
+const emit = defineEmits<{ close: [] }>()
 const { get, patch, errorMessage } = useExpertApi()
 // Kurumsal hesapta müşteri firmanın kendisi: yalnızca lokasyon.
 const { corporate, kamu } = useAccount()
@@ -109,6 +115,11 @@ const load = async () => {
     const data = await get<{ workplaces: AssignmentWorkplace[]; experts: Expert[] }>('/pk-account/assignments')
     workplaces.value = data.workplaces
     experts.value = data.experts
+    if (props.only) {
+      const item = data.workplaces.find(workplace => workplace.id === props.only)
+      if (item) open(item)
+      else error.value = 'Bu işyerinin ataması bulunamadı.'
+    }
   } catch (e: any) { error.value = errorMessage(e, 'Atamalar alınamadı.') }
   finally { loading.value = false }
 }
@@ -118,7 +129,11 @@ const selected = ref<number[]>([])
 const saving = ref(false)
 const formError = ref('')
 const open = (item: AssignmentWorkplace) => { target.value = item; selected.value = expertsOf(item).map(person => person.id); formError.value = '' }
-const close = () => { if (!saving.value) target.value = null }
+const close = () => {
+  if (saving.value) return
+  target.value = null
+  if (props.only) emit('close')
+}
 const save = async () => {
   if (!target.value) return
   saving.value = true
@@ -127,6 +142,7 @@ const save = async () => {
     const updated = await patch<AssignmentWorkplace>(`/pk-account/assignments/${target.value.id}`, { user_ids: selected.value })
     workplaces.value = workplaces.value.map(item => item.id === updated.id ? { ...item, users: updated.users } : item)
     target.value = null
+    if (props.only) emit('close')
   } catch (e: any) { formError.value = errorMessage(e, 'Atama kaydedilemedi.') }
   finally { saving.value = false }
 }

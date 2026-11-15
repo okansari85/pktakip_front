@@ -73,6 +73,8 @@
                   <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
                 </div>
                 <div class="row-actions">
+                  <!-- OSGB / kurumsal / kamu: işyerinin uzmanı (Ayarlar → Firmalar'daki Uzman ata penceresi) -->
+                  <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerine uzman ata`" @click="assignId = item.workplace.id"><i class="pi pi-user-edit" /></button>
                   <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
                 </div>
               </template>
@@ -218,6 +220,8 @@
         </details>
       </section>
     </template>
+
+    <ExpertWorkplaceAssignments v-if="assignId" :only="assignId" @close="assignId = null" />
 
     <!-- Grup, şirket ya da lokasyonu sil -->
     <div v-if="removing" class="modal-backdrop">
@@ -725,6 +729,8 @@ async function repairRoot() {
 }
 
 const goEquipment = (location: FirmLocation) => goToEquipment(location.id)
+// Uzman ata penceresi açık olan işyeri (OSGB / kurumsal / kamu; yönetici ve operasyon yöneticisi).
+const assignId = ref<number | null>(null)
 
 // --- Ağaçtan silme ---
 // Backend lokasyonu silince ekipman, tesisat ve toplu raporlar da silinir; firmayı çıkarınca bu kayıtlar lokasyonda firmasız kalır.
