@@ -1,6 +1,7 @@
 <template>
   <div class="firm-detail">
-    <NuxtLink to="/expert/workplaces" class="back"><i class="pi pi-arrow-left" /> Firmalarım</NuxtLink>
+    <!-- Kurumsal / kamu hesabında Firmalarım bu sayfanın kendisidir: geri bağlantısı yok. -->
+    <NuxtLink v-if="!corporate" to="/expert/workplaces" class="back"><i class="pi pi-arrow-left" /> Firmalarım</NuxtLink>
 
     <div v-if="loading" class="state">Yükleniyor...</div>
     <div v-else-if="error && !firm" class="state error">{{ error }}<button class="secondary-button" type="button" @click="load">Tekrar Dene</button></div>

@@ -5,7 +5,7 @@
         <h1>Firmalarım</h1>
         <p>Hizmet verdiğiniz firmaları buradan ekleyin ve yönetin.</p>
       </div>
-      <button class="primary-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus-circle" /> Firma Ekle</button>
+      <button v-if="canAdd" class="primary-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus-circle" /> Firma Ekle</button>
     </div>
 
     <div v-if="firms.length" class="stats">
@@ -23,7 +23,7 @@
         <span class="empty-icon"><i class="pi pi-building" /></span>
         <strong>Henüz firmanız yok</strong>
         <span>İlk firmanızı ekleyin; birkaç soruyla hazır olur.</span>
-        <button class="primary-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus-circle" /> İlk Firmamı Ekle</button>
+        <button v-if="canAdd" class="primary-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus-circle" /> İlk Firmamı Ekle</button>
       </div>
       <template v-else>
         <div class="toolbar">
@@ -47,7 +47,9 @@
       </template>
     </section>
 
-    <ExpertFirmWizard v-if="wizardOpen" :firms="firms" @close="wizardOpen = false" @changed="load" />
+    <ExpertFirmWizard v-if="wizardOpen && !multiUser" :firms="firms" @close="wizardOpen = false" @changed="load" />
+    <!-- OSGB: mevcut Müşteri Ekle sihirbazı (Ayarlar → Müşteriler'deki) -->
+    <ExpertOrganizationWizard v-if="wizardOpen && multiUser" customer-mode @close="wizardOpen = false" @created="wizardOpen = false; load()" />
   </div>
 </template>
 
@@ -62,6 +64,9 @@ const loading = ref(true)
 const error = ref('')
 const search = ref('')
 const wizardOpen = ref(false)
+// OSGB: müşteriyi yönetici ekler (operasyon yöneticisi listeyi ve ağacı görür).
+const { multiUser, isManager } = useAccount()
+const canAdd = computed(() => !multiUser.value || isManager.value)
 
 const locationTotal = computed(() => firms.value.reduce((sum, f) => sum + f.locations_count, 0))
 const filtered = computed(() => {

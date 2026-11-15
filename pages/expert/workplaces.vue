@@ -1,7 +1,8 @@
 <template>
-  <!-- Bireysel uzman: firma merkezli liste ve Firma Ekle. OSGB / kurumsal / kamu aşağıdaki tabloyu görmeye devam eder. -->
-  <ExpertFirmList v-if="account && !multiUser" />
-  <div v-else-if="account || accountFailed" class="workplaces-page">
+  <!-- Bireysel uzman ve OSGB yöneticisi / operasyon yöneticisi: firma (müşteri) listesi ve Firma Ekle; kurumsal / kamu hesabında
+       yönetici ve operasyon yöneticisi tek müşterinin sayfasına gider. Uzman (rol) aşağıdaki tabloyu görmeye devam eder. -->
+  <ExpertFirmList v-if="account && (!multiUser || (treeUser && !corporate))" />
+  <div v-else-if="(account || accountFailed) && (!singleFirm || singleFailed)" class="workplaces-page">
     <div class="page-head">
       <div>
         <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></div>
@@ -35,15 +36,25 @@ const { workplaces, loaded, error, load } = useMyWorkplaces()
 const locationCount = computed(() => new Set(workplaces.value.map(w => w.location_id)).size)
 const customerCount = computed(() => new Set(workplaces.value.map(w => w.customer_name).filter(Boolean)).size)
 // Kurumsal hesapta müşteri firmanın kendisi: müşteri sayısı yazılmaz.
-const { account, corporate, kamu, multiUser, isManager, load: loadAccount } = useAccount()
+const { account, corporate, kamu, multiUser, isManager, isOperation, load: loadAccount } = useAccount()
 // Hesap bilgisi alınamazsa bugünkü liste gösterilir; hesap gelmeden hiçbir görünüm açılmaz (yanlış ekran yanıp sönmesin).
 const accountFailed = ref(false)
+// Firma ağacını yönetici ve operasyon yöneticisi kullanır; kurumsal / kamu hesabının tek müşterisi var, doğrudan onun sayfası açılır.
+const treeUser = computed(() => isManager.value || isOperation.value)
+const singleFirm = computed(() => corporate.value && treeUser.value)
+// Müşteri alınamazsa bugünkü tablo gösterilir.
+const singleFailed = ref(false)
+const { listFirms } = useFirmSetup()
 
 // Sayfa her açıldığında listeyi tazeler (Ayarlar'da yapılan değişiklikler görünsün).
 onMounted(async () => {
   load(true)
   await loadAccount()
   accountFailed.value = !account.value
+  if (!singleFirm.value) return
+  const [firm] = await listFirms().catch(() => [])
+  if (firm) await navigateTo(`/expert/firma/${firm.id}`, { replace: true })
+  else singleFailed.value = true
 })
 </script>
 
