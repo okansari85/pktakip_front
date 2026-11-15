@@ -1,11 +1,11 @@
 <template>
-  <div class="package-page">
+  <div ref="root" class="package-page">
     <div v-if="loading" class="state">Yükleniyor...</div>
     <div v-else-if="loadError" class="state error">{{ loadError }} <button class="secondary-button" type="button" @click="load">Tekrar Dene</button></div>
 
     <template v-else-if="data">
-      <!-- Mevcut durum -->
-      <section class="card status-card">
+      <!-- Mevcut durum: katalogda Hesabım'daki "Mevcut paketiniz" kartında; bu kart gizli, ileride açılabilir -->
+      <section v-if="SHOW_STATUS_CARD" class="card status-card">
         <div class="card-head">
           <span class="card-icon"><i class="pi pi-wallet" /></span>
           <div><h2>Mevcut durum</h2><p>Kredi yalnız rapor okumada düşer; aktif işyeri sayısı paketin limitiyle sınırlıdır.</p></div>
@@ -86,9 +86,9 @@
         </section>
       </div>
 
-      <template v-else>
-        <!-- Kurallar -->
-        <section class="rules">
+      <section v-else class="card options">
+        <!-- Kurallar: katalogda yok, gizli; ileride açılabilir (yenileme / yükseltme açıklaması ve cayma özet adımında da yazar) -->
+        <section v-if="SHOW_RULES" class="rules">
           <i class="pi pi-info-circle" />
           <ul>
             <li><strong>Yenileme:</strong> yeni dönem, mevcut döneminizin sonuna eklenir; bir aylık kredi hemen yüklenir.</li>
@@ -98,31 +98,37 @@
           </ul>
         </section>
 
-        <p v-if="reason" class="reason"><i class="pi pi-lock" /> {{ reason }}</p>
+        <!-- Tasarım kataloğu 19: Paket seçenekleri; Aylık / Yıllık seçimi başlığın yanında -->
+        <header class="options-head">
+          <h2>Paket seçenekleri</h2>
+          <div class="period-row">
+            <span class="muted">{{ period === 'yearly' ? 'Yıllık ödemede fiyat bir yıl içindir.' : 'Aylık ödemede fiyat bir ay içindir.' }}</span>
+            <SelectButton v-model="period" :options="PERIODS" option-label="label" option-value="value" :allow-empty="false" aria-label="Ödeme dönemi" />
+          </div>
+        </header>
 
-        <div class="period-row">
-          <SelectButton v-model="period" :options="PERIODS" option-label="label" option-value="value" :allow-empty="false" aria-label="Ödeme dönemi" />
-          <span class="muted">{{ period === 'yearly' ? 'Yıllık ödemede fiyat bir yıl içindir.' : 'Aylık ödemede fiyat bir ay içindir.' }}</span>
-        </div>
+        <p v-if="reason" class="reason"><i class="pi pi-lock" /> {{ reason }}</p>
 
         <div v-if="!data.packages.length" class="state">Şu anda satın alınabilecek paket yok.</div>
         <div class="packages">
           <article v-for="pkg in data.packages" :key="pkg.id" class="package" :class="{ current: pkg.id === status?.package?.id, highlight: pkg.id === highlightId }">
-            <span v-if="pkg.id === status?.package?.id" class="current-tag">Mevcut paketiniz</span>
-            <h3>{{ pkg.name }}</h3>
-            <div class="price">{{ formatTl(price(pkg)) }} <small>+ KDV / {{ period === 'yearly' ? 'yıl' : 'ay' }}</small></div>
+            <header class="package-head">
+              <span class="package-icon"><i class="pi pi-box" /></span>
+              <span class="package-title"><h3>{{ pkg.name }}</h3><small>{{ formatTl(price(pkg)) }} + KDV / {{ period === 'yearly' ? 'yıl' : 'ay' }}</small></span>
+              <span v-if="pkg.id === status?.package?.id" class="current-tag">Mevcut paket</span>
+            </header>
             <ul>
-              <li><i class="pi pi-bolt" /> Ayda {{ pkg.monthly_credits }} kredi</li>
-              <li><i class="pi pi-briefcase" /> {{ pkg.workplace_limit == null ? 'Sınırsız aktif işyeri' : `${pkg.workplace_limit} aktif işyeri` }}</li>
-              <li><i class="pi pi-users" /> Sınırsız kullanıcı</li>
+              <li><i class="pi pi-check" /> Ayda {{ pkg.monthly_credits }} kredi</li>
+              <li><i class="pi pi-check" /> {{ pkg.workplace_limit == null ? 'Sınırsız aktif işyeri' : `${pkg.workplace_limit} aktif işyeri` }}</li>
+              <li><i class="pi pi-check" /> Sınırsız kullanıcı</li>
             </ul>
             <template v-if="canBuy">
               <p v-if="actionOf(pkg) === 'locked'" class="locked">Mevcut döneminiz {{ formatDay(status!.paid_until!) }} tarihinde bitince geçebilirsiniz.</p>
-              <button v-else class="primary-button" type="button" @click="choose(pkg)">{{ ACTION_LABELS[actionOf(pkg) as Action] }}</button>
+              <button v-else class="choose-button" type="button" @click="choose(pkg)">{{ ACTION_LABELS[actionOf(pkg) as Action] }} <i class="pi pi-angle-right" /></button>
             </template>
           </article>
         </div>
-      </template>
+      </section>
     </template>
   </div>
 </template>
@@ -137,6 +143,10 @@ const SITE = 'https://pktakip.com'
 const STEPS = ['Fatura bilgileri', 'Özet ve onay', 'Ödeme']
 const PERIODS = [{ label: 'Aylık', value: 'monthly' }, { label: 'Yıllık', value: 'yearly' }]
 const ACTION_LABELS: Record<Action, string> = { buy: 'Satın al', renew: 'Yenile', upgrade: 'Yükselt' }
+// Katalogda yok, gizli; ileride açılabilir: mevcut durum kartı (Hesabım'daki Mevcut paketiniz kartında) ve kurallar kutusu.
+const SHOW_STATUS_CARD = false
+const SHOW_RULES = false
+const root = ref<HTMLElement | null>(null)
 
 const route = useRoute()
 const router = useRouter()
@@ -190,7 +200,8 @@ const choose = (pkg: PkPackage) => {
   agreements.value = false
   flowError.value = ''
   paytr.value = null
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  // Akış kartı paket seçeneklerinin yerinde açılır (Hesabım'da üstte mevcut paket kartı var)
+  nextTick(() => root.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
 const closeFlow = () => { chosen.value = null; paytr.value = null }
 const goSummary = () => { flowError.value = ''; step.value = 2 }
@@ -261,19 +272,27 @@ onMounted(async () => {
 .rules i { margin-top: 4px; }
 .rules ul { margin: 0; padding-left: 18px; }
 .reason { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 18px; border-radius: 12px; background: var(--admin-soft); color: var(--admin-heading); font-size: 14px; font-weight: 600; }
+/* Paket seçenekleri (tasarım kataloğu 19) */
+.card.options { display: grid; gap: 18px; }
+.options-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.options-head h2 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 800; }
 .period-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .muted { color: var(--admin-muted); font-size: 13px; }
-.packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
-.package { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 22px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); }
-.package.current { border-color: var(--pk-yellow); }
+.packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }
+.package { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 8px 22px rgba(var(--pk-shadow-rgb), .05); }
+.package.current { border: 1.5px solid var(--pk-accent); box-shadow: 0 10px 26px rgba(var(--pk-accent-rgb), .12); }
 .package.highlight { outline: 2px solid var(--admin-link); outline-offset: 2px; }
-.current-tag { align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 11.5px; font-weight: 700; }
-.package h3 { margin: 0; color: var(--admin-heading); font-size: 19px; }
-.price { color: var(--admin-heading); font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
-.price small { color: var(--admin-muted); font-size: 13px; font-weight: 600; letter-spacing: 0; }
-.package ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; color: var(--admin-text); font-size: 13.5px; }
-.package li i { width: 18px; color: var(--admin-link); }
-.package .primary-button { margin-top: auto; justify-content: center; }
+.package-head { display: flex; align-items: center; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--admin-border); }
+.package-icon { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 22px; }
+.package-title { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.package h3 { margin: 0; color: var(--admin-heading); font-size: 22px; font-weight: 800; }
+.package-title small { color: var(--admin-text); font-size: 15px; }
+.current-tag { align-self: flex-start; padding: 5px 12px; border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.package ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; color: var(--admin-heading); font-size: 16px; }
+.package li { display: flex; align-items: center; gap: 12px; }
+.package li i { color: var(--admin-success-text); font-size: 15px; font-weight: 700; }
+.choose-button { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; border: 1.5px solid var(--pk-accent); border-radius: 12px; background: var(--admin-card); color: var(--admin-link); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.choose-button:hover { background: var(--admin-accent-soft); }
 .locked { margin: auto 0 0; padding: 10px 12px; border-radius: 10px; background: var(--admin-soft); color: var(--admin-muted); font-size: 13px; line-height: 1.5; }
 .flow { display: grid; gap: 18px; }
 .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

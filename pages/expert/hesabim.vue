@@ -28,8 +28,37 @@
           <ExpertBillingProfileForm inline @forbidden="canPay = false" />
         </section>
 
-        <!-- Paketim: durum, paketler ve satın alma (yenile / yükselt) -->
-        <ExpertPackageShop v-else-if="tab === 'package'" />
+        <!-- Paketim (katalog 19): mevcut paket; paket seçenekleri ve satın alma aşağıda (PackageShop) -->
+        <section v-else-if="tab === 'package'" class="card package-card">
+          <header class="package-head">
+            <h2 class="card-title">Mevcut paketiniz</h2>
+            <span v-if="billing" class="package-tag">{{ billing.package?.name || MODE_LABELS[billing.mode] }}</span>
+          </header>
+          <dl class="package-rows">
+            <div>
+              <dt><span class="row-icon"><i class="pi pi-database" /></span> Kalan kredi</dt>
+              <dd><strong>{{ billing ? billing.unlimited ? 'Sınırsız' : billing.credits ?? 0 : '—' }}</strong><small v-if="billing && !billing.unlimited"> kredi</small></dd>
+            </div>
+            <div>
+              <dt><span class="row-icon"><i class="pi pi-building" /></span> Aktif işyeri</dt>
+              <dd class="usage-cell">
+                <strong>{{ billing?.active_workplaces ?? '—' }}<small v-if="billing?.workplace_limit != null">/{{ billing.workplace_limit }}</small></strong>
+                <template v-if="billing?.workplace_limit">
+                  <ProgressBar :value="workplacePercent" :show-value="false" class="usage" />
+                  <small>%{{ workplacePercent }}</small>
+                </template>
+              </dd>
+            </div>
+            <div>
+              <dt><span class="row-icon"><i class="pi pi-calendar" /></span> Yenileme tarihi</dt>
+              <dd><strong>{{ billing?.paid_until ? formatDay(billing.paid_until) : '—' }}</strong></dd>
+            </div>
+          </dl>
+          <div class="package-actions">
+            <button class="primary-button" type="button" @click="scrollToPackages"><i class="pi pi-box" /> Paketi yönet <i class="pi pi-arrow-right" /></button>
+            <NuxtLink to="/expert/settings/analyses?tab=credits" class="credit-link"><i class="pi pi-file" /> Kredi hareketleri</NuxtLink>
+          </div>
+        </section>
 
         <!-- Ödemelerim: paket siparişleri -->
         <section v-else-if="tab === 'orders'" class="orders">
@@ -155,8 +184,19 @@
             <div><h2>Faturalandırma</h2><p>Paket ödemelerinizde bu bilgiler kullanılır.</p></div>
           </section>
         </template>
+
+        <!-- Paketim: katalogdaki küpler ve jetonlar (katalog 19'dan kırpıldı) -->
+        <figure v-else-if="tab === 'package'" class="hero">
+          <div class="hero-art">
+            <img src="/katalog/paketim-katalog.webp" alt="" />
+            <span v-if="billing" class="hero-pill package-pill"><i class="pi pi-check" /><span><strong class="plain">{{ billing.package?.name || MODE_LABELS[billing.mode] }}</strong><strong v-if="billing.mode !== 'none'">Aktif</strong></span></span>
+          </div>
+        </figure>
       </aside>
     </div>
+
+    <!-- Paketim: paket seçenekleri ve satın alma akışı (PayTR) -->
+    <ExpertPackageShop v-if="tab === 'package'" id="paket-secenekleri" />
   </div>
 </template>
 
@@ -220,6 +260,11 @@ const saveError = ref('')
 const saved = ref(false)
 const avatarOpen = ref(false)
 
+const workplacePercent = computed(() => {
+  const limit = billing.value?.workplace_limit
+  return limit ? Math.min(100, Math.round((billing.value?.active_workplaces ?? 0) / limit * 100)) : 0
+})
+const scrollToPackages = () => document.getElementById('paket-secenekleri')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 const createdText = computed(() => profile.value.created_at ? new Date(profile.value.created_at).toLocaleDateString('tr-TR') : '')
 // Baş harfler (üst çubuktaki gibi): adın ilk iki kelimesinin ilk harfleri.
 const initials = computed(() => (profile.value.name || user.value?.name || 'UZ').split(' ').filter(Boolean).map(part => part[0]).slice(0, 2).join('').toLocaleUpperCase('tr-TR'))
@@ -337,6 +382,26 @@ onMounted(() => {
 .hero-pill.doc { top: 19%; gap: 14px; padding: 14px 26px 14px 18px; }
 .hero-pill.doc > i { width: auto; height: auto; background: none; color: var(--admin-link); font-size: 24px; }
 .hero-pill.doc strong { color: var(--admin-heading); font-size: 18px; font-weight: 600; }
+.package-pill { top: 6%; left: auto; right: 4%; }
+.package-pill strong.plain { color: var(--admin-heading); font-size: 17px; }
+/* Mevcut paketiniz */
+.package-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.package-head .card-title { margin: 0; }
+.package-tag { padding: 4px 14px; border: 1px solid var(--pk-accent); border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 16px; font-weight: 700; }
+.package-rows { display: grid; margin: 0; }
+.package-rows div { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: center; gap: 16px; padding: 12px 0; }
+.package-rows div + div { border-top: 1px solid var(--admin-border); }
+.package-rows dt { display: flex; align-items: center; gap: 14px; padding-right: 16px; border-right: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 16px; font-weight: 600; }
+.row-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 17px; }
+.package-rows dd { margin: 0; color: var(--admin-text); font-size: 18px; }
+.package-rows dd strong { color: var(--admin-heading); font-size: 30px; font-weight: 800; }
+.package-rows dd strong small { color: var(--admin-heading); font-size: 28px; font-weight: 700; }
+.usage-cell { display: flex; align-items: center; gap: 16px; }
+.usage-cell > small { color: var(--admin-muted); font-size: 15px; }
+.usage { flex: 1; height: 10px; }
+.package-actions { display: flex; align-items: center; gap: 36px; flex-wrap: wrap; margin-top: 16px; }
+.package-actions .primary-button { min-width: 0; }
+.credit-link { display: inline-flex; align-items: center; gap: 10px; color: var(--admin-link); font-size: 17px; font-weight: 700; text-decoration: underline; }
 .side-card .card-title { margin-bottom: 8px; }
 .note-card { display: flex; align-items: center; gap: 20px; }
 .note-icon { flex: none; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 16px; background: var(--admin-soft); color: var(--admin-heading); font-size: 30px; box-shadow: 0 6px 16px rgba(var(--pk-shadow-rgb), .08); }
