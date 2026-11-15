@@ -160,9 +160,99 @@
         </template>
       </template>
 
-      <!-- Tesisat bazında -->
+      <!-- Tesisat bazında (tasarım kataloğu 10): sayılar, her tesisat için durum kartı ve sistemler, altta kontrol raporu tablosu -->
       <template v-else>
+        <div class="inst-kpis">
+          <NuxtLink to="/expert/installations" class="kpi-card blue">
+            <span class="kpi-icon"><i class="pi pi-clone" /></span>
+            <span class="kpi-text"><strong>{{ data.installations.length }}</strong><small>Toplam tesisat</small></span>
+            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+          </NuxtLink>
+          <NuxtLink to="/expert/installations" class="kpi-card bad">
+            <span class="kpi-icon"><i class="pi pi-exclamation-triangle" /></span>
+            <span class="kpi-text"><strong>{{ installationCount('uygun_degil') }}</strong><small>Uygun değil</small></span>
+            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+          </NuxtLink>
+          <NuxtLink to="/expert/installations" class="kpi-card warn">
+            <span class="kpi-icon"><i class="pi pi-calendar" /></span>
+            <span class="kpi-text"><strong>{{ overdueInstallations }}</strong><small>Süresi geçen</small></span>
+            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+          </NuxtLink>
+          <NuxtLink to="/expert/bulgu-takip" class="kpi-card blue">
+            <span class="kpi-icon"><i class="pi pi-file" /></span>
+            <span class="kpi-text"><strong>{{ openFindings }}</strong><small>Açık bulgu</small></span>
+            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+          </NuxtLink>
+        </div>
+
         <div v-if="!data.installations.length" class="card state">Bu kapsamda tesisat yok.</div>
+        <div v-for="installation in data.installations" :key="installation.id" class="inst-row">
+          <section class="card inst-card">
+            <header>
+              <h2>{{ installation.type?.name || installation.name }}</h2>
+              <span class="status-pill" :class="installation.status"><i :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span>
+              <span v-if="installation.status !== 'rapor_yok' && dueShort(installation.days_left)" class="due-chip" :class="dueKey(installation.days_left)"><i class="pi pi-calendar" aria-hidden="true" /> {{ dueShort(installation.days_left) }}</span>
+            </header>
+            <!-- Kaydın adı (bina) türden farklıysa, lokasyon ve işyeri: birden çok tesisatta hangisi olduğu belli olsun -->
+            <p class="place-line"><template v-if="installation.type?.name && installation.name !== installation.type.name">{{ installation.name }} · </template>{{ locationLabel(installation.location?.id, installation.location?.name) }}<template v-if="installation.workplace"> · {{ workplaceLabel(installation.workplace.id, installation.workplace.company_name) }}</template></p>
+            <figure class="inst-hero no-print">
+              <!-- Katalogdaki görsel (tasarım kataloğu 10'dan kırpıldı) -->
+              <img src="/katalog/durum-raporu-tesisat-katalog.webp" alt="" />
+            </figure>
+            <div class="date-strip">
+              <span><i class="pi pi-calendar" aria-hidden="true" /> Son kontrol <strong>{{ formatDate(installation.last_control_date) }}</strong></span>
+              <span><i class="pi pi-calendar" aria-hidden="true" /> Geçerlilik <strong>{{ formatDate(installation.next_control_date) }}</strong></span>
+            </div>
+          </section>
+          <section class="card systems-side">
+            <h3>Sistemlerin durumu</h3>
+            <ul v-if="physicalSystems(installation).length" class="row-list">
+              <li v-for="system in physicalSystems(installation)" :key="system.name">
+                <NuxtLink :to="`/expert/installations?tesisat=${installation.id}`" class="list-row">
+                  <i class="pi pi-th-large row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
+                  <span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
+                  <i class="pi pi-angle-right" aria-hidden="true" />
+                </NuxtLink>
+              </li>
+            </ul>
+            <p v-else class="muted">Henüz sistem yok.</p>
+            <template v-if="documentChecks(installation).length">
+              <h3>Belge ve proje kontrolleri</h3>
+              <ul class="row-list">
+                <li v-for="system in documentChecks(installation)" :key="system.name">
+                  <NuxtLink :to="`/expert/installations?tesisat=${installation.id}`" class="list-row">
+                    <i class="pi pi-file row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
+                    <span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
+                    <i class="pi pi-angle-right" aria-hidden="true" />
+                  </NuxtLink>
+                </li>
+              </ul>
+            </template>
+            <NuxtLink to="/expert/bulgu-takip" class="primary-button wide no-print">İlgili bulguları aç <i class="pi pi-arrow-right" aria-hidden="true" /></NuxtLink>
+          </section>
+        </div>
+
+        <section v-if="data.installations.length" class="card table-card">
+          <header class="table-head"><h3>Kontrol raporu</h3></header>
+          <div class="table-wrap">
+            <table class="report-table">
+              <thead><tr><th>Tesisat</th><th>Kontrol kuruluşu</th><th>Rapor no</th><th>Son kontrol</th><th>Geçerlilik</th><th>Sonuç</th></tr></thead>
+              <tbody>
+                <tr v-for="installation in data.installations" :key="installation.id">
+                  <td><strong>{{ installation.type?.name || installation.name }}</strong><small v-if="installation.type?.name && installation.name !== installation.type.name"> · {{ installation.name }}</small></td>
+                  <td>{{ installation.inspection_body || '—' }}</td>
+                  <td>{{ installation.report_no || '—' }}</td>
+                  <td>{{ formatDate(installation.last_control_date) }}</td>
+                  <td>{{ formatDate(installation.next_control_date) }}</td>
+                  <td><span class="status-badge" :class="installation.status"><i :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <p class="scope-foot">Rapor kapsamı: Tesisatlar</p>
+
+        <template v-if="SHOW_LEGACY_INSTALLATIONS">
         <section v-for="installation in data.installations" :key="installation.id" class="card block installation">
           <header class="installation-head">
             <div>
@@ -215,6 +305,7 @@
             <ol class="general-findings"><li v-for="(finding, index) in installation.general_findings" :key="index">{{ finding }}</li></ol>
           </template>
         </section>
+        </template>
       </template>
     </template>
   </div>
@@ -229,6 +320,7 @@ definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
 // Tasarım kataloğu 09 / 10'da olmayan öğeler: katalogda yok, gizli; ileride açılabilir (kod ve veri yerinde).
 const SHOW_LEGACY_KPIS = false // Üstteki beş sayı kartı (Aktif ekipman, Uygun, Uygun değil, Süresi geçmiş, 60 gün içinde)
 const SHOW_LEGACY_EQUIPMENT = false // Ekipman bazında: kategori halkaları, Ekipman türleri grafiği ve tablosu, Lokasyonlar, Sorunlu ekipmanlar
+const SHOW_LEGACY_INSTALLATIONS = false // Tesisat bazında: bilgi şeridi, sistem halkası ve ekipman grafiği, sistemler tablosu ve bulguları, genel bulgular
 
 // Ekipman türleri tablosu: Belirtilmemiş / Rapor bekleniyor / Rapor yok sütunu hiçbir satırda değeri yoksa gösterilmez (veri gelince görünür).
 const OPTIONAL_STATUS = [['belirtilmemis', 'Belirtilmemiş'], ['rapor_bekleniyor', 'Rapor bekleniyor'], ['rapor_yok', 'Rapor yok']] as const
@@ -238,7 +330,21 @@ const EXTRA_STATUS = [['rapor_bekleniyor', 'Rapor bekleniyor'], ['rapor_yok', 'R
 const categoryExtraStatus = computed(() => EXTRA_STATUS.filter(([key]) => data.value?.status?.[key]))
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok', belirtilmemis: 'Belirtilmemiş' }
+const STATUS_ICONS: Record<string, string> = { uygun: 'pi pi-check', uygun_degil: 'pi pi-exclamation-triangle', rapor_bekleniyor: 'pi pi-hourglass', rapor_yok: 'pi pi-clock', belirtilmemis: 'pi pi-question-circle' }
 const statusText = STATUS_TEXT
+
+// Tesisat bazında sayılar: tesisat, uygun değil, süresi geçen, açık bulgu (son kontrollerin sistem ve genel bulguları).
+const installationCount = (status: string) => (data.value?.installations || []).filter((item: any) => item.status === status).length
+const overdueInstallations = computed(() => (data.value?.installations || []).filter((item: any) => item.days_left !== null && item.days_left < 0).length)
+const openFindings = computed(() => (data.value?.installations || []).reduce((sum: number, item: any) =>
+  sum + item.systems.reduce((count: number, system: any) => count + system.findings.length, 0) + (item.general_findings?.length || 0), 0))
+// Sistemler ve belge / proje kontrolleri (Tesisat detayındaki gibi); Tesis Özellikleri durumu olmayan bilgi kartı, listede yok.
+const FACILITY_SYSTEM_NAME = 'Tesis Özellikleri'
+const physicalSystems = (installation: any) => installation.systems.filter((system: any) => !system.card)
+const documentChecks = (installation: any) => installation.systems.filter((system: any) => system.card && system.name !== FACILITY_SYSTEM_NAME)
+// Durum kartındaki kısa yazı (katalogdaki "126 gün geçti") ve rengi
+const dueShort = (days: number | null) => days === null || days === undefined ? '' : days < 0 ? `${-days} gün geçti` : days === 0 ? 'Bugün doluyor' : `${days} gün kaldı`
+const dueKey = (days: number) => days < 0 ? 'overdue' : days <= 60 ? 'soon' : 'ok'
 
 const { get, errorMessage } = useExpertApi()
 const { groups, load, query, scopeLabel, locationLabel, locationId, locations } = useDashboardScope()
@@ -408,6 +514,46 @@ tfoot .num{min-width:64px;padding:5px 12px}
 tfoot .num.total{background:color-mix(in srgb,var(--pk-accent) 16%,var(--admin-surface))}
 .scope-note{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:12px 4px 0;color:var(--admin-text);font-size:14px}.scope-note i{color:var(--admin-muted)}
 .pad{padding:8px 0}
+/* Tesisat bazında (tasarım kataloğu 10) */
+.inst-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi-card{display:flex;align-items:center;gap:16px;min-height:76px;padding:12px 20px;border:1px solid var(--admin-border);border-radius:16px;background:var(--admin-card);box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05);color:inherit;text-decoration:none}
+.kpi-card:hover{border-color:var(--admin-muted)}
+.kpi-icon{flex:none;width:52px;height:52px;display:grid;place-items:center;border-radius:50%;font-size:21px}
+.kpi-card.blue .kpi-icon{background:var(--admin-accent-soft);color:var(--admin-accent-text)}
+.kpi-card.bad .kpi-icon{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.kpi-card.warn .kpi-icon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+.kpi-text{display:grid;gap:2px;min-width:0}.kpi-text strong{color:var(--admin-heading);font-size:24px;font-weight:800;line-height:1.1}.kpi-text small{color:var(--admin-text);font-size:15px}
+.kpi-arrow{margin-left:auto;color:var(--admin-heading);font-size:15px}
+.inst-row{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(320px,1fr);gap:18px;align-items:stretch}
+.inst-card{display:flex;flex-direction:column;padding:20px 24px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
+.inst-card header{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.inst-card h2{font-size:26px}
+.inst-card .status-pill,.due-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;font-size:15px;font-weight:700}
+.due-chip{background:var(--admin-chip);color:var(--admin-text)}
+.due-chip.overdue,.due-chip.soon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-chip.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.place-line{margin:6px 0 0;color:var(--admin-muted);font-size:13px}
+.inst-hero{margin:4px 0 0;display:flex;justify-content:center}.inst-hero img{display:block;width:min(100%,780px)}
+.date-strip{display:flex;flex-wrap:wrap;justify-content:center;align-self:center;gap:0;margin-top:-26px;position:relative;padding:10px 6px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-surface);box-shadow:0 10px 24px rgba(var(--pk-shadow-rgb),.08);color:var(--admin-text);font-size:15px}
+.date-strip span{display:inline-flex;align-items:center;gap:9px;padding:0 20px}.date-strip span + span{border-left:1px solid var(--admin-border)}
+.date-strip i{color:var(--admin-muted)}.date-strip strong{margin-left:4px;color:var(--admin-heading);font-weight:800}
+.systems-side{display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.systems-side h3{font-size:21px;font-weight:800}.systems-side h3 + .row-list + h3{margin-top:6px}
+.row-list{display:grid;margin:0;padding:0;list-style:none;border:1px solid var(--admin-row-border);border-radius:12px;overflow:hidden}
+.row-list li + li{border-top:1px solid var(--admin-row-border)}
+.list-row{display:flex;align-items:center;gap:14px;padding:11px 16px;color:var(--admin-heading);font-size:15px;text-decoration:none}
+.list-row:hover{background:var(--admin-hover)}
+.row-icon{color:var(--admin-accent-text);font-size:18px}.row-name{flex:1;min-width:0}
+.list-row .status-badge,.report-table .status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;font-size:13.5px;font-weight:700}
+.list-row > .pi-angle-right{color:var(--admin-heading)}
+.primary-button.wide{width:100%;margin-top:auto}
+.report-table th{padding:11px 22px;border-bottom:0;color:var(--admin-heading);font-size:14px;font-weight:600}
+.report-table thead th:first-child{border-radius:12px 0 0 12px}.report-table thead th:last-child{border-radius:0 12px 12px 0}
+.report-table td{padding:14px 22px;color:var(--admin-heading);font-size:15px;vertical-align:middle}.report-table td small{color:var(--admin-muted);font-size:13px}
+.report-table tbody tr:last-child td{border-bottom:0}
+.status-badge.belirtilmemis,.status-badge.rapor_yok,.status-pill.belirtilmemis,.status-pill.rapor_yok{background:var(--admin-chip);color:var(--admin-text)}
+.status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+.scope-foot{margin:-4px 0 0;color:var(--admin-text);font-size:14px}
+@media(max-width:1180px){.inst-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.inst-row{grid-template-columns:1fr}}
 @media(max-width:1180px){.top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero{grid-column:1 / -1;order:3}}
 @media(max-width:760px){.top{grid-template-columns:1fr}.segment button{min-width:0}h1{font-size:30px}}
 .count{padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px}
@@ -456,6 +602,8 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:var(--admin-hover)}
   /* Çizim basılmaz; kapsam ve çubuklar yan yana. Çubuk ve hap renkleri basılsın. */
   .report-page .top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .report-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-page .date-strip { margin-top: 12px; }
+  .report-page .inst-row { break-inside: avoid; }
   body { background: #fff; }
 }
 </style>
