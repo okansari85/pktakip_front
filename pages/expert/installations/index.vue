@@ -1,11 +1,29 @@
 <template>
   <div class="installations-page">
+    <!-- Tesisatlar (tasarım kataloğu 07): başlık ve tür hapları. Detay görünümünde (08, ?tesisat=ID) sayfa yolu Tesisatlar > tesisat. -->
     <div class="page-head">
-      <div>
-        <div class="breadcrumb"><template v-if="!multiUser"><span>Uzman Paneli</span><i class="pi pi-angle-right" /></template><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Tesisatlar</strong></div>
-        <h1>Tesisatlar</h1>
-        <p v-if="context">{{ contextLabel }}</p>
-        <p v-else>Üstten lokasyon ve firma seçin.</p>
+      <div class="head-title">
+        <nav class="crumb" aria-label="Sayfa yolu">
+          <i class="pi pi-home" aria-hidden="true" />
+          <template v-if="detailView && detail">
+            <a href="/expert/installations" @click.prevent="closeDetail">Tesisatlar</a>
+            <i class="pi pi-angle-right" aria-hidden="true" />
+            <strong>{{ detail.name }}</strong>
+          </template>
+          <template v-else>
+            <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
+            <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
+            <i class="pi pi-angle-right" aria-hidden="true" />
+            <strong>Tesisatlar</strong>
+          </template>
+        </nav>
+        <h1>{{ detailView && detail ? detail.name : 'Tesisatlar' }}</h1>
+        <p class="lead">{{ context ? contextLabel : 'Üstten lokasyon ve firma seçin.' }}</p>
+      </div>
+      <!-- Tesisat türleri: yalnız bu lokasyonda tanımlı olanlar (ve eklenmek üzere seçilen); başka tür sondaki kutudan seçilir -->
+      <div v-if="context && !detailView && shownTabs.length" class="type-pills">
+        <button v-for="type in shownTabs" :key="type.slug" type="button" class="type-pill" :class="{ active: activeSlug === type.slug }" :aria-pressed="activeSlug === type.slug" @click="selectTab(type.slug)"><i :class="typeIcon(type.slug)" aria-hidden="true" /> {{ type.name }}</button>
+        <Select v-if="addableTabs.length" :model-value="null" :options="addableTabs" option-label="name" option-value="slug" placeholder="Tesisat türü ekle" class="type-add" @update:model-value="selectTab" />
       </div>
     </div>
 
@@ -16,12 +34,6 @@
     </div>
 
     <template v-else>
-      <!-- Tesisat türleri: yalnız bu lokasyonda tanımlı olanlar (ve eklenmek üzere seçilen); başka tür sondaki kutudan seçilir -->
-      <div v-if="shownTabs.length" class="tabs">
-        <button v-for="type in shownTabs" :key="type.slug" type="button" :class="{ active: activeSlug === type.slug }" @click="selectTab(type.slug)">{{ type.name }}</button>
-        <Select v-if="addableTabs.length" :model-value="null" :options="addableTabs" option-label="name" option-value="slug" placeholder="Tesisat türü ekle" size="small" class="type-add" @update:model-value="selectTab" />
-      </div>
-
       <div v-if="loading" class="card state">Tesisat yükleniyor...</div>
       <div v-else-if="error" class="card state error-text">{{ error }}</div>
 
@@ -38,7 +50,7 @@
       <template v-else>
         <!-- Aynı türden birden fazla tesisat varsa (ör. işyerine ait) seçim. Elektrik ailesinde her zaman: bina bazında rapor
              gelirse her bina ayrı kayıt ("Tesisat ekle"); birden çok kayıtta üstte özet, her kaydın durumu noktada -->
-        <template v-if="ofType.length > 1 || isElectricalTab">
+        <template v-if="!detailView && (ofType.length > 1 || isElectricalTab)">
           <p v-if="isElectricalTab && ofType.length > 1" class="picker-summary">
             {{ ofType.length }} {{ activeType?.name || 'tesisat' }} kaydı<template v-if="ofTypeCount('uygun_degil')"> · <strong class="bad">{{ ofTypeCount('uygun_degil') }} uygun değil</strong></template><template v-if="ofTypeCount('rapor_yok')"> · {{ ofTypeCount('rapor_yok') }} kontrol yok</template>
           </p>
@@ -53,9 +65,91 @@
         </template>
 
         <div v-if="detailLoading && !detail" class="card state">Tesisat yükleniyor...</div>
+        <template v-else-if="detail && !detailView">
+          <!-- Genel bakış (tasarım kataloğu 07): seçili tesisatın durumu, çizim, sayılar, rapor; altta sistemler -->
+          <div class="top">
+            <section class="card status-card">
+              <header>
+                <i :class="typeIcon(detail.type?.slug)" class="type-icon" aria-hidden="true" />
+                <h2>{{ detail.name }}</h2>
+                <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
+              </header>
+              <p v-if="ofType.length > 1 || installationArea(detail.id) || detail.workplace" class="place-line"><template v-if="installationArea(detail.id)">{{ installationArea(detail.id) }} · </template>{{ placeOf(detail) }}</p>
+              <dl class="facts">
+                <div><dt><i class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
+                <div><dt><i class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
+              </dl>
+              <!-- Kalan gün / süresi geçti; kontrol yoksa ya da rapor bekleniyorsa kısa not -->
+              <p v-if="detail.status === 'rapor_bekleniyor'" class="due-strip soon"><i class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor</p>
+              <p v-else-if="detail.status === 'rapor_yok'" class="due-strip"><i class="pi pi-info-circle" /> {{ detail.reports.length ? 'Henüz tesisat raporu yok' : 'Henüz kontrol eklenmedi' }}</p>
+              <p v-else-if="dueText" class="due-strip" :class="daysKey(detail.days_left)"><i :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</p>
+              <button class="primary-button" type="button" @click="openControl()"><i class="pi pi-plus" /> Kontrol ekle</button>
+              <button class="outline-button" type="button" @click="openDetail()"><i class="pi pi-file" /> Detayları aç <i class="pi pi-angle-right push" /></button>
+            </section>
+            <figure class="hero">
+              <!-- İzometrik çizim: beton kaidede yangın pompa istasyonu (public/katalog, elle çizildi) -->
+              <img src="/katalog/pompa-istasyonu.svg" alt="" />
+            </figure>
+            <div class="top-right">
+              <div class="kpis">
+                <button type="button" class="kpi blue" @click="openDetail()">
+                  <span class="kpi-icon"><i class="pi pi-sitemap" /></span>
+                  <span class="kpi-text"><strong>{{ ofType.length }}</strong><small>Tesisat</small></span>
+                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                </button>
+                <button type="button" class="kpi ok" @click="openDetail()">
+                  <span class="kpi-icon"><i class="pi pi-shield" /></span>
+                  <span class="kpi-text"><strong>{{ listSystems.length }}</strong><small>Fiziksel sistem</small></span>
+                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                </button>
+                <button type="button" class="kpi warn wide" @click="navigateTo('/expert/bulgu-takip')">
+                  <span class="kpi-icon"><i class="pi pi-exclamation-triangle" /></span>
+                  <span class="kpi-text"><strong>{{ totalFindings }}</strong><small>Açık bulgu</small></span>
+                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                </button>
+              </div>
+              <!-- Son tesisat raporu: kuruluş, rapor no, raporu aç -->
+              <section class="card report-card">
+                <header><i class="pi pi-file" /><h3>Rapor</h3></header>
+                <dl class="facts">
+                  <div><dt>Kuruluş</dt><dd>{{ detail.inspection_body || '—' }}</dd></div>
+                  <div><dt>Rapor No</dt><dd>{{ detail.report_no || '—' }}</dd></div>
+                </dl>
+                <button v-if="generalReport?.has_report" class="primary-button" type="button" @click="openReport(generalReport)"><i class="pi pi-external-link" /> Raporu aç</button>
+                <p v-else class="muted">{{ detail.reports.length ? 'Rapor dosyası yok.' : 'Henüz tesisat raporu yok.' }}</p>
+              </section>
+            </div>
+          </div>
+
+          <!-- Sistemler: satırın oku detayı o sistem açık olarak açar -->
+          <section class="card systems-card">
+            <header class="systems-head">
+              <h2>Sistemler</h2>
+              <small v-if="cardSystems.length">Belge ve proje kontrolleri ayrıca izlenir</small>
+              <button class="primary-button" type="button" @click="editOpen = true"><i class="pi pi-plus" /> Sistem ekle</button>
+            </header>
+            <div v-if="!listSystems.length" class="empty-inline"><i class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.</div>
+            <div v-else class="table-wrap">
+              <table class="systems-table">
+                <thead><tr><th>Sistem</th><th>Ekipman</th><th>Son kontrol</th><th>Durum</th><th>Bulgular</th><th class="actions-col"><span class="sr-only">Aç</span></th></tr></thead>
+                <tbody>
+                  <tr v-for="system in listSystems" :key="system.id" @click="openDetail(system.id)">
+                    <td><span class="system-cell"><i class="pi pi-th-large" aria-hidden="true" /> <strong>{{ system.name }}</strong></span></td>
+                    <td>{{ system.has_equipment ? system.equipment.length : (systemMeta(system) || '—') }}</td>
+                    <td>{{ formatDate(system.last_control_date) }}</td>
+                    <td><span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" /> {{ STATUS_LABELS[system.status] }}</span></td>
+                    <td>{{ system.findings.length }}</td>
+                    <td class="actions-col"><button class="icon-button" type="button" :aria-label="`${system.name} ayrıntıları`" @click.stop="openDetail(system.id)"><i class="pi pi-angle-right" /></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </template>
+
         <template v-else-if="detail">
-          <!-- Genel bilgiler -->
-          <section class="card overview" :class="detail.status">
+          <!-- Genel bilgiler: katalogda yok, gizli (SHOW_LEGACY_OVERVIEW); Düzenle ve Rapor bekleniyor burada (Sistem ekle aynı düzenleme penceresini açar) -->
+          <section v-if="SHOW_LEGACY_OVERVIEW" class="card overview" :class="detail.status">
             <div class="overview-main">
               <div class="overview-icon"><i class="pi pi-shield" /></div>
               <div class="overview-title">
@@ -397,8 +491,31 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'expert', middleware: 'expert' })
-// Sayfa yolundaki "Uzman Paneli" yalnız bireysel uzman hesabında.
-const { multiUser } = useAccount()
+// Sayfa yolu: bireysel uzmanda Ana Sayfa, diğer hesaplarda Genel Bakış.
+const { account, multiUser } = useAccount()
+const individual = computed(() => !!account.value && !multiUser.value)
+
+// Tasarım kataloğu 07 / 08'de olmayan öğeler: katalogda yok, gizli; ileride açılabilir (kod yerinde).
+const SHOW_LEGACY_OVERVIEW = false // Eski genel bilgiler kartı (Düzenle, Rapor bekleniyor, bilgi şeridi, sayılar); Sistem ekle aynı düzenleme penceresini açar
+
+// Tür haplarındaki simgeler (PrimeIcons'ta yangın / batarya yok; en yakınları)
+const TYPE_ICONS: Record<string, string> = {
+  'yangin-tesisati': 'pi pi-shield', 'yangin-algilama': 'pi pi-wifi', 'elektrik-ic-tesisati': 'pi pi-bolt', topraklama: 'pi pi-arrow-down',
+  'havalandirma-klima': 'pi pi-asterisk', paratoner: 'pi pi-bolt', akumulator: 'pi pi-server', trafo: 'pi pi-microchip'
+}
+const typeIcon = (slug?: string) => TYPE_ICONS[slug || ''] || 'pi pi-sitemap'
+
+// Detay görünümü (tasarım kataloğu 08): adres satırında ?tesisat=ID; geri tuşu ve sayfa yolundaki "Tesisatlar" genel bakışa döner.
+const route = useRoute()
+const router = useRouter()
+const detailView = computed(() => typeof route.query.tesisat === 'string' && !!route.query.tesisat)
+const openDetail = (systemId?: number) => {
+  if (!detail.value) return
+  if (systemId) openIds.value = [systemId]
+  router.push({ query: { tesisat: String(detail.value.id) } })
+  window.scrollTo({ top: 0 })
+}
+const closeDetail = () => { router.push({ query: {} }); window.scrollTo({ top: 0 }) }
 
 // Sekmeler: tesisat türleri (sırasıyla). Diğer tesisatlar geldikçe buraya eklenir.
 const TAB_SLUGS = ['yangin-tesisati', 'yangin-algilama', 'elektrik-ic-tesisati', 'topraklama', 'havalandirma-klima', 'paratoner', 'akumulator', 'trafo']
@@ -454,6 +571,11 @@ const dueText = computed(() => {
   const days = detail.value?.days_left
   if (days === null || days === undefined) return ''
   return days < 0 ? `Kontrol süresi ${-days} gün geçti` : days === 0 ? 'Kontrol süresi bugün doluyor' : `Sonraki kontrole ${days} gün`
+})
+// Durum kartındaki kısa yazı (katalogdaki "126 gün geçti")
+const dueShort = computed(() => {
+  const days = detail.value?.days_left
+  return days === null || days === undefined ? '' : days < 0 ? `${-days} gün geçti` : days === 0 ? 'Bugün doluyor' : `${days} gün kaldı`
 })
 
 const isOpen = (id: number) => openIds.value.includes(id)
@@ -603,6 +725,12 @@ const loadInstallations = async () => {
       loadAreas(context.value.location_id, true)
     ])
     installations.value = list
+    // Adresteki detay (?tesisat=ID): o tesisatın türü ve kendisi seçilir; tesisat yoksa (silinmiş, başka lokasyon) genel bakış.
+    if (detailView.value) {
+      const wanted = list.find((item: any) => String(item.id) === route.query.tesisat)
+      if (wanted) { activeSlug.value = wanted.type?.slug || activeSlug.value; selectedId.value = wanted.id }
+      else router.replace({ query: {} })
+    }
     // Seçili tür bu lokasyonda tanımlı değilse ilk tanımlı türe geçilir; hiç tesisat yoksa tür seçilmez.
     if (!definedSlugs.value.has(activeSlug.value)) activeSlug.value = TAB_SLUGS.find(slug => definedSlugs.value.has(slug)) || ''
     if (!ofType.value.some(item => item.id === selectedId.value)) selectedId.value = ofType.value[0]?.id ?? null
@@ -678,6 +806,12 @@ const deleteReport = async (report: any) => {
   }
 }
 
+// Detay açıkken seçili tesisat değişirse (rapor başka kayda gitti, silindi) adres de değişir.
+watch(selectedId, id => {
+  if (!detailView.value || String(id) === route.query.tesisat) return
+  router.replace({ query: id ? { tesisat: String(id) } : {} })
+})
+
 watch(() => context.value && `${context.value.location_id}-${context.value.workplace_id ?? ''}`, () => {
   selectedId.value = null
   openIds.value = []
@@ -694,13 +828,66 @@ onMounted(async () => {
 
 <style scoped>
 .installations-page { margin: 0 auto; }
-.page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:20px; }
-.breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
-h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
+/* Başlık ve tür hapları (tasarım kataloğu 07) */
+.page-head{display:flex;align-items:flex-start;gap:24px;margin-bottom:18px}
+.head-title{flex:none;max-width:420px}
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
+.crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
+.crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
+h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.lead{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
 h2{margin:0;color:var(--admin-heading);font-size:20px}h3{margin:0;color:var(--admin-heading);font-size:15px}h4{margin:14px 0 8px;color:var(--admin-heading);font-size:12px}
+.type-pills{flex:1;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;padding-top:30px}
+.type-pill{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.05)}
+.type-pill i{color:var(--admin-heading);font-size:14px}
+.type-pill:hover{border-color:var(--admin-muted)}
+.type-pill.active{border-color:var(--pk-yellow);background:var(--pk-yellow);color:var(--pk-on-accent);box-shadow:0 8px 20px rgba(var(--pk-accent-rgb),.25)}.type-pill.active i{color:var(--pk-on-accent)}
+.type-pills .type-add{height:42px;border-radius:12px}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px}
 .empty-state{display:flex;flex-direction:column;align-items:center;gap:7px;padding:70px 20px;text-align:center;color:var(--admin-muted)}.empty-state i{font-size:28px}.empty-state strong{color:var(--admin-heading)}.empty-state .primary-button{margin-top:10px}
 .state{padding:60px 20px;text-align:center;color:var(--admin-muted)}
+/* Genel bakış üst sırası: durum kartı, çizim, sayılar + rapor */
+.top{display:grid;grid-template-columns:minmax(290px,350px) minmax(0,1fr) minmax(320px,390px);gap:16px;align-items:start;margin-bottom:18px}
+.status-card,.report-card{display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
+.status-card header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status-card header h2{font-size:21px;font-weight:800}
+.type-icon{color:var(--pk-danger);font-size:20px}
+.status-card .status-pill{margin-left:auto;padding:5px 12px;font-size:13px}
+.place-line{margin:-4px 0 0;color:var(--admin-muted);font-size:13px}
+.facts{display:grid;margin:0;border-top:1px solid var(--admin-border)}
+.facts > div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--admin-row-border)}
+.facts dt{display:flex;align-items:center;gap:12px;color:var(--admin-text);font-size:14px}.facts dt i{color:var(--admin-muted)}
+.facts dd{margin:0;color:var(--admin-heading);font-size:15px;font-weight:700;text-align:right;overflow-wrap:anywhere}
+.due-strip{display:flex;align-items:center;gap:10px;margin:0;padding:12px 16px;border-radius:12px;background:var(--admin-chip);color:var(--admin-text);font-size:16px;font-weight:700}
+.due-strip.overdue{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+.due-strip.soon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-strip.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.status-card .primary-button,.report-card .primary-button{width:100%;min-height:46px;font-size:15px}
+.outline-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:0 16px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-soft);color:var(--admin-heading);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.outline-button:hover{border-color:var(--admin-muted)}.outline-button .push{margin-left:auto}.outline-button .pi-file{margin-left:auto}
+.hero{min-width:0;margin:-20px 0 0;display:flex;justify-content:center}
+.hero img{display:block;width:min(100%,620px)}
+.top-right{display:grid;gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kpi{display:flex;align-items:center;gap:12px;min-height:80px;padding:14px 16px;border:1px solid var(--admin-border);border-radius:16px;background:var(--admin-card);box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05);font:inherit;text-align:left;cursor:pointer}
+.kpi:hover{border-color:var(--admin-muted)}.kpi.wide{grid-column:1 / -1}
+.kpi-icon{flex:none;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;font-size:19px}
+.kpi.blue .kpi-icon{background:var(--admin-accent-soft);color:var(--admin-accent-text)}.kpi.ok .kpi-icon{background:var(--admin-success-bg);color:var(--admin-success-text)}.kpi.warn .kpi-icon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+.kpi-text{display:grid;gap:2px;min-width:0}.kpi-text strong{color:var(--admin-heading);font-size:24px;font-weight:800;line-height:1.1}.kpi-text small{color:var(--admin-text);font-size:13px}
+.kpi-arrow{margin-left:auto;color:var(--admin-heading);font-size:14px}
+.report-card header{display:flex;align-items:center;gap:10px}.report-card header i{color:var(--admin-accent-text);font-size:18px}.report-card h3{font-size:18px;font-weight:800}
+.report-card .facts dt{color:var(--admin-muted)}
+/* Sistemler tablosu */
+.systems-card{overflow:hidden;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.systems-head{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:16px 20px}
+.systems-head h2{font-size:26px;font-weight:800}
+.systems-head small{padding-left:14px;border-left:1px solid var(--admin-border);color:var(--admin-muted);font-size:15px}
+.systems-head .primary-button{margin-left:auto}
+.systems-card .table-wrap{padding:0 20px 14px}
+.systems-table th{font-size:14px;color:var(--admin-heading);border-bottom:0}.systems-table thead th:first-child{border-radius:12px 0 0 12px}.systems-table thead th:last-child{border-radius:0 12px 12px 0}
+.systems-table td{font-size:15px;padding:13px 16px}.systems-table tbody tr{cursor:pointer}.systems-table tbody tr:hover{background:var(--admin-hover)}.systems-table tbody tr:last-child td{border-bottom:0}
+.system-cell{display:inline-flex;align-items:center;gap:12px}.system-cell i{color:var(--admin-accent-text);font-size:18px}.system-cell strong{font-weight:600}
+.systems-table .status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;font-size:14px}
+.go-button,.systems-table .icon-button{width:34px;height:34px;color:var(--admin-accent-text)}.systems-table .icon-button:hover{color:var(--admin-accent-text);background:var(--admin-accent-soft)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs .type-add{align-self:center;margin-left:6px}
@@ -814,7 +1001,12 @@ td strong{color:var(--admin-heading)}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 16px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 .error-text{color:var(--admin-danger-text);font-size:12px}
-@media(max-width:1000px){.info-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.info-cards{grid-template-columns:1fr}}
+@media(max-width:1300px){
+  .page-head{flex-direction:column;gap:8px}.head-title{max-width:none}.type-pills{justify-content:flex-start;padding-top:0}
+  .top{grid-template-columns:minmax(280px,340px) minmax(0,1fr)}.top-right{grid-column:1 / -1;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+}
+@media(max-width:1000px){.info-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.info-cards{grid-template-columns:1fr}.top-right{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:800px){.top{grid-template-columns:minmax(0,1fr)}.hero{display:none}h1{font-size:32px}.systems-head small{border-left:0;padding-left:0}}
 @media(max-width:700px){
   .page-head{align-items:flex-start;flex-direction:column}
   .overview-status{align-items:flex-start}.pills{justify-content:flex-start}.overview-actions{width:100%}.overview-actions button{flex:1;justify-content:center}
