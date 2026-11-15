@@ -35,6 +35,10 @@ export const agendaNextDay = (agenda: AgendaEntry[] | undefined) => {
   return date ? { date, days_left: entries.find(entry => entry.date === date)!.days_left, entries: entries.filter(entry => entry.date === date) } : null
 }
 
+// Kontrol planı (pk-control-plans): ne kontrol edileceği ("Yangın Tesisatı · Forklift · 2 ekipman"); başlık varsa başlığı.
+export const controlPlanSubject = (plan: any) => [plan.installation?.name, plan.equipment_type_name && agendaShortName(plan.equipment_type_name), plan.equipment?.length ? `${plan.equipment.length} ekipman` : ''].filter(Boolean).join(' · ')
+export const controlPlanText = (plan: any) => plan.title || controlPlanSubject(plan) || 'Planlı kontrol'
+
 // Kontrol zamanı (renk): süresi geçmiş / 30 gün içinde / 31–60 gün / 60 günden sonra.
 export const agendaTiming = (days: number | null | undefined) => days === null || days === undefined ? 'none' : days < 0 ? 'overdue' : days <= 30 ? 'd30' : days <= 60 ? 'd60' : 'later'
 

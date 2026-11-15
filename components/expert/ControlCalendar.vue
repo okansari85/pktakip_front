@@ -29,6 +29,7 @@
 
       <div class="legend">
         <span v-for="key in LEGEND" :key="key"><i :class="key" />{{ timingText[key] }}</span>
+        <span><i class="plan" />Planlanan kontrol</span>
         <span v-if="undated" class="undated">{{ undated }} ekipmanın kontrol tarihi yok; takvimde görünmez.</span>
       </div>
 
@@ -58,7 +59,7 @@
           <ul v-if="month.days.length" class="day-lines">
             <li v-for="day in shownDays(month)" :key="day.date">
               <button type="button" :class="{ selected: day.date === selectedDate }" @click="openDay(day.date)">
-                <i class="dot" :class="timingOf(day.days_left)" />
+                <i class="dot" :class="day.entries.length || day.rechecks.length ? timingOf(day.days_left) : 'plan'" />
                 <span class="date">{{ dayLabel(day.date) }}</span>
                 <span class="text">{{ day.text }}<small>{{ day.place }}</small></span>
               </button>
@@ -73,13 +74,13 @@
     </section>
 
     <!-- Süresi geçmiş ya da 60 gün içinde dolan kontroller: gün + lokasyon başına gruplu (tüp ve tesisat tek kalem). -->
-    <section class="card list-card">
+    <section v-if="SHOW_SOON_LIST" class="card list-card">
       <header><h3>Yaklaşan ve gecikmiş kontroller</h3><small>Süresi geçmiş ya da 60 gün içinde dolan, en eski önce. Satıra tıklayınca o günün kontrolleri açılır.</small></header>
       <p v-if="!soon.length" class="muted">60 gün içinde dolan ya da süresi geçmiş kontrol yok.</p>
       <ExpertAgendaTable v-else :entries="soon" :limit="12" @select="openDay" />
     </section>
 
-    <ExpertControlDayModal v-if="selectedDate" :date="selectedDate" :entries="entriesOn(selectedDate)" :rechecks="rechecksOn(selectedDate)" :query="query" @close="selectedDate = null" />
+    <ExpertControlDayModal v-if="selectedDate" :date="selectedDate" :entries="entriesOn(selectedDate)" :rechecks="rechecksOn(selectedDate)" :plans="plansOn(selectedDate)" :query="query" @close="selectedDate = null" @edit-plan="editPlan" />
   </div>
 </template>
 
@@ -88,7 +89,12 @@
 // altında o ayın günleri gruplu ("5 Kas · 3 Forklift, 2 Transpalet"). Tesisata bağlı ekipman tesisat, tüpler tek kalem.
 // Güne tıklayınca o günün kontrolleri (lokasyona göre) pencerede açılır.
 // rechecks: Bulgu Takip'te tekrar kontrol tarihi girilmiş, kapanmamış bulgular (yalnız Kontrol Takvimi sayfası verir).
-const props = defineProps<{ agenda: AgendaEntry[]; undated?: number; query: Record<string, any>; rechecks?: any[] }>()
+// plans: kontrol planları (pk-control-plans); planlı gün kesikli çizgiyle ayrılır, gün penceresinde "Düzenle" edit-plan verir.
+const props = defineProps<{ agenda: AgendaEntry[]; undated?: number; query: Record<string, any>; rechecks?: any[]; plans?: any[] }>()
+const emit = defineEmits<{ 'edit-plan': [plan: any] }>()
+
+// Yaklaşan ve gecikmiş kontroller listesi: katalogda yok, gizli; ileride açılabilir.
+const SHOW_SOON_LIST = false
 
 const { locationLabel } = useDashboardScope()
 
@@ -110,31 +116,36 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('tr-TR').format(ag
 const dayLabel = (value: string) => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' }).format(agendaDate(value))
 
 // Günler (birden çok lokasyon birleşik): renk, ay satırı ve ipucu metni.
-interface CalendarDay { date: string; days_left: number; entries: AgendaEntry[]; rechecks: any[]; text: string; place: string }
+interface CalendarDay { date: string; days_left: number; entries: AgendaEntry[]; rechecks: any[]; plans: any[]; text: string; place: string }
 const daysUntil = (date: string) => Math.round((agendaDate(date).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
 const days = computed(() => {
   const byDate = new Map<string, AgendaEntry[]>()
   for (const entry of props.agenda || []) byDate.set(entry.date, [...(byDate.get(entry.date) || []), entry])
   const rechecksByDate = new Map<string, any[]>()
   for (const item of props.rechecks || []) rechecksByDate.set(item.recheck_date, [...(rechecksByDate.get(item.recheck_date) || []), item])
-  const dates = [...new Set([...byDate.keys(), ...rechecksByDate.keys()])].sort()
+  const plansByDate = new Map<string, any[]>()
+  for (const plan of props.plans || []) plansByDate.set(plan.date, [...(plansByDate.get(plan.date) || []), plan])
+  const dates = [...new Set([...byDate.keys(), ...rechecksByDate.keys(), ...plansByDate.keys()])].sort()
   return new Map<string, CalendarDay>(dates.map((date): [string, CalendarDay] => {
     const entries = byDate.get(date) || []
     const rechecks = rechecksByDate.get(date) || []
-    const places = new Set([...entries.map(entry => entry.location_id), ...rechecks.map(item => item.location?.id)])
+    const plans = plansByDate.get(date) || []
+    const places = new Set([...entries.map(entry => entry.location_id), ...rechecks.map(item => item.location?.id), ...plans.map(plan => plan.location_id)])
     const first = entries[0]
     return [date, {
       date,
       days_left: first ? first.days_left : daysUntil(date),
       entries,
       rechecks,
-      text: [entries.length ? agendaGroupsText(entries) : '', rechecks.length ? `${rechecks.length} bulgu tekrar kontrolü` : ''].filter(Boolean).join(', '),
-      place: places.size > 1 ? `${places.size} lokasyon` : first ? locationLabel(first.location_id, first.location_name) : locationLabel(rechecks[0]?.location?.id, rechecks[0]?.location?.name)
+      plans,
+      text: [entries.length ? agendaGroupsText(entries) : '', rechecks.length ? `${rechecks.length} bulgu tekrar kontrolü` : '', plans.length ? `${plans.length} planlı kontrol` : ''].filter(Boolean).join(', '),
+      place: places.size > 1 ? `${places.size} lokasyon` : first ? locationLabel(first.location_id, first.location_name) : rechecks[0] ? locationLabel(rechecks[0].location?.id, rechecks[0].location?.name) : locationLabel(plans[0]?.location_id, plans[0]?.location_name)
     }]
   }))
 })
 const entriesOn = (date: string) => days.value.get(date)?.entries || []
 const rechecksOn = (date: string) => days.value.get(date)?.rechecks || []
+const plansOn = (date: string) => days.value.get(date)?.plans || []
 
 // Seçili yılın ayları: her DatePicker kendi ayında sabit (başlığı gizli); kontrolü olmayan günler seçilemez.
 const months = computed(() => MONTH_NAMES.map((name, index) => {
@@ -166,7 +177,10 @@ const reset = (key: string) => { resets[key] = (resets[key] || 0) + 1 }
 const keyOf = (date: { year: number; month: number; day: number }) => `${date.year}-${pad(date.month + 1)}-${pad(date.day)}`
 const dayClass = (date: { year: number; month: number; day: number }) => {
   const day = days.value.get(keyOf(date))
-  return day ? ['has', agendaTiming(day.days_left), { selected: day.date === selectedDate.value }] : []
+  if (!day) return []
+  // Yalnız planı olan gün renksiz, kesikli çizgili; kontrolü de olan gün renkli + kesikli çizgi.
+  const control = day.entries.length || day.rechecks.length
+  return [control ? ['has', agendaTiming(day.days_left)] : 'plan-only', { planned: day.plans.length, selected: day.date === selectedDate.value }]
 }
 const dayTitle = (date: { year: number; month: number; day: number }) => {
   const day = days.value.get(keyOf(date))
@@ -186,10 +200,16 @@ const onPick = (value: Date) => {
 }
 
 // Seçili yıldan önce dolmuş, hâlâ yapılmamış kontroller.
-const earlier = computed(() => [...days.value.values()].filter(day => day.days_left < 0 && yearOf(day.date) < year.value))
+const earlier = computed(() => [...days.value.values()].filter(day => day.days_left < 0 && yearOf(day.date) < year.value && (day.entries.length || day.rechecks.length)))
 
 // Yaklaşan ve gecikmiş: gün + lokasyon satırları (tarih sırasıyla gelir).
 const soon = computed(() => (props.agenda || []).filter(entry => entry.days_left <= 60))
+
+// Gün penceresinde plana "Düzenle": pencere kapanır, plan penceresi sayfada açılır.
+const editPlan = (plan: any) => {
+  selectedDate.value = null
+  emit('edit-plan', plan)
+}
 
 // Kapsam (filtre, il) değişince pencere kapanır.
 watch(() => props.agenda, () => { selectedDate.value = null })
@@ -217,6 +237,7 @@ h3{margin:0;color:var(--admin-heading);font-size:15px}
 .legend .undated{margin-left:auto}
 .overdue{--timing:#dc2626}.d30{--timing:#f97316}.d60{--timing:#facc15}.later{--timing:#16a34a}
 .legend i,.dot{background:var(--timing,var(--admin-muted))}
+.legend i.plan,.dot.plan{background:transparent;border:2px dashed var(--admin-heading)}
 .months{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .month{display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border:1px solid var(--admin-border);border-radius:10px}
 .month.current{border-color:var(--pk-yellow);box-shadow:0 0 0 1px var(--pk-yellow)}
@@ -241,6 +262,8 @@ h3{margin:0;color:var(--admin-heading);font-size:15px}
 .day{display:grid;place-items:center;width:100%;height:100%;border-radius:50%}
 .day.has{background:var(--timing);color:#fff;font-weight:800;cursor:pointer}.day.has.d60{color:#111827}
 .day.has:hover{filter:brightness(1.1)}
+.day.plan-only{border:2px dashed var(--admin-heading);color:var(--admin-heading);font-weight:800;cursor:pointer}
+.day.has.planned{outline:2px dashed var(--admin-heading);outline-offset:1px}
 .day.selected{box-shadow:0 0 0 2px var(--admin-card),0 0 0 4px var(--admin-heading)}
 .day-lines{display:grid;gap:2px;margin:0;padding:0;list-style:none}
 .day-lines button{display:grid;grid-template-columns:10px 46px minmax(0,1fr);align-items:start;gap:8px;width:100%;padding:5px 6px;border:0;border-radius:7px;background:none;font:inherit;text-align:left;cursor:pointer;color:var(--admin-text)}

@@ -21,6 +21,20 @@
         <NuxtLink class="link-button" to="/expert/bulgu-takip">Bulgu Takip <i class="pi pi-arrow-right" /></NuxtLink>
       </div>
 
+      <!-- Kontrol planlama: o gün planlanan kontroller (yalnız Kontrol Takvimi verir) -->
+      <div v-if="plans?.length" class="entry">
+        <h3><i class="pi pi-calendar-plus" /> Planlanan kontroller</h3>
+        <ul class="rechecks">
+          <li v-for="plan in plans" :key="plan.id" class="plan-line">
+            <span>
+              <strong>{{ planText(plan) }}</strong>
+              <small>{{ [plan.title ? planSubject(plan) : '', plan.workplace_name, locationLabel(plan.location_id, plan.location_name), plan.note].filter(Boolean).join(' · ') }}</small>
+            </span>
+            <button class="link-button" type="button" @click="emit('edit-plan', plan)"><i class="pi pi-pencil" /> Düzenle</button>
+          </li>
+        </ul>
+      </div>
+
       <div v-for="entry in entries" :key="entry.location_id ?? 0" class="entry">
         <h3><i class="pi pi-map-marker" /> {{ locationLabel(entry.location_id, entry.location_name) }}</h3>
         <div v-for="group in entry.groups" :key="group.key" class="group" :class="{ open: isOpen(entry, group) }">
@@ -44,9 +58,9 @@
 <script setup lang="ts">
 // Kontrol takviminde bir gün: o gün kontrolü dolan ekipman lokasyona göre, gruplu (tesisat, tüp, tür). Gruba tıklayınca
 // ekipmanları açılır (satır ekipmana gider).
-// rechecks: o gün tekrar kontrolü planlanan bulgular (yalnız Kontrol Takvimi verir).
-const props = defineProps<{ date: string; entries: AgendaEntry[]; query: Record<string, any>; rechecks?: any[] }>()
-const emit = defineEmits<{ close: [] }>()
+// rechecks: o gün tekrar kontrolü planlanan bulgular; plans: o günün kontrol planları (ikisini de yalnız Kontrol Takvimi verir).
+const props = defineProps<{ date: string; entries: AgendaEntry[]; query: Record<string, any>; rechecks?: any[]; plans?: any[] }>()
+const emit = defineEmits<{ close: []; 'edit-plan': [plan: any] }>()
 
 const { get, errorMessage } = useExpertApi()
 const { locationLabel } = useDashboardScope()
@@ -54,11 +68,13 @@ const { locationLabel } = useDashboardScope()
 const timingOf = agendaTiming
 const groupText = agendaGroupText
 const shortName = agendaShortName
+const planText = controlPlanText
+const planSubject = controlPlanSubject
 const longDate = computed(() => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }).format(agendaDate(props.date)))
 const daysLeft = computed(() => props.entries[0]?.days_left
   ?? Math.round((agendaDate(props.date).getTime() - new Date(new Date().setHours(0, 0, 0, 0)).getTime()) / 86400000))
 const total = computed(() => props.entries.reduce((sum, entry) => sum + entry.total, 0))
-const summary = computed(() => [total.value ? `${total.value} ekipmanın kontrolü dolar` : '', props.rechecks?.length ? `${props.rechecks.length} bulgunun tekrar kontrolü` : ''].filter(Boolean).join(' · '))
+const summary = computed(() => [total.value ? `${total.value} ekipmanın kontrolü dolar` : '', props.rechecks?.length ? `${props.rechecks.length} bulgunun tekrar kontrolü` : '', props.plans?.length ? `${props.plans.length} planlı kontrol` : ''].filter(Boolean).join(' · '))
 const daysText = (days: number | null) => days === null ? '—' : days < 0 ? `${-days} gün geçti` : days === 0 ? 'Bugün' : `${days} gün kaldı`
 
 // Açık gruplar ve ekipman listeleri (lokasyon + grup başına bir kez alınır).
@@ -107,4 +123,6 @@ h3{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--admin-head
 .link-button{justify-self:start;display:inline-flex;align-items:center;gap:6px;color:var(--admin-link);font-size:12px;font-weight:700;text-decoration:none}
 .rechecks{display:grid;gap:8px;margin:0 0 10px;padding:0;list-style:none}.rechecks li{display:grid;gap:3px;padding:9px 10px;border-radius:9px;background:var(--admin-soft)}.rechecks strong{color:var(--admin-heading);font-size:13px}.rechecks small{color:var(--admin-muted);font-size:11.5px}
 .muted{margin:0;color:var(--admin-muted);font-size:12px}.error-text{margin:0;color:var(--admin-danger-text);font-size:12px}
+.rechecks li.plan-line{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px dashed var(--admin-heading)}.plan-line > span{display:grid;gap:3px;min-width:0}
+button.link-button{flex:none;border:0;background:none;font:inherit;font-size:12px;cursor:pointer}
 </style>
