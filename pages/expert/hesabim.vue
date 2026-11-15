@@ -23,11 +23,9 @@
 
         <!-- Fatura bilgileri: faturanın kesileceği ad / unvan, kimlik ya da vergi bilgisi ve adresler (ödeme yapabilene) -->
         <section v-if="tab === 'billing'" class="card wide">
-          <div class="card-head">
-            <span class="card-icon"><i class="pi pi-file" /></span>
-            <div><h2>Fatura bilgileri</h2><p>Paket satın aldığınızda faturanız bu bilgilerle kesilir. Satın alma sırasında da değiştirebilirsiniz.</p></div>
-          </div>
-          <ExpertBillingProfileForm @forbidden="canPay = false" />
+          <h2 class="card-title">Fatura bilgileri</h2>
+          <!-- inline: kayıtlı bilgiler doğrudan formda (özet görünümü yok); Vazgeç kaydedilmemiş değişiklikleri geri alır -->
+          <ExpertBillingProfileForm inline @forbidden="canPay = false" />
         </section>
 
         <!-- Paketim: durum, paketler ve satın alma (yenile / yükselt) -->
@@ -141,6 +139,20 @@
               <div><dt><i class="pi pi-clone" /> Paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
               <div><dt><i class="pi pi-box" /> Kredi</dt><dd>{{ billing ? billing.unlimited ? 'Sınırsız' : `${billing.credits ?? 0} kredi` : '—' }}</dd></div>
             </dl>
+          </section>
+        </template>
+
+        <!-- Fatura bilgileri: katalogdaki bina ve fatura (katalog 18'den kırpıldı) -->
+        <template v-else-if="tab === 'billing'">
+          <figure class="hero">
+            <div class="hero-art">
+              <img src="/katalog/fatura-katalog.webp" alt="" />
+              <span class="hero-pill doc"><i class="pi pi-file" /><strong>Fatura profili</strong></span>
+            </div>
+          </figure>
+          <section class="card side-card note-card">
+            <span class="note-icon"><i class="pi pi-file" /></span>
+            <div><h2>Faturalandırma</h2><p>Paket ödemelerinizde bu bilgiler kullanılır.</p></div>
           </section>
         </template>
       </aside>
@@ -322,7 +334,14 @@ onMounted(() => {
 .badge-initials { left: 43.2%; top: 54.3%; color: var(--pk-surface); font-size: 6.2cqw; font-weight: 800; }
 .badge-name { left: 41.6%; top: 66.6%; max-width: 46%; overflow: hidden; text-overflow: ellipsis; color: var(--pk-text); font-size: 3.7cqw; font-weight: 800; }
 .badge-role { left: 39.8%; top: 72%; color: var(--pk-muted); font-size: 2.8cqw; font-weight: 500; }
+.hero-pill.doc { top: 19%; gap: 14px; padding: 14px 26px 14px 18px; }
+.hero-pill.doc > i { width: auto; height: auto; background: none; color: var(--admin-link); font-size: 24px; }
+.hero-pill.doc strong { color: var(--admin-heading); font-size: 18px; font-weight: 600; }
 .side-card .card-title { margin-bottom: 8px; }
+.note-card { display: flex; align-items: center; gap: 20px; }
+.note-icon { flex: none; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 16px; background: var(--admin-soft); color: var(--admin-heading); font-size: 30px; box-shadow: 0 6px 16px rgba(var(--pk-shadow-rgb), .08); }
+.note-card h2 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 800; }
+.note-card p { margin: 6px 0 0; color: var(--admin-text); font-size: 16px; }
 .info-rows { display: grid; margin: 0; }
 .info-rows div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; }
 .info-rows div + div { border-top: 1px solid var(--admin-border); }
