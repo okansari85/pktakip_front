@@ -354,7 +354,7 @@ h2{margin:0;color:var(--admin-heading);font-size:15px}
 .hero-art{position:relative;width:min(100%,600px);padding-top:30px}
 .hero-art img{display:block;width:100%}
 .hero-pill{position:absolute;top:0;left:50%;display:inline-flex;align-items:center;gap:10px;padding:10px 20px 10px 12px;border:1px solid var(--admin-border);border-radius:16px;background:var(--admin-card);color:var(--admin-heading);font-size:16px;font-weight:700;white-space:nowrap;box-shadow:0 10px 26px rgba(var(--pk-shadow-rgb),.1)}
-.hero-pill i{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;color:#fff;font-size:13px}
+.hero-pill i{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;color:var(--pk-on-accent);font-size:13px}
 .hero-pill.ok i{background:var(--admin-success-text)}.hero-pill.bad i{background:var(--admin-danger-text)}
 .card.credit{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:22px 24px}
 .credit-number{margin-top:8px;color:var(--admin-heading);font-size:56px;font-weight:800;line-height:1}
