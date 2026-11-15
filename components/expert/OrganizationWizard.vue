@@ -101,8 +101,15 @@
             <div class="next-steps">
               <strong><i class="pi pi-directions" /> Sonra ne yapacaksınız?</strong>
               <ol>
-                <li><b>Lokasyonlar</b> sayfasından bu {{ customerMode ? 'müşteriye' : 'organizasyona' }} lokasyon (adres, bina, tesis) ekleyin.</li>
-                <li>Lokasyonda <b>Lokasyona Firma Tanımla</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı, çalışan sayısı).</li>
+                <!-- OSGB: oluşturulunca müşterinin sayfası (ağaç) açılır; lokasyon ve işyeri oradaki satırlardan eklenir -->
+                <template v-if="customerMode">
+                  <li><b>Oluştur</b>'a basınca müşterinin sayfası açılır; oradan lokasyon (adres, bina, tesis) ekleyin.</li>
+                  <li>Lokasyon satırındaki <b>İşyeri ekle</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı).</li>
+                </template>
+                <template v-else>
+                  <li><b>Lokasyonlar</b> sayfasından bu organizasyona lokasyon (adres, bina, tesis) ekleyin.</li>
+                  <li>Lokasyonda <b>Lokasyona Firma Tanımla</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı, çalışan sayısı).</li>
+                </template>
                 <li>İşyerine periyodik kontrol ekipmanlarını ekleyin.</li>
               </ol>
             </div>

@@ -48,8 +48,8 @@
     </section>
 
     <ExpertFirmWizard v-if="wizardOpen && !multiUser" :firms="firms" @close="wizardOpen = false" @changed="load" />
-    <!-- OSGB: mevcut Müşteri Ekle sihirbazı (Ayarlar → Müşteriler'deki) -->
-    <ExpertOrganizationWizard v-if="wizardOpen && multiUser" customer-mode @close="wizardOpen = false" @created="wizardOpen = false; load()" />
+    <!-- OSGB: mevcut Müşteri Ekle sihirbazı (Ayarlar → Müşteriler'deki); oluşturulunca müşterinin sayfası açılır -->
+    <ExpertOrganizationWizard v-if="wizardOpen && multiUser" customer-mode @close="wizardOpen = false" @created="id => navigateTo(`/expert/firma/${id}`)" />
   </div>
 </template>
 

@@ -223,7 +223,9 @@ const customerTypes = ref<Record<string, CustomerType | null>>({})
 const customerTypeChoice = ref<CustomerType | null>(null)
 const wizardOpen = ref(false)
 const notice = ref('')
-const onWizardCreated = async (_id: number | string, warning: string) => {
+const onWizardCreated = async (id: number | string, warning: string) => {
+  // OSGB: lokasyon ve işyerleri müşterinin sayfasında (ağaç) eklenir; oluşturulunca oraya gidilir.
+  if (multiUser.value) return navigateTo(`/expert/firma/${id}`)
   wizardOpen.value = false
   notice.value = warning
   await loadCustomers()
