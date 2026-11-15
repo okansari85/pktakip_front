@@ -1,18 +1,55 @@
 <template>
   <div class="equipment-page">
-    <div class="page-head">
-      <div>
-        <div class="breadcrumb"><template v-if="!multiUser"><span>Uzman Paneli</span><i class="pi pi-angle-right" /></template><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Ekipmanlar</strong></div>
+    <!-- Üst sıra (tasarım kataloğu 05): başlık ve kontrolü en yakın ekipman, izometrik çizim, sayı kartları ve kontrol kapsamı -->
+    <div class="top">
+      <div class="top-left">
+        <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
+        <nav class="crumb" aria-label="Sayfa yolu">
+          <i class="pi pi-home" aria-hidden="true" />
+          <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
+          <i class="pi pi-angle-right" aria-hidden="true" />
+          <strong>Ekipmanlar</strong>
+        </nav>
         <h1>Ekipmanlar</h1>
-        <p v-if="context">{{ contextLabel }}</p>
-        <p v-else>Üstten lokasyon ve firma seçin.</p>
+        <p class="lead">{{ context ? contextLabel : 'Üstten lokasyon ve firma seçin.' }}</p>
+        <!-- Kontrolü en yakın aktif ekipman (yaklaşan yoksa süresi en çok geçen); fotoğrafı yoksa çizim -->
+        <section v-if="context && featured" class="card featured">
+          <div class="featured-head">
+            <h2>{{ featuredTitle }}</h2>
+            <span class="due-pill" :class="daysKey(featured.days_left)"><i class="pi pi-clock" /> {{ dueText(featured.days_left) }}</span>
+          </div>
+          <strong v-if="featuredModel" class="featured-model">{{ featuredModel }}</strong>
+          <div class="featured-row"><i class="pi pi-calendar" /><span>Sonraki kontrol</span><strong>{{ formatDate(featured.next_control_date) }}</strong></div>
+          <img class="featured-img" :src="featured.photo_url || '/katalog/ekipman.svg'" alt="" />
+          <NuxtLink class="primary-button featured-link" :to="`/expert/equipment/${featured.id}`"><i class="pi pi-file" /> Profili aç <i class="pi pi-arrow-right" /></NuxtLink>
+        </section>
       </div>
-      <div class="head-actions">
-        <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
-        <button v-tooltip.bottom="'Birden fazla tek ekipmanlı raporu birlikte yükleyin; sırayla okunur, ekipmanlarla eşleştirilip kaydedilir (yangın ekipmanları hariç).'" class="ai-button outline" type="button" :disabled="!context || bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu Rapor Yükle</button>
-        <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
-        <button v-tooltip.bottom="'Periyodik kontrol raporunu yükleyin; eşleşen ekipmana eklenir ya da rapordaki ekipman yeni tanımlanır.'" class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> P.K. Raporu Yükle</button>
-        <button v-tooltip.bottom="'Ekipmanı rapor olmadan, elle tanımlayın.'" class="primary-button" type="button" :disabled="!context" @click="openCreate"><i class="pi pi-plus" /> Yeni Ekipman</button>
+      <figure class="hero">
+        <!-- İzometrik çizim: mavi ışıklı platformda forklift (public/katalog, elle çizildi) -->
+        <img src="/katalog/forklift-izometrik.svg" alt="" />
+      </figure>
+      <div v-if="context" class="top-right">
+        <!-- Sayılar lokasyondaki aktif ekipmanlardan; tıklayınca liste süzülür (Açık bulgu: Bulgu takibi) -->
+        <div class="kpis">
+          <button v-for="kpi in kpis" :key="kpi.key" type="button" class="kpi" :class="[kpi.tone, { active: kpi.key === 'total' ? false : statusFilter === kpi.key }]" @click="onKpi(kpi.key)">
+            <span class="kpi-icon"><i :class="kpi.icon" /></span>
+            <span class="kpi-text"><strong>{{ kpi.value }}</strong><small>{{ kpi.label }}</small></span>
+            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+          </button>
+        </div>
+        <section class="card coverage">
+          <header><i class="pi pi-clone" /><h3>Kontrol kapsamı</h3></header>
+          <div class="coverage-row">
+            <span>Süresi geçen</span>
+            <ProgressBar :value="share(counts.overdue)" :show-value="false" class="bar overdue" />
+            <strong>{{ counts.overdue }}</strong>
+          </div>
+          <div class="coverage-row">
+            <span>Kontrolü yaklaşan</span>
+            <ProgressBar :value="share(counts.soon)" :show-value="false" class="bar soon" />
+            <strong>{{ counts.soon }}</strong>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -22,33 +59,51 @@
       <span>Ekipmanları görmek için üstteki Lokasyon kutusundan seçim yapın.</span>
     </div>
 
-    <template v-else>
+    <!-- Sekmeler, süzgeçler, düğmeler ve tablo tek kartta -->
+    <section v-else class="card list-card">
       <div v-if="visibleCategories.length" class="tabs">
         <button v-for="category in visibleCategories" :key="category.slug" type="button" :class="{ active: categoryFilter === category.slug }" @click="selectCategory(category.slug)">
-          {{ category.name }} <span class="count">{{ countByCategory[category.slug] || 0 }}</span>
+          <i :class="['pi', category.icon || 'pi-box']" aria-hidden="true" /> {{ category.name }} <span class="count">{{ countByCategory[category.slug] || 0 }}</span>
         </button>
       </div>
 
-      <div v-if="equipment.length" class="filters">
-        <div class="type-chips">
-          <button v-for="type in visibleTypes" :key="type.id" type="button" class="chip" :class="{ active: typeFilter === type.id }" @click="typeFilter = typeFilter === type.id ? null : type.id">
-            {{ type.name }} <span>{{ type.count }}</span>
-          </button>
-        </div>
-        <div v-if="!showForms" class="filter-right">
-          <!-- Pasife alınan ekipmanlar varsayılan olarak gizli -->
-          <select v-model="activeFilter">
-            <option value="active">Aktif olanlar</option>
-            <option value="passive">Pasif olanlar</option>
-            <option value="all">Tümü</option>
-          </select>
-          <select v-model="statusFilter">
-            <option value="">Tüm durumlar</option>
-            <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
-            <option value="overdue">Süresi geçmiş</option>
-          </select>
-          <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Kod, marka, seri no ara" /></div>
-        </div>
+      <div class="toolbar">
+        <template v-if="equipment.length">
+          <span class="pill-select">
+            <select v-model="typeFilter" aria-label="Ekipman türü">
+              <option :value="null">Ekipman türü</option>
+              <option v-for="type in visibleTypes" :key="type.id" :value="type.id">{{ type.name }} ({{ type.count }})</option>
+            </select>
+            <i class="pi pi-chevron-down" aria-hidden="true" />
+          </span>
+          <template v-if="!showForms">
+            <span class="pill-select">
+              <select v-model="statusFilter" aria-label="Durum">
+                <option value="">Durum</option>
+                <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
+                <option value="overdue">Süresi geçmiş</option>
+                <option value="soon">Kontrolü yaklaşan</option>
+              </select>
+              <i class="pi pi-chevron-down" aria-hidden="true" />
+            </span>
+            <!-- Pasife alınan ekipmanlar varsayılan olarak gizli -->
+            <span class="pill-select">
+              <select v-model="activeFilter" aria-label="Aktiflik">
+                <option value="active">Aktif olanlar</option>
+                <option value="passive">Pasif olanlar</option>
+                <option value="all">Tümü</option>
+              </select>
+              <i class="pi pi-chevron-down" aria-hidden="true" />
+            </span>
+            <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Kod, marka veya seri no ara" aria-label="Ara" /></div>
+          </template>
+        </template>
+        <span class="toolbar-spacer" />
+        <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
+        <button v-tooltip.bottom="'Birden fazla tek ekipmanlı raporu birlikte yükleyin; sırayla okunur, ekipmanlarla eşleştirilip kaydedilir (yangın ekipmanları hariç).'" class="outline-button" type="button" :disabled="bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu rapor yükle</button>
+        <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
+        <button v-tooltip.bottom="'Periyodik kontrol raporunu yükleyin; eşleşen ekipmana eklenir ya da rapordaki ekipman yeni tanımlanır.'" class="outline-button" type="button" @click="fromReportOpen = true"><i class="pi pi-upload" /> Rapor yükle</button>
+        <button v-tooltip.bottom="'Ekipmanı rapor olmadan, elle tanımlayın.'" class="primary-button" type="button" @click="openCreate"><i class="pi pi-plus" /> Yeni ekipman</button>
       </div>
 
       <!-- Yangın söndürme cihazı (tüp) seçiliyken: tüp listesi, toplu kontrol formları ve formlarda eşleştirme bekleyenler -->
@@ -57,20 +112,22 @@
         <button type="button" :class="{ active: showForms }" @click="tubeTab = 'forms'"><i class="pi pi-file-check" /> Kontrol Formları</button>
         <button type="button" :class="{ active: showMatching }" @click="tubeTab = 'matching'"><i class="pi pi-link" /> Eşleştirme bekliyor <span class="count" :class="{ warn: matchingCount }">{{ matchingCount }}</span></button>
       </div>
-      <ExpertBulkReportList v-if="showForms" :context="context" :refresh-key="formsKey" @upload="openBulk(null)" @changed="onTubesChanged" @matching="tubeTab = 'matching'" />
-      <ExpertTubeMatching v-else-if="showMatching" :context="context" :refresh-key="formsKey" @changed="loadEquipment" @count="matchingCount = $event" />
+      <div v-if="showForms || showMatching" class="inner">
+        <ExpertBulkReportList v-if="showForms" :context="context" :refresh-key="formsKey" @upload="openBulk(null)" @changed="onTubesChanged" @matching="tubeTab = 'matching'" />
+        <ExpertTubeMatching v-else :context="context" :refresh-key="formsKey" @changed="loadEquipment" @count="matchingCount = $event" />
+      </div>
 
-      <section v-else class="card table-card">
+      <template v-else>
         <div v-if="loading" class="state">Ekipmanlar yükleniyor...</div>
         <div v-else-if="error" class="state error-text">{{ error }}</div>
         <div v-else-if="filtered.length === 0" class="state empty-state">
           <i class="pi pi-wrench" />
           <strong>{{ equipment.length ? 'Filtreye uyan ekipman yok' : 'Henüz ekipman yok' }}</strong>
-          <span v-if="!equipment.length">"Yeni Ekipman" ile ilk ekipmanınızı ekleyin.</span>
+          <span v-if="!equipment.length">"Yeni ekipman" ile ilk ekipmanınızı ekleyin.</span>
         </div>
         <div v-else class="table-wrap">
-          <!-- Tür seçiliyken o türün bütün bulguları (son raporlardan), satırı ekipmana götürür -->
-          <div v-if="typeFindings.length" class="type-findings">
+          <!-- Tür seçiliyken o türün bütün bulguları (son raporlardan), satırı ekipmana götürür. Katalogda yok, gizli (SHOW_TYPE_FINDINGS). -->
+          <div v-if="SHOW_TYPE_FINDINGS && typeFindings.length" class="type-findings">
             <div class="type-findings-head">
               <strong>{{ selectedTypeName }}: {{ typeFindings.length }} bulgu, {{ typeFindingEquipment }} ekipmanda</strong>
               <button v-if="typeFindings.length > 10" class="link-button" type="button" @click="showAllFindings = !showAllFindings">{{ showAllFindings ? 'Daha az göster' : 'Tümünü göster' }}</button>
@@ -96,14 +153,14 @@
             <thead>
               <tr>
                 <th class="check-col"><input type="checkbox" :checked="allSelected" :indeterminate="selected.length > 0 && !allSelected" title="Tümünü seç" @change="toggleAll" /></th>
-                <th class="no-col">Ekipman no</th><th>Tür / Etiket</th><th>Ekipman</th><th>Konum</th><th>Son kontrol</th><th>Gelecek kontrol</th><th>Kalan gün</th><th>Durum</th><th class="actions-col" />
+                <th class="no-col">Ekipman no</th><th v-if="SHOW_TYPE_COLUMN">Tür / Etiket</th><th>Ekipman</th><th>Konum</th><th>Son kontrol</th><th>Gelecek kontrol</th><th v-if="SHOW_DAYS_COLUMN">Kalan gün</th><th>Durum</th><th class="actions-col">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in pagedItems" :key="item.id" :class="{ selected: selected.includes(item.id), passive: !item.is_active }" @click="navigateTo(`/expert/equipment/${item.id}`)">
-                <td class="check-col" @click.stop><input v-model="selected" type="checkbox" :value="item.id" /></td>
+                <td class="check-col" @click.stop><input v-model="selected" type="checkbox" :value="item.id" :aria-label="`${item.code || item.name || item.type?.name || 'Ekipman'} seç`" /></td>
                 <td class="no-col"><strong v-if="item.code">{{ item.code }}</strong><span v-else class="muted">—</span></td>
-                <td>
+                <td v-if="SHOW_TYPE_COLUMN">
                   <div class="type-cell">
                     <span>{{ item.type?.name }}</span>
                     <span v-if="item.variant" class="tag" :title="item.type?.variant_label || 'Etiket'">{{ item.variant }}</span>
@@ -124,14 +181,16 @@
                 </td>
                 <td>{{ formatDate(item.last_control_date) }}</td>
                 <td>{{ formatDate(item.next_control_date) }}</td>
-                <td>
+                <td v-if="SHOW_DAYS_COLUMN">
                   <span v-if="!item.is_active" class="passive-tag" :title="passiveTitle(item)">Pasif</span>
                   <span v-else class="days" :class="daysKey(item.days_left)">{{ daysText(item.days_left) }}</span>
                 </td>
                 <td>
                   <span class="status-badge" :class="item.status">{{ STATUS_LABELS[item.status] }}</span>
-                  <!-- Son raporun bulguları: sayı + üstüne gelince / odaklanınca liste -->
-                  <span v-if="item.findings_count" class="findings-info" tabindex="0" :aria-label="`${item.findings_count} bulgu: ${item.findings.join('; ')}`"
+                  <!-- Kalan gün sütunu gizliyken pasif bilgisi durumun yanında -->
+                  <span v-if="!SHOW_DAYS_COLUMN && !item.is_active" class="passive-tag" :title="passiveTitle(item)">Pasif</span>
+                  <!-- Son raporun bulguları: sayı + üstüne gelince / odaklanınca liste. Katalogda yok, gizli (SHOW_FINDINGS_INFO). -->
+                  <span v-if="SHOW_FINDINGS_INFO && item.findings_count" class="findings-info" tabindex="0" :aria-label="`${item.findings_count} bulgu: ${item.findings.join('; ')}`"
                     @click.stop @mouseenter="showFindings(item, $event)" @focus="showFindings(item, $event)" @mouseleave="hoverFindings = null" @blur="hoverFindings = null">
                     {{ item.findings_count }} bulgu <i class="pi pi-info-circle" />
                   </span>
@@ -144,7 +203,8 @@
                     <NuxtLink v-else-if="item.installation" v-tooltip.top="`Kontrolü ${item.installation.name} raporundan gelir`" class="icon-button" to="/expert/installations" :aria-label="`Kontrolü ${item.installation.name} raporundan gelir`"><i class="pi pi-sitemap" /></NuxtLink>
                     <template v-else>
                       <button v-tooltip.top="'Yeni Periyodik Kontrol Raporu Yükle'" class="icon-button" type="button" aria-label="Yeni Periyodik Kontrol Raporu Yükle" @click="reportItem = item"><i class="pi pi-file-arrow-up" /></button>
-                      <button v-tooltip.top="'Rapor bekleniyor olarak işaretle'" class="icon-button" type="button" aria-label="Rapor bekleniyor olarak işaretle" @click="pendingItem = item"><i class="pi pi-hourglass" /></button>
+                      <!-- Diğer işlemler: rapor bekleniyor -->
+                      <button v-tooltip.top="'Diğer işlemler'" class="icon-button more" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openRowMenu($event, item)"><i class="pi pi-ellipsis-h" /></button>
                     </template>
                   </div>
                 </td>
@@ -160,8 +220,9 @@
             </div>
           </div>
         </div>
-      </section>
-    </template>
+      </template>
+    </section>
+    <Menu ref="rowMenu" :model="rowMenuItems" popup :pt="{ root: { style: MENU_VARS } }" />
 
     <!-- Bulgu kutusu tablonun dışında (tablo kaydırmalı; içeride kesilirdi), sayının hizasında ekrana sabit -->
     <Teleport to="body">
@@ -248,11 +309,18 @@
 <script setup lang="ts">
 // keepalive: detaydan geri dönünce liste, filtreler ve kaydırma konumu olduğu gibi; liste arkada tazelenir (onActivated).
 definePageMeta({ layout: 'expert', middleware: 'expert', keepalive: true })
-// Sayfa yolundaki "Uzman Paneli" yalnız bireysel uzman hesabında.
-const { multiUser } = useAccount()
+// Sayfa yolu: bireysel uzmanda Ana Sayfa, diğer hesaplarda Genel Bakış.
+const { account, multiUser } = useAccount()
+const individual = computed(() => !!account.value && !multiUser.value)
+
+// Tasarım kataloğu 05'te olmayan öğeler: katalogda yok, gizli; ileride açılabilir (kod yerinde).
+const SHOW_TYPE_COLUMN = false // Tür / Etiket sütunu
+const SHOW_DAYS_COLUMN = false // Kalan gün sütunu (pasif etiketi bu sırada Durum'da)
+const SHOW_FINDINGS_INFO = false // Durum sütunundaki "N bulgu" ve üstüne gelince liste
+const SHOW_TYPE_FINDINGS = false // Tür seçiliyken o türün bulguları kutusu
 
 interface CatalogType { id: number; slug?: string; name: string; default_period_months: number | null; default_scope: 'location' | 'workplace'; variants?: string[]; variant_label?: string | null }
-interface CatalogCategory { slug: string; name: string; kind: 'equipment' | 'installation'; types: CatalogType[] }
+interface CatalogCategory { slug: string; name: string; kind: 'equipment' | 'installation'; icon?: string | null; types: CatalogType[] }
 
 const STATUS_LABELS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', belirtilmemis: 'Belirtilmemiş', rapor_yok: 'Rapor yok' }
 
@@ -317,7 +385,7 @@ const filtered = computed(() => {
   const q = trLower(search.value.trim())
   return sortRacks(inCategory.value.filter(item =>
     (!typeFilter.value || item.type?.id === typeFilter.value) &&
-    (!statusFilter.value || (statusFilter.value === 'overdue' ? item.days_left !== null && item.days_left < 0 : item.status === statusFilter.value)) &&
+    (!statusFilter.value || (statusFilter.value === 'overdue' ? item.days_left !== null && item.days_left < 0 : statusFilter.value === 'soon' ? isSoon(item) : item.status === statusFilter.value)) &&
     (!q || [item.code, item.name, item.brand, item.model, item.serial_no, item.place, item.type?.name, item.variant].some(v => trLower(v).includes(q)))
   ))
 })
@@ -332,6 +400,48 @@ watch([search, statusFilter, categoryFilter, typeFilter, activeFilter, context],
 watch(pageCount, count => { if (page.value > count) page.value = count })
 
 const selectCategory = (slug: string) => { categoryFilter.value = slug; typeFilter.value = null }
+
+// --- Üst sıra: sayı kartları, kontrol kapsamı ve kontrolü en yakın ekipman (lokasyondaki aktif ekipmanlardan) ---
+// Kontrolü yaklaşan: kalan gün 0–30 (listedeki "yaklaşan" rengiyle aynı eşik).
+const isSoon = (item: any) => item.days_left !== null && item.days_left !== undefined && item.days_left >= 0 && item.days_left <= 30
+const activeItems = computed(() => equipment.value.filter(item => item.is_active))
+const counts = computed(() => ({
+  total: activeItems.value.length,
+  overdue: activeItems.value.filter(item => item.days_left !== null && item.days_left < 0).length,
+  soon: activeItems.value.filter(isSoon).length,
+  // Son raporların bulguları (listedeki "N bulgu" ile aynı sayı)
+  findings: activeItems.value.reduce((sum, item) => sum + (item.findings_count || 0), 0)
+}))
+const kpis = computed(() => [
+  { key: 'total', label: 'Toplam ekipman', value: counts.value.total, icon: 'pi pi-box', tone: 'blue' },
+  { key: 'overdue', label: 'Süresi geçen', value: counts.value.overdue, icon: 'pi pi-exclamation-triangle', tone: 'bad' },
+  { key: 'soon', label: 'Kontrolü yaklaşan', value: counts.value.soon, icon: 'pi pi-calendar', tone: 'warn' },
+  { key: 'findings', label: 'Açık bulgu', value: counts.value.findings, icon: 'pi pi-list-check', tone: 'purple' }
+])
+// Toplam: durum süzgeci kalkar, aktifler görünür; süresi geçen / yaklaşan: liste o duruma süzülür (tekrar tıklayınca kalkar).
+const onKpi = (key: string) => {
+  if (key === 'findings') { navigateTo('/expert/bulgu-takip'); return }
+  if (key === 'total') { statusFilter.value = ''; activeFilter.value = 'active'; return }
+  statusFilter.value = statusFilter.value === key ? '' : key
+  if (statusFilter.value) activeFilter.value = 'active'
+}
+const share = (count: number) => counts.value.total ? Math.round(count / counts.value.total * 100) : 0
+const featured = computed(() => {
+  const dated = activeItems.value.filter(item => item.days_left !== null && item.days_left !== undefined).sort((a, b) => a.days_left - b.days_left)
+  return dated.find(item => item.days_left >= 0) || dated[0] || null
+})
+const featuredTitle = computed(() => [featured.value?.name || featured.value?.type?.name, featured.value?.code].filter(Boolean).join(' '))
+const featuredModel = computed(() => [featured.value?.brand, featured.value?.model].filter(Boolean).join(' '))
+const dueText = (days: number) => days < 0 ? `${-days} gün geçti` : days === 0 ? 'Bugün' : `${days} gün kaldı`
+
+// Satırdaki "Diğer işlemler" menüsü (rapor bekleniyor). PrimeVue menüsü uygulamanın açık / koyu temasıyla.
+const MENU_VARS = '--p-menu-background:var(--admin-surface);--p-menu-border-color:var(--admin-border);--p-menu-color:var(--admin-text);--p-menu-item-color:var(--admin-text);--p-menu-item-icon-color:var(--admin-muted);--p-menu-item-focus-background:var(--admin-hover);--p-menu-item-focus-color:var(--admin-heading);--p-menu-item-icon-focus-color:var(--admin-heading)'
+const rowMenu = ref<any>(null)
+const rowMenuItems = ref<any[]>([])
+const openRowMenu = (event: Event, item: any) => {
+  rowMenuItems.value = [{ label: 'Rapor bekleniyor olarak işaretle', icon: 'pi pi-hourglass', command: () => { pendingItem.value = item } }]
+  rowMenu.value?.toggle(event)
+}
 
 // Durum sütunundaki "3 bulgu": kutu sayının altında, ekranın sağından taşmayacak şekilde.
 const hoverFindings = ref<{ findings: string[]; top: number; left: number } | null>(null)
@@ -638,47 +748,88 @@ onActivated(() => {
 </script>
 
 <style scoped>
-.equipment-page { margin: 0 auto; }
-.page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:20px; }
-.breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
-h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
+.equipment-page { margin: 0 auto; display: grid; gap: 18px; }
+/* Üst sıra: başlık + öne çıkan ekipman, çizim, sayı kartları + kontrol kapsamı */
+.top{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr) minmax(360px,500px);gap:16px;align-items:start}
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
+.crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
+.crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
+h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.lead{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
 h2{margin:0;color:var(--admin-heading);font-size:18px}h3{margin:22px 0 10px;color:var(--admin-heading);font-size:13px}h3 small{font-weight:400;color:var(--admin-muted)}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.head-actions{display:flex;flex-wrap:wrap;gap:10px}
-.ai-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:#6d28d9;color:#fff;font-size:13px;font-weight:800;cursor:pointer}.ai-button:hover{background:#5b21b6}.ai-button:disabled{opacity:.55;cursor:not-allowed}
-.ai-button.outline{border:1.5px solid #7c3aed;background:transparent;color:#7c3aed}.ai-button.outline:hover{background:var(--admin-hover)}
+.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;min-width:0}
+.featured{display:flex;flex-direction:column;gap:12px;margin-top:20px;padding:20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
+.featured-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.featured-head h2{font-size:26px;font-weight:800;letter-spacing:-.4px;overflow-wrap:anywhere}
+.featured-model{margin-top:-6px;color:var(--admin-heading);font-size:17px;font-weight:700}
+.due-pill{flex:none;display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:13px;font-weight:700;white-space:nowrap}
+.due-pill.soon,.due-pill.ok{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-pill.overdue{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.featured-row{display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px solid var(--admin-border);color:var(--admin-text);font-size:14px}
+.featured-row i{color:var(--admin-muted)}.featured-row strong{margin-left:auto;color:var(--admin-heading);font-size:16px}
+.featured-img{display:block;width:100%;height:150px;object-fit:contain}
+.featured-link{width:100%;text-decoration:none}.featured-link .pi-file{margin-left:auto}.featured-link .pi-arrow-right{margin-left:auto}
+.hero{min-width:0;margin:-30px 0 0;display:flex;justify-content:center}
+.hero img{display:block;width:min(100%,560px)}
+.top-right{display:grid;gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kpi{display:flex;align-items:center;gap:14px;min-height:96px;padding:16px;border:1px solid var(--admin-border);border-radius:16px;background:var(--admin-card);box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.kpi:hover{border-color:var(--admin-muted)}.kpi.active{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.kpi-icon{flex:none;width:48px;height:48px;display:grid;place-items:center;border-radius:50%;font-size:20px}
+.kpi.blue .kpi-icon{background:var(--admin-accent-soft);color:var(--admin-accent-text)}
+.kpi.bad .kpi-icon{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.kpi.warn .kpi-icon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+/* Mor: Genel bakış (katalog 02) sayı kartındaki tonla aynı; tokenlarda mor yok */
+.kpi.purple .kpi-icon{background:#ebe9fe;color:#5925dc}
+.kpi-text{display:grid;gap:2px;min-width:0}.kpi-text strong{color:var(--admin-heading);font-size:26px;font-weight:800;line-height:1.1}.kpi-text small{color:var(--admin-text);font-size:14px}
+.kpi-arrow{margin-left:auto;color:var(--admin-heading);font-size:14px}
+.coverage{display:grid;gap:12px;padding:18px 20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.coverage header{display:flex;align-items:center;gap:10px}.coverage header i{color:var(--admin-accent-text);font-size:18px}.coverage h3{margin:0;font-size:17px;font-weight:800}
+.coverage-row{display:grid;grid-template-columns:140px minmax(0,1fr) 36px;align-items:center;gap:14px;color:var(--admin-text);font-size:14px}
+.coverage-row strong{color:var(--admin-heading);font-size:15px;text-align:right}
+.bar{height:10px;--p-progressbar-background:var(--admin-chip);--p-progressbar-border-radius:999px}
+.bar.overdue :deep(.p-progressbar-value){background:var(--pk-danger)}.bar.soon :deep(.p-progressbar-value){background:var(--admin-upcoming-text)}
+/* Düğmeler */
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 18px;border:0;border-radius:10px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(var(--pk-accent-rgb),.22)}.primary-button:hover{background:var(--pk-yellow-dark)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.outline-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 16px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.outline-button i{color:var(--admin-accent-text)}.outline-button:hover{border-color:var(--admin-muted)}.outline-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px}
 .empty-state{display:flex;flex-direction:column;align-items:center;gap:7px;padding:70px 20px;text-align:center;color:var(--admin-muted)}.empty-state i{font-size:28px}.empty-state strong{color:var(--admin-heading)}
-.tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
-.tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow)}
-.count{min-width:20px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700}
-.filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.type-chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-input);color:var(--admin-text);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
-.chip span{color:var(--admin-muted);font-size:11px}.chip.active{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
-.filter-right{display:flex;gap:8px}
-.filter-right select{height:38px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
-.search-box{height:38px;width:240px;display:flex;align-items:center;gap:8px;padding:0 11px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:12px}
-.table-card{overflow:hidden}.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse}th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text);vertical-align:middle}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
+/* Liste kartı: sekmeler, süzgeçler, tablo */
+.list-card{overflow:hidden;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.tabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:4px 18px 0;border-bottom:1px solid var(--admin-border)}
+.tabs button{display:inline-flex;align-items:center;gap:9px;padding:14px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-heading);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.tabs button i{color:var(--admin-muted);font-size:16px}
+.tabs button:hover{color:var(--admin-accent-text)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow);font-weight:700}.tabs button.active i{color:var(--admin-accent-text)}
+.tabs button.active .count{background:var(--admin-accent-soft);color:var(--admin-accent-text)}
+.count{min-width:20px;padding:1px 8px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:12px;font-weight:700}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px}
+.toolbar-spacer{flex:1}
+.pill-select{position:relative;display:inline-flex;align-items:center}
+.pill-select select{max-width:220px;height:42px;padding:0 40px 0 16px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;appearance:none;cursor:pointer;outline:0;text-overflow:ellipsis}
+.pill-select select:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.pill-select > .pi{position:absolute;right:15px;color:var(--admin-heading);font-size:12px;pointer-events:none}
+.search-box{height:42px;width:300px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font:inherit;font-size:14px}
+.search-box:focus-within{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.inner{padding:0 18px 18px}
+.table-wrap{overflow:auto;padding:0 18px}
+table{width:100%;border-collapse:collapse}th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:14px;color:var(--admin-text);vertical-align:middle}
+th{font-size:14px;font-weight:700;color:var(--admin-heading);background:var(--admin-soft);white-space:nowrap}
+thead th:first-child{border-radius:12px 0 0 12px}thead th:last-child{border-radius:0 12px 12px 0}thead th{border-bottom:0}
 tbody tr{cursor:pointer}tbody tr:hover{background:var(--admin-hover)}tbody tr.selected{background:var(--admin-accent-soft)}
-.no-col{width:1%;white-space:nowrap;color:var(--admin-heading);font-size:13px}
-.check-col{width:44px;padding-right:0;cursor:default}.check-col input{width:16px;height:16px;accent-color:var(--pk-accent);cursor:pointer;vertical-align:middle}
-.actions-col{width:1%;cursor:default}.row-actions{display:flex;justify-content:flex-end;gap:4px}
-.icon-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}.icon-button i{font-size:15px}
+.no-col{width:1%;white-space:nowrap;color:var(--admin-heading);font-size:15px}
+.check-col{width:44px;padding-right:0;cursor:default}.check-col input{width:17px;height:17px;accent-color:var(--pk-accent);cursor:pointer;vertical-align:middle}
+.actions-col{width:1%;cursor:default;text-align:center}.row-actions{display:flex;justify-content:flex-end;gap:8px}
+.icon-button{width:36px;height:36px;display:grid;place-items:center;border:1px solid transparent;border-radius:10px;background:var(--admin-accent-soft);color:var(--admin-accent-text);cursor:pointer;text-decoration:none}.icon-button:hover{border-color:var(--pk-accent)}.icon-button i{font-size:15px}
+.icon-button.more{background:transparent}.icon-button.more:hover{background:var(--admin-accent-soft)}
 .bulk-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--admin-soft);border-bottom:1px solid var(--admin-border);font-size:12px}.bulk-bar strong{color:var(--admin-heading)}
 .link-button{border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.sub-tabs{display:flex;gap:4px;margin-bottom:10px}
+.sub-tabs{display:flex;gap:4px;margin:0 18px 12px}
 .sub-tabs button{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .sub-tabs button:hover{color:var(--admin-heading)}.sub-tabs button.active{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
 .sub-tabs .count.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .bulk-spacer{flex:1}
 .secondary-button.small{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;background:var(--admin-card)}.secondary-button.small:disabled{opacity:.6}
 tbody tr.passive td:not(.check-col):not(.actions-col){opacity:.6}
-.passive-tag{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700;cursor:help}
+.passive-tag{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700;cursor:help}
 .danger-button{display:inline-flex;align-items:center;gap:7px;margin-left:auto;min-height:34px;padding:0 13px;border:1px solid var(--admin-danger-text);border-radius:8px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:12px;font-weight:700;cursor:pointer}.danger-button:disabled{opacity:.6}
 .tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--admin-border);background:var(--admin-soft);color:var(--admin-text);font-size:10px;font-weight:700;vertical-align:middle}
 .type-cell{display:flex;flex-direction:column;align-items:flex-start;gap:4px;white-space:nowrap}.type-cell > span:first-child{color:var(--admin-heading);font-weight:600}
@@ -710,7 +861,10 @@ label > span{color:var(--admin-danger-text)}label small{font-weight:400;color:va
 .modal-card{width:min(620px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-card);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-@media(max-width:800px){.page-head{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:1fr}.search-box{width:100%}.filter-right{width:100%;flex-direction:column}}
+/* Dar ekranda sayı kartları çizimin altına iner; telefonda çizim gizli, kartlar alt alta */
+@media(max-width:1300px){.top{grid-template-columns:minmax(280px,360px) minmax(0,1fr)}.top-right{grid-column:1 / -1;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}}
+@media(max-width:1000px){.top-right{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:800px){.top{grid-template-columns:minmax(0,1fr)}.hero{display:none}.featured{margin-top:6px}h1{font-size:32px}.form-grid{grid-template-columns:1fr}.search-box{width:100%}.toolbar-spacer{display:none}.coverage-row{grid-template-columns:110px minmax(0,1fr) 30px}}
 </style>
 
 <style>
