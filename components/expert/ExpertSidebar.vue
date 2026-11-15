@@ -13,8 +13,9 @@
       <span v-if="!collapsed">Menüyü daralt</span>
     </button>
 
-    <!-- Bireysel uzmanda ayrı Ayarlar menüsü yok: Ayarlar sayfalarında da aynı tek menü görünür (aşağıda Ayarlar grubu). -->
-    <template v-if="mode === 'settings' && !individual">
+    <!-- Bireysel uzmanda ve kurumsal / kamu hesabında ayrı Ayarlar menüsü yok: Ayarlar sayfalarında da aynı tek menü görünür
+         (kurumsal / kamuda Kullanıcılar ve Analiz geçmişi ana menüde; süper admin bugünkü Ayarlar menüsünü görür). -->
+    <template v-if="mode === 'settings' && !individual && (!corporate || superAdmin)">
       <NuxtLink to="/expert/workplaces" class="back-link" :title="collapsed ? 'Panele dön' : undefined">
         <i class="pi pi-arrow-left" />
         <span v-if="!collapsed">Panele dön</span>
@@ -94,6 +95,17 @@
             <i class="pi pi-briefcase" />
             <span v-if="!collapsed">{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</span>
           </NuxtLink>
+          <!-- Kurumsal / kamu: Ayarlar yerine Kullanıcılar (yönetici) ve Analiz geçmişi ana menüde; Katalog talepleri gösterilmez -->
+          <template v-if="corporate">
+            <NuxtLink v-if="isManager" to="/expert/settings/users" class="sidebar-link" :title="collapsed ? 'Kullanıcılar' : undefined">
+              <i class="pi pi-id-card" />
+              <span v-if="!collapsed">Kullanıcılar</span>
+            </NuxtLink>
+            <NuxtLink to="/expert/settings/analyses" class="sidebar-link" :title="collapsed ? 'Analiz geçmişi' : undefined">
+              <i class="pi pi-history" />
+              <span v-if="!collapsed">Analiz geçmişi</span>
+            </NuxtLink>
+          </template>
           <template v-if="individual">
             <template v-if="collapsed">
               <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
@@ -112,7 +124,7 @@
               </div>
             </div>
           </template>
-          <NuxtLink v-else :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
+          <NuxtLink v-else-if="!corporate || superAdmin" :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
@@ -143,7 +155,7 @@ const emit = defineEmits<{ toggle: [] }>()
 const { logout, superAdmin } = useAuth()
 // Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
 // Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
-const { account, multiUser, kamu, isManager, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
+const { account, multiUser, corporate, kamu, isManager, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
 // Bulgu Takip rozeti: kullanıcının lokasyonlarındaki kapanmamış bulgular.
 const { open: findingCount, refresh: refreshFindingCount } = useFindingCount()
