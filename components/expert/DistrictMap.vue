@@ -9,7 +9,7 @@
           @mousemove="onHover($event, district.name)" @click="onClick(district.name)"
         />
       </g>
-      <!-- İlçe adları ve lokasyonu olan ilçelerde sayı -->
+      <!-- Lokasyonu olan ilçelerde ad ve sayı (diğer ilçelerin adı üstüne gelince görünür; küçük ilçelerde yazılar üst üste binmesin) -->
       <g class="labels">
         <text v-for="label in labels" :key="label.name" :x="label.x" :y="label.y + (statOf(label.name) ? 24 : 0)" text-anchor="middle" class="label">{{ label.name }}</text>
       </g>
@@ -60,7 +60,7 @@ const maxCount = computed(() => Math.max(1, ...props.stats.map(stat => stat.coun
 const bubbles = computed(() => props.stats
   .filter(stat => centers.value[stat.name])
   .map(stat => ({ name: stat.name, count: stat.count, level: levelOf(stat.name), ...centers.value[stat.name]!, r: 13 + Math.round((stat.count / maxCount.value) * 9) })))
-const labels = computed(() => districts.value.filter(district => centers.value[district.name]).map(district => ({ name: district.name, ...centers.value[district.name]! })))
+const labels = computed(() => districts.value.filter(district => centers.value[district.name] && statOf(district.name)).map(district => ({ name: district.name, ...centers.value[district.name]! })))
 const onHover = (event: MouseEvent, name: string) => {
   const box = root.value?.getBoundingClientRect()
   if (!box) return
