@@ -21,14 +21,69 @@
       <div v-if="!embedded" class="page-head">
         <div>
           <h1>{{ firm.name }}</h1>
-          <p><span v-if="firm.type" class="chip">{{ customerTypeLabel(firm.type) }}</span> {{ headerStats }}</p>
+          <!-- Tasarım kataloğu 12: "Kamu kurumu · Firma detayları"; sayılar Organizasyon yapısı kartında -->
+          <p class="lead"><template v-if="firm.type">{{ customerTypeLabel(firm.type) }} · </template>Firma detayları</p>
+          <p v-if="SHOW_HEADER_STATS"><span v-if="firm.type" class="chip">{{ customerTypeLabel(firm.type) }}</span> {{ headerStats }}</p>
         </div>
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
+      <!-- Firma ve lokasyon detayı (tasarım kataloğu 12): organizasyon yapısı, lokasyon çizimi, seçili lokasyon -->
+      <div v-if="!embedded && nodes.length" class="overview">
+        <section class="card org-card">
+          <header class="card-head"><i class="pi pi-sitemap" aria-hidden="true" /><h2>Organizasyon yapısı</h2></header>
+          <ul class="mini-tree">
+            <li v-for="item in miniRows" :key="item.key" :style="{ '--depth': item.depth }">
+              <span v-if="item.kind === 'node'" class="mini-node"><i :class="item.depth ? 'pi pi-building' : 'pi pi-briefcase'" aria-hidden="true" /> {{ item.node.name }}</span>
+              <button v-else type="button" class="mini-location" :class="{ on: String(focusLocation?.id) === String(item.location.id) }" :aria-pressed="String(focusLocation?.id) === String(item.location.id)" @click="focusId = item.location.id"><i class="pi pi-map-marker" aria-hidden="true" /> {{ item.location.name }}</button>
+            </li>
+          </ul>
+          <div class="org-counts">
+            <div><i class="pi pi-clone" aria-hidden="true" /><strong>{{ orgCount }}</strong><small>{{ firm.type === 'public' ? 'birim' : 'organizasyon' }}</small></div>
+            <div><i class="pi pi-map-marker" aria-hidden="true" /><strong>{{ locations.length }}</strong><small>lokasyon</small></div>
+            <div><i class="pi pi-building" aria-hidden="true" /><strong>{{ firmWorkplaces.length }}</strong><small>işyeri</small></div>
+          </div>
+        </section>
+        <figure class="hero">
+          <div class="hero-art">
+            <!-- Katalogdaki görsel (tasarım kataloğu 12'den kırpıldı, binadaki ve tabeladaki kurum adı silindi); etiket seçili lokasyon -->
+            <img src="/katalog/firma-detay-katalog.webp" alt="" />
+            <span v-if="focusLocation" class="pin-chip"><i class="pi pi-map-marker" aria-hidden="true" /> {{ focusLocation.name }}</span>
+          </div>
+          <figcaption><i class="pi pi-clone" aria-hidden="true" /> Örnek yerleşim</figcaption>
+        </figure>
+        <section v-if="focusLocation" class="card location-card">
+          <header>
+            <i class="pi pi-map-marker" aria-hidden="true" />
+            <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
+          </header>
+          <!-- Ekipman / tesisat sayfası ve Lokasyona git: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
+          <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
+            <span class="count-icon"><i class="pi pi-box" /></span>
+            <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
+            <i class="pi pi-angle-right" aria-hidden="true" />
+          </button>
+          <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
+            <span class="count-icon"><i class="pi pi-sitemap" /></span>
+            <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
+            <i class="pi pi-angle-right" aria-hidden="true" />
+          </button>
+          <button class="primary-button go-button" type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')">Lokasyona git <i class="pi pi-arrow-right" aria-hidden="true" /></button>
+          <small v-if="!workplacesOf(focusLocation).length" class="muted">Henüz işyeri yok; önce aşağıdaki ağaçtan işyeri ekleyin.</small>
+        </section>
+      </div>
+
       <!-- Tek pencere: bütün yapı ağaçta; ekleme, düzenleme ve silme ilgili satırın altında açılır. -->
       <section v-if="nodes.length" :class="embedded ? 'tree-embedded' : 'card tree-card'">
-        <div v-if="canBranch && !embedded" class="tree-head">
+        <!-- Katalogdaki sekmeler: Lokasyonlar = yere göre ağaç, İşyerleri = firmaya göre (eski Yere göre / Firmaya göre seçimi) -->
+        <div v-if="!embedded" class="tabs-row">
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" :aria-selected="treeView === 'yer'" :class="{ active: treeView === 'yer' }" @click="treeView = 'yer'"><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyonlar</button>
+            <button v-if="canBranch" type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-building" aria-hidden="true" /> İşyerleri</button>
+          </div>
+          <button v-if="canEdit" class="primary-button" type="button" @click="addLocationFromTab"><i class="pi pi-plus" aria-hidden="true" /> Lokasyon ekle</button>
+        </div>
+        <div v-if="SHOW_VIEW_TOGGLE && canBranch && !embedded" class="tree-head">
           <div class="view-toggle" role="group" aria-label="Görünüm">
             <button type="button" :class="{ on: treeView === 'yer' }" :aria-pressed="treeView === 'yer'" @click="treeView = 'yer'">Yere göre</button>
             <button type="button" :class="{ on: treeView === 'firma' }" :aria-pressed="treeView === 'firma'" @click="treeView = 'firma'">Firmaya göre</button>
@@ -753,6 +808,53 @@ async function repairRoot() {
 }
 
 const goEquipment = (location: FirmLocation) => goToEquipment(location.id)
+
+// --- Firma sayfasının üst sırası (tasarım kataloğu 12; gömülü ağaçta yok) ---
+// Katalogda yok, gizli; ileride açılabilir: başlıktaki tür + sayılar satırı (sayılar Organizasyon yapısı kartında) ve
+// eski Yere göre / Firmaya göre seçimi (aynı iş Lokasyonlar / İşyeri sekmelerinde).
+const SHOW_HEADER_STATS = false
+const SHOW_VIEW_TOGGLE = false
+// Organizasyon yapısı kartı: düğümler ve lokasyonlar (işyerleri aşağıdaki ağaçta); lokasyona tıklayınca sağdaki kart o lokasyon.
+const miniRows = computed(() => {
+  const out: TreeRow[] = []
+  const walk = (node: FirmNode, depth: number) => {
+    out.push({ kind: 'node', key: `n${node.id}`, depth, node })
+    for (const location of locationsOf(node)) out.push({ kind: 'location', key: `l${location.id}`, depth: depth + 1, location })
+    for (const child of node.children || []) walk(child, depth + 1)
+  }
+  nodes.value.forEach(node => walk(node, 0))
+  return out
+})
+const orgCount = computed(() => flatten(nodes.value).length - nodes.value.length)
+// Seçili lokasyon: tıklanan, yoksa üstte seçili lokasyon (bu firmanınsa), yoksa ilk lokasyon.
+const { context: workContext } = useWorkplaceContext()
+const focusId = ref<number | string | null>(null)
+const focusLocation = computed(() => locations.value.find(l => String(l.id) === String(focusId.value))
+  || locations.value.find(l => String(l.id) === String(workContext.value?.location_id))
+  || locations.value[0] || null)
+// Lokasyonun ekipman (aktif) ve tesisat sayısı: Durum raporu ucundan, lokasyon başına bir kez.
+const locationCounts = ref<Record<string, { equipment: number; installations: number }>>({})
+const focusCounts = computed(() => focusLocation.value ? locationCounts.value[String(focusLocation.value.id)] || null : null)
+watch(() => props.embedded ? null : focusLocation.value?.id, async (id) => {
+  if (id == null || locationCounts.value[String(id)]) return
+  try {
+    const report = await get<any>('/pk-dashboard/report', { 'location_ids[]': [id] })
+    locationCounts.value = { ...locationCounts.value, [String(id)]: { equipment: report.locations?.[0]?.total ?? report.totals?.equipment ?? 0, installations: report.installations?.length ?? 0 } }
+  } catch { /* sayı alınamazsa kartta "—" */ }
+})
+// Tesisat sayfası ve Lokasyona git (Genel Bakış): üstteki seçim bu lokasyon olur (ekipmandaki gibi).
+const { groups: workplaceGroups, selectLocation: chooseLocation } = useMyWorkplaces()
+async function openLocationPage(location: FirmLocation, path: string) {
+  const group = workplaceGroups.value.find(g => String(g.location_id) === String(location.id))
+  if (group) chooseLocation(group)
+  await navigateTo(path)
+}
+// Sekmedeki Lokasyon ekle: seçili lokasyonun organizasyonuna (yoksa köke) lokasyon formu ağaçta açılır.
+function addLocationFromTab() {
+  treeView.value = 'yer'
+  const owner = flatten(nodes.value).find(n => String(n.id) === String(focusLocation.value?.organization_id)) || nodes.value[0]
+  if (owner) startLocation(owner)
+}
 // Uzman ata penceresi açık olan işyeri (OSGB / kurumsal / kamu; yönetici ve operasyon yöneticisi).
 const assignId = ref<number | null>(null)
 // Alanlar paneli açık olan lokasyon ve Birimler penceresi açık olan işyeri (OSGB / kurumsal / kamu).
@@ -897,7 +999,59 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .page-head p { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; color: var(--admin-muted); font-size: 13.5px; }
 .chip { padding: 3px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-heading); font-size: 12px; font-weight: 600; }
 .card { padding: 14px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card, var(--admin-input)); }
-.tree-card { min-height: calc(100vh - 230px); padding: 18px; }
+.tree-card { min-height: 260px; padding: 0 18px 18px; border-radius: 16px; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .05); }
+/* Firma ve lokasyon detayı üst sırası (tasarım kataloğu 12) */
+.page-head h1 { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
+.page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
+.overview { display: grid; grid-template-columns: minmax(270px, 340px) minmax(0, 1fr) minmax(260px, 320px); gap: 16px; align-items: start; margin-bottom: 18px; }
+.org-card, .location-card { display: grid; gap: 12px; padding: 18px; border-radius: 16px; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); }
+.card-head { display: flex; align-items: center; gap: 10px; }
+.card-head i { color: var(--admin-accent-text); font-size: 19px; }
+.card-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 800; }
+.mini-tree { --step: 26px; max-height: 280px; overflow: auto; display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.mini-tree li { padding-left: calc(var(--depth) * var(--step)); }
+.mini-node, .mini-location { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 10px; color: var(--admin-heading); font-size: 14.5px; }
+.mini-node i { color: var(--admin-heading); font-size: 16px; }
+.mini-location { width: 100%; border: 1px solid transparent; background: none; font: inherit; text-align: left; cursor: pointer; }
+.mini-location i { color: var(--admin-accent-text); }
+.mini-location:hover { background: var(--admin-hover); }
+.mini-location.on { background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 600; box-shadow: 0 8px 20px rgba(var(--pk-accent-rgb), .25); }
+.mini-location.on i { color: var(--pk-on-accent); }
+.org-counts { display: grid; grid-template-columns: repeat(3, 1fr); padding-top: 12px; border-top: 1px solid var(--admin-border); text-align: center; }
+.org-counts > div { display: grid; justify-items: center; gap: 2px; }
+.org-counts > div + div { border-left: 1px solid var(--admin-border); }
+.org-counts i { color: var(--admin-accent-text); font-size: 17px; }
+.org-counts strong { color: var(--admin-heading); font-size: 20px; font-weight: 800; }
+.org-counts small { color: var(--admin-text); font-size: 13.5px; }
+.hero { position: relative; min-width: 0; margin: 0; display: flex; justify-content: center; }
+.hero-art { position: relative; width: min(100%, 820px); margin-top: 30px; }
+.hero-art img { display: block; width: 100%; }
+/* Etiket katalogdaki gibi binadaki noktanın çizgisinin ucunda (görselde x %47,6, y %9,8) */
+.pin-chip { position: absolute; left: calc(47.6% - 22px); top: 9.8%; transform: translateY(calc(-100% + 2px)); display: inline-flex; align-items: center; gap: 8px; max-width: 60%; padding: 8px 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 8px 22px rgba(var(--pk-shadow-rgb), .12); }
+.pin-chip i { color: var(--pk-accent); }
+.hero figcaption { position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px 15px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
+.location-card header { display: flex; align-items: flex-start; gap: 12px; }
+.location-card header > i { margin-top: 4px; color: var(--pk-accent); font-size: 22px; }
+.location-card h2 { font-size: 22px; overflow-wrap: anywhere; }
+.location-card header small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 14px; }
+.count-row { display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 10px 16px; border: 1px solid var(--admin-row-border); border-radius: 14px; background: var(--admin-soft); color: var(--admin-heading); font: inherit; text-align: left; cursor: pointer; }
+.count-row:hover:not(:disabled) { border-color: var(--admin-border); background: var(--admin-hover); }
+.count-row:disabled { opacity: .6; cursor: default; }
+.count-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 19px; }
+.count-text { flex: 1; display: grid; }
+.count-text strong { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.count-text small { color: var(--admin-text); font-size: 14px; }
+.go-button { min-height: 50px; font-size: 16px; box-shadow: 0 8px 20px rgba(var(--pk-accent-rgb), .25); }
+/* Sekmeler: Lokasyonlar / İşyerleri ve Lokasyon ekle */
+.tabs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -18px 14px; padding: 6px 18px 0; border-bottom: 1px solid var(--admin-border); }
+.tabs { display: flex; gap: 6px; }
+.tabs button { display: inline-flex; align-items: center; gap: 9px; margin-bottom: -1px; padding: 14px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--admin-heading); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.tabs button i { color: var(--admin-muted); }
+.tabs button.active { color: var(--admin-accent-text); border-bottom-color: var(--pk-yellow); font-weight: 700; }
+.tabs button.active i { color: var(--admin-accent-text); }
+.tabs-row .primary-button { margin: 6px 0; }
+@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .hero { grid-column: 1 / -1; order: 3; } }
+@media (max-width: 760px) { .overview { grid-template-columns: 1fr; } .page-head h1 { font-size: 30px; } }
 .tree-head { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }
 .view-toggle button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
