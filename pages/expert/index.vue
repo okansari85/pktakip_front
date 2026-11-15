@@ -3,17 +3,23 @@
   <div class="expert-dashboard" :class="{ reloading: (loading || cityLoading) && !!data, fit: showSummary }">
     <div class="page-head">
       <div>
-        <span class="eyebrow">Hoş geldiniz, {{ user?.name }}</span>
-        <h1>Genel Bakış</h1>
-        <p :class="{ 'summary-sub': individual }">{{ individual ? 'Tüm firma ve lokasyonlarınızın periyodik kontrol takip özeti' : scopeLabel }}</p>
+        <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
+        <nav class="crumb" aria-label="Sayfa yolu">
+          <i class="pi pi-home" aria-hidden="true" />
+          <template v-if="individual"><NuxtLink to="/expert/anasayfa">Ana Sayfa</NuxtLink><i class="pi pi-angle-right" aria-hidden="true" /></template>
+          <strong>Genel Bakış</strong>
+        </nav>
+        <h1>Genel bakış</h1>
+        <p>Kontrol portföyünüzün güncel durumu</p>
       </div>
-      <div v-if="individual" class="view-switch" role="group" aria-label="Görünüm">
+      <span v-if="data && groups.length" class="scope-pill"><i class="pi pi-building" /> {{ scopePill }}</span>
+      <div v-if="SHOW_DETAIL_TABLES && individual" class="view-switch" role="group" aria-label="Görünüm">
         <button type="button" :class="{ on: view === 'ozet' }" :aria-pressed="view === 'ozet'" @click="view = 'ozet'"><i class="pi pi-th-large" /> Özet</button>
         <button type="button" :class="{ on: view === 'detay' }" :aria-pressed="view === 'detay'" @click="view = 'detay'"><i class="pi pi-table" /> Detaylı Tablolar</button>
       </div>
     </div>
 
-    <!-- Bireysel uzman: sayılar, harita, kontrol durumu ve tarih kartları üstte; alttaki sekme ve tablolar aynen kalır. -->
+    <!-- Bireysel uzmanın eski Özet'i (katalogda yok, SHOW_LEGACY_SUMMARY ile gizli): sayılar, harita, kontrol durumu ve tarih kartları. -->
     <template v-if="showSummary">
       <div class="top-kpis">
         <div v-for="kpi in topKpis" :key="kpi.label" class="top-kpi">
@@ -44,11 +50,11 @@
     </template>
 
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, tesisat ve formlar (takvim sol menüde: Kontrol Takvimi) -->
-    <div v-if="!individual || view === 'detay'" class="tabs">
+    <div v-if="detailTables" class="tabs">
       <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
     </div>
     <!-- Haritada il seçiliyken sayfanın tamamı o ile göre -->
-    <div v-if="selectedCity && (!individual || view === 'detay')" class="city-bar">
+    <div v-if="selectedCity && detailTables" class="city-bar">
       <i :class="cityLoading ? 'pi pi-spin pi-spinner' : 'pi pi-map-marker'" />
       <span>Sayfa <strong>{{ selectedCityName }}</strong> iline göre gösteriliyor.</span>
       <button class="link-button" type="button" @click="selectedCity = null">Tüm iller</button>
@@ -58,7 +64,62 @@
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
 
-    <template v-else-if="data && (!individual || view === 'detay')">
+    <!-- Tasarım kataloğu 02 (bütün hesaplar): solda sayılar, ortada örnek yerleşim, sağda kontrol durumu çubukları;
+         altta öncelikli kontroller ve en yakın kontrol günü. Kapsam üstteki lokasyon / firma seçicisinden. -->
+    <template v-else-if="data && !detailTables">
+      <div class="gb-top">
+        <div class="gb-kpis">
+          <NuxtLink v-for="kpi in sideKpis" :key="kpi.to" :to="kpi.to" class="card gb-kpi">
+            <span class="gb-kpi-icon" :class="kpi.tone"><i :class="kpi.icon" /></span>
+            <span class="gb-kpi-text"><strong>{{ kpi.value }}</strong><small>{{ kpi.label }}</small></span>
+            <i class="pi pi-chevron-right" aria-hidden="true" />
+          </NuxtLink>
+        </div>
+        <figure class="gb-hero">
+          <img src="/katalog/yerlesim.svg" alt="" />
+          <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
+        </figure>
+        <div class="gb-side">
+          <NuxtLink v-for="box in statusBars" :key="box.to" :to="box.to" class="card gb-status">
+            <span class="gb-status-head"><i :class="box.icon" /><strong>{{ box.title }}</strong><i class="pi pi-chevron-right" aria-hidden="true" /></span>
+            <strong class="gb-status-total">{{ trNumber(box.total) }}</strong>
+            <span class="gb-bar" role="img" :aria-label="box.parts.map(part => `${part.count} ${part.label}`).join(', ') || 'Kayıt yok'">
+              <span v-for="part in box.parts" :key="part.key" :class="part.key" :style="{ width: `${part.share}%` }">{{ part.share >= 8 ? trNumber(part.count) : '' }}</span>
+            </span>
+            <span class="gb-legend"><span v-for="part in box.parts" :key="part.key"><i :class="part.key" /> {{ trNumber(part.count) }} {{ part.label }}</span></span>
+          </NuxtLink>
+        </div>
+      </div>
+
+      <div class="gb-bottom">
+        <section class="card gb-panel">
+          <header class="gb-panel-head"><span class="gb-head-icon"><i class="pi pi-list" /></span><h3>Öncelikli kontroller</h3></header>
+          <div class="gb-inner">
+            <p v-if="!priorityRows.length" class="muted gb-empty">Gecikmiş ya da 30 gün içinde dolan kontrol yok.</p>
+            <div v-for="row in priorityRows" :key="row.key" class="gb-row">
+              <span class="gb-row-icon"><i :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
+              <span class="gb-row-name"><strong>{{ row.name }}</strong><small v-if="row.meta"> · {{ row.meta }}</small></span>
+              <span class="gb-pill" :class="row.days_left < 0 ? 'bad' : 'warn'">{{ row.when }}</span>
+              <button type="button" class="gb-inspect" @click="priorityDate = row.date">İncele <i class="pi pi-chevron-right" /></button>
+            </div>
+          </div>
+        </section>
+        <section class="card gb-panel">
+          <header class="gb-panel-head"><span class="gb-head-icon"><i class="pi pi-calendar" /></span><h3>Kontrol takvimi</h3></header>
+          <div class="gb-inner gb-next">
+            <template v-if="nextDay">
+              <span class="gb-date"><strong>{{ nextDate.day }}</strong><span>{{ nextDate.month }}</span></span>
+              <span class="gb-next-text"><strong>{{ agendaGroupsText(nextDay.entries) }}</strong><small>{{ nextDate.long }}</small></span>
+            </template>
+            <p v-else class="muted gb-empty">Yaklaşan kontrol yok.</p>
+          </div>
+          <NuxtLink to="/expert/calendar" class="gb-go"><i class="pi pi-calendar" /> Takvime git <i class="pi pi-chevron-right" /></NuxtLink>
+        </section>
+      </div>
+      <ExpertControlDayModal v-if="priorityDate" :date="priorityDate" :entries="entriesOnDate(priorityDate)" :query="viewQuery" @close="priorityDate = null" />
+    </template>
+
+    <template v-else-if="data && detailTables">
       <!-- 1) Hizmet verilen lokasyonlar: başta sayılar (KPI), Türkiye haritası ve sağında genel skor, altta lokasyon
            bazında PK durumu (% tamam) -->
       <template v-if="tab === 'locations'">
@@ -257,10 +318,21 @@
 </template>
 
 <script setup lang="ts">
+import { agendaDate, agendaGroupsText, agendaNextDay, agendaShortName } from '~/composables/controlAgenda'
+
 // Genel Bakış: uzmanın tüm lokasyonlarındaki (ya da filtrelenen müşteri / lokasyon / işyerindeki) ekipman ve tesisat
 // özeti; hangi lokasyonun sorunlu olduğu tek bakışta. Lokasyon çubuğuna tıklayınca o lokasyona iner.
 // Kapsam üstteki lokasyon / firma menüsünden; bu sayfada menüde "Tüm lokasyonlar" da seçilebilir (dashboardScope).
 definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
+
+// Tasarım kataloğu (15 Kas 2026): sayfa bütün hesaplarda katalogdaki yerleşimde. Aşağıdaki bölümler katalogda yok, gizli;
+// kodları ve istekleri yerinde, bayrak açılınca geri gelir.
+// Bireysel uzmanın eski Özet'i: dört sayı kartı, Türkiye / ilçe haritası, Periyodik Kontrol Durumu halkaları, kontrol
+// kartları (Bugün / 7 gün / 8-30 gün / Süresi geçen) ve iki tablo (Son Eklenen Kayıtlar, Dikkat Gerektiren Kontroller).
+const SHOW_LEGACY_SUMMARY = false
+// Özet / Detaylı Tablolar düğmesi ve sekmeler (Lokasyonlar, Genel durum, Tesisatlar ve formlar, Uzmanlar, Ceza):
+// OSGB / kurumsal / kamuda sayfanın eski hâli; bireysel uzmanda Detaylı Tablolar.
+const SHOW_DETAIL_TABLES = false
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok' }
 
@@ -346,7 +418,8 @@ const districtEnabled = computed(() => kamuAccount.value || pkAccount.value?.typ
 // Müşterilerin lokasyonları: lokasyon → il ve ilçe adı (bir kez alınır).
 const locationPlaces = ref<Record<number, { city: string; district: string }> | null>(null)
 watch(districtEnabled, async (enabled) => {
-  if (!enabled || locationPlaces.value) return
+  // Harita yalnız gizli bölümlerde: gizliyken müşteri / lokasyon listesi çekilmez.
+  if (!enabled || locationPlaces.value || !(SHOW_LEGACY_SUMMARY || SHOW_DETAIL_TABLES)) return
   try {
     const customers = await get<any>('/customers')
     const list = Array.isArray(customers) ? customers : customers?.items || customers?.data || []
@@ -413,7 +486,7 @@ let typesKey = ''
 let typesRequest = 0
 const loadTypes = async () => {
   // Bireysel uzmanın Özet görünümünde tablo yok; gereksiz istek atılmaz.
-  if (tab.value !== 'locations' || !groups.value.length || (pkAccount.value && !multiUser.value && view.value === 'ozet')) return
+  if (!SHOW_DETAIL_TABLES || tab.value !== 'locations' || !groups.value.length || (pkAccount.value && !multiUser.value && view.value === 'ozet')) return
   const key = JSON.stringify(viewQuery.value)
   if (key === typesKey) return
   typesKey = key
@@ -477,8 +550,85 @@ const { multiUser, corporate, kamu, isManager, isOperation, load: loadAccount } 
 const teamView = computed(() => multiUser.value && (isManager.value || isOperation.value))
 // Bireysel uzmanın üst bölümü: gerçek sayılar; hesap bilgisi gelmeden gösterilmez.
 const individual = computed(() => !!pkAccount.value && !multiUser.value)
-const showSummary = computed(() => individual.value && view.value === 'ozet' && !!data.value && groups.value.length > 0)
+const showSummary = computed(() => SHOW_LEGACY_SUMMARY && individual.value && view.value === 'ozet' && !!data.value && groups.value.length > 0)
+const detailTables = computed(() => SHOW_DETAIL_TABLES && (!individual.value || view.value === 'detay'))
 const trNumber = (value: number) => new Intl.NumberFormat('tr-TR').format(value)
+
+// --- Katalog yerleşimi (bütün hesaplar) ---
+// Sağ üstteki kapsam: firma (kurumsal / kamuda yok) ve lokasyon sayısı.
+const scopePill = computed(() => [!corporate.value && `${trNumber(scopeCounts.value.customers)} firma`, `${trNumber(data.value?.locations?.length || 0)} lokasyon`].filter(Boolean).join(' · '))
+// Açık bulgu: menü rozetiyle aynı sayım (kapanmamış), sayfanın kapsamındaki lokasyonlarda.
+const openFindings = ref<number | null>(null)
+let findingsRequest = 0
+watch(() => JSON.stringify(viewQuery.value['location_ids[]'] || []), async (key) => {
+  const ids: number[] = JSON.parse(key)
+  const no = ++findingsRequest
+  if (!ids.length) { openFindings.value = null; return }
+  try {
+    const result = await get<{ open: number }>('/pk-findings/count', { 'location_ids[]': ids })
+    if (no === findingsRequest) openFindings.value = result.open
+  } catch { if (no === findingsRequest) openFindings.value = null }
+}, { immediate: true })
+const sideKpis = computed(() => [
+  { to: '/expert/equipment', label: 'Ekipman', value: trNumber(data.value?.totals?.equipment || 0), icon: 'pi pi-box', tone: 'equipment' },
+  { to: '/expert/installations', label: 'Tesisat', value: trNumber(data.value?.installations?.length || 0), icon: 'pi pi-sitemap', tone: 'installation' },
+  { to: '/expert/bulgu-takip', label: 'Açık bulgu', value: openFindings.value === null ? '—' : trNumber(openFindings.value), icon: 'pi pi-exclamation-triangle', tone: 'finding' }
+])
+// Ekipman ve tesisat kontrol durumu çubuğu (Periyodik Kontrol Durumu halkalarıyla aynı hesap); yalnız sıfır olmayan dilimler.
+const BAR_PARTS = [
+  { key: 'ok', label: 'tamamlanan' },
+  { key: 'soon', label: 'yaklaşan' },
+  { key: 'overdue', label: 'süresi geçen' },
+  { key: 'none', label: 'tarihi girilmemiş' }
+] as const
+const barOf = (title: string, to: string, icon: string, total: number, counts: Record<(typeof BAR_PARTS)[number]['key'], number>) => {
+  const sum = BAR_PARTS.reduce((acc, part) => acc + counts[part.key], 0)
+  return { title, to, icon, total, parts: BAR_PARTS.filter(part => counts[part.key]).map(part => ({ ...part, count: counts[part.key], share: (counts[part.key] / sum) * 100 })) }
+}
+const statusBars = computed(() => {
+  const t = data.value?.timing || {}
+  const installation = { ok: 0, soon: 0, overdue: 0, none: 0 }
+  for (const item of data.value?.installations || []) {
+    const days = item.days_left
+    if (days === null || days === undefined) installation.none++
+    else if (days < 0) installation.overdue++
+    else if (days <= 60) installation.soon++
+    else installation.ok++
+  }
+  return [
+    barOf('Ekipmanlar', '/expert/equipment', 'pi pi-box', data.value?.totals?.equipment || 0, { ok: t.later || 0, soon: (t.d30 || 0) + (t.d60 || 0), overdue: t.overdue || 0, none: t.none || 0 }),
+    barOf('Tesisatlar', '/expert/installations', 'pi pi-sitemap', data.value?.installations?.length || 0, installation)
+  ]
+})
+// Öncelikli kontroller: süresi geçenler (en eski önce), sonra 30 gün içinde dolanlar (en yakın önce); ilk üç kalem.
+// "İncele" o günün penceresini açar (takvimdeki gibi).
+const priorityDate = ref<string | null>(null)
+const priorityRows = computed(() => {
+  const many = (data.value?.locations?.length || 0) > 1
+  return (data.value?.agenda || []).filter((entry: any) => entry.days_left <= 30)
+    .flatMap((entry: any) => (entry.groups || []).map((group: any) => ({ entry, group })))
+    .sort((a: any, b: any) => a.entry.days_left - b.entry.days_left)
+    .slice(0, 3)
+    .map(({ entry, group }: any) => ({
+      key: `${entry.date}|${entry.location_id}|${group.key}`,
+      date: entry.date,
+      days_left: entry.days_left,
+      kind: group.kind,
+      name: group.kind === 'installation' ? group.name : agendaShortName(group.name),
+      meta: [group.count > 1 ? `${trNumber(group.count)} ekipman` : '', many ? locationLabel(entry.location_id, entry.location_name) : ''].filter(Boolean).join(' · '),
+      when: entry.days_left < 0 ? `${trNumber(-entry.days_left)} gün gecikti` : entry.days_left === 0 ? 'Bugün' : `${entry.days_left} gün kaldı`
+    }))
+})
+// Kontrol takvimi kartı: en yakın kontrol günü.
+const nextDay = computed(() => agendaNextDay(data.value?.agenda))
+const nextDate = computed(() => {
+  const date = nextDay.value ? agendaDate(nextDay.value.date) : new Date()
+  return {
+    day: date.getDate(),
+    month: new Intl.DateTimeFormat('tr-TR', { month: 'short' }).format(date).toLocaleUpperCase('tr-TR'),
+    long: new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
+  }
+})
 const topKpis = computed(() => [
   { label: 'Firmalar', value: trNumber(scopeCounts.value.customers), text: 'Takip edilen firmalar', icon: 'pi pi-building', tone: 'blue' },
   { label: 'Lokasyonlar', value: trNumber(data.value?.locations?.length || 0), text: `${trNumber(scopeCounts.value.workplaces)} işyeri`, icon: 'pi pi-map-marker', tone: 'amber' },
@@ -503,7 +653,8 @@ const { customer: scopeCustomer, locationId: scopeLocationId } = useDashboardSco
 const teamLocationIds = computed<number[]>(() => scopeCustomer.value || scopeLocationId.value || selectedCity.value ? viewQuery.value['location_ids[]'] : [])
 let teamKey = ''
 const loadTeam = async () => {
-  if (!teamView.value) { team.value = null; teamKey = ''; return }
+  // Uzman özeti yalnız gizli sekmelerde (Uzman sayısı, Müşteri özeti, Uzmanlar).
+  if (!teamView.value || !SHOW_DETAIL_TABLES) { team.value = null; teamKey = ''; return }
   const key = JSON.stringify(teamLocationIds.value)
   if (key === teamKey) return
   teamKey = key
@@ -526,6 +677,91 @@ onMounted(async () => {
 .view-switch button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .view-switch button.on { background: var(--pk-yellow); color: #111827; }
 .page-head p.summary-sub { color: var(--admin-heading); font-size: 15px; font-weight: 600; }
+/* Tasarım kataloğu 02: başlık, kapsam, sayılar, örnek yerleşim, durum çubukları, öncelikli kontroller, takvim kartı */
+.crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--admin-muted); font-size: 13px; }
+.crumb a { color: var(--admin-muted); } .crumb a:hover { color: var(--admin-heading); }
+.crumb strong { color: var(--admin-heading); font-weight: 600; } .crumb .pi-angle-right { font-size: 11px; }
+.expert-dashboard .page-head h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; }
+.expert-dashboard .page-head p { font-size: 15px; }
+.scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+.scope-pill i { color: var(--pk-yellow-dark); }
+.gb-top { display: grid; grid-template-columns: 236px minmax(0, 1fr) 320px; gap: 16px; align-items: stretch; }
+.gb-kpis, .gb-side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.card.gb-kpi, .card.gb-status { flex: 1; border-radius: 16px; color: inherit; box-shadow: 0 10px 28px rgba(120, 90, 0, .06); transition: border-color .15s ease; }
+.gb-kpi:hover, .gb-kpi:focus-visible, .gb-status:hover, .gb-status:focus-visible { border-color: var(--pk-yellow); }
+.gb-kpi { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.gb-kpi-icon { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; font-size: 22px; }
+.gb-kpi-icon.equipment { background: var(--admin-accent-soft); color: var(--pk-yellow-dark); }
+.gb-kpi-icon.installation { background: #ebe9fe; color: #5925dc; }
+.gb-kpi-icon.finding { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
+.gb-kpi-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gb-kpi-text strong { color: var(--admin-heading); font-size: 30px; line-height: 1.1; }
+.gb-kpi-text small { color: var(--admin-muted); font-size: 15px; }
+.gb-kpi > .pi, .gb-status-head > .pi-chevron-right { color: var(--admin-heading); font-size: 13px; }
+.gb-hero { position: relative; min-width: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
+.gb-hero img { width: 100%; max-height: 400px; object-fit: contain; }
+.gb-hero figcaption { position: absolute; right: 12px; bottom: 6px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 13px; font-weight: 600; }
+.gb-status { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; }
+.gb-status-head { display: flex; align-items: center; gap: 10px; }
+.gb-status-head > i:first-child { color: var(--pk-yellow-dark); font-size: 18px; }
+.gb-status-head strong { flex: 1; color: var(--admin-heading); font-size: 16px; }
+.gb-status-total { color: var(--admin-heading); font-size: 30px; line-height: 1.1; }
+.gb-bar { display: flex; gap: 2px; height: 26px; border-radius: 8px; background: var(--admin-chip); overflow: hidden; }
+.gb-bar span { display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; }
+.gb-bar .ok, .gb-legend i.ok { background: #12805c; }
+.gb-bar .soon, .gb-legend i.soon { background: #f5b800; }
+.gb-bar .overdue, .gb-legend i.overdue { background: #d92d20; }
+.gb-bar .none, .gb-legend i.none { background: #a8b3c2; }
+.gb-bar .soon { color: #111827; }
+.gb-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--admin-muted); font-size: 13px; }
+.gb-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.gb-legend i { width: 10px; height: 10px; border-radius: 50%; }
+.gb-bottom { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; }
+.card.gb-panel { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: 18px; }
+.gb-panel-head { display: flex; align-items: center; gap: 12px; }
+.gb-panel-head h3 { font-size: 20px; font-weight: 800; }
+.gb-head-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--admin-accent-soft); color: var(--pk-yellow-dark); font-size: 16px; }
+.gb-inner { border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-surface); }
+.gb-empty { padding: 18px 16px; }
+.gb-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 16px; }
+.gb-row + .gb-row { border-top: 1px solid var(--admin-row-border); }
+.gb-row-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-chip); color: var(--admin-heading); font-size: 20px; }
+.gb-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-row-name strong { color: var(--admin-heading); font-size: 16px; }
+.gb-row-name small { color: var(--admin-muted); font-size: 15px; }
+.gb-pill { padding: 7px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.gb-pill.bad { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
+.gb-pill.warn { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
+.gb-inspect { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 0; border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.gb-inspect:hover, .gb-inspect:focus-visible { background: var(--pk-yellow); color: #111827; }
+.gb-inspect .pi { font-size: 11px; }
+.gb-next { flex: 1; display: flex; align-items: center; gap: 28px; padding: 20px 28px; }
+.gb-date { flex: none; width: 106px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--admin-border); border-radius: 14px; text-align: center; box-shadow: 0 6px 18px rgba(120, 90, 0, .08); }
+.gb-date strong { padding: 10px 0 6px; background: var(--pk-yellow); color: #111827; font-size: 36px; line-height: 1.1; }
+.gb-date span { padding: 6px 0 8px; background: var(--admin-surface); color: var(--admin-heading); font-size: 20px; font-weight: 800; }
+.gb-next-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-left: 28px; border-left: 1px solid var(--admin-border); }
+.gb-next-text strong { color: var(--admin-heading); font-size: 26px; font-weight: 800; line-height: 1.2; }
+.gb-next-text small { color: var(--admin-muted); font-size: 17px; }
+.gb-go { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 54px; padding: 0 22px; border-radius: 12px; background: var(--pk-yellow); color: #111827; font-size: 17px; font-weight: 700; }
+.gb-go:hover, .gb-go:focus-visible { background: var(--pk-yellow-dark); }
+.gb-go .pi-chevron-right { position: absolute; right: 22px; font-size: 13px; }
+@media (max-width: 1250px) {
+  .gb-top { grid-template-columns: 220px minmax(0, 1fr); }
+  .gb-side { grid-column: 1 / -1; flex-direction: row; }
+  .gb-side > * { min-width: 0; }
+}
+@media (max-width: 1000px) { .gb-bottom { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 800px) {
+  .expert-dashboard .page-head h1 { font-size: 32px; }
+  .gb-top { grid-template-columns: minmax(0, 1fr); }
+  .gb-hero { display: none; }
+  .gb-side { flex-direction: column; }
+  .gb-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
+  .gb-row-icon { width: 40px; height: 40px; }
+  .gb-inspect { grid-column: 2 / -1; justify-self: start; }
+  .gb-next { gap: 16px; padding: 16px; }
+  .gb-next-text { padding-left: 16px; }
+}
 .map-slot { flex: 1; min-height: 0; display: flex; }
 .map-slot > * { flex: 1; min-width: 0; }
 /* Özet tek ekrana sığar: harita ve halkalar kalan yüksekliği paylaşır; küçük ekranda normal kaydırma. */
