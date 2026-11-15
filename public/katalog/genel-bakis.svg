@@ -1,22 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="presentation" aria-hidden="true">
-  <!-- Genel bakış kartı: ofis binası (elle çizildi) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-94 -63 213 173" role="presentation" aria-hidden="true">
+  <!-- Genel bakış kartı: izometrik ofis binası (elle tanımlı kutulardan üretildi). -->
   <defs>
-    <radialGradient id="golge" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity=".2"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
-    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f86a0"/><stop offset=".55" stop-color="#aabdd0"/><stop offset="1" stop-color="#5a718c"/></linearGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f8fb2"/><stop offset=".5" stop-color="#b3c8de"/><stop offset="1" stop-color="#5b7ba0"/></linearGradient>
+    <radialGradient id="gol1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity="0.2"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
+    <linearGradient id="g0" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#644d35"/><stop offset=".45" stop-color="#a0866b"/><stop offset="1" stop-color="#6c533a"/></linearGradient>
+    
   </defs>
-  <ellipse cx="82" cy="106" rx="68" ry="9" fill="url(#golge)"/>
-  <polygon points="58,26 70,19 112,19 100,26" fill="#f4f6f8" stroke="#d3d9e0"/>
-  <polygon points="100,26 112,19 112,48 100,54" fill="#bcc6d1"/>
-  <rect x="58" y="26" width="42" height="28" fill="#e9edf1"/>
-  <rect x="62" y="30" width="34" height="9" fill="url(#cam)"/><rect x="62" y="42" width="34" height="9" fill="url(#cam)"/>
-  <polygon points="22,62 36,54 132,54 118,62" fill="#f4f6f8" stroke="#d3d9e0"/>
-  <polygon points="118,62 132,54 132,96 118,104" fill="#c3ccd6"/>
-  <polygon points="121,66 129,61 129,72 121,77" fill="url(#cam)" opacity=".8"/><polygon points="121,82 129,77 129,88 121,93" fill="url(#cam)" opacity=".8"/>
-  <rect x="22" y="62" width="96" height="42" fill="#e6eaef"/>
-  <rect x="26" y="67" width="88" height="12" fill="url(#cam)"/>
-  <g stroke="#e9eef3" stroke-width="1.5"><line x1="48" y1="67" x2="48" y2="79"/><line x1="70" y1="67" x2="70" y2="79"/><line x1="92" y1="67" x2="92" y2="79"/></g>
-  <rect x="26" y="85" width="36" height="14" fill="url(#cam)"/><rect x="84" y="85" width="30" height="14" fill="url(#cam)"/>
-  <rect x="66" y="84" width="14" height="20" fill="#4b5d72"/>
-  <rect x="11" y="86" width="3" height="18" fill="#8b6b4a"/><circle cx="12.5" cy="80" r="10" fill="#5fae5a"/><circle cx="8" cy="87" r="6" fill="#4f9d4b"/>
-  <rect x="140" y="88" width="3" height="16" fill="#8b6b4a"/><circle cx="141.5" cy="83" r="9" fill="#6bbb63"/>
+  <ellipse cx="11.7" cy="47.2" rx="99.2" ry="38.2" fill="url(#gol1)"/>
+  <polygon points="-85.7,36.0 31.2,103.5 31.2,99.9 -85.7,32.4" fill="#d3d9e0"/>
+  <polygon points="113.0,56.2 31.2,103.5 31.2,99.9 113.0,52.6" fill="#b4bdc7"/>
+  <polygon points="-3.9,-14.8 113.0,52.6 31.2,99.9 -85.7,32.4" fill="#eef1f4"/>
+  <polygon points="-62.4,32.4 -11.7,61.6 -11.7,20.2 -62.4,-9.0" fill="#d6dce2"/>
+  <polygon points="35.1,34.6 -11.7,61.6 -11.7,20.2 35.1,-6.8" fill="#b9c2cb"/>
+  <polygon points="-15.6,-36.0 35.1,-6.8 -11.7,20.2 -62.4,-9.0" fill="#eef1f4"/>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 -60.0 -4.0)"><rect x="0.12" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="1.57" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="3.01" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="4.46" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 -9.4 22.5)"><rect x="0.12" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/><rect x="1.88" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/><rect x="3.64" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 -60.0 13.9)"><rect x="0.12" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="1.57" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="3.01" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/><rect x="4.46" y="0.12" width="1.33" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 -9.4 40.5)"><rect x="0.12" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/><rect x="1.88" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/><rect x="3.64" y="0.12" width="1.64" height="1.36" fill="url(#cam)"/></g>
+  <polygon points="-49.9,45.0 -33.5,54.4 -33.5,36.5 -49.9,27.0" fill="#46505b"/>
+  <polygon points="-28.4,51.5 -33.5,54.4 -33.5,36.5 -28.4,33.5" fill="#353d46"/>
+  <polygon points="-44.8,24.1 -28.4,33.5 -33.5,36.5 -49.9,27.0" fill="#5f6b78"/>
+  <polygon points="11.7,48.1 58.5,75.2 58.5,-7.6 11.7,-34.6" fill="#e2e7ec"/>
+  <polygon points="97.4,52.6 58.5,75.2 58.5,-7.6 97.4,-30.1" fill="#c3ccd5"/>
+  <polygon points="50.7,-57.1 97.4,-30.1 58.5,-7.6 11.7,-34.6" fill="#f4f6f8"/>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 13.6 -29.0)"><rect x="0.12" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="1.47" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="2.81" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="4.16" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 60.0 -4.0)"><rect x="0.12" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="1.61" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="3.11" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 13.6 -11.0)"><rect x="0.12" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="1.47" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="2.81" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="4.16" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 60.0 14.0)"><rect x="0.12" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="1.61" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="3.11" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 13.6 7.0)"><rect x="0.12" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="1.47" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="2.81" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="4.16" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 60.0 32.0)"><rect x="0.12" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="1.61" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="3.11" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 4.5000 0 9.0000 13.6 25.0)"><rect x="0.12" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="1.47" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="2.81" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/><rect x="4.16" y="0.12" width="1.23" height="1.36" fill="url(#cam)"/></g>
+  <g transform="matrix(7.7942 -4.5000 0 9.0000 60.0 50.0)"><rect x="0.12" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="1.61" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/><rect x="3.11" y="0.12" width="1.37" height="1.36" fill="url(#cam)"/></g>
+  <polygon points="39.0,-40.5 56.1,-30.6 56.1,-37.8 39.0,-47.7" fill="#b9c2cc"/>
+  <polygon points="71.7,-39.6 56.1,-30.6 56.1,-37.8 71.7,-46.8" fill="#97a2ae"/>
+  <polygon points="54.6,-56.7 71.7,-46.8 56.1,-37.8 39.0,-47.7" fill="#e3e8ee"/>
+  <polygon points="35.6,77.9 35.8,77.5 36.2,77.2 36.7,77.0 37.4,76.9 38.1,77.0 38.7,77.2 39.0,77.5 39.2,77.9 39.2,91.8 39.0,92.2 38.7,92.5 38.1,92.7 37.4,92.8 36.7,92.7 36.2,92.5 35.8,92.2 35.6,91.8" fill="url(#g0)"/>
+  <polygon points="38.7,78.7 38.1,78.9 37.4,79.0 36.7,78.9 36.2,78.7 35.8,78.3 35.6,77.9 35.8,77.6 36.2,77.2 36.7,77.0 37.4,76.9 38.1,77.0 38.7,77.2 39.0,77.6 39.2,77.9 39.0,78.3" fill="#a89077"/>
+  <circle cx="32.0" cy="73.5" r="7.1" fill="#4f9d45"/>
+  <circle cx="42.9" cy="74.0" r="6.9" fill="#5aa84d"/>
+  <circle cx="37.4" cy="71.5" r="9.4" fill="#64b457"/>
+  <circle cx="35.4" cy="65.6" r="6.9" fill="#74c364"/>
+  <circle cx="40.9" cy="67.5" r="5.4" fill="#80cb6e"/>
+  <circle cx="34.9" cy="66.6" r="3.2" fill="#9bd889" opacity=".55"/>
+  <polygon points="-59.4,32.2 -59.3,31.8 -58.9,31.5 -58.4,31.3 -57.7,31.2 -57.0,31.3 -56.4,31.5 -56.0,31.8 -55.9,32.2 -55.9,44.1 -56.0,44.5 -56.4,44.8 -57.0,45.0 -57.7,45.1 -58.4,45.0 -58.9,44.8 -59.3,44.5 -59.4,44.1" fill="url(#g0)"/>
+  <polygon points="-56.4,32.9 -57.0,33.2 -57.7,33.2 -58.4,33.2 -58.9,32.9 -59.3,32.6 -59.4,32.2 -59.3,31.8 -58.9,31.5 -58.4,31.3 -57.7,31.2 -57.0,31.3 -56.4,31.5 -56.0,31.8 -55.9,32.2 -56.0,32.6" fill="#a89077"/>
+  <circle cx="-62.6" cy="28.2" r="6.5" fill="#4f9d45"/>
+  <circle cx="-52.7" cy="28.6" r="6.3" fill="#5aa84d"/>
+  <circle cx="-57.7" cy="26.4" r="8.5" fill="#64b457"/>
+  <circle cx="-59.5" cy="21.0" r="6.3" fill="#74c364"/>
+  <circle cx="-54.5" cy="22.8" r="5.0" fill="#80cb6e"/>
+  <circle cx="-59.9" cy="21.9" r="2.9" fill="#9bd889" opacity=".55"/>
 </svg>
