@@ -107,7 +107,8 @@
             <span v-else class="location-empty">Ekipman yok</span>
           </div>
         </section>
-        <section class="card list-card">
+        <!-- OSGB / kurumsal / kamu: yalnız boşluk mesajı taşıyacak kartlar gösterilmez (veri gelince görünür). -->
+        <section v-if="!multiUser || summaryLocations.length" class="card list-card">
           <header>
             <div><h3>Lokasyon özeti</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Lokasyon bazında PK durumu (yüzde kaçı tamam); en sorunlu üstte, tıklayınca o lokasyona iner.</small></div>
             <button v-if="selectedCity" class="link-button" type="button" @click="selectedCity = null">Tüm iller</button>
@@ -127,7 +128,7 @@
           </div>
         </section>
         <!-- Ekipman kategorileri: kategori bazında PK durumu (yangın ekipmanları dahil; genel skorla aynı hesap) -->
-        <section class="card list-card">
+        <section v-if="!multiUser || data.category_scores.length" class="card list-card">
           <header><div><h3>Ekipman kategorileri</h3><small>Kategori bazında PK durumu (yüzde kaçı tamam)</small></div></header>
           <p v-if="!data.category_scores.length" class="muted pad">Ekipman yok.</p>
           <div v-for="row in data.category_scores" :key="row.slug" class="location-row static">
@@ -138,7 +139,7 @@
           </div>
         </section>
         <!-- Ekipman türleri: Durum Raporu'ndaki tablo (yalnızca tablo); kapsam sayfayla aynı (filtre + seçili il) -->
-        <section class="card list-card" :class="{ loading: typesLoading && typeRows.length }">
+        <section v-if="!multiUser || typesLoading || typesError || typeRows.length" class="card list-card" :class="{ loading: typesLoading && typeRows.length }">
           <header><div><h3>Ekipman türleri</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Tür başına durum ve kontrol zamanı</small></div></header>
           <p v-if="typesLoading && !typeRows.length" class="muted pad"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
           <p v-else-if="typesError" class="muted pad error-text">{{ typesError }}</p>
@@ -146,7 +147,7 @@
           <ExpertTypeStatusTable v-else :types="typeRows" />
         </section>
         <!-- Tesisat özeti: kapsamdaki her tesisat kaydı (filtre + seçili il); en sorunlu üstte -->
-        <section class="card list-card">
+        <section v-if="!multiUser || data.installations.length" class="card list-card">
           <header>
             <div><h3>Tesisat özeti</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Her tesisat kaydının son durumu; en sorunlu üstte</small></div>
             <NuxtLink class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink>
@@ -167,7 +168,7 @@
       </div>
 
       <!-- Yaklaşan kontroller (60 gün içinde; süresi geçmişler hariç): gün + lokasyon başına gruplu, tüp ve tesisat tek kalem -->
-      <section class="card list-card">
+      <section v-if="!multiUser || upcomingEntries.length" class="card list-card">
         <header><h3>Yaklaşan kontroller</h3><small>60 gün içinde dolan, en yakın önce. Satıra tıklayınca o günün kontrolleri açılır.</small></header>
         <p v-if="!upcomingEntries.length" class="muted pad">60 gün içinde dolan kontrol yok.</p>
         <ExpertAgendaTable v-else :entries="upcomingEntries" :limit="12" @select="upcomingDate = $event" />
@@ -176,7 +177,7 @@
 
       <!-- Ana kategoriler ve yangın ekipmanları ayrı (yangın ekipmanları sayıca çok, diğerlerini bastırmasın) -->
       <div class="grid two">
-        <section v-for="box in progressBoxes" :key="box.key" class="card chart-card">
+        <section v-for="box in progressBoxes.filter(item => !multiUser || item.rows.length)" :key="box.key" class="card chart-card">
           <header><h3>{{ box.title }}</h3><small>{{ box.hint }}</small></header>
           <p v-if="!box.rows.length" class="muted pad">{{ box.empty }}</p>
           <div v-else class="progress-list">
@@ -227,7 +228,7 @@
       <!-- 4) Tesisatlar ve tüp kontrol formları -->
       <template v-else>
       <div class="grid two">
-        <section class="card list-card">
+        <section v-if="!multiUser || data.installations.length" class="card list-card">
           <header><h3>Tesisatlar</h3><NuxtLink class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink></header>
           <p v-if="!data.installations.length" class="muted pad">Tesisat yok.</p>
           <div v-for="item in data.installations" :key="item.id" class="line">
@@ -239,7 +240,7 @@
             <span class="status-badge" :class="item.status">{{ INSTALLATION_STATUS[item.status] || item.status }}</span>
           </div>
         </section>
-        <section class="card list-card">
+        <section v-if="!multiUser || data.bulk_reports.length" class="card list-card">
           <header><h3>Tüp kontrol formları</h3><small>Lokasyon başına son form</small></header>
           <p v-if="!data.bulk_reports.length" class="muted pad">Tüp kontrol formu yok.</p>
           <div v-for="item in data.bulk_reports" :key="item.id" class="line">
