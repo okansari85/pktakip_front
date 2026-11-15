@@ -1,7 +1,7 @@
 <template>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th>Belirtilmemiş</th><th>Rapor bekleniyor</th><th>Rapor yok</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
+      <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th v-for="[key, label] in optionalStatus" :key="key">{{ label }}</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
       <tbody>
         <tr v-for="type in types" :key="type.type_id">
           <td><strong>{{ type.name }}</strong></td>
@@ -9,9 +9,7 @@
           <td><strong>{{ type.total }}</strong></td>
           <td class="ok-text">{{ type.status.uygun || '—' }}</td>
           <td class="bad-text">{{ type.status.uygun_degil || '—' }}</td>
-          <td>{{ type.status.belirtilmemis || '—' }}</td>
-          <td>{{ type.status.rapor_bekleniyor || '—' }}</td>
-          <td>{{ type.status.rapor_yok || '—' }}</td>
+          <td v-for="[key] in optionalStatus" :key="key">{{ type.status[key] || '—' }}</td>
           <td class="bad-text">{{ type.overdue || '—' }}</td>
           <td class="warn-text">{{ type.upcoming || '—' }}</td>
           <!-- Yüzde kaçı uygun: ilerleme çubuğu ve oran (%90+ yeşil, %70+ turuncu, altı kırmızı) -->
@@ -30,7 +28,10 @@
 <script setup lang="ts">
 // Ekipman türleri tablosu (Durum Raporu'ndaki "Ekipman türleri" tablosuyla aynı): tür başına son kontrol durumu, süresi
 // geçmiş / 60 gün içinde ve uygun oranı. Veri pk-dashboard/report yanıtının types listesi.
-defineProps<{ types: any[] }>()
+const props = defineProps<{ types: any[] }>()
+// Belirtilmemiş / Rapor bekleniyor / Rapor yok: hiçbir satırda değeri yoksa sütun gösterilmez (veri gelince görünür).
+const OPTIONAL_STATUS = [['belirtilmemis', 'Belirtilmemiş'], ['rapor_bekleniyor', 'Rapor bekleniyor'], ['rapor_yok', 'Rapor yok']] as const
+const optionalStatus = computed(() => OPTIONAL_STATUS.filter(([key]) => props.types.some(type => type.status?.[key])))
 
 // Yüzde kaçı uygun: tek haneli, aşağı yuvarlanmış; renk eşikleri %90 / %70.
 const shareOf = (value: number, total: number) => total ? Math.floor(((value || 0) / total) * 1000) / 10 : 0

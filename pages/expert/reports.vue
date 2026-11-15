@@ -47,7 +47,7 @@
           <Chart type="bar" :data="typeChart" :options="typeOptions" class="chart" :style="{ height: `${Math.max(220, data.types.length * 34 + 70)}px` }" />
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th>Belirtilmemiş</th><th>Rapor bekleniyor</th><th>Rapor yok</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
+              <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th v-for="[key, label] in optionalStatus" :key="key">{{ label }}</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
               <tbody>
                 <tr v-for="type in data.types" :key="type.type_id">
                   <td><strong>{{ type.name }}</strong></td>
@@ -55,9 +55,7 @@
                   <td><strong>{{ type.total }}</strong></td>
                   <td class="ok-text">{{ type.status.uygun || '—' }}</td>
                   <td class="bad-text">{{ type.status.uygun_degil || '—' }}</td>
-                  <td>{{ type.status.belirtilmemis || '—' }}</td>
-                  <td>{{ type.status.rapor_bekleniyor || '—' }}</td>
-                  <td>{{ type.status.rapor_yok || '—' }}</td>
+                  <td v-for="[key] in optionalStatus" :key="key">{{ type.status[key] || '—' }}</td>
                   <td class="bad-text">{{ type.overdue || '—' }}</td>
                   <td class="warn-text">{{ type.upcoming || '—' }}</td>
                   <!-- Yüzde kaçı uygun: ilerleme çubuğu ve oran (%90+ yeşil, %70+ turuncu, altı kırmızı) -->
@@ -152,6 +150,9 @@
 definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
 // Sayfa yolundaki "Uzman Paneli" yalnız bireysel uzman hesabında.
 const { multiUser } = useAccount()
+// Ekipman türleri tablosu: Belirtilmemiş / Rapor bekleniyor / Rapor yok sütunu hiçbir satırda değeri yoksa gösterilmez (veri gelince görünür).
+const OPTIONAL_STATUS = [['belirtilmemis', 'Belirtilmemiş'], ['rapor_bekleniyor', 'Rapor bekleniyor'], ['rapor_yok', 'Rapor yok']] as const
+const optionalStatus = computed(() => OPTIONAL_STATUS.filter(([key]) => (data.value?.types || []).some((type: any) => type.status?.[key])))
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok', belirtilmemis: 'Belirtilmemiş' }
 const statusText = STATUS_TEXT
