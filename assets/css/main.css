@@ -11,8 +11,15 @@
   --pk-danger: #ef4444;
 
   --admin-background: #f6f8fb;
+  /* Uzman paneli zemini (tasarım kataloğu, sarı tonlu): açık zemin üstünde yumuşak sarı ışık lekeleri. */
+  --admin-backdrop:
+    radial-gradient(1100px 620px at 88% -8%, rgba(255, 193, 7, .20), transparent 62%),
+    radial-gradient(900px 560px at -6% 28%, rgba(255, 214, 102, .16), transparent 60%),
+    radial-gradient(1000px 640px at 55% 112%, rgba(255, 228, 150, .30), transparent 62%),
+    #fbfaf5;
   --admin-surface: #ffffff;
-  --admin-card: #ffffff;
+  /* Kartlar yarı saydam beyaz: zemindeki sarı ışık hafifçe görünür. */
+  --admin-card: rgba(255, 255, 255, .86);
   --admin-soft: #f8fafc;
   --admin-border: #e2e8f0;
   --admin-heading: #0f172a;
@@ -63,8 +70,13 @@
   --admin-upcoming-text: #facc15;
   --admin-link: #60a5fa;
   --admin-background: #0b1120;
+  --admin-backdrop:
+    radial-gradient(1100px 620px at 88% -8%, rgba(255, 193, 7, .10), transparent 62%),
+    radial-gradient(900px 560px at -6% 28%, rgba(255, 214, 102, .06), transparent 60%),
+    radial-gradient(1000px 640px at 55% 112%, rgba(255, 193, 7, .08), transparent 62%),
+    #0b1120;
   --admin-surface: #111827;
-  --admin-card: #111827;
+  --admin-card: rgba(17, 24, 39, .88);
   --admin-soft: #172033;
   --admin-border: #263244;
   --admin-heading: #f8fafc;

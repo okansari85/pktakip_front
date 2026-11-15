@@ -1,7 +1,8 @@
 <template>
   <header class="expert-topbar">
+    <!-- Sol menü: geniş → dar → kapalı → geniş -->
+    <button v-tooltip.bottom="menuLabel" class="menu-toggle" type="button" :aria-label="menuLabel" @click="nextMenu"><i class="pi pi-bars" /></button>
     <ExpertWorkplaceSwitcher v-if="!title.startsWith('Ayarlar') && !route.meta.hideWorkplaceSwitcher" />
-    <div v-else />
 
     <div class="topbar-actions">
       <!-- Süper admin bir hesaba girdiyse: kendi oturumuna (Müşteriler) döner -->
@@ -25,6 +26,7 @@ withDefaults(defineProps<{ title?: string }>(), { title: 'Uzman Paneli' })
 const route = useRoute()
 const { user, impersonating, stopImpersonation } = useAuth()
 const { roleLabel } = useAccount()
+const { next: nextMenu, label: menuLabel } = useSidebarMode()
 const isDark = ref(false)
 
 const initials = computed(() => {
@@ -50,16 +52,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.expert-topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: var(--admin-surface); border-bottom: 1px solid var(--admin-border); }
+/* Tasarım kataloğu: üst çubuk zeminin üstünde (ayrı bant yok); seçiciler, tema ve kullanıcı ayrı kartlar. */
+.expert-topbar { min-height: 76px; display: flex; align-items: center; gap: 12px; padding: 14px 30px 0; }
+.menu-toggle { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-heading); cursor: pointer; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+.menu-toggle:hover { border-color: var(--pk-yellow); color: var(--pk-yellow-dark); }
 .topbar-eyebrow { display: block; margin-bottom: 2px; color: var(--pk-yellow-dark); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 .expert-topbar strong { color: var(--admin-heading); font-size: 15px; }
-.topbar-actions { display: flex; align-items: center; gap: 14px; }
-.theme-toggle { width: 38px; height: 38px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-card); color: var(--admin-muted); cursor: pointer; }
+.topbar-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.theme-toggle { width: 44px; height: 44px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-muted); cursor: pointer; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
 .theme-toggle:hover { color: var(--pk-yellow-dark); border-color: var(--pk-yellow); }
 .return-button { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--pk-yellow); border-radius: 9px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .return-button:hover { background: var(--pk-yellow); color: #111827; }
-.user-chip { display: flex; align-items: center; gap: 9px; }
+.user-chip { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 14px 4px 4px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
 .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 12px; font-weight: 800; }
 .user-chip strong { display: block; font-size: 12px; }
 .user-chip small { display: block; margin-top: 2px; color: var(--admin-muted); font-size: 10px; }
+@media (max-width: 800px) { .expert-topbar { padding: 12px 16px 0; } }
 </style>

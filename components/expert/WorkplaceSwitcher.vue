@@ -131,15 +131,16 @@ watch(orgAvailable, on => { if (on) loadOrganizations() }, { immediate: true })
 </script>
 
 <style scoped>
-.switcher { min-width: 0; display: flex; align-items: flex-end; gap: 8px; margin-right: auto; }
-.select-field { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* Tasarım kataloğu: her seçici ayrı kart (küçük başlık, kalın seçim). */
+.switcher { min-width: 0; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+.select-field { min-width: 0; display: flex; flex-direction: column; gap: 1px; padding: 6px 10px 6px 14px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+.select-field:focus-within { border-color: var(--pk-yellow); box-shadow: 0 0 0 3px rgba(255,193,7,.16); }
 .select-field > span { display: flex; align-items: center; gap: 5px; color: var(--admin-muted); font-size: 10px; font-weight: 700; }
 .select-field > span i { font-size: 10px; color: var(--pk-yellow-dark); }
-.select-field select { width: 220px; height: 34px; padding: 0 8px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--admin-card); color: var(--admin-heading); font: inherit; font-size: 12px; font-weight: 600; outline: 0; cursor: pointer; }
-.select-field select:focus { border-color: #d7a900; box-shadow: 0 0 0 3px rgba(255,193,7,.12); }
+.select-field select { width: 220px; height: 26px; padding: 0 4px 0 0; border: 0; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; outline: 0; cursor: pointer; }
 .select-field select:disabled { cursor: not-allowed; opacity: .7; }
-.empty .select-field:first-child select { border-color: #fec84b; }
-.separator { margin-bottom: 10px; color: var(--admin-muted); font-size: 12px; }
+.empty .select-field:first-child { border-color: #fec84b; }
+.separator { color: var(--admin-muted); font-size: 12px; }
 @media (max-width: 1100px) { .select-field select { width: 170px; } }
 @media (max-width: 800px) { .switcher { display: none; } }
 </style>

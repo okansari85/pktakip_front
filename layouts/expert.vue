@@ -1,6 +1,6 @@
 <template>
   <div class="expert-layout">
-    <ExpertSidebar :collapsed="sidebarCollapsed" @toggle="sidebarCollapsed = !sidebarCollapsed" />
+    <ExpertSidebar v-if="sidebarMode !== 'kapali'" :collapsed="sidebarMode === 'dar'" />
     <main class="main-area">
       <ExpertTopbar />
       <div class="page-content"><slot /></div>
@@ -9,11 +9,12 @@
 </template>
 
 <script setup lang="ts">
-const sidebarCollapsed = ref(false)
+// Sol menü: geniş / dar / kapalı (düğmesi üst çubukta).
+const { mode: sidebarMode } = useSidebarMode()
 </script>
 
 <style scoped>
-.expert-layout { min-height: 100vh; display: flex; background: var(--admin-background); }
+.expert-layout { min-height: 100vh; display: flex; background: var(--admin-backdrop); background-attachment: fixed; }
 .main-area { min-width: 0; flex: 1; }
 .page-content { padding: 30px 34px 40px; }
 @media (max-width: 800px) {
