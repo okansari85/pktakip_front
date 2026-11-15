@@ -1,63 +1,105 @@
 <template>
   <div class="requests-page">
     <div class="page-head">
-      <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Katalog talepleri</strong></div>
-        <h1>Katalog talepleri</h1>
-        <template v-if="kind === 'spec'">
-          <p v-if="canManage">Raporlarda geçip teknik özellik kataloğunda olmayan özellikler için uzmanların talepleri. Onaylanan özellik tüm kullanıcılarda katalogda görünür.</p>
-          <p v-else>Kataloğa eklenmesini talep ettiğiniz teknik özellikler. Yetkili onaylayınca özellik kataloğa, değer ekipmana eklenir.</p>
-        </template>
-        <template v-else>
-          <p v-if="canManage">Tesisat raporlarında geçip katalogda olmayan sistemler için uzmanların talepleri. Onaylanan sistem tüm kullanıcılarda katalogda görünür; rapordaki sonucu talep eden tesisata yazılır.</p>
-          <p v-else>Kataloğa eklenmesini talep ettiğiniz tesisat sistemleri. Yetkili onaylayınca sistem kataloğa, rapordaki sonucu ve bulguları tesisatınıza eklenir.</p>
-        </template>
+      <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
+      <nav class="crumb" aria-label="Sayfa yolu">
+        <i class="pi pi-home" aria-hidden="true" />
+        <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
+        <i class="pi pi-angle-right" aria-hidden="true" />
+        <strong>Katalog talepleri</strong>
+      </nav>
+      <h1>Katalog talepleri</h1>
+      <p>Teknik özellik ve tesisat sistemi taleplerinizi takip edin</p>
+    </div>
+
+    <!-- Üst sıra (tasarım kataloğu 13): talep sayıları, çizim, seçili talep -->
+    <div class="top">
+      <section class="card counts">
+        <button type="button" class="count-row" :class="{ active: tab === 'pending' }" @click="tab = 'pending'">
+          <span class="count-icon warn"><i class="pi pi-hourglass" /></span><span class="count-label">Onay bekleyen</span>
+          <strong>{{ allRequests.filter(item => item.status === 'pending').length }}</strong><i class="pi pi-angle-right" />
+        </button>
+        <button type="button" class="count-row" :class="{ active: tab === 'decided' }" @click="tab = 'decided'">
+          <span class="count-icon ok"><i class="pi pi-check" /></span><span class="count-label">Sonuçlanan</span>
+          <strong>{{ allRequests.filter(item => item.status !== 'pending').length }}</strong><i class="pi pi-angle-right" />
+        </button>
+      </section>
+      <figure class="hero">
+        <div class="hero-art">
+          <!-- Katalogdaki görsel (tasarım kataloğu 13'ten kırpıldı); etiket seçili talebin türü -->
+          <img src="/katalog/katalog-talepleri-katalog.webp" alt="" />
+          <span v-if="featured" class="hero-label"><strong>{{ featured.type?.name || featured.name }}</strong> · {{ featured.kind === 'spec' ? 'Teknik özellik' : 'Tesisat sistemi' }}</span>
+        </div>
+      </figure>
+      <!-- Seçili talep: satırdaki Detay ile değişir; ilk açılışta en yeni bekleyen talep -->
+      <section v-if="featured" class="card featured">
+        <header class="featured-head">
+          <span class="featured-icon"><i class="pi pi-verified" /></span>
+          <span class="featured-title">
+            <strong>{{ featured.name }}<template v-if="featured.unit"> ({{ featured.unit }})</template></strong>
+            <small>{{ featured.kind === 'spec' ? 'Teknik özellik talebi' : 'Tesisat sistemi talebi' }}</small>
+          </span>
+          <span class="status" :class="featured.status"><i :class="STATUS_ICON[featured.status]" /> {{ STATUS[featured.status] }}</span>
+        </header>
+        <dl v-if="featured.kind === 'spec'" class="featured-rows">
+          <div><dt><i class="pi pi-box" /> Ekipman</dt><dd>{{ featured.type?.name || '—' }}</dd></div>
+          <div><dt><i class="pi pi-barcode" /> Ekipman no</dt><dd>{{ featured.equipment ? featured.equipment.code || featured.equipment.id : '—' }}</dd></div>
+        </dl>
+        <dl v-else class="featured-rows">
+          <div><dt><i class="pi pi-sitemap" /> Tesisat</dt><dd>{{ featured.report?.installation || featured.type?.name || '—' }}</dd></div>
+          <div><dt><i class="pi pi-file" /> Rapor</dt><dd>{{ featured.report ? [formatDate(featured.report.control_date), featured.report.report_no].filter(Boolean).join(' · ') : 'Rapor silinmiş' }}</dd></div>
+        </dl>
+        <NuxtLink v-if="featured.kind === 'spec' && featured.equipment && featured.own_tenant" :to="`/expert/equipment/${featured.equipment.id}`" class="featured-link">Ekipmana git <i class="pi pi-arrow-right" /></NuxtLink>
+        <NuxtLink v-else-if="featured.kind === 'system' && featured.report && featured.own_tenant" to="/expert/installations" class="featured-link">Tesisatlara git <i class="pi pi-arrow-right" /></NuxtLink>
+      </section>
+    </div>
+
+    <section class="card list">
+      <div class="tabs">
+        <button type="button" :class="{ active: tab === 'pending' }" @click="tab = 'pending'">Bekleyen <span class="count">{{ pending.length }}</span></button>
+        <button type="button" :class="{ active: tab === 'decided' }" @click="tab = 'decided'">Sonuçlanan <span class="count">{{ decided.length }}</span></button>
       </div>
-    </div>
 
-    <div class="kinds">
-      <button type="button" :class="{ active: kind === 'spec' }" @click="setKind('spec')">Teknik özellikler <span class="count">{{ specRequests.filter(item => item.status === 'pending').length }}</span></button>
-      <button type="button" :class="{ active: kind === 'system' }" @click="setKind('system')">Tesisat sistemleri <span class="count">{{ systemRequests.filter(item => item.status === 'pending').length }}</span></button>
-    </div>
+      <div class="tools">
+        <div class="kinds">
+          <button type="button" :class="{ active: kind === 'spec' }" @click="setKind('spec')"><i class="pi pi-cog" /> Teknik özellikler <span v-if="SHOW_KIND_COUNTS" class="count">{{ specRequests.filter(item => item.status === 'pending').length }}</span></button>
+          <button type="button" :class="{ active: kind === 'system' }" @click="setKind('system')"><i class="pi pi-sitemap" /> Tesisat sistemleri <span v-if="SHOW_KIND_COUNTS" class="count">{{ systemRequests.filter(item => item.status === 'pending').length }}</span></button>
+        </div>
+        <label class="search"><i class="pi pi-search" aria-hidden="true" /><input v-model="search" type="search" placeholder="Talep ara" aria-label="Talep ara" /></label>
+      </div>
 
-    <div class="tabs">
-      <button type="button" :class="{ active: tab === 'pending' }" @click="tab = 'pending'">Bekleyen <span class="count">{{ pending.length }}</span></button>
-      <button type="button" :class="{ active: tab === 'decided' }" @click="tab = 'decided'">Karara bağlanan <span class="count">{{ decided.length }}</span></button>
-    </div>
-
-    <section class="card">
       <div v-if="loading" class="state">Yükleniyor...</div>
       <div v-else-if="error" class="state error-text">{{ error }}</div>
-      <div v-else-if="!rows.length" class="state">{{ tab === 'pending' ? 'Bekleyen talep yok.' : 'Karara bağlanmış talep yok.' }}</div>
+      <div v-else-if="!rows.length" class="state">{{ search.trim() ? 'Aramaya uyan talep yok.' : tab === 'pending' ? 'Bekleyen talep yok.' : 'Sonuçlanan talep yok.' }}</div>
 
       <!-- Teknik özellik talepleri -->
       <div v-else-if="kind === 'spec'" class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Ekipman türü</th><th>Talep edilen özellik</th><th>Raporda</th><th>Ekipman</th><th>Talep eden</th><th>Durum</th><th v-if="canManage && tab === 'pending'" />
+              <th>Ekipman</th><th>Talep edilen özellik</th><th>Rapordaki ifade</th><th v-if="canManage">Talep eden</th><th>Durum</th><th class="actions">İşlemler</th>
             </tr>
           </thead>
           <tbody>
             <template v-for="item in rows" :key="item.id">
-              <tr>
-                <td>{{ item.type?.name || '—' }}</td>
-                <td><strong>{{ item.name }}</strong><template v-if="item.unit"> ({{ item.unit }})</template></td>
-                <td class="muted">{{ item.raw_label }}: <strong>{{ item.raw_value || '—' }}</strong></td>
+              <tr :class="{ selected: featured?.kind === 'spec' && featured.id === item.id }">
                 <td>
-                  <NuxtLink v-if="item.equipment && item.own_tenant" :to="`/expert/equipment/${item.equipment.id}`" class="link">{{ item.equipment.name || `Ekipman no ${item.equipment.code || item.equipment.id}` }}</NuxtLink>
-                  <span v-else-if="item.equipment">{{ item.equipment.name || `Ekipman no ${item.equipment.code || item.equipment.id}` }}</span>
-                  <span v-else class="muted">—</span>
+                  <span class="subject"><span class="subject-icon"><i class="pi pi-box" /></span><strong>{{ item.type?.name || '—' }}<template v-if="item.equipment"> · No{{ item.equipment.code || item.equipment.id }}</template></strong></span>
                 </td>
-                <td>{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
+                <td>{{ item.name }}<template v-if="item.unit"> ({{ item.unit }})</template></td>
+                <td><span class="muted">{{ item.raw_label }}:</span> {{ item.raw_value || '—' }}</td>
+                <td v-if="canManage">{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
                 <td>
-                  <span class="status" :class="item.status">{{ STATUS[item.status] }}</span>
+                  <span class="status" :class="item.status"><i :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
                   <small v-if="item.status === 'approved' && item.spec" class="block muted">→ {{ item.spec.name }}<template v-if="item.spec.unit"> ({{ item.spec.unit }})</template></small>
                   <small v-if="item.decision_note" class="block muted">{{ item.decision_note }}</small>
                 </td>
-                <td v-if="canManage && tab === 'pending'" class="actions">
-                  <button class="primary-button" type="button" @click="openDecision(item)">Onayla</button>
-                  <button class="secondary-button" type="button" :disabled="busy" @click="reject(item)">Reddet</button>
+                <td class="actions">
+                  <template v-if="canManage && tab === 'pending'">
+                    <button class="primary-button" type="button" @click="openDecision(item)">Onayla</button>
+                    <button class="secondary-button" type="button" :disabled="busy" @click="reject(item)">Reddet</button>
+                  </template>
+                  <button class="detail-link" type="button" @click="showDetail(item, 'spec')">Detay <i class="pi pi-arrow-right" /></button>
                 </td>
               </tr>
               <tr v-if="decisionFor === item.id" class="decision-row">
@@ -94,14 +136,14 @@
         <table>
           <thead>
             <tr>
-              <th>Tesisat türü</th><th>Talep edilen sistem</th><th>Rapordaki sonuç</th><th>Rapor</th><th>Talep eden</th><th>Durum</th><th v-if="canManage && tab === 'pending'" />
+              <th>Tesisat</th><th>Talep edilen sistem</th><th>Rapordaki sonuç</th><th>Rapor</th><th v-if="canManage">Talep eden</th><th>Durum</th><th class="actions">İşlemler</th>
             </tr>
           </thead>
           <tbody>
             <template v-for="item in rows" :key="item.id">
-              <tr>
-                <td>{{ item.type?.name || '—' }}</td>
-                <td><strong>{{ item.name }}</strong></td>
+              <tr :class="{ selected: featured?.kind === 'system' && featured.id === item.id }">
+                <td><span class="subject"><span class="subject-icon"><i class="pi pi-sitemap" /></span><strong>{{ item.type?.name || '—' }}</strong></span></td>
+                <td>{{ item.name }}</td>
                 <td>
                   <span class="result" :class="item.result.status">{{ RESULT[item.result.status] || 'Belirtilmemiş' }}</span>
                   <button v-if="item.result.findings.length" class="link-button" type="button" @click="toggleFindings(item.id)">
@@ -116,15 +158,18 @@
                   </template>
                   <span v-else class="muted">Rapor silinmiş</span>
                 </td>
-                <td>{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
+                <td v-if="canManage">{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
                 <td>
-                  <span class="status" :class="item.status">{{ STATUS[item.status] }}</span>
+                  <span class="status" :class="item.status"><i :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
                   <small v-if="item.status === 'approved' && item.system" class="block muted">→ {{ item.system.name }}</small>
                   <small v-if="item.decision_note" class="block muted">{{ item.decision_note }}</small>
                 </td>
-                <td v-if="canManage && tab === 'pending'" class="actions">
-                  <button class="primary-button" type="button" @click="openSystemDecision(item)">Onayla</button>
-                  <button class="secondary-button" type="button" :disabled="busy" @click="rejectSystem(item)">Reddet</button>
+                <td class="actions">
+                  <template v-if="canManage && tab === 'pending'">
+                    <button class="primary-button" type="button" @click="openSystemDecision(item)">Onayla</button>
+                    <button class="secondary-button" type="button" :disabled="busy" @click="rejectSystem(item)">Reddet</button>
+                  </template>
+                  <button class="detail-link" type="button" @click="showDetail(item, 'system')">Detay <i class="pi pi-arrow-right" /></button>
                 </td>
               </tr>
               <tr v-if="decisionFor === item.id" class="decision-row">
@@ -164,9 +209,14 @@
 definePageMeta({ layout: 'expert-settings', middleware: 'expert' })
 
 const STATUS: Record<string, string> = { pending: 'Onay bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi' }
+const STATUS_ICON: Record<string, string> = { pending: 'pi pi-clock', approved: 'pi pi-check-circle', rejected: 'pi pi-times-circle' }
 const RESULT: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil' }
+// Tür düğmelerindeki bekleyen sayısı: katalogda yok, gizli; ileride açılabilir (sayılar sekmelerde ve üstteki kartta)
+const SHOW_KIND_COUNTS = false
 
 const { get, post, errorMessage } = useExpertApi()
+const { multiUser, account, load: loadAccount } = useAccount()
+const individual = computed(() => !!account.value && !multiUser.value)
 const specRequests = ref<any[]>([])
 const systemRequests = ref<any[]>([])
 const canManage = ref(false)
@@ -179,7 +229,25 @@ const tab = ref<'pending' | 'decided'>('pending')
 const source = computed(() => kind.value === 'spec' ? specRequests.value : systemRequests.value)
 const pending = computed(() => source.value.filter(item => item.status === 'pending'))
 const decided = computed(() => source.value.filter(item => item.status !== 'pending'))
-const rows = computed(() => tab.value === 'pending' ? pending.value : decided.value)
+// Talep ara: yüklenen talepler içinde (sunucu en çok 500 talep döner, hepsi sayfada)
+const search = ref('')
+const matches = (item: any, text: string) => [item.name, item.unit, item.raw_label, item.raw_value, item.type?.name, item.equipment?.name, item.equipment?.code, item.report?.installation, item.report?.report_no, item.requested_by]
+  .some(value => value && String(value).toLocaleLowerCase('tr-TR').includes(text))
+const rows = computed(() => {
+  const list = tab.value === 'pending' ? pending.value : decided.value
+  const text = search.value.trim().toLocaleLowerCase('tr-TR')
+  return text ? list.filter(item => matches(item, text)) : list
+})
+// Üstteki kart: Detay ile seçilen talep; seçilmediyse en yeni bekleyen (yoksa en yeni) talep.
+const allRequests = computed(() => [...specRequests.value.map(item => ({ ...item, kind: 'spec' })), ...systemRequests.value.map(item => ({ ...item, kind: 'system' }))]
+  .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))))
+const picked = ref<{ id: number; kind: string } | null>(null)
+const featured = computed(() => allRequests.value.find(item => picked.value && item.id === picked.value.id && item.kind === picked.value.kind)
+  || allRequests.value.find(item => item.status === 'pending') || allRequests.value[0] || null)
+const showDetail = (item: any, itemKind: 'spec' | 'system') => {
+  picked.value = { id: item.id, kind: itemKind }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const formatDateTime = (value?: string | null) => value ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : ''
 const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(value)) : '—'
 
@@ -257,35 +325,79 @@ const rejectSystem = async (item: any) => {
   finally { busy.value = false }
 }
 
-onMounted(load)
+onMounted(() => { loadAccount(); load() })
 </script>
 
 <style scoped>
-.requests-page { margin: 0 auto; }
-.page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:20px; }
-.breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
-h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;max-width:760px;color:var(--admin-muted);font-size:13px}
-.kinds{display:inline-flex;gap:4px;margin-bottom:14px;padding:4px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-soft)}
-.kinds button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:0;border-radius:7px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.kinds button.active{background:var(--admin-card);color:var(--admin-heading);box-shadow:0 1px 3px var(--admin-shadow)}
-.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--admin-border)}
-.tabs button{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow)}
-.count{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px}
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
+.requests-page{margin:0 auto;display:grid;gap:16px}
+.page-head h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
+.crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
+.crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
+.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;min-width:0;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:13px}
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse}th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text);vertical-align:top}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
-td strong{color:var(--admin-heading)}.muted{color:var(--admin-muted)}.block{display:block;margin-top:2px}
-.link{color:var(--admin-link);font-weight:700}
+/* Üst sıra: sayılar, çizim, seçili talep */
+.top{display:grid;grid-template-columns:300px minmax(0,1fr) 340px;gap:16px;align-items:start}
+.card.counts{display:grid;gap:10px;padding:14px}
+.count-row{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--admin-row-border);border-radius:12px;background:var(--admin-card);font:inherit;text-align:left;cursor:pointer;box-shadow:0 4px 12px rgba(var(--pk-shadow-rgb),.04)}
+.count-row:hover{border-color:var(--admin-border);background:var(--admin-hover)}
+.count-row.active{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.count-icon{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;font-size:17px}
+.count-icon.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.count-icon.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.count-label{flex:1;color:var(--admin-heading);font-size:16px;font-weight:600}
+.count-row strong{color:var(--admin-heading);font-size:24px;font-weight:800}
+.count-row > .pi-angle-right{color:var(--admin-muted)}
+.hero{min-width:0;margin:-40px 0 0;display:flex;justify-content:center}
+.hero-art{position:relative;width:min(100%,640px)}
+.hero-art img{display:block;width:100%}
+.hero-label{position:absolute;left:34%;top:0;display:inline-flex;align-items:center;gap:6px;max-width:64%;padding:8px 16px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 22px rgba(var(--pk-shadow-rgb),.12)}
+.hero-label strong{color:var(--admin-heading);font-weight:800}
+.card.featured{display:grid;gap:4px;padding:20px 22px}
+.featured-head{display:flex;align-items:flex-start;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--admin-border)}
+.featured-icon{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:var(--admin-accent-soft);color:var(--admin-link);font-size:20px}
+.featured-title{flex:1;display:grid;gap:4px;min-width:0}
+.featured-title strong{color:var(--admin-heading);font-size:18px;font-weight:800;overflow-wrap:anywhere}
+.featured-title small{color:var(--admin-muted);font-size:14px}
+.featured-rows{display:grid;margin:0}
+.featured-rows div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid var(--admin-row-border)}
+.featured-rows dt{display:flex;align-items:center;gap:10px;color:var(--admin-text);font-size:14px}.featured-rows dt i{color:var(--admin-muted)}
+.featured-rows dd{margin:0;color:var(--admin-heading);font-size:15px;font-weight:700;text-align:right}
+.featured-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;color:var(--admin-link);font-size:16px;font-weight:700}
+/* Liste kartı */
+.card.list{padding:6px 22px 22px}
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--admin-border)}
+.tabs button{display:inline-flex;align-items:center;gap:10px;padding:14px 2px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-text);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-link);border-bottom-color:var(--pk-accent);font-weight:800}
+.count{min-width:24px;padding:2px 8px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:12px;font-weight:700;text-align:center}
+.tabs button.active .count{background:var(--pk-accent);color:var(--pk-on-accent)}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0 14px}
+.kinds{display:flex;flex-wrap:wrap;gap:12px}
+.kinds button{display:inline-flex;align-items:center;gap:9px;height:44px;padding:0 18px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.kinds button:hover{background:var(--admin-hover)}
+.kinds button.active{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-link);font-weight:700}
+.search{position:relative;display:flex;align-items:center;flex:0 1 440px;min-width:220px}
+.search i{position:absolute;left:16px;color:var(--admin-muted)}
+.search input{width:100%;height:44px;padding:0 14px 0 44px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:15px;outline:0}
+.search input:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.table-wrap{overflow:auto;border:1px solid var(--admin-row-border);border-radius:12px}
+table{width:100%;border-collapse:collapse}th,td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:14.5px;color:var(--admin-text);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+th{font-size:14px;font-weight:700;color:var(--admin-heading);background:var(--admin-soft);white-space:nowrap}
+tbody tr.selected{background:var(--admin-accent-soft)}
+td strong{color:var(--admin-heading)}.muted{color:var(--admin-muted)}.block{display:block;margin-top:4px;font-size:12px}
+.subject{display:inline-flex;align-items:center;gap:12px}
+.subject-icon{flex:none;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--admin-accent-soft);color:var(--admin-link)}
+.subject strong{font-size:15.5px;font-weight:800}
 .link-button{display:inline-flex;align-items:center;gap:5px;margin-left:8px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.result{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700}
+.result{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:12px;font-weight:700}
 .result.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.result.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.findings{display:grid;gap:4px;margin:8px 0 0;padding-left:18px;max-width:420px}
-.status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.findings{display:grid;gap:4px;margin:8px 0 0;padding-left:18px;max-width:420px;font-size:13px}
+.status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
 .status.pending{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status.approved{background:var(--admin-success-bg);color:var(--admin-success-text)}.status.rejected{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.actions{white-space:nowrap;text-align:right}.actions button + button{margin-left:6px}
+.featured-head .status{font-size:12.5px;padding:4px 10px}
+.actions{white-space:nowrap;text-align:right}.actions button + button{margin-left:8px}
+.detail-link{display:inline-flex;align-items:center;gap:8px;padding:0;border:0;background:none;color:var(--admin-link);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.detail-link:hover{text-decoration:underline}
 .primary-button,.secondary-button{min-height:32px;padding:0 12px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer}
 .primary-button{border:0;background:var(--pk-yellow);color:var(--pk-on-accent)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}.secondary-button:disabled{opacity:.55}
@@ -297,4 +409,6 @@ td strong{color:var(--admin-heading)}.muted{color:var(--admin-muted)}.block{disp
 .decision-fields input,.decision-fields select{flex:1;min-width:0}.decision-fields input.unit{flex:0 0 130px}
 .decision-actions{display:flex;justify-content:flex-end;gap:8px}
 .error-text{margin:0;color:var(--admin-danger-text);font-size:12px}
+@media (max-width:1280px){.top{grid-template-columns:280px minmax(0,1fr)}.card.featured{grid-column:1 / -1}}
+@media (max-width:800px){.top{grid-template-columns:1fr}.hero{margin:0}.page-head h1{font-size:30px}}
 </style>
