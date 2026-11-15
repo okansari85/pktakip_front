@@ -206,7 +206,8 @@
       </section>
       <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
-      <section class="other">
+      <!-- OSGB / kurumsal / kamu: Ayarlar'daki yapı sayfaları menüde yok, bağlantılar gösterilmez. -->
+      <section v-if="!multiUser" class="other">
         <details>
           <summary>Diğer işlemler</summary>
           <div class="other-body">

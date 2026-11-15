@@ -21,24 +21,7 @@
       </NuxtLink>
       <div v-if="!collapsed" class="sidebar-label">AYARLAR · TANIMLAR</div>
       <nav class="sidebar-nav">
-        <!-- Kurumsal hesapta müşteri yok (firma tek müşteri): organizasyonu tam ekran; OSGB / kurumsalda yalnızca yönetici -->
-        <NuxtLink v-if="corporate && isManager" to="/expert/settings/organization" class="sidebar-link" :title="collapsed ? 'Organizasyon' : undefined">
-          <i class="pi pi-sitemap" />
-          <span v-if="!collapsed">Organizasyon</span>
-        </NuxtLink>
-        <NuxtLink v-else-if="!multiUser || isManager" to="/expert/settings/customers" class="sidebar-link" :title="collapsed ? (multiUser ? 'Müşteriler' : 'Organizasyon Yönetimi') : undefined">
-          <i :class="multiUser ? 'pi pi-users' : 'pi pi-sitemap'" />
-          <span v-if="!collapsed">{{ multiUser ? 'Müşteriler' : 'Organizasyon Yönetimi' }}</span>
-        </NuxtLink>
-        <NuxtLink v-if="!multiUser || isManager || isOperation" to="/expert/settings/locations" class="sidebar-link" :title="collapsed ? 'Lokasyonlar' : undefined">
-          <i class="pi pi-map-marker" />
-          <span v-if="!collapsed">Lokasyonlar</span>
-        </NuxtLink>
-        <!-- Kamu hesabında Firmalar yok: işyerleri Lokasyonlar → İşyerleri'nden yönetilir -->
-        <NuxtLink v-if="!kamu && (!multiUser || isManager || isOperation)" to="/expert/settings/companies" class="sidebar-link" :title="collapsed ? 'Firmalar' : undefined">
-          <i class="pi pi-briefcase" />
-          <span v-if="!collapsed">Firmalar</span>
-        </NuxtLink>
+        <!-- Müşteriler / Organizasyon / Lokasyonlar / Firmalar menüde yok: yapı Firmalarım'daki ağaçtan yönetilir (sayfalar silinmedi, adresleri çalışır). -->
         <NuxtLink v-if="isManager" to="/expert/settings/users" class="sidebar-link" :title="collapsed ? 'Kullanıcılar' : undefined">
           <i class="pi pi-id-card" />
           <span v-if="!collapsed">Kullanıcılar</span>
@@ -159,7 +142,7 @@ const emit = defineEmits<{ toggle: [] }>()
 const { logout, superAdmin } = useAuth()
 // Hesap türü (OSGB / kurumsal): logonun altı ve rol; bireysel uzmanda bugünkü yazılar.
 // Ayarlar menüsü role göre (OSGB / kurumsal): uzman yapı sayfalarını (Lokasyonlar, Firmalar…) görmez; ilk sayfa settingsHome.
-const { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
+const { account, multiUser, kamu, isManager, edition, roleLabel, settingsHome, load: loadAccount } = useAccount()
 onMounted(loadAccount)
 // Bulgu Takip rozeti: kullanıcının lokasyonlarındaki kapanmamış bulgular.
 const { open: findingCount, refresh: refreshFindingCount } = useFindingCount()
