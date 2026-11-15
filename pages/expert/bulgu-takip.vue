@@ -1,5 +1,8 @@
 <template>
   <div class="findings-page" :class="{ reloading: loading && !!result }">
+    <!-- Bulgu detayı (tasarım kataloğu 21) liste yerine açılır; süzgeçler, sayfa ve açık gruplar korunur -->
+    <ExpertFindingPanel v-if="openId" :finding-id="openId" :responsibles="responsibles" :can-invite="isManager" @close="openId = null" @changed="onChanged" @responsibles-changed="loadResponsibles" />
+    <template v-else>
     <div class="page-head">
       <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
       <nav class="crumb" aria-label="Sayfa yolu">
@@ -142,8 +145,7 @@
         </div>
       </div>
     </template>
-
-    <ExpertFindingPanel v-if="openId" :finding-id="openId" :responsibles="responsibles" :can-invite="isManager" @close="openId = null" @changed="onChanged" @responsibles-changed="loadResponsibles" />
+    </template>
   </div>
 </template>
 
