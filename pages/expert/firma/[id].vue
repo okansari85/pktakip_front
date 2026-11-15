@@ -55,6 +55,8 @@
                 </button>
                 <div class="row-actions">
                   <button v-if="canEdit" v-tooltip.top="'İşyeri ekle'" class="row-button icon add" type="button" :aria-label="`${item.location.name} içine işyeri ekle`" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /><i class="pi pi-plus mini" /></button>
+                  <!-- OSGB / kurumsal / kamu: lokasyonun alanları (Ayarlar → Lokasyonlar'daki Alanlar paneli) -->
+                  <button v-if="multiUser" v-tooltip.top="'Alanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} alanları`" @click="areaLocation = item.location"><i class="pi pi-th-large" /></button>
                   <button v-if="workplacesOf(item.location).length" v-tooltip.top="'Ekipmanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} ekipmanları`" @click="goEquipment(item.location)"><i class="pi pi-wrench" /></button>
                   <button v-if="canEdit" v-tooltip.top="'Sil'" class="row-button icon remove" type="button" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
                 </div>
@@ -73,6 +75,8 @@
                   <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
                 </div>
                 <div class="row-actions">
+                  <!-- OSGB / kurumsal / kamu: işyerinin birimleri (Ayarlar → Lokasyonlar → Firmalar'daki Birimler penceresi) -->
+                  <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} birimleri`" @click="unitTarget = { location: item.location, workplace: { id: item.workplace.id, name: workplaceLabel(item.workplace.id, item.workplace.company_name) } }"><i class="pi pi-sitemap" /></button>
                   <!-- OSGB / kurumsal / kamu: işyerinin uzmanı (Ayarlar → Firmalar'daki Uzman ata penceresi) -->
                   <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerine uzman ata`" @click="assignId = item.workplace.id"><i class="pi pi-user-edit" /></button>
                   <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
@@ -222,6 +226,8 @@
     </template>
 
     <ExpertWorkplaceAssignments v-if="assignId" :only="assignId" @close="assignId = null" />
+    <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="firm?.name" @close="areaLocation = null" />
+    <ExpertWorkplaceUnitsModal v-if="unitTarget" :location="unitTarget.location" :workplace="unitTarget.workplace" @close="unitTarget = null" />
 
     <!-- Grup, şirket ya da lokasyonu sil -->
     <div v-if="removing" class="modal-backdrop">
@@ -283,7 +289,7 @@ const route = useRoute()
 const { get, patch, del, errorMessage } = useExpertApi()
 const { listFirms, loadStructure, addNode, addLocation, addWorkplace, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
-const { load: loadNames, nameOf } = useWorkplaceNames()
+const { load: loadNames, nameOf, workplaceLabel } = useWorkplaceNames()
 const { load: loadOrganizationScope } = useOrganizationScope()
 const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
 const goToEquipment = useGoToEquipment()
@@ -731,6 +737,9 @@ async function repairRoot() {
 const goEquipment = (location: FirmLocation) => goToEquipment(location.id)
 // Uzman ata penceresi açık olan işyeri (OSGB / kurumsal / kamu; yönetici ve operasyon yöneticisi).
 const assignId = ref<number | null>(null)
+// Alanlar paneli açık olan lokasyon ve Birimler penceresi açık olan işyeri (OSGB / kurumsal / kamu).
+const areaLocation = ref<FirmLocation | null>(null)
+const unitTarget = ref<{ location: FirmLocation; workplace: { id: number; name: string } } | null>(null)
 
 // --- Ağaçtan silme ---
 // Backend lokasyonu silince ekipman, tesisat ve toplu raporlar da silinir; firmayı çıkarınca bu kayıtlar lokasyonda firmasız kalır.
