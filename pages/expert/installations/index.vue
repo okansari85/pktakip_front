@@ -87,8 +87,8 @@
               <button class="outline-button" type="button" @click="openDetail()"><i class="pi pi-file" /> Detayları aç <i class="pi pi-angle-right push" /></button>
             </section>
             <figure class="hero">
-              <!-- İzometrik çizim: beton kaidede yangın pompa istasyonu (public/katalog, elle çizildi) -->
-              <img src="/katalog/pompa-istasyonu.svg" alt="" />
+              <!-- Katalogdaki görsel (tasarım kataloğu 07'den kırpıldı); elle çizilmiş karşılığı public/katalog/pompa-istasyonu.svg -->
+              <img src="/katalog/pompa-istasyonu-katalog.webp" alt="" />
             </figure>
             <div class="top-right">
               <div class="kpis">
@@ -223,8 +223,8 @@
                 <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
                 <span v-if="dueShort && detail.status !== 'rapor_yok'" class="due-chip" :class="daysKey(detail.days_left)"><i :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</span>
               </div>
-              <!-- İzometrik çizim: mavi ışıklı platformda su deposu ve yangın pompaları (public/katalog, elle çizildi) -->
-              <img src="/katalog/yangin-tesisati.svg" alt="" />
+              <!-- Katalogdaki görsel (tasarım kataloğu 08'den kırpıldı); elle çizilmiş karşılığı public/katalog/yangin-tesisati.svg -->
+              <img src="/katalog/yangin-tesisati-katalog.webp" alt="" />
             </figure>
             <div class="top-right">
               <!-- Son kontrolün bulguları (sistemler, belge kontrolleri ve genel); işler Bulgu takibinde -->

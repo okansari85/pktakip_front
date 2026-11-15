@@ -20,13 +20,13 @@
           </div>
           <strong v-if="featuredModel" class="featured-model">{{ featuredModel }}</strong>
           <div class="featured-row"><i class="pi pi-calendar" /><span>Sonraki kontrol</span><strong>{{ formatDate(featured.next_control_date) }}</strong></div>
-          <img class="featured-img" :src="featured.photo_url || '/katalog/ekipman.svg'" alt="" />
+          <img class="featured-img" :src="featured.photo_url || '/katalog/forklift-katalog.webp'" alt="" />
           <NuxtLink class="primary-button featured-link" :to="`/expert/equipment/${featured.id}`"><i class="pi pi-file" /> Profili aç <i class="pi pi-arrow-right" /></NuxtLink>
         </section>
       </div>
       <figure class="hero">
-        <!-- İzometrik çizim: mavi ışıklı platformda forklift (public/katalog, elle çizildi) -->
-        <img src="/katalog/forklift-izometrik.svg" alt="" />
+        <!-- Katalogdaki görsel (tasarım kataloğu 05'ten kırpıldı, marka yazıları silindi) -->
+        <img src="/katalog/forklift-katalog.webp" alt="" />
       </figure>
       <div v-if="context" class="top-right">
         <!-- Sayılar lokasyondaki aktif ekipmanlardan; tıklayınca liste süzülür (Açık bulgu: Bulgu takibi) -->

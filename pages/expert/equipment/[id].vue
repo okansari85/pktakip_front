@@ -37,8 +37,8 @@
 
         <figure class="hero">
           <span class="status-float" :class="equipment.status"><i :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
-          <!-- İzometrik çizim: mavi ışıklı platformda forklift (public/katalog, elle çizildi) -->
-          <img src="/katalog/forklift-izometrik.svg" alt="" />
+          <!-- Katalogdaki görsel (tasarım kataloğu 05'ten kırpıldı, marka yazıları silindi) -->
+          <img src="/katalog/forklift-katalog.webp" alt="" />
         </figure>
 
         <div class="top-right">
