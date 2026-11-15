@@ -16,9 +16,10 @@
     </div>
 
     <template v-else>
-      <!-- Tesisat türleri: diğer tesisatlar geldikçe sekme eklenir -->
-      <div class="tabs">
-        <button v-for="type in tabs" :key="type.slug" type="button" :class="{ active: activeSlug === type.slug }" @click="selectTab(type.slug)">{{ type.name }}</button>
+      <!-- Tesisat türleri: yalnız bu lokasyonda tanımlı olanlar (ve eklenmek üzere seçilen); başka tür sondaki kutudan seçilir -->
+      <div v-if="shownTabs.length" class="tabs">
+        <button v-for="type in shownTabs" :key="type.slug" type="button" :class="{ active: activeSlug === type.slug }" @click="selectTab(type.slug)">{{ type.name }}</button>
+        <Select v-if="addableTabs.length" :model-value="null" :options="addableTabs" option-label="name" option-value="slug" placeholder="Tesisat türü ekle" size="small" class="type-add" @update:model-value="selectTab" />
       </div>
 
       <div v-if="loading" class="card state">Tesisat yükleniyor...</div>
@@ -29,7 +30,9 @@
         <i class="pi pi-sitemap" />
         <strong>Bu lokasyonda {{ activeType?.name || 'tesisat' }} tanımlı değil</strong>
         <span>Tesisatı ve içindeki sistemleri ekleyin. Periyodik kontrol raporları sonradan eklenir.</span>
-        <button class="primary-button" type="button" :disabled="!activeType" @click="openCreate"><i class="pi pi-plus" /> Tesisat Ekle</button>
+        <button v-if="activeType" class="primary-button" type="button" @click="openCreate"><i class="pi pi-plus" /> Tesisat Ekle</button>
+        <!-- Lokasyonda hiç tesisat yoksa önce tür seçilir; seçilen tür sekme olur, Tesisat Ekle açılır -->
+        <Select v-else :model-value="null" :options="tabs" option-label="name" option-value="slug" placeholder="Tesisat türü seçin" @update:model-value="selectTab" />
       </div>
 
       <template v-else>
@@ -414,7 +417,8 @@ const detail = ref<any>(null)
 const loading = ref(false)
 const detailLoading = ref(false)
 const error = ref('')
-const activeSlug = ref(TAB_SLUGS[0])
+// Seçili tür; lokasyonda hiç tesisat yoksa boş (tür seçilene kadar sekme yok).
+const activeSlug = ref('')
 const selectedId = ref<number | null>(null)
 const openIds = ref<number[]>([])
 const createOpen = ref(false)
@@ -425,6 +429,10 @@ const reportSystem = ref<any>(null)
 const pendingOpen = ref(false)
 
 const tabs = computed(() => TAB_SLUGS.map(slug => catalog.value.find(type => type.slug === slug)).filter(Boolean))
+// Sekmeler: lokasyonda tanımlı türler ve eklenmek üzere seçilen tür; diğerleri "Tesisat türü ekle" kutusunda.
+const definedSlugs = computed(() => new Set(installations.value.map(item => item.type?.slug)))
+const shownTabs = computed(() => tabs.value.filter(type => definedSlugs.value.has(type.slug) || type.slug === activeSlug.value))
+const addableTabs = computed(() => tabs.value.filter(type => !shownTabs.value.includes(type)))
 const activeType = computed(() => catalog.value.find(type => type.slug === activeSlug.value) || null)
 const ofType = computed(() => installations.value.filter(item => item.type?.slug === activeSlug.value))
 const ofTypeCount = (status: string) => ofType.value.filter(item => item.status === status).length
@@ -595,6 +603,8 @@ const loadInstallations = async () => {
       loadAreas(context.value.location_id, true)
     ])
     installations.value = list
+    // Seçili tür bu lokasyonda tanımlı değilse ilk tanımlı türe geçilir; hiç tesisat yoksa tür seçilmez.
+    if (!definedSlugs.value.has(activeSlug.value)) activeSlug.value = TAB_SLUGS.find(slug => definedSlugs.value.has(slug)) || ''
     if (!ofType.value.some(item => item.id === selectedId.value)) selectedId.value = ofType.value[0]?.id ?? null
     await loadDetail()
   } catch (e: any) {
@@ -693,6 +703,7 @@ h2{margin:0;color:var(--admin-heading);font-size:20px}h3{margin:0;color:var(--ad
 .state{padding:60px 20px;text-align:center;color:var(--admin-muted)}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.tabs .type-add{align-self:center;margin-left:6px}
 .tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
 .picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-input);color:var(--admin-text);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
