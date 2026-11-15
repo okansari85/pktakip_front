@@ -1,54 +1,88 @@
 <template>
   <div class="ai-page">
     <div class="page-head">
-      <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Yapay zeka</strong></div>
-        <h1>Yapay zeka</h1>
-        <p>Periyodik kontrol raporlarını okuyan yapay zeka. Varsayılan istemci rapor yükleme, rapordan ekipman tanımlama ve test sayfasında kullanılır. Şimdilik tüm uzmanlar değiştirebilir.</p>
-      </div>
+      <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
+      <nav class="crumb" aria-label="Sayfa yolu">
+        <i class="pi pi-home" aria-hidden="true" />
+        <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
+        <i class="pi pi-angle-right" aria-hidden="true" />
+        <strong>Yapay zekâ ayarları</strong>
+      </nav>
+      <h1>Yapay zekâ ayarları</h1>
+      <p>Periyodik kontrol raporlarının okuma yapılandırması</p>
     </div>
 
     <div v-if="loading" class="card state">Yükleniyor...</div>
     <div v-else-if="loadError" class="card state error-text">{{ loadError }}</div>
     <template v-else>
-      <!-- Varsayılan istemci -->
-      <section class="card">
-        <h2>Varsayılan yapay zeka istemcisi</h2>
-        <div class="providers">
-          <label v-for="item in providers" :key="item.key" class="provider" :class="{ active: form.provider === item.key }">
-            <input v-model="form.provider" type="radio" :value="item.key" />
-            <span class="provider-body">
+      <!-- Tasarım kataloğu 15: solda sağlayıcı, model, okuma yöntemi ve bağlantı; sağda çizim -->
+      <div class="layout">
+        <section class="card main">
+          <h2><i class="pi pi-microchip-ai" /> Rapor okuma sağlayıcısı</h2>
+          <!-- Varsayılan istemci -->
+          <div class="providers">
+            <label v-for="item in providers" :key="item.key" class="provider" :class="{ active: form.provider === item.key }" :title="item.note">
+              <input v-model="form.provider" type="radio" :value="item.key" class="sr-only" />
+              <i :class="PROVIDER_ICON[item.key] || 'pi pi-microchip-ai'" class="provider-icon" />
               <strong>{{ item.label }}</strong>
-              <small>{{ item.note }}</small>
-              <span class="key-state" :class="keyState(item).tone">{{ keyState(item).text }}</span>
-            </span>
-          </label>
-        </div>
-      </section>
+              <span v-if="form.provider === item.key" class="key-state" :class="keyState(item).tone" :title="keyState(item).text">{{ keyState(item).tone === 'ok' ? 'Bağlı' : keyState(item).text }}</span>
+              <span class="radio-mark"><i v-if="form.provider === item.key" class="pi pi-check" /></span>
+            </label>
+          </div>
 
-      <!-- Okuma yöntemi: tek uzun talimat (eski) ya da küçük ajanlar (yeni, Docling) -->
-      <section class="card">
-        <h2>Okuma yöntemi</h2>
-        <div class="providers">
-          <label class="provider" :class="{ active: !form.agents }">
-            <input v-model="form.agents" type="radio" :value="false" />
-            <span class="provider-body">
-              <strong>Tek talimat</strong>
-              <small>Rapor tek seferde, uzun talimatla okunur. Büyük bulut modelleri (Gemini, gpt-luna) için; bugüne kadarki okumalar bununla.</small>
-            </span>
-          </label>
-          <label class="provider" :class="{ active: form.agents }">
-            <input v-model="form.agents" type="radio" :value="true" />
-            <span class="provider-body">
-              <strong>Çok ajanlı (Docling)</strong>
-              <small>PDF Docling ile bölümlere ayrılır, her bölümü tek işi olan küçük bir ajan okur. Yerel sunucu (NuExtract3) için gerekli.</small>
-              <span v-if="form.agents && !doclingReady" class="key-state warn">Docling kurulu değil: tesisat raporları düz metinle okunur</span>
-            </span>
-          </label>
-        </div>
-      </section>
+          <!-- Seçili istemcinin modeli: listeden seçilir ya da yazılır; boşsa .env'deki model -->
+          <div class="field">
+            <span class="field-label">Model</span>
+            <Select v-if="current" :model-value="form.models[current.key] || null" :options="(current.suggestions || []).map(s => ({ label: `${s.id} · ${s.note}`, value: s.id }))" option-label="label" option-value="value" editable show-clear
+              :placeholder="`Varsayılan model${current.default_model ? ` (${current.default_model})` : ''}`" class="model-select" aria-label="Model" @update:model-value="(value: any) => { form.models[current!.key] = value ?? '' }" />
+          </div>
 
-      <!-- Her istemcinin modeli ve API anahtarı -->
+          <!-- Okuma yöntemi: tek uzun talimat (eski) ya da küçük ajanlar (yeni, Docling) -->
+          <div class="field">
+            <span class="field-label">Okuma yöntemi</span>
+            <div class="methods">
+              <label class="method" :class="{ active: !form.agents }" title="Tek talimat: rapor tek seferde, uzun talimatla okunur (büyük bulut modelleri için).">
+                <input v-model="form.agents" type="radio" :value="false" />
+                <span><strong>Standart okuma</strong><small>Tek geçişte rapor alanlarını çıkarır</small></span>
+              </label>
+              <label class="method" :class="{ active: form.agents }" title="Çok ajanlı (Docling): PDF bölümlere ayrılır, her bölümü tek işi olan küçük bir ajan okur (yerel sunucu için gerekli).">
+                <input v-model="form.agents" type="radio" :value="true" />
+                <span>
+                  <strong>Ayrıntılı okuma</strong><small>Tablo ve ekipman alanlarını ayrı inceler</small>
+                  <em v-if="form.agents && !doclingReady" class="key-state warn">Docling kurulu değil: tesisat raporları düz metinle okunur</em>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Seçili istemcinin bağlantısı; Bağlantıyı yönet: her istemcinin modeli ve API anahtarı (aşağıdaki kartlar) -->
+          <div v-if="current" class="connection" :class="keyState(current).tone">
+            <i :class="PROVIDER_ICON[current.key] || 'pi pi-microchip-ai'" class="provider-icon" />
+            <span class="connection-text">
+              <strong>{{ current.label }} bağlantısı</strong>
+              <span class="key-state" :class="keyState(current).tone" :title="keyState(current).text">{{ keyState(current).tone === 'ok' ? 'Bağlantı hazır' : keyState(current).text }}</span>
+            </span>
+            <button class="text-link" type="button" :aria-expanded="showConnections" @click="showConnections = !showConnections">Bağlantıyı yönet <i :class="showConnections ? 'pi pi-chevron-up' : 'pi pi-external-link'" /></button>
+          </div>
+
+          <p v-if="error" class="error-text">{{ error }}</p>
+          <p v-if="saved" class="saved-text"><i class="pi pi-check" /> Kaydedildi.</p>
+          <div class="actions">
+            <button class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
+            <NuxtLink to="/expert/test" class="secondary-button"><i class="pi pi-play" /> Örnek raporla dene</NuxtLink>
+          </div>
+          <!-- Son değişikliği yapan: katalogda yok, gizli; ileride açılabilir -->
+          <span v-if="SHOW_UPDATED_BY && updatedBy" class="muted">Son değişiklik: {{ updatedBy }}<template v-if="updatedAt"> · {{ formatDateTime(updatedAt) }}</template></span>
+        </section>
+
+        <figure class="hero">
+          <!-- Katalogdaki görsel (tasarım kataloğu 15'ten kırpıldı; çipteki marka logosu ve forklift yazısı silindi) -->
+          <img src="/katalog/yapay-zeka-katalog.webp" alt="" />
+        </figure>
+      </div>
+
+      <!-- Her istemcinin modeli ve API anahtarı (Bağlantıyı yönet ile açılır) -->
+      <template v-if="showConnections">
       <section v-for="item in providers" :key="item.key" class="card">
         <h2>{{ item.label }} <span v-if="item.key === form.provider" class="badge">Varsayılan</span></h2>
         <div class="fields">
@@ -76,13 +110,12 @@
           </label>
         </div>
       </section>
-
       <p v-if="error" class="error-text">{{ error }}</p>
       <p v-if="saved" class="saved-text"><i class="pi pi-check" /> Kaydedildi.</p>
-      <div class="actions">
-        <span v-if="updatedBy" class="muted">Son değişiklik: {{ updatedBy }}<template v-if="updatedAt"> · {{ formatDateTime(updatedAt) }}</template></span>
-        <button class="primary-button" type="button" :disabled="saving" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
+      <div class="actions end">
+        <button class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
       </div>
+      </template>
     </template>
   </div>
 </template>
@@ -103,8 +136,16 @@ interface Settings {
 }
 
 const { get, patch, errorMessage } = useExpertApi()
+const { multiUser, account, load: loadAccount } = useAccount()
+const individual = computed(() => !!account.value && !multiUser.value)
+// Sağlayıcı kartlarındaki simge (marka logosu kullanılmaz)
+const PROVIDER_ICON: Record<string, string> = { gemini: 'pi pi-sparkles', openai: 'pi pi-microchip-ai', nvidia: 'pi pi-bolt', local: 'pi pi-server' }
+// Son değişikliği yapan ve zamanı: katalogda yok, gizli; ileride açılabilir
+const SHOW_UPDATED_BY = false
+const showConnections = ref(false)
 
 const providers = ref<Provider[]>([])
+const current = computed(() => providers.value.find(item => item.key === form.provider) || null)
 const updatedBy = ref<string | null>(null)
 const updatedAt = ref<string | null>(null)
 const loading = ref(true)
@@ -166,26 +207,64 @@ const save = async () => {
   } finally { saving.value = false }
 }
 
-onMounted(load)
+onMounted(() => { loadAccount(); load() })
 </script>
 
 <style scoped>
-.ai-page{max-width:980px;margin:0 auto}
-.page-head{margin-bottom:20px}
-.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--admin-muted);font-size:12px}.breadcrumb strong{color:var(--admin-heading)}
-h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;max-width:760px;color:var(--admin-muted);font-size:13px}
-.card{margin-bottom:14px;padding:18px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px}
-.card h2{display:flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--admin-heading);font-size:15px}
+.ai-page{margin:0 auto;display:grid;gap:16px}
+.page-head h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
+.crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
+.crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
+.card{padding:18px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;min-width:0;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.card h2{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--admin-heading);font-size:15px}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:13px}
-.badge{padding:2px 9px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-heading);font-size:11px;font-weight:700}
-.providers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.provider{display:flex;align-items:flex-start;gap:10px;padding:14px;border:1px solid var(--admin-border);border-radius:10px;cursor:pointer}
-.provider:hover{background:var(--admin-hover)}.provider.active{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
-.provider input{margin-top:3px}
-.provider-body{display:flex;flex-direction:column;gap:5px;min-width:0}
-.provider-body strong{color:var(--admin-heading);font-size:13px}.provider-body small{color:var(--admin-muted);font-size:11px;line-height:1.4}
-.key-state{align-self:flex-start;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Katalog 15: ana kart ve çizim */
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
+.card.main{display:grid;gap:18px;padding:24px}
+.card.main h2{margin:0;font-size:21px;font-weight:800}.card.main h2 i{color:var(--admin-link);font-size:22px}
+.providers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.provider{position:relative;display:flex;align-items:center;gap:14px;min-height:72px;padding:12px 18px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);cursor:pointer}
+.provider:hover{background:var(--admin-hover)}
+.provider.active{border:2px solid var(--pk-accent);padding:11px 17px;background:var(--admin-accent-soft)}
+.provider:focus-within{box-shadow:0 0 0 3px var(--pk-focus-ring)}
+.provider-icon{flex:none;width:36px;display:grid;place-items:center;color:var(--admin-heading);font-size:24px}
+.provider strong{color:var(--admin-heading);font-size:17px;font-weight:600}
+.radio-mark{flex:none;width:22px;height:22px;display:grid;place-items:center;margin-left:auto;border:1.5px solid var(--admin-muted);border-radius:50%;color:var(--pk-on-accent);font-size:11px}
+.provider.active .radio-mark{border-color:var(--pk-accent);background:var(--pk-accent)}
+.key-state{display:inline-flex;align-items:center;gap:6px;align-self:center;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;font-style:normal}
+.key-state.ok::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
 .key-state.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}.key-state.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.key-state.missing{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.field{display:grid;gap:8px}
+.field-label{color:var(--admin-heading);font-size:17px;font-weight:700}
+.model-select{width:100%}
+.model-select :deep(.p-select-label){padding:12px 18px;color:var(--admin-heading);font-size:16px}
+.methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.method{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border:1px solid var(--admin-border);border-radius:12px;cursor:pointer}
+.method:hover{background:var(--admin-hover)}
+.method.active{border:2px solid var(--pk-accent);padding:15px 17px;background:var(--admin-accent-soft)}
+.method input{flex:none;width:20px;height:20px;margin:3px 0 0;accent-color:var(--pk-accent)}
+.method span{display:grid;gap:4px}
+.method strong{color:var(--admin-heading);font-size:17px;font-weight:700}
+.method small{color:var(--admin-text);font-size:14px}
+.method .key-state{justify-self:start;margin-top:4px;font-size:12px}
+.connection{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-soft)}
+.connection.ok{border-color:var(--admin-success-bg);background:var(--admin-success-bg)}
+.connection-text{display:grid;justify-items:start;gap:6px;min-width:0}
+.connection-text strong{color:var(--admin-heading);font-size:17px;font-weight:700}
+.connection .key-state{background:var(--admin-card)}
+.text-link{display:inline-flex;align-items:center;gap:8px;margin-left:auto;padding:0;border:0;background:none;color:var(--admin-link);font:inherit;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.actions.end{display:flex;justify-content:flex-end}
+.primary-button,.secondary-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:12px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;text-decoration:none}
+.primary-button{border:0;background:var(--pk-accent);color:var(--pk-on-accent)}.primary-button:hover{background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}.secondary-button:hover{background:var(--admin-hover)}
+.secondary-button i{color:var(--admin-link)}
+.hero{min-width:0;margin:-90px 0 0;display:flex;justify-content:center}
+.hero img{display:block;width:min(100%,560px)}
+/* Bağlantıyı yönet: istemci kartları */
+.badge{padding:2px 9px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-heading);font-size:11px;font-weight:700}
 .fields{display:grid;gap:12px}
 .fields label{display:grid;gap:6px;color:var(--admin-heading);font-size:12px;font-weight:700}
 .fields label small{font-weight:400;color:var(--admin-muted);font-size:11px}
@@ -196,9 +275,9 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .chip small{font-weight:400;color:var(--admin-muted);font-size:11px}
 .chip:hover{border-color:var(--pk-accent)}.chip.active{border-color:var(--pk-accent);background:var(--admin-accent-soft)}
 .link-button{border:0;padding:0;background:none;color:var(--admin-link);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
-.actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:6px}
 .muted{color:var(--admin-muted);font-size:12px}
-.primary-button{min-height:42px;padding:0 20px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.error-text{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
-.saved-text{display:flex;align-items:center;gap:6px;margin:0 0 8px;color:var(--admin-success-text);font-size:12px;font-weight:700}
+.error-text{margin:0;color:var(--admin-danger-text);font-size:13px}
+.saved-text{display:flex;align-items:center;gap:6px;margin:0;color:var(--admin-success-text);font-size:13px;font-weight:700}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}.hero{margin:0;grid-row:1}.hero img{width:min(100%,420px)}}
+@media (max-width:700px){.providers,.methods,.actions{grid-template-columns:1fr}.page-head h1{font-size:30px}.connection{flex-wrap:wrap}}
 </style>
