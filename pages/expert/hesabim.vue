@@ -71,7 +71,8 @@
           <div class="field"><label for="p-email">E-posta Adresi</label><input id="p-email" :value="profile.email" readonly /></div>
         </section>
 
-        <section class="card">
+        <!-- Mesleki bilgiler yalnız bireysel uzman hesabında -->
+        <section v-if="!multiUser" class="card">
           <div class="card-head">
             <span class="card-icon"><i class="pi pi-briefcase" /></span>
             <div><h2>Mesleki Bilgiler</h2><p>Mesleğinizi ve çalışma alanınızı seçin.</p></div>
@@ -96,17 +97,6 @@
       </div>
 
       <div class="column">
-        <section class="card">
-          <div class="card-head">
-            <span class="card-icon"><i class="pi pi-building" /></span>
-            <div><h2>Firmalar</h2><p>Gelecekteki e-Katip entegrasyonu</p></div>
-          </div>
-          <div class="note">
-            <i class="pi pi-info-circle" />
-            <div><strong>İleride e-Katip ile bağlantı planlanıyor.</strong><span>Firma bilgilerinin otomatik getirilmesi düşünülmektedir. Entegrasyon şu anda aktif değildir.</span></div>
-          </div>
-        </section>
-
         <section class="card">
           <div class="card-head">
             <span class="card-icon"><i class="pi pi-shield" /></span>
@@ -149,6 +139,7 @@ const CLASSES = ['A', 'B', 'C']
 
 const { get, patch, errorMessage } = useExpertApi()
 const { packages } = useBilling()
+const { multiUser } = useAccount()
 const route = useRoute()
 const router = useRouter()
 
