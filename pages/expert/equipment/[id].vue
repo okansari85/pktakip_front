@@ -37,8 +37,15 @@
 
         <figure class="hero">
           <span class="status-float" :class="equipment.status"><i :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
-          <!-- Katalogdaki görsel (tasarım kataloğu 05'ten kırpıldı, marka yazıları silindi) -->
-          <img src="/katalog/forklift-katalog.webp" alt="" />
+          <div class="hero-art">
+            <!-- Katalogdaki görsel (tasarım kataloğu 05'ten kırpıldı, marka yazıları silindi) -->
+            <img src="/katalog/forklift-katalog.webp" alt="" />
+            <!-- Kaldırma ve iletme ekipmanında son raporun bulguları resimdeki parçasında (zincir, teker, lamba …); tıklayınca Bulgular sekmesi -->
+            <button v-for="pin in findingPins" :key="pin.key" v-tooltip.top="pin.texts.join(' • ')" class="pin" :class="{ flip: pin.x > 75 }" type="button" :style="{ left: `${pin.x}%`, top: `${pin.y}%` }" :aria-label="`${pin.label}: ${pin.texts.join('; ')}`" @click="showTab('findings')">
+              <span class="pin-dot">{{ pin.texts.length > 1 ? pin.texts.length : '' }}</span>
+              <span class="pin-label">{{ pin.label }}</span>
+            </button>
+          </div>
         </figure>
 
         <div class="top-right">
@@ -374,6 +381,53 @@ const modelText = computed(() => [equipment.value?.brand, equipment.value?.model
 const placeText = computed(() => [currentUnit.value?.name, currentArea.value?.label, equipment.value?.place].filter(Boolean).join(' · '))
 // Son raporun bulguları (Açık bulgular kartı ve Bulgular sekmesi); Belgeler: kontrollerin rapor dosyaları.
 const findings = computed<string[]>(() => equipment.value?.findings || [])
+
+// --- Bulguların forklift resmindeki yeri (kaldırma ve iletme ekipmanı) ---
+// shortcut: bulgunun parçası rapordan etiket olarak gelmiyor; metinde parça adının kelime başı olarak geçmesine bakılır (ilk eşleşen
+// parça). Rapor okuma bulguya parça etiketi koyunca (ör. findings[].part) bu tablo yerine o kullanılmalı.
+// x / y: resmin genişliği / yüksekliği içinde yüzde. Sıra önemli: özel olan önce (tepe lambası > lamba, direksiyon > direk).
+const FORKLIFT_PARTS = [
+  { key: 'zincir', label: 'Zincir', words: ['zincir'], x: 31.2, y: 29.6 },
+  { key: 'catal', label: 'Çatal', words: ['çatal'], x: 10.5, y: 84 },
+  { key: 'tepe', label: 'Tepe lambası', words: ['tepe lamba', 'tepe ışı', 'döner lamba', 'flaşör'], x: 83.3, y: 15.4 },
+  { key: 'lamba', label: 'Lamba', words: ['lamba', 'ışık', 'ışığ', 'aydınlatma', 'sinyal'], x: 55.4, y: 20.4 },
+  { key: 'arka-teker', label: 'Arka teker', words: ['arka teker', 'arka lastik'], x: 88.6, y: 77.2 },
+  { key: 'teker', label: 'Teker', words: ['teker', 'lastik', 'jant', 'bijon'], x: 51, y: 77.2 },
+  { key: 'fren', label: 'Fren', words: ['fren'], x: 47, y: 70 },
+  { key: 'hidrolik', label: 'Hidrolik', words: ['hidrolik', 'silindir', 'hortum', 'kaçak', 'kaçağ', 'sızıntı'], x: 42.6, y: 55 },
+  { key: 'direksiyon', label: 'Direksiyon', words: ['direksiyon', 'korna'], x: 54.5, y: 35.4 },
+  { key: 'koltuk', label: 'Koltuk', words: ['koltuk', 'koltuğ', 'kemer'], x: 71.6, y: 39 },
+  { key: 'tavan', label: 'Üst koruma', words: ['tavan', 'üst koruma', 'koruma çerçeve'], x: 66, y: 16 },
+  { key: 'agirlik', label: 'Karşı ağırlık', words: ['karşı ağırlık'], x: 88, y: 60 },
+  { key: 'direk', label: 'Direk', words: ['direk', 'direğ', 'mast', 'asansör'], x: 39.4, y: 14 }
+]
+// Harf olmayan karakterler boşluk; tek kelimelik anahtar kelime başında, çok kelimeli olan metnin içinde aranır.
+const wordsOf = (text: string) => [...text.toLocaleLowerCase('tr-TR')].map(char => char.toLocaleUpperCase('tr-TR') !== char.toLocaleLowerCase('tr-TR') ? char : ' ').join('')
+const partOf = (text: string) => {
+  const plain = wordsOf(text)
+  const tokens = plain.split(' ').filter(Boolean)
+  return FORKLIFT_PARTS.find(part => part.words.some(word => word.includes(' ') ? plain.includes(word) : tokens.some(token => token.startsWith(word)))) || null
+}
+const findingPins = computed(() => {
+  if (equipment.value?.category?.slug !== 'kaldirma-iletme') return []
+  const pins = new Map<string, { key: string; label: string; x: number; y: number; texts: string[] }>()
+  for (const text of findings.value) {
+    const part = partOf(text)
+    if (!part) continue
+    const pin = pins.get(part.key) || { key: part.key, label: part.label, x: part.x, y: part.y, texts: [] }
+    pin.texts.push(text)
+    pins.set(part.key, pin)
+  }
+  return [...pins.values()]
+})
+if (import.meta.dev) {
+  // Küçük kendini sınama: parça eşleşmesi (örnek bulgular)
+  console.assert(partOf('Asansör orta zincir uzamış')?.key === 'zincir', 'zincir')
+  console.assert(partOf('Ön mavi lamba yanmıyor')?.key === 'lamba', 'lamba')
+  console.assert(partOf('Direksiyon boşluğu fazla')?.key === 'direksiyon', 'direksiyon')
+  console.assert(partOf('Direği eğilmiş')?.key === 'direk', 'direk')
+  console.assert(partOf('Farklı bir konu') === null, 'eşleşmeme')
+}
 const reportFiles = computed(() => (equipment.value?.inspections || []).filter((inspection: any) => inspection.has_report))
 
 // --- Kontroller / Bulgular / Belgeler sekmeleri ---
@@ -629,7 +683,14 @@ h3{margin:0;color:var(--admin-heading);font-size:18px;font-weight:800}
 .due-pill.soon,.due-pill.ok{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-pill.overdue{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .info-card .primary-button{width:100%;min-height:46px;font-size:15px}
 .hero{position:relative;min-width:0;margin:-10px 0 0;display:flex;justify-content:center}
-.hero img{display:block;width:min(100%,600px);margin-top:40px}
+.hero-art{position:relative;width:min(100%,600px);margin-top:40px}
+.hero-art img{display:block;width:100%}
+/* Bulgu işareti: parçanın üstünde nokta, yanında parça adı */
+.pin{position:absolute;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;transform:translate(-11px,-11px);cursor:pointer}
+.pin-dot{width:22px;height:22px;display:grid;place-items:center;border:3px solid #fff;border-radius:50%;background:var(--pk-danger);color:#fff;font-size:11px;font-weight:800;box-shadow:0 0 0 6px rgba(239,68,68,.25)}
+.pin-label{padding:3px 9px;border-radius:999px;background:var(--admin-surface);color:var(--admin-heading);font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(var(--pk-shadow-rgb),.18)}
+.pin.flip{flex-direction:row-reverse;transform:translate(calc(-100% + 11px),-11px)}
+.pin:hover .pin-label,.pin:focus-visible .pin-label{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .status-float{position:absolute;top:0;right:8%;z-index:1;display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:19px;font-weight:700;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.12)}
 .status-float i{font-size:20px}
 .status-float.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-float.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
