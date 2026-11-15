@@ -48,7 +48,8 @@
     </template>
 
     <template v-else>
-      <div v-if="!collapsed" class="sidebar-label">UZMAN PANELİ</div>
+      <!-- "Uzman Paneli" yalnız bireysel uzman hesabında (OSGB / kurumsal / kamu kullanıcıları uzman olmayabilir) -->
+      <div v-if="!collapsed && !multiUser" class="sidebar-label">UZMAN PANELİ</div>
       <nav class="sidebar-nav">
         <!-- Yalnızca bireysel uzman; hesap bilgisi gelmeden gösterilmez (OSGB / kurumsalda bir an görünmesin) -->
         <NuxtLink v-if="account && !multiUser" to="/expert/anasayfa" class="sidebar-link" :title="collapsed ? 'Ana Sayfa' : undefined">

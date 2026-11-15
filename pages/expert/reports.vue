@@ -2,7 +2,7 @@
   <div class="report-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb no-print"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Durum Raporu</strong></div>
+        <div class="breadcrumb no-print"><template v-if="!multiUser"><span>Uzman Paneli</span><i class="pi pi-angle-right" /></template><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Durum Raporu</strong></div>
         <h1>Periyodik Kontrol Durum Raporu</h1>
         <p>{{ scopeLabel }} · {{ today }}</p>
       </div>
@@ -150,6 +150,8 @@
 // bulgular); kapsam Genel Bakış ile aynı filtre (tüm lokasyonlar → müşteri → lokasyon → işyeri). Yazdırılabilir.
 // Kapsam üstteki lokasyon / firma menüsünden; bu sayfada menüde "Tüm lokasyonlar" da seçilebilir (dashboardScope).
 definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
+// Sayfa yolundaki "Uzman Paneli" yalnız bireysel uzman hesabında.
+const { multiUser } = useAccount()
 
 const INSTALLATION_STATUS: Record<string, string> = { uygun: 'Uygun', uygun_degil: 'Uygun değil', rapor_bekleniyor: 'Rapor bekleniyor', rapor_yok: 'Kontrol yok', belirtilmemis: 'Belirtilmemiş' }
 const statusText = STATUS_TEXT

@@ -2,7 +2,7 @@
   <div class="equipment-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Ekipmanlar</strong></div>
+        <div class="breadcrumb"><template v-if="!multiUser"><span>Uzman Paneli</span><i class="pi pi-angle-right" /></template><span>Periyodik Kontroller</span><i class="pi pi-angle-right" /><strong>Ekipmanlar</strong></div>
         <h1>Ekipmanlar</h1>
         <p v-if="context">{{ contextLabel }}</p>
         <p v-else>Üstten lokasyon ve firma seçin.</p>
@@ -248,6 +248,8 @@
 <script setup lang="ts">
 // keepalive: detaydan geri dönünce liste, filtreler ve kaydırma konumu olduğu gibi; liste arkada tazelenir (onActivated).
 definePageMeta({ layout: 'expert', middleware: 'expert', keepalive: true })
+// Sayfa yolundaki "Uzman Paneli" yalnız bireysel uzman hesabında.
+const { multiUser } = useAccount()
 
 interface CatalogType { id: number; slug?: string; name: string; default_period_months: number | null; default_scope: 'location' | 'workplace'; variants?: string[]; variant_label?: string | null }
 interface CatalogCategory { slug: string; name: string; kind: 'equipment' | 'installation'; types: CatalogType[] }

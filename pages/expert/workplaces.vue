@@ -5,7 +5,7 @@
   <div v-else-if="(account || accountFailed) && (!singleFirm || singleFailed)" class="workplaces-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Uzman Paneli</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></div>
+        <div class="breadcrumb"><template v-if="!multiUser"><span>Uzman Paneli</span><i class="pi pi-angle-right" /></template><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></div>
         <h1>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</h1>
         <p v-if="loaded && workplaces.length">
           <strong>{{ workplaces.length }}</strong> işyeri · <strong>{{ locationCount }}</strong> lokasyon<template v-if="!corporate"> · <strong>{{ customerCount }}</strong> müşteri</template>
