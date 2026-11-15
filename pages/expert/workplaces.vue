@@ -63,5 +63,5 @@ onMounted(async () => {
 .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:24px; }
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}.page-head p strong{color:var(--admin-heading)}
-.secondary-link{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:9px 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font-size:12px;font-weight:700}.secondary-link:hover{border-color:#d7a900;background:var(--admin-accent-soft)}
+.secondary-link{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:9px 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font-size:12px;font-weight:700}.secondary-link:hover{border-color:var(--pk-accent);background:var(--admin-accent-soft)}
 </style>

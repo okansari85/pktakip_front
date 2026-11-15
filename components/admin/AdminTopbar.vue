@@ -54,7 +54,7 @@ onMounted(() => {
 .theme-toggle { width: 38px; height: 38px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-card); color: var(--admin-muted); cursor: pointer; }
 .theme-toggle:hover { color: var(--pk-yellow-dark); border-color: var(--pk-yellow); }
 .user-chip { display: flex; align-items: center; gap: 9px; }
-.avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 12px; font-weight: 800; }
+.avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-text); color: #fff; font-size: 12px; font-weight: 800; }
 .user-chip strong { display: block; font-size: 12px; }
 .user-chip small { display: block; margin-top: 2px; color: var(--admin-muted); font-size: 10px; }
 </style>

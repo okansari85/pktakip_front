@@ -367,16 +367,16 @@ const onPlanDeleted = () => {
 .reloading > *{opacity:.5;transition:opacity .15s}
 .muted{margin:0;color:var(--admin-muted);font-size:13px}
 .plans-error{display:flex;align-items:center;gap:8px;margin:0;padding:10px 14px;border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:13px}
-/* Görünüm düğmesi ve sarı ana düğme (katalogdaki mavi yerine PKTakip sarısı) */
-.view-switch{display:inline-flex;gap:4px;margin-top:16px;padding:4px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-card);box-shadow:0 6px 18px rgba(120,90,0,.06)}
+/* Görünüm düğmesi ve mavi ana düğme (katalogdaki gibi) */
+.view-switch{display:inline-flex;gap:4px;margin-top:16px;padding:4px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-card);box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.06)}
 .view-switch button{min-height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 20px;border:0;border-radius:10px;background:none;color:var(--admin-heading);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
-.view-switch button.on{background:var(--pk-yellow);color:#111827}
-.plan-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--pk-yellow);color:#111827;font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(230,169,0,.25)}
+.view-switch button.on{background:var(--pk-yellow);color:var(--pk-on-accent)}
+.plan-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--pk-yellow);color:var(--pk-on-accent);font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(var(--pk-accent-rgb),.25)}
 .plan-button:hover,.plan-button:focus-visible{background:var(--pk-yellow-dark)}
 .plan-button .pi-arrow-right{font-size:12px}
 /* Üst sıra: özet, en yakın kontrol, seçili gün */
 .cal-top{display:grid;grid-template-columns:330px minmax(0,1fr) 370px;gap:16px;align-items:stretch}
-.card.cal-summary{display:flex;flex-direction:column;padding:12px 18px 16px;border-radius:16px;box-shadow:0 10px 28px rgba(120,90,0,.06)}
+.card.cal-summary{display:flex;flex-direction:column;padding:12px 18px 16px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
 .cal-sum-row{display:flex;align-items:center;gap:16px;padding:12px 4px;color:inherit}
 .cal-sum-row + .cal-sum-row{border-top:1px solid var(--admin-row-border)}
 .cal-sum-row:hover .cal-sum-text small,.cal-sum-row:focus-visible .cal-sum-text small{color:var(--admin-heading)}
@@ -389,14 +389,14 @@ const onPlanDeleted = () => {
 .cal-sum-alert{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:14px;font-weight:600}
 .cal-hero{position:relative;min-width:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 .cal-hero-actions{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.cal-hero-tag{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);color:var(--admin-heading);font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(120,90,0,.06)}
+.cal-hero-tag{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);color:var(--admin-heading);font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.06)}
 .cal-hero-tag i{color:var(--pk-yellow-dark)}
 .cal-hero-art{position:relative;width:min(100%,400px)}
 .cal-hero-art img{display:block;width:100%}
 .cal-hero-cal{position:absolute;right:3%;bottom:10%;width:30%;font-family:inherit}
-.cal-hero-pin{position:absolute;top:-4%;left:26%;width:42px;height:42px;display:grid;place-items:center;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pk-yellow);color:#111827;box-shadow:0 6px 16px var(--admin-shadow)}
+.cal-hero-pin{position:absolute;top:-4%;left:26%;width:42px;height:42px;display:grid;place-items:center;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pk-yellow);color:var(--pk-on-accent);box-shadow:0 6px 16px var(--admin-shadow)}
 .cal-hero-pin i{transform:rotate(45deg);font-size:16px}
-.card.cal-day{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:16px;box-shadow:0 10px 28px rgba(120,90,0,.06)}
+.card.cal-day{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
 .cal-day-head{display:flex;align-items:center;gap:12px}
 .cal-day-head i{color:var(--pk-yellow-dark);font-size:22px}
 .cal-day-head h3{margin:0;color:var(--admin-heading);font-size:22px;font-weight:800}
@@ -432,7 +432,7 @@ const onPlanDeleted = () => {
 .cal-chip > span{min-width:0;display:flex;flex-direction:column}
 .cal-chip strong{font-size:13px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}.cal-chip small{font-size:12px;opacity:.85}
 .cal-chip > i{margin-top:2px;font-size:13px}
-.cal-chip.due{background:var(--pk-yellow);color:#111827}
+.cal-chip.due{background:var(--pk-yellow);color:var(--pk-on-accent)}
 .cal-chip.late{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .cal-chip.recheck{background:var(--admin-chip);color:var(--admin-heading)}
 .cal-chip.plan{border:1.5px dashed var(--admin-heading);background:var(--admin-surface);color:var(--admin-heading);cursor:pointer}

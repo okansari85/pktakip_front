@@ -84,5 +84,5 @@ h1 { margin: 0; color: #111827; font-size: 27px; letter-spacing: -.5px; }
 .intro { margin: 8px 0 28px; color: #64748b; font-size: 13px; }
 .field { margin-bottom: 18px; }
 .field label { display: block; margin-bottom: 7px; color: #111827; font-size: 12px; font-weight: 700; }
-.login-link { display: block; margin-top: 22px; text-align: center; color: #b57b00; font-size: 13px; }
+.login-link { display: block; margin-top: 22px; text-align: center; color: var(--pk-accent); font-size: 13px; }
 </style>

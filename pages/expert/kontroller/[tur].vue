@@ -108,7 +108,7 @@ h1 { margin: 0 0 14px; color: var(--admin-heading); font-size: 28px; letter-spac
 .filters label { display: block; color: var(--admin-heading); font-size: 12.5px; font-weight: 700; }
 select, input { display: block; min-height: 42px; margin-top: 5px; padding: 0 12px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 13.5px; font-weight: 400; }
 select { min-width: 190px; }
-select:focus, input:focus { border-color: #d7a900; }
+select:focus, input:focus { border-color: var(--pk-accent); }
 .search { position: relative; flex: 1; min-width: 220px; max-width: 420px; margin-left: auto; }
 .search input { width: 100%; margin-top: 0; padding-left: 36px; }
 .search i { position: absolute; left: 13px; top: 14px; color: var(--admin-muted); z-index: 1; }

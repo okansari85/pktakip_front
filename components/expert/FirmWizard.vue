@@ -135,12 +135,12 @@ const openFirm = () => navigateTo(`/expert/firma/${progress.customerId}?lokasyon
 .modal-head > div { flex: 1; min-width: 0; }
 .modal-head h2 { margin: 0; color: var(--admin-heading); font-size: 19px; }
 .modal-head p { margin: 3px 0 0; color: var(--admin-muted); font-size: 13px; }
-.head-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: #111827; font-size: 19px; }
+.head-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 19px; }
 .close-button { flex: none; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-muted); cursor: pointer; }
 .close-button:hover { background: var(--admin-hover); color: var(--admin-heading); }
 .kinds { display: grid; gap: 10px; }
 .kind { width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--admin-border); border-radius: 11px; background: var(--admin-input); color: var(--admin-heading); font: inherit; text-align: left; cursor: pointer; }
-.kind:hover { border-color: #d7a900; background: var(--admin-accent-soft); }
+.kind:hover { border-color: var(--pk-accent); background: var(--admin-accent-soft); }
 .kind-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 11px; font-size: 19px; }
 .green .kind-icon { background: #dcfae6; color: #067647; } .blue .kind-icon { background: #d1e9ff; color: #175cd3; } .purple .kind-icon { background: #ebe9fe; color: #5925dc; } .orange .kind-icon { background: #fef0c7; color: #b54708; }
 .kind-text { flex: 1; display: grid; gap: 2px; }
@@ -150,7 +150,7 @@ const openFirm = () => navigateTo(`/expert/firma/${progress.customerId}?lokasyon
 .form > label { display: block; color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 label input, label select { margin-top: 6px; }
 .form input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 400; }
-.form input:focus { border-color: #d7a900; box-shadow: 0 0 0 3px var(--admin-accent-soft); }
+.form input:focus { border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--admin-accent-soft); }
 .req { color: #d92d20; }
 .hint { display: flex; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 9px; font-size: 13px; line-height: 1.45; }
 .hint.warn { background: #fffaeb; color: #b54708; } .hint.warn a { font-weight: 700; text-decoration: underline; }
@@ -158,7 +158,7 @@ label input, label select { margin-top: 6px; }
 .form-error { margin: 14px 0 0; padding: 10px 12px; border-radius: 9px; background: #fef3f2; color: #b42318; font-size: 13px; }
 .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
 .primary-button, .secondary-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border-radius: 9px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: #111827; }
+.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: var(--pk-on-accent); }
 .primary-button:hover:not(:disabled) { background: var(--pk-yellow-dark); }
 .primary-button:disabled { opacity: .5; cursor: default; }
 .secondary-button { border: 1px solid var(--admin-border); background: var(--admin-input); color: var(--admin-heading); }

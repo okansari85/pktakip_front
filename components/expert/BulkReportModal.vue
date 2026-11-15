@@ -459,7 +459,7 @@ tr.pending td{background:var(--admin-warning-bg)}
 .error-text{margin:12px 0 0;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 .primary-button,.ai-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer}
-.primary-button{background:var(--pk-yellow);color:#111827}.ai-button{background:#6d28d9;color:#fff}.primary-button:disabled,.ai-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{background:var(--pk-yellow);color:var(--pk-on-accent)}.ai-button{background:#6d28d9;color:#fff}.primary-button:disabled,.ai-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:800px){.form-grid{grid-template-columns:1fr 1fr}}
 </style>

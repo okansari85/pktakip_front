@@ -139,7 +139,7 @@ const impersonate = async (tenant: any) => {
 .eyebrow { display: block; margin-bottom: 7px; color: var(--pk-yellow-dark); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .page-head h1 { margin: 0; color: var(--admin-heading); font-size: 30px; line-height: 1.15; letter-spacing: -.7px; }
 .page-head p { margin: 7px 0 0; color: var(--admin-muted); font-size: 13px; }
-.new-expert-button { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; border: 0; border-radius: 9px; background: var(--pk-yellow); color: #111827; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 5px 14px rgba(0,0,0,.08); }
+.new-expert-button { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; border: 0; border-radius: 9px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 5px 14px rgba(0,0,0,.08); }
 .new-expert-button:hover { filter: brightness(.96); transform: translateY(-1px); }
 .feedback-message { margin-top: 16px; }
 @media (max-width: 700px) { .page-head { align-items: flex-start; flex-direction: column; } }

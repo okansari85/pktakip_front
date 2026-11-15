@@ -495,7 +495,7 @@ watch([corporate, customers], () => {
 .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:24px; }
 .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; color:var(--admin-muted); font-size:12px; }.breadcrumb strong{color:var(--admin-heading)}
 h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.07)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.07)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .table-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .pager{display:flex;align-items:center;gap:10px}.pager span{color:var(--admin-muted);font-size:12px;font-weight:700}
 .pager button{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
@@ -505,7 +505,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .field{display:flex;flex-direction:column;gap:6px;margin:0;font-size:11px;font-weight:700;color:var(--admin-muted)}
 .field select,.field .search-box{box-sizing:border-box;height:42px;margin:0}
 .field select,.modal-card select{height:42px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
-.field select:focus,.modal-card select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.field select:focus,.modal-card select:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .search-box{height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--admin-heading);font-size:13px}.search-box input::placeholder{color:var(--admin-muted)}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-muted)}th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft)}td strong{color:var(--admin-heading)}
 .address-cell{max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -517,7 +517,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .modal-card label{display:block;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}.modal-card label span{color:var(--admin-danger-text)}.modal-card label small{font-weight:400;color:var(--admin-muted)}
 .modal-card select{margin-top:7px;width:100%}
-.modal-card input,.modal-card textarea{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;font:inherit;font-size:13px;color:var(--admin-heading);resize:vertical}.modal-card input:focus,.modal-card textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.modal-card input,.modal-card textarea{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;font:inherit;font-size:13px;color:var(--admin-heading);resize:vertical}.modal-card input:focus,.modal-card textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
@@ -529,7 +529,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .area-chip{padding:2px 8px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font-size:11px;font-weight:700}
 .area-empty{color:var(--admin-muted);font-size:11px}
 .company-areas .link-button{display:inline-flex;align-items:center;gap:4px;margin-left:auto;border:0;background:none;color:var(--admin-link);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
-.row-button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-text);font-size:12px;font-weight:600;cursor:pointer}.row-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.row-button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-text);font-size:12px;font-weight:600;cursor:pointer}.row-button:hover{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
 .primary-button.small{min-height:38px;padding:0 13px;font-size:12px}
 .drawer-backdrop{position:fixed;inset:0;z-index:100;background:var(--admin-overlay)}
 .company-drawer{position:absolute;top:0;right:0;width:min(460px,92vw);height:100%;background:var(--admin-input);box-shadow:-12px 0 30px var(--admin-shadow);display:flex;flex-direction:column}

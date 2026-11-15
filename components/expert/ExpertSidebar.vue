@@ -187,14 +187,14 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 
 <style scoped>
 /* Sayfa uzasa da menü ekran boyunda sabit kalır (yapışık); menü ekrana sığmazsa kendi içinde kayar.
-   Tasarım kataloğu: zeminin üstünde yüzen açık panel, seçili satır sarı. Renkler yalnız bu menüde (süper admin paneli aynı kalır). */
+   Tasarım kataloğu: zeminin üstünde yüzen açık panel, seçili satır mavi. Renkler yalnız bu menüde (süper admin paneli aynı kalır). */
 .expert-sidebar {
   --admin-sidebar: rgba(255, 255, 255, .9); --admin-sidebar-text: #344054; --admin-sidebar-muted: #667085;
-  --admin-sidebar-hover: #fff4cc; --admin-sidebar-border: rgba(15, 23, 42, .07); --admin-sidebar-strong: #0f172a;
+  --admin-sidebar-hover: var(--admin-accent-soft); --admin-sidebar-border: rgba(15, 23, 42, .07); --admin-sidebar-strong: #0f172a;
   position: sticky; top: 14px; align-self: flex-start; width: 250px; height: calc(100vh - 28px); margin: 14px 0 14px 14px; overflow-y: auto; padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0;
-  background: var(--admin-sidebar); color: var(--admin-sidebar-text); border: 1px solid var(--admin-sidebar-border); border-radius: 22px; box-shadow: 0 14px 36px rgba(120, 90, 0, .08); transition: width .2s ease, padding .2s ease;
+  background: var(--admin-sidebar); color: var(--admin-sidebar-text); border: 1px solid var(--admin-sidebar-border); border-radius: 22px; box-shadow: 0 14px 36px rgba(var(--pk-shadow-rgb), .08); transition: width .2s ease, padding .2s ease;
 }
-:global(.dark-theme) .expert-sidebar { --admin-sidebar: rgba(15, 23, 42, .9); --admin-sidebar-text: #cbd5e1; --admin-sidebar-muted: #94a3b8; --admin-sidebar-hover: rgba(255, 193, 7, .12); --admin-sidebar-border: #1e293b; --admin-sidebar-strong: #fff; box-shadow: 0 14px 36px rgba(0, 0, 0, .35); }
+:global(.dark-theme) .expert-sidebar { --admin-sidebar: rgba(15, 23, 42, .9); --admin-sidebar-text: #cbd5e1; --admin-sidebar-muted: #94a3b8; --admin-sidebar-hover: var(--admin-accent-soft); --admin-sidebar-border: #1e293b; --admin-sidebar-strong: #fff; box-shadow: 0 14px 36px rgba(0, 0, 0, .35); }
 .expert-sidebar.collapsed { width: 84px; padding-left: 12px; padding-right: 12px; }
 .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 4px 10px 20px; }
 .brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: var(--pk-logo); mask: var(--pk-logo-shape) center / contain no-repeat; color: var(--pk-on-accent); font-size: 22px; font-weight: 800; }
@@ -207,7 +207,7 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .sidebar-link { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 0 13px; border-radius: 12px; color: var(--admin-sidebar-text); transition: .15s ease; }
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
 .sidebar-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
-.sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; box-shadow: 0 6px 16px rgba(255, 193, 7, .35); }
+.sidebar-link.router-link-active { background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 700; box-shadow: 0 6px 16px rgba(var(--pk-accent-rgb), .3); }
 .collapsed .sidebar-link { min-height: 48px; }
 /* Uzun adlar (ör. Organizasyon Yönetimi) kalınken de tek satır kalsın. */
 .sidebar-link > span { white-space: nowrap; }

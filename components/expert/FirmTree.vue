@@ -921,11 +921,11 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .no-firm { color: #b54708; }
 .row-actions { flex: 0 1 auto; max-width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .row-button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.row-button:hover:not(:disabled) { border-color: #d7a900; }
+.row-button:hover:not(:disabled) { border-color: var(--pk-accent); }
 .row-button:disabled { opacity: .45; cursor: not-allowed; }
 .row-button.icon { position: relative; width: 36px; justify-content: center; padding: 0; color: var(--admin-muted); }
 .row-button.icon.add { color: var(--admin-heading); }
-.row-button .mini { position: absolute; right: 3px; bottom: 3px; padding: 1px; border-radius: 50%; background: var(--pk-yellow); color: #111827; font-size: 7px; }
+.row-button .mini { position: absolute; right: 3px; bottom: 3px; padding: 1px; border-radius: 50%; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 7px; }
 .row-button.remove { color: #b42318; }
 .row-button.remove:hover:not(:disabled) { border-color: #d92d20; }
 .company-chip { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #eef4ff; color: #3538cd; font-size: 12px; font-weight: 600; }
@@ -986,7 +986,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .modal-head > div { flex: 1; min-width: 0; }
 .modal-head h2 { margin: 0; color: var(--admin-heading); font-size: 19px; }
 .modal-head p { margin: 3px 0 0; color: var(--admin-muted); font-size: 13px; overflow-wrap: anywhere; }
-.head-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: #111827; font-size: 19px; }
+.head-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 19px; }
 .head-icon.danger { background: #fee4e2; color: #b42318; }
 .close-button { flex: none; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-muted); cursor: pointer; }
 .close-button:hover { background: var(--admin-hover); color: var(--admin-heading); }
@@ -996,7 +996,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .field select, .field textarea { width: 100%; margin-top: 6px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 400; }
 .field select { min-height: 44px; padding: 0 10px; }
 .field textarea { padding: 10px 12px; resize: vertical; }
-.field input:focus, .field select:focus, .field textarea:focus { border-color: #d7a900; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--pk-accent); }
 .req { color: #d92d20; }
 .form-error { margin: 14px 0 0; padding: 10px 12px; border-radius: 9px; background: #fef3f2; color: #b42318; font-size: 13px; }
 .muted { color: var(--admin-muted); font-size: 13px; }
@@ -1004,7 +1004,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .delete-list { margin: 0 0 12px; padding-left: 18px; color: var(--admin-heading); font-size: 13.5px; }
 .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
 .primary-button, .secondary-button, .danger-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border-radius: 9px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: #111827; }
+.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: var(--pk-on-accent); }
 .primary-button:hover:not(:disabled) { background: var(--pk-yellow-dark); }
 .secondary-button { border: 1px solid var(--admin-border); background: var(--admin-input); color: var(--admin-heading); }
 .danger-button { border: 1px solid #d92d20; background: #d92d20; color: #fff; }

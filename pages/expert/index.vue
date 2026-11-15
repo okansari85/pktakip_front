@@ -675,7 +675,7 @@ onMounted(async () => {
 <style scoped>
 .view-switch { flex: none; display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card); }
 .view-switch button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.view-switch button.on { background: var(--pk-yellow); color: #111827; }
+.view-switch button.on { background: var(--pk-yellow); color: var(--pk-on-accent); }
 .page-head p.summary-sub { color: var(--admin-heading); font-size: 15px; font-weight: 600; }
 /* Tasarım kataloğu 02: başlık, kapsam, sayılar, örnek yerleşim, durum çubukları, öncelikli kontroller, takvim kartı */
 .crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--admin-muted); font-size: 13px; }
@@ -683,11 +683,11 @@ onMounted(async () => {
 .crumb strong { color: var(--admin-heading); font-weight: 600; } .crumb .pi-angle-right { font-size: 11px; }
 .expert-dashboard .page-head h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; }
 .expert-dashboard .page-head p { font-size: 15px; }
-.scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+.scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
 .scope-pill i { color: var(--pk-yellow-dark); }
 .gb-top { display: grid; grid-template-columns: 236px minmax(0, 1fr) 320px; gap: 16px; align-items: stretch; }
 .gb-kpis, .gb-side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.card.gb-kpi, .card.gb-status { flex: 1; border-radius: 16px; color: inherit; box-shadow: 0 10px 28px rgba(120, 90, 0, .06); transition: border-color .15s ease; }
+.card.gb-kpi, .card.gb-status { flex: 1; border-radius: 16px; color: inherit; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); transition: border-color .15s ease; }
 .gb-kpi:hover, .gb-kpi:focus-visible, .gb-status:hover, .gb-status:focus-visible { border-color: var(--pk-yellow); }
 .gb-kpi { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
 .gb-kpi-icon { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; font-size: 22px; }
@@ -733,16 +733,16 @@ onMounted(async () => {
 .gb-pill.bad { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
 .gb-pill.warn { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
 .gb-inspect { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 0; border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.gb-inspect:hover, .gb-inspect:focus-visible { background: var(--pk-yellow); color: #111827; }
+.gb-inspect:hover, .gb-inspect:focus-visible { background: var(--pk-yellow); color: var(--pk-on-accent); }
 .gb-inspect .pi { font-size: 11px; }
 .gb-next { flex: 1; display: flex; align-items: center; gap: 28px; padding: 20px 28px; }
-.gb-date { flex: none; width: 106px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--admin-border); border-radius: 14px; text-align: center; box-shadow: 0 6px 18px rgba(120, 90, 0, .08); }
-.gb-date strong { padding: 10px 0 6px; background: var(--pk-yellow); color: #111827; font-size: 36px; line-height: 1.1; }
+.gb-date { flex: none; width: 106px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--admin-border); border-radius: 14px; text-align: center; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .08); }
+.gb-date strong { padding: 10px 0 6px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 36px; line-height: 1.1; }
 .gb-date span { padding: 6px 0 8px; background: var(--admin-surface); color: var(--admin-heading); font-size: 20px; font-weight: 800; }
 .gb-next-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-left: 28px; border-left: 1px solid var(--admin-border); }
 .gb-next-text strong { color: var(--admin-heading); font-size: 26px; font-weight: 800; line-height: 1.2; }
 .gb-next-text small { color: var(--admin-muted); font-size: 17px; }
-.gb-go { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 54px; padding: 0 22px; border-radius: 12px; background: var(--pk-yellow); color: #111827; font-size: 17px; font-weight: 700; }
+.gb-go { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 54px; padding: 0 22px; border-radius: 12px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 17px; font-weight: 700; }
 .gb-go:hover, .gb-go:focus-visible { background: var(--pk-yellow-dark); }
 .gb-go .pi-chevron-right { position: absolute; right: 22px; font-size: 13px; }
 @media (max-width: 1250px) {
@@ -803,7 +803,7 @@ onMounted(async () => {
 .city-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #93c5fd;border-radius:10px;background:rgba(37,99,235,.08);color:var(--admin-text);font-size:12px}
 .city-bar i{color:#2563eb}.city-bar strong{color:var(--admin-heading)}.city-bar .link-button{margin-left:auto}
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
+.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow)}
 /* Lokasyonlar sekmesi: başta iki KPI kartı, lokasyon özeti (alt) */
 .kpis.two{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.three{grid-template-columns:repeat(3,minmax(0,1fr))}.kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:1100px){.kpis.four{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.kpis.four{grid-template-columns:1fr}}

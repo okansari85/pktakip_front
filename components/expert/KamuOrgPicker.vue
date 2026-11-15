@@ -142,14 +142,14 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocument))
 .picker > span { display: flex; align-items: center; gap: 5px; color: var(--admin-muted); font-size: 10px; font-weight: 700; }
 .picker > span i { font-size: 10px; color: var(--pk-yellow-dark); }
 .trigger { width: 260px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--admin-card); color: var(--admin-heading); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; }
-.trigger.open, .trigger:focus { border-color: #d7a900; box-shadow: 0 0 0 3px rgba(255,193,7,.12); outline: 0; }
+.trigger.open, .trigger:focus { border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--pk-focus-ring); outline: 0; }
 .trigger-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trigger .pi { font-size: 11px; color: var(--admin-muted); }
 .panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; width: 420px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); box-shadow: 0 18px 50px var(--admin-shadow); }
 .search { position: relative; padding: 10px; border-bottom: 1px solid var(--admin-border); }
 .search > .pi { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--admin-muted); font-size: 12px; }
 .search input { width: 100%; height: 36px; padding: 0 32px; border: 1px solid var(--admin-border); border-radius: 8px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 13px; }
-.search input:focus { border-color: #d7a900; box-shadow: 0 0 0 3px rgba(255,193,7,.12); }
+.search input:focus { border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--pk-focus-ring); }
 .clear { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--admin-muted); cursor: pointer; }
 .list { max-height: 420px; overflow: auto; padding: 6px; }
 .section { margin: 8px 8px 4px; color: var(--admin-muted); font-size: 10.5px; font-weight: 800; letter-spacing: .05em; }
@@ -170,7 +170,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocument))
 .row.building .pi { color: var(--pk-yellow-dark); font-size: 12px; }
 .none { margin: 14px 10px; color: var(--admin-muted); font-size: 12.5px; }
 .footer { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--admin-border); color: var(--admin-muted); font-size: 12px; cursor: pointer; }
-.footer input { width: 15px; height: 15px; margin: 0; accent-color: #d7a900; }
+.footer input { width: 15px; height: 15px; margin: 0; accent-color: var(--pk-accent); }
 @media (max-width: 1100px) { .trigger { width: 200px; } }
 /* Lokasyonlar sayfasındaki filtre: sayfanın diğer kutularıyla aynı boy */
 .picker.field > span { color: var(--admin-muted); font-size: 11px; font-weight: 700; }

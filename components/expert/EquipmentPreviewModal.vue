@@ -110,7 +110,7 @@ h3{display:flex;align-items:center;gap:6px;margin:20px 0 10px;color:var(--admin-
 .modal-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;margin-top:20px}
 .bound-note{display:inline-flex;align-items:center;gap:6px;margin-right:auto;color:var(--admin-muted);font-size:12px}
 a.secondary-button{text-decoration:none}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer;text-decoration:none}
 .secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 16px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}.secondary-button:disabled{opacity:.55}
 @media(max-width:640px){.top{grid-template-columns:1fr}}
 </style>

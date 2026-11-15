@@ -19,8 +19,8 @@ const toggle = (id: number) => emit('update:modelValue', props.modelValue.includ
 <style scoped>
 .area-checklist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .area-check{display:flex;align-items:flex-start;gap:9px;margin:0 !important;padding:9px 11px;border:1px solid var(--admin-border);border-radius:9px;background:var(--admin-input);cursor:pointer;font-weight:400 !important}
-.area-check:hover{border-color:#d7a900}.area-check.checked{border-color:#d7a900;background:var(--admin-accent-soft)}
-.area-check input{width:16px;height:16px;margin:1px 0 0;accent-color:#d7a900;flex-shrink:0}
+.area-check:hover{border-color:var(--pk-accent)}.area-check.checked{border-color:var(--pk-accent);background:var(--admin-accent-soft)}
+.area-check input{width:16px;height:16px;margin:1px 0 0;accent-color:var(--pk-accent);flex-shrink:0}
 .area-check span{display:flex;flex-direction:column;gap:2px;min-width:0}.area-check strong{color:var(--admin-heading);font-size:12px}.area-check small{color:var(--admin-muted);font-size:10px}
 @media(max-width:640px){.area-checklist{grid-template-columns:1fr}}
 </style>

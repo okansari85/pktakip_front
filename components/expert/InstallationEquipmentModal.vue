@@ -160,7 +160,7 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .row{display:grid;gap:8px;align-items:center}
 .row.head span{color:var(--admin-muted);font-size:11px;font-weight:700}
 .row input,.row select{width:100%;min-width:0;height:38px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
-.row input:focus,.row select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.row input:focus,.row select:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .row.invalid input,.row.invalid select{border-color:var(--admin-danger-text)}
 .row-error{grid-column:1 / -1;margin-top:-2px;color:var(--admin-danger-text);font-size:11px}
 .icon-button{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover:not(:disabled){background:var(--admin-hover);color:var(--admin-danger-text)}.icon-button:disabled{opacity:.35;cursor:default}
@@ -168,7 +168,7 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.link-button:disabled{opacity:.5}
 .error-text{margin:12px 0 0;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:640px){.row{grid-template-columns:1fr 1fr !important}.row.head{display:none}.row .icon-button{justify-self:end}}
 </style>

@@ -408,12 +408,12 @@ const save = async () => {
 h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .file-box{width:100%;display:flex;align-items:center;gap:14px;padding:16px;border:1.5px dashed var(--admin-border);border-radius:10px;background:var(--admin-soft);color:var(--admin-muted);text-align:left;cursor:pointer;font:inherit}
-.file-box:hover{border-color:#d7a900}.file-box.filled{border-style:solid}.file-box i{font-size:24px}.file-box.filled i{color:var(--admin-danger-text)}
+.file-box:hover{border-color:var(--pk-accent)}.file-box.filled{border-style:solid}.file-box i{font-size:24px}.file-box.filled i{color:var(--admin-danger-text)}
 .file-box span,.ai-box span{display:flex;flex-direction:column;gap:3px;min-width:0}.file-box strong,.ai-box strong{color:var(--admin-heading);font-size:13px;overflow-wrap:anywhere}.file-box small,.ai-box small{font-size:11px;color:var(--admin-muted)}
 .mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0;padding:4px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-soft)}
 .mode button{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .mode button.active{background:var(--admin-card);color:var(--admin-heading);box-shadow:0 1px 3px var(--admin-shadow)}.mode button:disabled{cursor:not-allowed}
-.ai-box{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--admin-border);border-radius:10px;margin-bottom:14px}.ai-box > i{font-size:22px;color:#d7a900}.ai-box .primary-button{margin-left:auto;flex-shrink:0}
+.ai-box{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--admin-border);border-radius:10px;margin-bottom:14px}.ai-box > i{font-size:22px;color:var(--admin-accent-text)}.ai-box .primary-button{margin-left:auto;flex-shrink:0}
 .ai-result{margin-top:16px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-soft)}
 .ai-result-head{width:100%;display:flex;align-items:center;gap:9px;padding:12px 14px;border:0;background:transparent;color:var(--admin-heading);font:inherit;font-size:12px;font-weight:800;text-align:left;cursor:pointer;border-radius:10px}
 .ai-result-head:hover{background:var(--admin-hover)}.ai-result-head > i:first-child{color:var(--admin-success-text)}
@@ -464,19 +464,19 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .form-grid label{display:block;color:var(--admin-heading);font-size:12px;font-weight:700}.form-grid label small{font-weight:400;color:var(--admin-muted)}.form-grid label > span{color:var(--admin-danger-text)}.wide{grid-column:1 / -1}
 .form-grid input,.form-grid select,.form-grid textarea{display:block;width:100%;margin-top:6px;padding:0 10px;height:40px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
 .form-grid textarea{height:auto;padding:9px 10px;resize:vertical}
-.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .findings-edit{display:grid;gap:8px}
 .findings-head{display:flex;align-items:center;justify-content:space-between;color:var(--admin-heading);font-size:12px;font-weight:700}.findings-head small{font-weight:400;color:var(--admin-muted)}
 .findings-edit ol{display:grid;gap:6px;margin:0;padding-left:22px;color:var(--admin-muted);font-size:12px}
 .findings-edit li{padding-left:2px}.findings-edit li > *{vertical-align:top}
 .findings-edit li textarea{display:inline-block;width:calc(100% - 40px);margin:0;padding:8px 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;resize:vertical;outline:0}
-.findings-edit li textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.findings-edit li textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .icon-button{width:32px;height:32px;margin-left:6px;display:inline-grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover{background:var(--admin-hover);color:var(--admin-danger-text)}
 .muted{margin:0;color:var(--admin-muted);font-size:12px}
 .hint{margin:8px 0 0;color:var(--admin-muted);font-size:12px}.hint.warn{color:var(--admin-warning-text)}.hint .link-button{margin-left:6px}.error-text{margin:10px 0 0;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}.secondary-button:disabled{opacity:.55}
 @media(max-width:640px){.form-grid,.mode{grid-template-columns:1fr}.ai-box{flex-wrap:wrap}}
 </style>

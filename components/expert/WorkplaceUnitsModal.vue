@@ -120,9 +120,9 @@ onMounted(async () => {
 .unit{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:10px}.unit.passive{opacity:.6}
 .unit-main{display:flex;flex-direction:column;gap:3px;min-width:0}.unit-main strong{color:var(--admin-heading);font-size:13px}.unit-main small{color:var(--admin-muted);font-size:11px}
 .unit-actions{display:flex;gap:5px;flex-shrink:0}
-.icon-button{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.icon-button{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
 .icon-button.danger:hover{border-color:#fda29b;background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.unit-form{padding:14px;border:1px dashed #d7a900;border-radius:10px;background:var(--admin-accent-soft)}
+.unit-form{padding:14px;border:1px dashed var(--pk-accent);border-radius:10px;background:var(--admin-accent-soft)}
 .unit-form label{display:block;margin-bottom:12px;color:var(--admin-heading);font-size:12px;font-weight:700}.unit-form label span{color:var(--admin-danger-text)}.unit-form label small{font-weight:400;color:var(--admin-muted)}
 .unit-form input[type=text]{width:100%;height:40px;margin-top:6px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;background:var(--admin-input);font:inherit;font-size:13px;color:var(--admin-heading)}
 .areas-field{margin-bottom:12px}.areas-field > span{display:block;margin-bottom:8px;color:var(--admin-heading);font-size:12px;font-weight:700}.areas-field > span small{font-weight:400;color:var(--admin-muted)}
@@ -132,6 +132,6 @@ onMounted(async () => {
 .add-button{display:inline-flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .form-error{margin:12px 0 0;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 16px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 16px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:38px;padding:0 16px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 </style>

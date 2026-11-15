@@ -111,9 +111,9 @@ th{width:44%;color:var(--admin-muted);font-weight:600}
 .badge.current{background:var(--admin-success-bg);color:var(--admin-success-text)}.badge.rejected{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .edit{display:flex;gap:6px}
 .edit input{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
-.edit input:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.edit input:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .primary-button,.secondary-button{height:30px;padding:0 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer}
-.primary-button{border:0;background:var(--pk-yellow);color:#111827}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{border:0;background:var(--pk-yellow);color:var(--pk-on-accent)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}
 .history-row td{background:var(--admin-card);padding:6px 10px 10px}
 .history{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--admin-border);display:grid;gap:5px}

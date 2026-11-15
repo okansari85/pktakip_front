@@ -270,7 +270,7 @@ h1{margin:0;color:var(--admin-heading);font-size:30px;letter-spacing:-.7px}.page
 .kinds button.active{background:var(--admin-card);color:var(--admin-heading);box-shadow:0 1px 3px var(--admin-shadow)}
 .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
+.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow)}
 .count{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:11px}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:13px}
@@ -287,7 +287,7 @@ td strong{color:var(--admin-heading)}.muted{color:var(--admin-muted)}.block{disp
 .status.pending{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status.approved{background:var(--admin-success-bg);color:var(--admin-success-text)}.status.rejected{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .actions{white-space:nowrap;text-align:right}.actions button + button{margin-left:6px}
 .primary-button,.secondary-button{min-height:32px;padding:0 12px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer}
-.primary-button{border:0;background:var(--pk-yellow);color:#111827}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{border:0;background:var(--pk-yellow);color:var(--pk-on-accent)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}.secondary-button:disabled{opacity:.55}
 .decision-row td{background:var(--admin-soft)}
 .decision{display:grid;gap:8px;max-width:640px}

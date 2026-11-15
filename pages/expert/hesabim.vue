@@ -242,7 +242,7 @@ onMounted(() => {
 .message { font-size: 13.5px; }
 .message.error { color: var(--admin-danger-text); }
 .message.ok { color: var(--admin-success-text); }
-.primary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--pk-yellow); color: #1b1b1b; font-weight: 700; font-size: 14px; cursor: pointer; }
+.primary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 700; font-size: 14px; cursor: pointer; }
 .primary-button:disabled { opacity: .55; cursor: not-allowed; }
 .secondary-button { margin-left: 12px; height: 36px; padding: 0 14px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card); color: var(--admin-text); cursor: pointer; }
 .state { padding: 30px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-muted); }

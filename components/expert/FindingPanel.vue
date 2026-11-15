@@ -311,7 +311,7 @@ onMounted(load)
 label{display:grid;gap:6px;color:var(--admin-heading);font-size:12px;font-weight:700}
 input,select,textarea{width:100%;min-height:40px;padding:8px 11px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:400;outline:0}
 textarea{resize:vertical;line-height:1.5}
-input:focus,select:focus,textarea:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+input:focus,select:focus,textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 input:disabled,select:disabled,textarea:disabled{opacity:.7}
 input[type=file]{min-height:auto;padding:7px;font-size:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -336,7 +336,7 @@ input[type=file]{min-height:auto;padding:7px;font-size:12px}
 .error-text{color:var(--admin-danger-text)}.small-text{margin:0;font-size:12px}
 .close-button{flex:none;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .primary-button,.secondary-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 16px;border-radius:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.primary-button{border:0;background:var(--pk-yellow);color:#111827}.secondary-button{border:1px solid var(--admin-border);background:var(--admin-hover);color:var(--admin-heading)}
+.primary-button{border:0;background:var(--pk-yellow);color:var(--pk-on-accent)}.secondary-button{border:1px solid var(--admin-border);background:var(--admin-hover);color:var(--admin-heading)}
 .primary-button:disabled,.secondary-button:disabled{opacity:.55;cursor:not-allowed}
 .small{min-height:34px;padding:0 12px;font-size:12px}
 .modal-backdrop{position:fixed;inset:0;z-index:110;background:var(--admin-overlay);display:grid;place-items:center;padding:20px}

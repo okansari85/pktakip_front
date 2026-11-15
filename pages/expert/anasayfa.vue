@@ -111,7 +111,7 @@ onMounted(async () => {
 .home-sub span { font-size: 15px; }
 .sep { width: 6px; height: 6px; border-radius: 50%; background: var(--admin-border); }
 
-.plan-card { margin-top: 26px; padding: 22px 22px 18px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); box-shadow: 0 10px 28px rgba(120, 90, 0, .06); }
+.plan-card { margin-top: 26px; padding: 22px 22px 18px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); }
 .plan-card h2 { margin: 0 0 16px; color: var(--admin-heading); font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
 .plan-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 14px 16px; border-radius: 12px; color: var(--admin-heading); font-size: 16px; }
 .plan-row i { flex: none; font-size: 20px; }
@@ -126,7 +126,7 @@ onMounted(async () => {
 .plan-button { display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font-size: 15px; font-weight: 700; }
 .plan-button .pi-chevron-right { font-size: 12px; }
 .plan-button:hover { border-color: var(--pk-yellow); }
-.plan-button.primary { border-color: var(--pk-yellow); background: var(--pk-yellow); color: #111827; }
+.plan-button.primary { border-color: var(--pk-yellow); background: var(--pk-yellow); color: var(--pk-on-accent); }
 .plan-button.primary:hover { background: var(--pk-yellow-dark); }
 .plan-findings { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 17px; }
 .plan-findings i { color: var(--admin-muted); font-size: 18px; }
@@ -134,10 +134,10 @@ onMounted(async () => {
 .home-hero { position: relative; min-width: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
 .home-hero img { width: 100%; max-height: 440px; object-fit: contain; }
 .home-hero figcaption, .home-hero figcaption i { display: inline-flex; align-items: center; gap: 8px; }
-.home-hero figcaption { position: absolute; right: 8px; bottom: 6px; padding: 9px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+.home-hero figcaption { position: absolute; right: 8px; bottom: 6px; padding: 9px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
 
 .home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.home-card { min-width: 0; min-height: 140px; display: flex; align-items: center; gap: 18px; padding: 12px 22px 12px 14px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); color: inherit; box-shadow: 0 10px 28px rgba(120, 90, 0, .06); transition: transform .15s ease, border-color .15s ease; }
+.home-card { min-width: 0; min-height: 140px; display: flex; align-items: center; gap: 18px; padding: 12px 22px 12px 14px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); color: inherit; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); transition: transform .15s ease, border-color .15s ease; }
 .home-card:hover, .home-card:focus-visible { transform: translateY(-2px); border-color: var(--pk-yellow); }
 .home-card-image { flex: none; width: 150px; height: 112px; object-fit: contain; }
 .home-card-text { flex: 1; min-width: 0; }

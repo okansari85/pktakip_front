@@ -704,10 +704,10 @@ h2{margin:0;color:var(--admin-heading);font-size:20px}h3{margin:0;color:var(--ad
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs .type-add{align-self:center;margin-left:6px}
-.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-heading);border-bottom-color:var(--pk-yellow)}
+.tabs button:hover{color:var(--admin-heading)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow)}
 .picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-input);color:var(--admin-text);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
-.chip span{color:var(--admin-muted);font-size:11px}.chip.active{border-color:#d7a900;background:var(--admin-accent-soft);color:var(--admin-heading)}
+.chip span{color:var(--admin-muted);font-size:11px}.chip.active{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
 .chip .dot{flex-shrink:0;width:8px;height:8px}
 .chip.add{border-style:dashed;background:transparent;color:var(--admin-link)}.chip.add i{font-size:11px}
 .picker-summary{margin:0 0 8px;color:var(--admin-muted);font-size:12px}.picker-summary .bad{color:var(--admin-danger-text)}
@@ -716,7 +716,7 @@ h2{margin:0;color:var(--admin-heading);font-size:20px}h3{margin:0;color:var(--ad
 .overview{padding:20px;border-left:4px solid var(--admin-border)}
 .overview.uygun{border-left-color:var(--admin-success-text)}.overview.uygun_degil{border-left-color:var(--admin-danger-text)}.overview.rapor_yok{border-left-color:var(--admin-muted)}.overview.rapor_bekleniyor{border-left-color:var(--admin-warning-text)}
 .overview-main{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.overview-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:12px;background:var(--admin-accent-soft);color:#b45309;flex-shrink:0}.overview-icon i{font-size:22px}
+.overview-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:12px;background:var(--admin-accent-soft);color:var(--admin-accent-text);flex-shrink:0}.overview-icon i{font-size:22px}
 .overview-title{flex:1;min-width:200px}.overview-title p{margin:4px 0 0;color:var(--admin-muted);font-size:12px}
 .overview-status{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .status-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;font-size:14px;font-weight:800;white-space:nowrap}
@@ -811,7 +811,7 @@ td strong{color:var(--admin-heading)}
 .status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status-badge.rapor_yok,.status-badge.belirtilmemis{background:var(--admin-chip);color:var(--admin-muted)}
 .actions-col{width:1%}
 .icon-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover{border-color:var(--admin-border);background:var(--admin-card);color:var(--admin-danger-text)}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 16px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 .error-text{color:var(--admin-danger-text);font-size:12px}
 @media(max-width:1000px){.info-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.info-cards{grid-template-columns:1fr}}

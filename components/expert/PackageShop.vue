@@ -281,7 +281,7 @@ onMounted(async () => {
 .steps li { display: flex; align-items: center; gap: 8px; }
 .steps span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--admin-soft); font-size: 12px; }
 .steps li.active { color: var(--admin-heading); }
-.steps li.active span { background: var(--pk-yellow); color: #1b1b1b; }
+.steps li.active span { background: var(--pk-yellow); color: var(--pk-on-accent); }
 .steps li.done span { background: var(--admin-success-bg); color: var(--admin-success-text); }
 .chosen-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-radius: 12px; background: var(--admin-soft); color: var(--admin-text); font-size: 14px; }
 .chosen-line strong { color: var(--admin-heading); }
@@ -308,7 +308,7 @@ onMounted(async () => {
 .close-button:hover { background: var(--admin-hover); color: var(--admin-heading); }
 .error { margin: 0; color: var(--admin-danger-text); font-size: 13.5px; }
 .primary-button, .secondary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 0; background: var(--pk-yellow); color: #1b1b1b; }
+.primary-button { border: 0; background: var(--pk-yellow); color: var(--pk-on-accent); }
 .secondary-button { border: 1px solid var(--admin-border); background: var(--admin-card); color: var(--admin-text); font-weight: 600; }
 .primary-button:disabled, .secondary-button:disabled { opacity: .55; cursor: not-allowed; }
 .text-button { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--admin-link); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }

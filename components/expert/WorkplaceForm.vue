@@ -335,9 +335,9 @@ const { corporate, multiUser, load: loadAccount } = useAccount()
 label{display:block;margin-bottom:16px;color:var(--admin-heading);font-size:12px;font-weight:700}
 label>span{color:var(--admin-danger-text)}label small{font-weight:400;color:var(--admin-muted)}
 input,select{width:100%;height:42px;margin-top:7px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;outline:0;background:var(--admin-input);font:inherit;font-size:13px;color:var(--admin-heading)}
-input:focus,select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+input:focus,select:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.new-company{margin:-6px 0 16px;padding:14px 14px 0;border:1px dashed #d7a900;border-radius:10px;background:var(--admin-accent-soft)}
+.new-company{margin:-6px 0 16px;padding:14px 14px 0;border:1px dashed var(--pk-accent);border-radius:10px;background:var(--admin-accent-soft)}
 .nace-field{position:relative}
 .nace-results{position:absolute;top:100%;left:0;right:0;z-index:5;max-height:260px;overflow:auto;margin:4px 0 0;padding:4px;list-style:none;background:var(--admin-input);border:1px solid var(--admin-border);border-radius:8px;box-shadow:0 12px 30px var(--admin-shadow)}
 .nace-results li{padding:8px 9px;border-radius:6px;font-size:12px;font-weight:400;cursor:pointer;line-height:1.4}.nace-results li:hover{background:var(--admin-hover)}
@@ -349,7 +349,7 @@ input:focus,select:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
 
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:640px){.form-row{grid-template-columns:1fr}}
 </style>

@@ -115,7 +115,7 @@ label { display: block; color: var(--admin-heading); font-size: 13px; font-weigh
 label input, label select { margin-top: 6px; }
 .req { color: #d92d20; }
 input, select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 400; }
-input:focus, select:focus { border-color: #d7a900; box-shadow: 0 0 0 3px var(--admin-accent-soft); }
+input:focus, select:focus { border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--admin-accent-soft); }
 select:disabled { opacity: .55; }
 .hint { margin: -6px 0 0; color: var(--admin-muted); font-size: 12px; }
 .hazard-hint { margin: -2px 0 8px; }
@@ -131,7 +131,7 @@ label small { color: var(--admin-muted); font-weight: 400; }
 .question { display: block; margin-bottom: 6px; color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 .hazard-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .hazard-option { min-height: 46px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.hazard-option:hover { border-color: #d7a900; }
+.hazard-option:hover { border-color: var(--pk-accent); }
 .hazard-option.on.low { background: #ecfdf3; border-color: #12b76a; color: #027a48; }
 .hazard-option.on.high { background: #fffaeb; border-color: #f79009; color: #b54708; }
 .hazard-option.on.very-high { background: #fef3f2; border-color: #d92d20; color: #b42318; }

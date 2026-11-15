@@ -98,7 +98,7 @@ onMounted(load)
 h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.7px; }
 .page-head p { margin: 6px 0 0; color: var(--admin-muted); font-size: 14px; }
 .primary-button, .secondary-button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: #111827; }
+.primary-button { border: 1px solid var(--pk-yellow); background: var(--pk-yellow); color: var(--pk-on-accent); }
 .primary-button:hover { background: var(--pk-yellow-dark); }
 .secondary-button { min-height: 38px; border: 1px solid var(--admin-border); background: var(--admin-input); color: var(--admin-heading); }
 .stats { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
@@ -112,7 +112,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.
 .search { position: relative; display: block; max-width: 420px; }
 .search i { position: absolute; left: 13px; top: 14px; color: var(--admin-muted); }
 .search input { width: 100%; min-height: 42px; padding: 0 12px 0 36px; border: 1px solid var(--admin-border); border-radius: 9px; outline: 0; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
-.search input:focus { border-color: #d7a900; }
+.search input:focus { border-color: var(--pk-accent); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .table-wrap { position: relative; overflow-x: auto; }
 .tree-list { padding: 10px 14px 14px; }

@@ -63,5 +63,5 @@ onMounted(async () => {
 .icon.fail { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
 h1 { margin: 0; color: var(--admin-heading); font-size: 24px; }
 p { margin: 0; color: var(--admin-text); font-size: 14.5px; line-height: 1.6; }
-.primary-button { display: inline-flex; align-items: center; justify-content: center; align-self: stretch; height: 46px; border-radius: 10px; background: var(--pk-yellow); color: #1b1b1b; font-weight: 800; text-decoration: none; }
+.primary-button { display: inline-flex; align-items: center; justify-content: center; align-self: stretch; height: 46px; border-radius: 10px; background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 800; text-decoration: none; }
 </style>

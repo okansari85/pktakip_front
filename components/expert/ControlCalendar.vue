@@ -225,7 +225,7 @@ h3{margin:0;color:var(--admin-heading);font-size:15px}
 .nav-button,.year-button{height:32px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-card);color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .nav-button{width:32px;display:grid;place-items:center}.year-button{padding:0 10px}
 .nav-button:hover,.year-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
-.year-current{min-width:64px;height:32px;display:grid;place-items:center;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:14px}
+.year-current{min-width:64px;height:32px;display:grid;place-items:center;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:14px}
 .link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0 6px}
 .earlier{display:grid;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--admin-danger-text);border-radius:10px;background:var(--admin-danger-bg)}
 .earlier > strong{display:flex;align-items:center;gap:7px;color:var(--admin-danger-text);font-size:12px}

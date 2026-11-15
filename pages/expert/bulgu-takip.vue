@@ -167,14 +167,14 @@ onMounted(async () => {
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .kpi{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
 .kpi:hover{border-color:var(--admin-muted)}
-.kpi.active{border-color:var(--pk-yellow);box-shadow:0 0 0 3px rgba(255,193,7,.18)}
+.kpi.active{border-color:var(--pk-yellow);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .kpi-icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;font-size:18px}
 .kpi.bad .kpi-icon{background:var(--admin-danger-bg);color:var(--admin-danger-text)}.kpi.warn .kpi-icon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.kpi.ok .kpi-icon{background:var(--admin-success-bg);color:var(--admin-success-text)}
 .kpi-text{display:grid;gap:2px;min-width:0}.kpi-text small{color:var(--admin-muted);font-size:12px}.kpi-text strong{color:var(--admin-heading);font-size:24px;line-height:1.1}
 .filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:12px;align-items:end;padding:14px 16px}
 .filters label{display:grid;gap:6px;color:var(--admin-heading);font-size:12px;font-weight:700}
 .filters select,.filters input{width:100%;height:40px;padding:0 11px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:400;outline:0}
-.filters select:focus,.filters input:focus{border-color:#d7a900;box-shadow:0 0 0 3px rgba(255,193,7,.12)}
+.filters select:focus,.filters input:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .secondary-button{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .secondary-button:disabled{opacity:.55;cursor:not-allowed}
 .table-wrap{overflow-x:auto}

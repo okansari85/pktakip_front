@@ -239,7 +239,7 @@ h2{margin:0 0 14px;color:var(--admin-heading);font-size:15px}
 .field input,.field select{height:40px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
 .field input[type=file]{padding:8px 10px;height:auto}
 .or{display:flex;align-items:center;gap:10px;margin:2px 0 12px;color:var(--admin-muted);font-size:11px}.or::before,.or::after{content:'';flex:1;height:1px;background:var(--admin-border)}
-.primary-button{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
 .icon-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-muted);cursor:pointer}
 .hint{margin:10px 0 0;color:var(--admin-muted);font-size:12px}.error-text{color:var(--admin-danger-text)}.card>.error-text{margin:10px 0 0;font-size:12px}
 .muted{color:var(--admin-muted);font-size:12px}.empty{padding:26px 10px;text-align:center;color:var(--admin-muted);font-size:12px}

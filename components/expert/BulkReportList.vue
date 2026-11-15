@@ -214,11 +214,11 @@ td strong{color:var(--admin-heading)}
 .findings{display:grid;gap:4px;margin:8px 0 0;padding-left:20px;color:var(--admin-text);font-size:12px;line-height:1.45}
 .conclusion{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--pk-yellow);background:var(--admin-soft);color:var(--admin-text);font-size:12px;line-height:1.5}
 .tubes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
-.tube{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-card);color:var(--admin-text);font-size:12px;text-decoration:none}.tube:hover{border-color:#d7a900}
+.tube{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-card);color:var(--admin-text);font-size:12px;text-decoration:none}.tube:hover{border-color:var(--pk-accent)}
 .tube-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--admin-heading)}
 .tube-status{font-size:11px;font-weight:700;color:var(--admin-muted)}.tube-status.uygun{color:var(--admin-success-text)}.tube-status.uygun_degil{color:var(--admin-danger-text)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--admin-muted);flex-shrink:0}.dot.uygun{background:var(--admin-success-text)}.dot.uygun_degil{background:var(--admin-danger-text)}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 15px;border:0;border-radius:8px;background:var(--pk-yellow);color:#111827;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 15px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
 .error-text{color:var(--admin-danger-text)}
 @media(max-width:700px){.forms-head{flex-direction:column}}
 </style>

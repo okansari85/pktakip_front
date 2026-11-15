@@ -186,7 +186,7 @@ onMounted(load)
 .req { color: var(--admin-danger-text); }
 .actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; font-size: 13.5px; }
 .primary-button, .secondary-button { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 0; background: var(--pk-yellow); color: #1b1b1b; }
+.primary-button { border: 0; background: var(--pk-yellow); color: var(--pk-on-accent); }
 .secondary-button { flex: none; border: 1px solid var(--admin-border); background: var(--admin-card); color: var(--admin-text); font-weight: 600; }
 .primary-button:disabled, .secondary-button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 640px) {
