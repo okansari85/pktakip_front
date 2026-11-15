@@ -89,7 +89,8 @@
                   <label class="field">Ad <span class="req">*</span>
                     <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(item.node)" />
                   </label>
-                  <label class="field">Tür <small>(isteğe bağlı)</small>
+                  <!-- Tür etiketi yalnız bireysel uzman hesabında var (backend OSGB / kurumsalda kapalı). -->
+                  <label v-if="!multiUser" class="field">Tür <small>(isteğe bağlı)</small>
                     <select v-model="editLabel">
                       <option value="">Yok</option>
                       <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
@@ -449,7 +450,7 @@ async function load() {
     await loadAccount()
     // Bireysel uzman ile OSGB / kurumsal / kamu hesabının yöneticisi ve operasyon yöneticisi; uzman kendi işyerleri tablosuna döner.
     if (multiUser.value && !isManager.value && !isOperation.value) return navigateTo('/expert/workplaces', { replace: true })
-    const [firms, structure, labels] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), get<Record<string, string>>(`/customers/${route.params.id}/pk-organization-labels`).catch(() => ({} as Record<string, string>)), loadWorkplaces(true), loadNames()])
+    const [firms, structure, labels] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), multiUser.value ? {} : get<Record<string, string>>(`/customers/${route.params.id}/pk-organization-labels`).catch(() => ({} as Record<string, string>)), loadWorkplaces(true), loadNames()])
     const found = firms.find(f => String(f.id) === String(route.params.id)) || null
     // Kurumsal hesabın tek müşterisi firmanın kendisi: türü boş gelir, kurumsal firma gibi davranır (Lokasyona Firma Ata sihirbazındaki gibi).
     firm.value = found && !found.type && corporate.value ? { ...found, type: 'corporate' } : found
@@ -709,7 +710,7 @@ async function saveEdit() {
         firm.value = { ...firm.value, name }
       }
     }
-    if (editLabel.value !== labelOf(node)) await patch(`/customers/${firm.value.id}/pk-organizations/${node.id}/label`, { label: editLabel.value || null })
+    if (!multiUser.value && editLabel.value !== labelOf(node)) await patch(`/customers/${firm.value.id}/pk-organizations/${node.id}/label`, { label: editLabel.value || null })
     closeForm()
     await load()
   } catch (e: any) {
