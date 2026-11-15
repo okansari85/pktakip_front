@@ -34,10 +34,11 @@
                     <span class="row-text"><span class="name-line"><strong>{{ item.node.name }}</strong><span v-if="labelOf(item.node)" class="type-badge">{{ labelOf(item.node) }}</span></span><small>{{ nodeSummary(item.node) }}</small></span>
                   </button>
                   <div class="row-actions">
-                    <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
-                    <button v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
-                    <button v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
-                    <button v-tooltip.top="item.depth ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
+                    <button v-if="canEdit && canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
+                    <button v-if="canEdit" v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
+                    <button v-if="canEdit" v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
+                    <!-- Kurumsal / kamu hesabında kök de bir organizasyondur: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
+                    <button v-if="canEdit" v-tooltip.top="item.depth || corporate ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth || corporate ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
                   </div>
               </template>
 
@@ -52,9 +53,9 @@
                   </span>
                 </button>
                 <div class="row-actions">
-                  <button v-tooltip.top="'İşyeri ekle'" class="row-button icon add" type="button" :aria-label="`${item.location.name} içine işyeri ekle`" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /><i class="pi pi-plus mini" /></button>
+                  <button v-if="canEdit" v-tooltip.top="'İşyeri ekle'" class="row-button icon add" type="button" :aria-label="`${item.location.name} içine işyeri ekle`" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /><i class="pi pi-plus mini" /></button>
                   <button v-if="workplacesOf(item.location).length" v-tooltip.top="'Ekipmanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} ekipmanları`" @click="goEquipment(item.location)"><i class="pi pi-wrench" /></button>
-                  <button v-tooltip.top="'Sil'" class="row-button icon remove" type="button" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
+                  <button v-if="canEdit" v-tooltip.top="'Sil'" class="row-button icon remove" type="button" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
                 </div>
               </template>
 
@@ -71,7 +72,7 @@
                   <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
                 </div>
                 <div class="row-actions">
-                  <button v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
+                  <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
                 </div>
               </template>
             </li>
@@ -202,7 +203,7 @@
           </div>
         </template>
       </section>
-      <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
+      <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
       <section class="other">
         <details>
@@ -277,8 +278,10 @@ const { listFirms, loadStructure, addNode, addLocation, addWorkplace, addWorkpla
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
 const { load: loadNames, nameOf } = useWorkplaceNames()
 const { load: loadOrganizationScope } = useOrganizationScope()
-const { multiUser, load: loadAccount } = useAccount()
+const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
 const goToEquipment = useGoToEquipment()
+// OSGB / kurumsal / kamu: yapıyı yönetici değiştirir, operasyon yöneticisi görür (Ayarlar → Lokasyonlar'daki kural).
+const canEdit = computed(() => !multiUser.value || isManager.value)
 
 const firm = ref<Firm | null>(null)
 const nodes = ref<FirmNode[]>([])
@@ -442,10 +445,12 @@ async function load() {
   error.value = ''
   try {
     await loadAccount()
-    // Bu ekran yalnız bireysel uzman içindir; diğer hesaplar kendi sayfalarına döner.
-    if (multiUser.value) return navigateTo('/expert/workplaces', { replace: true })
+    // Bireysel uzman ile OSGB / kurumsal / kamu hesabının yöneticisi ve operasyon yöneticisi; uzman kendi işyerleri tablosuna döner.
+    if (multiUser.value && !isManager.value && !isOperation.value) return navigateTo('/expert/workplaces', { replace: true })
     const [firms, structure, labels] = await Promise.all([listFirms(), loadStructure(String(route.params.id)), get<Record<string, string>>(`/customers/${route.params.id}/pk-organization-labels`).catch(() => ({} as Record<string, string>)), loadWorkplaces(true), loadNames()])
-    firm.value = firms.find(f => String(f.id) === String(route.params.id)) || null
+    const found = firms.find(f => String(f.id) === String(route.params.id)) || null
+    // Kurumsal hesabın tek müşterisi firmanın kendisi: türü boş gelir, kurumsal firma gibi davranır (Lokasyona Firma Ata sihirbazındaki gibi).
+    firm.value = found && !found.type && corporate.value ? { ...found, type: 'corporate' } : found
     if (!firm.value) { error.value = 'Firma bulunamadı.'; return }
     nodes.value = structure.nodes
     locations.value = structure.locations
@@ -696,7 +701,8 @@ async function saveEdit() {
   try {
     if (name !== node.name && !isLocked(node)) {
       await patch(`/customers/${firm.value.id}/organizations/${node.id}`, { name })
-      if (kindOf(node) === 'root') {
+      // Kurumsal / kamu hesabında müşteri hesabın kendisidir: kökün adı müşteriyi değiştirmez (Ayarlar → Organizasyon'daki gibi).
+      if (kindOf(node) === 'root' && !corporate.value) {
         await patch(`/customers/${firm.value.id}`, { name })
         firm.value = { ...firm.value, name }
       }
