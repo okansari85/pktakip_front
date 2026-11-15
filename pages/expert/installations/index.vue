@@ -197,9 +197,77 @@
             </div>
           </section>
 
-          <!-- Belge ve kayıt / proje bilgileri / tesis özellikleri: tesisatta varsa kart olarak; elektrik ailesinde tesisat raporunun
-               notları da kart -->
-          <div v-if="cardSystems.length || generalNotes" class="info-cards">
+          <!-- Tesisat detayı (tasarım kataloğu 08): kontrol bilgileri, çizim ve durum, açık bulgular, belge kontrolleri -->
+          <div class="top detail-top">
+            <section class="card status-card">
+              <header><i class="pi pi-clipboard accent-icon" aria-hidden="true" /><h2>Kontrol bilgileri</h2></header>
+              <dl class="facts">
+                <div><dt><i class="pi pi-building" /> Kontrol kuruluşu</dt><dd>{{ detail.inspection_body || '—' }}</dd></div>
+                <div><dt><i class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
+                <div><dt><i class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
+                <div><dt><i class="pi pi-file" /> Rapor no</dt><dd>{{ detail.report_no || '—' }}</dd></div>
+              </dl>
+              <p v-if="detail.status === 'rapor_bekleniyor'" class="notice warn">
+                <i class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor. Sistemlerin ve ekipmanların durumu önceki kontrolden; rapor gelince “Yeni kontrol ekle” ile yükleyin.
+              </p>
+              <p v-else-if="detail.status === 'rapor_yok' && detail.reports.length" class="notice">
+                <i class="pi pi-info-circle" /> Henüz tesisat raporu yok; yalnızca sistem raporları yüklendi. Genel durum ve kalan gün tesisat raporundan gelir.
+              </p>
+              <p v-else-if="detail.status === 'rapor_yok'" class="notice">
+                <i class="pi pi-info-circle" /> Bu tesisat için henüz kontrol eklenmedi. Genel durum ve kalan gün tesisat raporundan gelir.
+              </p>
+              <button class="primary-button" type="button" @click="openControl()"><i class="pi pi-plus" /> Yeni kontrol ekle</button>
+            </section>
+            <figure class="hero detail-hero">
+              <div class="hero-pills">
+                <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
+                <span v-if="dueShort && detail.status !== 'rapor_yok'" class="due-chip" :class="daysKey(detail.days_left)"><i :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</span>
+              </div>
+              <!-- İzometrik çizim: mavi ışıklı platformda su deposu ve yangın pompaları (public/katalog, elle çizildi) -->
+              <img src="/katalog/yangin-tesisati.svg" alt="" />
+            </figure>
+            <div class="top-right">
+              <!-- Son kontrolün bulguları (sistemler, belge kontrolleri ve genel); işler Bulgu takibinde -->
+              <section class="card side-card">
+                <header>
+                  <i class="pi pi-exclamation-triangle bad-icon" aria-hidden="true" />
+                  <h3>Açık bulgular</h3>
+                  <span class="count-badge" :class="{ none: !openFindings.length }">{{ openFindings.length }}</span>
+                </header>
+                <ul v-if="openFindings.length" class="side-list">
+                  <li v-for="(item, index) in openFindings.slice(0, 3)" :key="index">
+                    <NuxtLink to="/expert/bulgu-takip" class="side-row" :title="item.system ? `${item.system}: ${item.text}` : item.text">
+                      <i class="pi pi-file" aria-hidden="true" /><span class="clamp">{{ item.text }}</span><i class="pi pi-angle-right" aria-hidden="true" />
+                    </NuxtLink>
+                  </li>
+                </ul>
+                <p v-else class="muted">Son kontrolde bulgu yok.</p>
+                <NuxtLink v-if="openFindings.length" to="/expert/bulgu-takip" class="soft-link">Bulguları aç <i class="pi pi-arrow-right" /></NuxtLink>
+              </section>
+              <!-- Belge ve kayıt / proje bilgileri: durum; satıra tıklayınca bulguları -->
+              <section class="card side-card">
+                <header><i class="pi pi-file accent-icon" aria-hidden="true" /><h3>Belge kontrolleri</h3></header>
+                <ul v-if="docChecks.length" class="side-list">
+                  <li v-for="system in docChecks" :key="system.id">
+                    <button type="button" class="side-row doc-row" :aria-expanded="isOpen(system.id)" @click="toggle(system.id)">
+                      <i :class="system.status === 'uygun' ? 'pi pi-check ok-icon' : system.status === 'uygun_degil' ? 'pi pi-times bad-icon' : 'pi pi-minus'" aria-hidden="true" />
+                      <span>{{ system.name }}</span>
+                      <span class="status-badge" :class="system.status">{{ STATUS_LABELS[system.status] }}</span>
+                    </button>
+                    <ol v-if="isOpen(system.id)" class="findings doc-findings">
+                      <li v-for="(finding, index) in system.findings" :key="index">{{ finding }}</li>
+                      <li v-if="!system.findings.length" class="muted">{{ system.status === 'rapor_yok' ? 'Henüz kontrol yok.' : 'Bulgu yok.' }}</li>
+                    </ol>
+                  </li>
+                </ul>
+                <p v-else class="muted">Bu tesisatta belge kontrolü yok.</p>
+              </section>
+            </div>
+          </div>
+
+          <!-- Belge ve kayıt / proje bilgileri / tesis özellikleri kartları: katalogda yok, gizli (SHOW_INFO_CARDS); belge kontrolleri sağdaki
+               kartta, tesis özellikleri ve notlar Belgeler sekmesinde -->
+          <div v-if="SHOW_INFO_CARDS && (cardSystems.length || generalNotes)" class="info-cards">
             <article v-for="system in cardSystems" :key="system.id" class="card info-card">
               <header>
                 <div><strong>{{ system.name }}</strong><small>{{ cardHint(system) }}</small></div>
@@ -229,12 +297,19 @@
             </article>
           </div>
 
-          <!-- Sistemler -->
-          <section class="card section">
-            <div class="section-head">
-              <div><h3>Sistemler</h3><small>Satıra tıklayınca ekipmanları ve son kontrol bulguları açılır.</small></div>
-              <button class="link-button" type="button" @click="editOpen = true"><i class="pi pi-plus" /> Sistem ekle</button>
+          <!-- Sistemler / Kontrol geçmişi / Belgeler -->
+          <section class="card tabs-card">
+            <div class="tabs-row">
+              <div class="tabs" role="tablist">
+                <button type="button" role="tab" :aria-selected="detailTab === 'systems'" :class="{ active: detailTab === 'systems' }" @click="detailTab = 'systems'"><i class="pi pi-th-large" /> Sistemler</button>
+                <button type="button" role="tab" :aria-selected="detailTab === 'history'" :class="{ active: detailTab === 'history' }" @click="detailTab = 'history'"><i class="pi pi-history" /> Kontrol geçmişi</button>
+                <button type="button" role="tab" :aria-selected="detailTab === 'docs'" :class="{ active: detailTab === 'docs' }" @click="detailTab = 'docs'"><i class="pi pi-file" /> Belgeler</button>
+              </div>
+              <button v-if="detailTab === 'systems'" class="primary-button" type="button" @click="editOpen = true"><i class="pi pi-plus" /> Sistem ekle</button>
             </div>
+
+            <!-- Sistemler: satıra tıklayınca ekipmanları ve son kontrol bulguları açılır -->
+            <template v-if="detailTab === 'systems'">
             <p v-if="detail.pending_systems?.length" class="pending-note">
               <i class="pi pi-hourglass" />
               <span>
@@ -371,22 +446,13 @@
                 </div>
               </div>
             </div>
-          </section>
+              <button v-if="generalReport" class="view-link" type="button" @click="showReport(generalReport)">
+                <i class="pi pi-file" /> {{ formatDate(generalReport.control_date) }} kontrolünü görüntüle <i class="pi pi-arrow-right" />
+              </button>
+            </template>
 
-          <!-- Hiçbir sisteme bağlı olmayan bulgular -->
-          <section v-if="detail.general_findings.length" class="card section">
-            <div class="section-head"><div><h3>Genel bulgular</h3><small>Son tesisat raporunda herhangi bir sisteme bağlı olmayan bulgular.</small></div></div>
-            <ol class="findings padded">
-              <li v-for="(finding, index) in detail.general_findings" :key="index">{{ finding }}</li>
-            </ol>
-          </section>
-
-          <!-- Kontrol geçmişi -->
-          <section class="card section">
-            <div class="section-head">
-              <div><h3>Kontrol geçmişi</h3><small>Tesisatın periyodik kontrol raporları.</small></div>
-              <button class="link-button" type="button" @click="openControl()"><i class="pi pi-plus" /> Kontrol ekle</button>
-            </div>
+            <!-- Kontrol geçmişi: tesisatın periyodik kontrol raporları -->
+            <template v-else-if="detailTab === 'history'">
             <div v-if="!detail.reports.length" class="empty-inline"><i class="pi pi-history" /> Henüz kontrol yok.</div>
             <div v-else class="table-wrap">
               <table class="history-table">
@@ -464,6 +530,40 @@
                 </tbody>
               </table>
             </div>
+            </template>
+
+            <!-- Belgeler: kontrollerin rapor dosyaları; tesis özellikleri ve tesisat raporunun notları -->
+            <div v-else class="tab-body">
+              <ul v-if="reportFiles.length" class="doc-list">
+                <li v-for="report in reportFiles" :key="report.id">
+                  <button class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(report)"><i class="pi pi-file-pdf" /></button>
+                  <span class="doc-text"><strong>{{ report.report_no || report.report_file_name || 'Periyodik kontrol raporu' }}</strong><small>{{ formatDate(report.control_date) }} kontrolü<template v-if="report.scope === 'system'"> · Sistem raporu</template><template v-if="report.inspection_body"> · {{ report.inspection_body }}</template></small></span>
+                  <button class="link-button" type="button" @click="openReport(report)">Aç <i class="pi pi-external-link" /></button>
+                </li>
+              </ul>
+              <p v-else class="empty-inline"><i class="pi pi-file" /> Henüz rapor dosyası yok. Kontrol eklenince burada listelenir.</p>
+              <div v-if="facilitySystems.length || generalNotes" class="info-cards">
+                <article v-for="system in facilitySystems" :key="system.id" class="card info-card">
+                  <header><div><strong>{{ system.name }}</strong><small>{{ cardHint(system) }}</small></div></header>
+                  <dl v-if="facilityCells(system).length" class="facility-list">
+                    <template v-for="cell in facilityCells(system)" :key="cell.label"><dt>{{ cell.label }}</dt><dd>{{ cell.value }}</dd></template>
+                  </dl>
+                  <p v-else class="muted">Tesisat raporunda tesis bilgisi yok.</p>
+                </article>
+                <article v-if="generalNotes" class="card info-card">
+                  <header><div><strong>Notlar</strong><small>{{ formatDate(generalReport?.control_date) }} tesisat raporundan</small></div></header>
+                  <p class="notes-text">{{ generalNotes }}</p>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <!-- Hiçbir sisteme bağlı olmayan bulgular: katalogda yok, gizli (SHOW_GENERAL_FINDINGS); Açık bulgular kartında -->
+          <section v-if="SHOW_GENERAL_FINDINGS && detail.general_findings.length" class="card section">
+            <div class="section-head"><div><h3>Genel bulgular</h3><small>Son tesisat raporunda herhangi bir sisteme bağlı olmayan bulgular.</small></div></div>
+            <ol class="findings padded">
+              <li v-for="(finding, index) in detail.general_findings" :key="index">{{ finding }}</li>
+            </ol>
           </section>
         </template>
       </template>
@@ -497,6 +597,8 @@ const individual = computed(() => !!account.value && !multiUser.value)
 
 // Tasarım kataloğu 07 / 08'de olmayan öğeler: katalogda yok, gizli; ileride açılabilir (kod yerinde).
 const SHOW_LEGACY_OVERVIEW = false // Eski genel bilgiler kartı (Düzenle, Rapor bekleniyor, bilgi şeridi, sayılar); Sistem ekle aynı düzenleme penceresini açar
+const SHOW_INFO_CARDS = false // Belge ve kayıt / proje bilgileri / tesis özellikleri / notlar kartları (detayda Belge kontrolleri kartı ve Belgeler sekmesi)
+const SHOW_GENERAL_FINDINGS = false // Genel bulgular bölümü (detayda Açık bulgular kartında)
 
 // Tür haplarındaki simgeler (PrimeIcons'ta yangın / batarya yok; en yakınları)
 const TYPE_ICONS: Record<string, string> = {
@@ -509,8 +611,10 @@ const typeIcon = (slug?: string) => TYPE_ICONS[slug || ''] || 'pi pi-sitemap'
 const route = useRoute()
 const router = useRouter()
 const detailView = computed(() => typeof route.query.tesisat === 'string' && !!route.query.tesisat)
+const detailTab = ref<'systems' | 'history' | 'docs'>('systems')
 const openDetail = (systemId?: number) => {
   if (!detail.value) return
+  detailTab.value = 'systems'
   if (systemId) openIds.value = [systemId]
   router.push({ query: { tesisat: String(detail.value.id) } })
   window.scrollTo({ top: 0 })
@@ -562,6 +666,21 @@ const locationWorkplaces = computed(() => (groups.value.find(g => g.location_id 
 const placeOf = (item: any) => item?.workplace ? workplaceLabel(item.workplace.id, item.workplace.company_name) : 'Lokasyon geneli'
 
 const cardSystems = computed(() => (detail.value?.systems || []).filter((system: any) => system.card))
+// Detay (08): belge kontrolleri (Belge ve kayıtlar, Proje bilgileri) sağdaki kartta, tesis özellikleri Belgeler sekmesinde.
+const docChecks = computed(() => cardSystems.value.filter((system: any) => !isFacilityCard(system)))
+const facilitySystems = computed(() => cardSystems.value.filter((system: any) => isFacilityCard(system)))
+// Açık bulgular kartı: son kontrolün bütün bulguları (sistemler, belge kontrolleri, genel); sayısı totalFindings ile aynı.
+const openFindings = computed(() => [
+  ...(detail.value?.systems || []).flatMap((system: any) => system.findings.map((text: string) => ({ text, system: system.name }))),
+  ...(detail.value?.general_findings || []).map((text: string) => ({ text, system: '' }))
+])
+// Belgeler sekmesi: dosyası olan kontroller
+const reportFiles = computed(() => (detail.value?.reports || []).filter((report: any) => report.has_report))
+// "… kontrolünü görüntüle": Kontrol geçmişi sekmesinde o kontrolün satırı açılır.
+const showReport = (report: any) => {
+  detailTab.value = 'history'
+  if (openReportId.value !== report.id) toggleReport(report)
+}
 const listSystems = computed(() => (detail.value?.systems || []).filter((system: any) => !system.card))
 const countStatus = (status: string) => (detail.value?.systems || []).filter((system: any) => system.status === status).length
 const totalFindings = computed(() => (detail.value?.systems || []).reduce((sum: number, system: any) => sum + system.findings.length, 0) + (detail.value?.general_findings?.length || 0))
@@ -888,6 +1007,52 @@ h2{margin:0;color:var(--admin-heading);font-size:20px}h3{margin:0;color:var(--ad
 .systems-table .status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;font-size:14px}
 .go-button,.systems-table .icon-button{width:34px;height:34px;color:var(--admin-accent-text)}.systems-table .icon-button:hover{color:var(--admin-accent-text);background:var(--admin-accent-soft)}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Tesisat detayı (tasarım kataloğu 08) */
+.status-card header{display:flex;align-items:center;gap:10px}
+.accent-icon{color:var(--admin-accent-text);font-size:19px}.bad-icon{color:var(--admin-danger-text)}.ok-icon{color:var(--admin-success-text)}
+.detail-top .facts dt{font-size:13.5px}
+.detail-top .notice{margin:0}
+.detail-hero{position:relative;flex-direction:column;align-items:center}
+.hero-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:8px 0 -10px;position:relative;z-index:1}
+.hero-pills .status-pill{padding:9px 18px;font-size:17px;box-shadow:0 10px 24px rgba(var(--pk-shadow-rgb),.1)}
+.due-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;background:var(--admin-chip);color:var(--admin-text);font-size:17px;font-weight:800;box-shadow:0 10px 24px rgba(var(--pk-shadow-rgb),.1)}
+.due-chip.overdue,.due-chip.soon{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-chip.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.side-card{display:grid;gap:12px;padding:18px 20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.side-card header{display:flex;align-items:center;gap:12px}.side-card header i{font-size:20px}.side-card h3{font-size:19px;font-weight:800}
+.count-badge{margin-left:auto;min-width:32px;padding:3px 10px;border-radius:999px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:15px;font-weight:800;text-align:center}
+.count-badge.none{background:var(--admin-chip);color:var(--admin-muted)}
+.side-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.side-row{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--admin-row-border);border-radius:12px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14.5px;text-align:left;text-decoration:none;cursor:pointer}
+.side-row:hover{border-color:var(--admin-border);background:var(--admin-hover)}
+.side-row > .pi-file{color:var(--admin-muted)}.side-row > .pi-angle-right{margin-left:auto;color:var(--admin-heading)}
+.doc-row{border-color:transparent;padding:8px 6px}.doc-row .status-badge{margin-left:auto}
+.doc-findings{margin:4px 0 6px 34px}
+.soft-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border-radius:10px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font-size:14px;font-weight:700;text-decoration:none}
+.soft-link:hover{box-shadow:inset 0 0 0 1px var(--pk-accent)}
+.tabs-card{overflow:hidden;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.tabs-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:6px 18px 0;border-bottom:1px solid var(--admin-border)}
+.tabs-row .tabs{margin:0;border-bottom:0;gap:6px}
+.tabs-row .tabs button{gap:9px;padding:14px;border-bottom-width:3px;color:var(--admin-heading);font-size:16px;font-weight:600}
+.tabs-row .tabs button i{color:var(--admin-muted)}
+.tabs-row .tabs button.active,.tabs-row .tabs button.active i{color:var(--admin-accent-text)}.tabs-row .tabs button.active{font-weight:700}
+.tabs-row .primary-button{margin:6px 0}
+.tabs-card .system-list{display:grid;gap:10px;padding:14px 18px 6px}
+.tabs-card .system-item{border:1px solid var(--admin-row-border);border-radius:12px;overflow:hidden}
+.tabs-card .system-item + .system-item{border-top:1px solid var(--admin-row-border)}
+.tabs-card .system-item.open{border-color:var(--admin-border)}
+.tabs-card .system-item.open .system-head{background:var(--admin-accent-soft)}
+.tabs-card .system-name strong{font-size:15px}
+.tabs-card .empty-inline,.tabs-card .pending-note{margin:12px 18px 0;border-radius:10px}
+.tabs-card .table-wrap{padding:12px 18px 6px}
+.view-link{display:inline-flex;align-items:center;gap:10px;margin:8px 18px 16px;padding:6px 4px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.view-link .pi-file{color:var(--admin-accent-text);font-size:17px}
+.tab-body{padding:16px 18px 18px}
+.doc-list{display:grid;margin:0;padding:0;list-style:none;border:1px solid var(--admin-row-border);border-radius:12px}
+.doc-list li{display:flex;align-items:center;gap:14px;padding:10px 16px}.doc-list li + li{border-top:1px solid var(--admin-row-border)}
+.doc-list .link-button{margin-top:0}
+.pdf-button{flex:none;width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-accent-text);cursor:pointer}.pdf-button i{font-size:18px}.pdf-button:hover{border-color:var(--pk-accent)}
+.doc-text{flex:1;display:grid;gap:2px;min-width:0}.doc-text strong{color:var(--admin-heading);font-size:15px;overflow-wrap:anywhere}.doc-text small{color:var(--admin-muted);font-size:12px}
+.tab-body .info-cards{margin-top:14px}.tab-body .empty-inline{padding:12px 0}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
 .tabs button{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tabs .type-add{align-self:center;margin-left:6px}
