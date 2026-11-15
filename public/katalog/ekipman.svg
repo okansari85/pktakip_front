@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="presentation" aria-hidden="true">
+  <!-- Ekipmanlar kartı: forklift (elle çizildi) -->
+  <defs>
+    <radialGradient id="golge" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity=".22"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
+    <linearGradient id="sari" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#e0a800"/></linearGradient>
+  </defs>
+  <ellipse cx="82" cy="106" rx="66" ry="8" fill="url(#golge)"/>
+  <rect x="22" y="62" width="22" height="36" rx="6" fill="#2b3038"/>
+  <rect x="34" y="66" width="54" height="32" rx="5" fill="url(#sari)"/>
+  <rect x="34" y="58" width="34" height="10" rx="3" fill="#ffd23f"/>
+  <rect x="44" y="40" width="14" height="20" rx="3" fill="#2b3038"/>
+  <path d="M40 66 L46 20 L84 20 L88 66" fill="none" stroke="#2b3038" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="72" y1="58" x2="80" y2="44" stroke="#2b3038" stroke-width="3" stroke-linecap="round"/>
+  <rect x="90" y="8" width="6" height="92" fill="#3a4049"/><rect x="97" y="8" width="3" height="92" fill="#5b636e"/>
+  <rect x="100" y="70" width="5" height="28" fill="#2b3038"/>
+  <rect x="100" y="95" width="44" height="4" fill="#2b3038"/>
+  <circle cx="78" cy="98" r="12" fill="#1f2329"/><circle cx="78" cy="98" r="5" fill="#9aa3ad"/>
+  <circle cx="36" cy="99" r="10" fill="#1f2329"/><circle cx="36" cy="99" r="4" fill="#9aa3ad"/>
+</svg>

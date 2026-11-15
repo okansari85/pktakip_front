@@ -28,6 +28,13 @@ export const agendaMergedGroups = (entries: AgendaEntry[]) => {
 }
 export const agendaGroupsText = (entries: AgendaEntry[]) => agendaMergedGroups(entries).map(agendaGroupText).join(', ')
 
+// En yakın kontrol günü (bugün ya da sonrası) ve o günün kalemleri: Ana sayfa iş planı ve Genel bakış takvim kartı.
+export const agendaNextDay = (agenda: AgendaEntry[] | undefined) => {
+  const entries = (agenda || []).filter(entry => entry.days_left >= 0)
+  const date = entries.map(entry => entry.date).sort()[0]
+  return date ? { date, days_left: entries.find(entry => entry.date === date)!.days_left, entries: entries.filter(entry => entry.date === date) } : null
+}
+
 // Kontrol zamanı (renk): süresi geçmiş / 30 gün içinde / 31–60 gün / 60 günden sonra.
 export const agendaTiming = (days: number | null | undefined) => days === null || days === undefined ? 'none' : days < 0 ? 'overdue' : days <= 30 ? 'd30' : days <= 60 ? 'd60' : 'later'
 

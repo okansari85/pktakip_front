@@ -1,83 +1,159 @@
 <template>
   <div class="home-page">
-    <header class="home-head">
-      <p class="home-welcome">Hoş geldiniz</p>
-      <h1>{{ user?.name || 'Uzman' }}</h1>
-      <h2>Bugün ne yapmak istiyorsunuz?</h2>
-      <p class="home-lead">Periyodik kontrol süreçlerinizi kolayca yönetin.</p>
-    </header>
+    <div class="home-top">
+      <div class="home-left">
+        <nav class="crumb" aria-label="Sayfa yolu"><i class="pi pi-home" aria-hidden="true" /><span>Ana Sayfa</span></nav>
+        <h1>Ana sayfa</h1>
+        <p class="home-sub">Merhaba, {{ firstName }}<i class="sep" aria-hidden="true" /><span>{{ today }}</span></p>
+
+        <section class="plan-card">
+          <h2>Bugünkü iş planınız</h2>
+          <p v-if="loading" class="plan-muted"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p v-else-if="error" class="plan-muted error-text">{{ error }}</p>
+          <p v-else-if="loaded && !groups.length" class="plan-muted">Henüz işyeriniz yok. Firmalarım'dan firma ekleyin.</p>
+          <template v-else-if="data">
+            <div v-if="overdueGroups" class="plan-row bad"><i class="pi pi-exclamation-triangle" /><strong>{{ number(overdueGroups) }} gecikmiş kontrol grubu</strong></div>
+            <div v-if="nextDay" class="plan-row next">
+              <i class="pi pi-calendar" />
+              <strong>{{ agendaGroupsText(nextDay.entries) }} kontrolü {{ nextDay.days_left === 0 ? 'bugün' : `${nextDay.days_left} gün sonra` }}</strong>
+            </div>
+            <p v-if="!overdueGroups && !nextDay" class="plan-muted">Gecikmiş ya da yaklaşan kontrol yok.</p>
+          </template>
+          <div class="plan-actions">
+            <NuxtLink to="/expert/calendar" class="plan-button primary"><i class="pi pi-calendar" /> Kontrol takvimi <i class="pi pi-chevron-right" /></NuxtLink>
+            <NuxtLink to="/expert/bulgu-takip" class="plan-button"><i class="pi pi-clipboard" /> Bulguları aç <i class="pi pi-chevron-right" /></NuxtLink>
+          </div>
+          <div v-if="openFindings !== null" class="plan-findings"><i class="pi pi-clipboard" /><strong>{{ number(openFindings) }} açık bulgu</strong></div>
+        </section>
+      </div>
+
+      <figure class="home-hero">
+        <img src="/katalog/yerlesim.svg" alt="" />
+        <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
+      </figure>
+    </div>
 
     <nav class="home-cards" aria-label="Ana sayfa bağlantıları">
-      <NuxtLink v-for="card in CARDS" :key="card.to" :to="card.to" class="home-card" :class="card.tone">
-        <img :src="`/anasayfa/${card.image}.png`" alt="" class="home-card-image" />
-        <div class="home-card-row">
-          <div>
-            <strong>{{ card.title }}</strong>
-            <span>{{ card.text }}</span>
-          </div>
-          <i class="pi pi-chevron-right" aria-hidden="true" />
-        </div>
+      <NuxtLink v-for="card in cards" :key="card.to" :to="card.to" class="home-card">
+        <img :src="card.image" alt="" class="home-card-image" />
+        <span class="home-card-text"><strong>{{ card.title }}</strong><span>{{ card.text }}</span></span>
+        <i class="pi pi-chevron-right" aria-hidden="true" />
       </NuxtLink>
     </nav>
   </div>
 </template>
 
 <script setup lang="ts">
-// Bireysel uzmanın giriş sonrası yönlendirme sayfası: yalnız kartlar, veri isteği yok. Lokasyon seçici burada gizli.
+import { agendaGroupsText, agendaNextDay } from '~/composables/controlAgenda'
+
+// Bireysel uzmanın giriş sonrası ilk sayfası (tasarım kataloğu 01): bugünkü iş planı, örnek yerleşim çizimi ve sayfa kartları.
+// Lokasyon seçici burada gizli; sayılar uzmanın bütün lokasyonlarından.
 definePageMeta({ layout: 'expert', middleware: 'expert', hideWorkplaceSwitcher: true })
 
-const CARDS = [
-  { to: '/expert', title: 'Genel Bakış', text: 'Portföy özeti', image: 'genel-bakis', tone: 'blue' },
-  { to: '/expert/calendar', title: 'Kontrol Takvimi', text: 'Kontrol tarihleri', image: 'takvim', tone: 'green' },
-  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', image: 'firmalar', tone: 'yellow' },
-  { to: '/expert/equipment', title: 'Ekipmanlar', text: 'Ekipman kayıtları', image: 'ekipmanlar', tone: 'green' },
-  { to: '/expert/installations', title: 'Tesisatlar', text: 'Tesisat kayıtları', image: 'tesisatlar', tone: 'blue' },
-  { to: '/expert/reports', title: 'Durum Raporu', text: 'Kontrol raporları', image: 'durum-raporu', tone: 'yellow' }
-]
+// Durum Raporu kartı: katalogda yok, gizli; ileride açılabilir.
+const SHOW_REPORT_CARD = false
 
 const { user } = useAuth()
-const { multiUser, load } = useAccount()
+const { account, multiUser, load } = useAccount()
+const { groups, loaded, load: loadWorkplaces } = useMyWorkplaces()
+const { get, errorMessage } = useExpertApi()
+const { open: openFindings, refresh: refreshFindings } = useFindingCount()
+
+const number = (value: number) => new Intl.NumberFormat('tr-TR').format(value)
+const firstName = computed(() => (user.value?.name || 'Uzman').split(' ')[0])
+const today = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
+
+const data = ref<any>(null)
+const loading = ref(false)
+const error = ref('')
+// "Kontrol grubu": takvimdeki bir kalem (gün + lokasyon + tür / tesisat / tüp); Genel bakış'taki sayımla aynı.
+const overdueGroups = computed(() => (data.value?.agenda || []).filter((entry: any) => entry.days_left < 0).reduce((sum: number, entry: any) => sum + (entry.groups?.length || 0), 0))
+const nextDay = computed(() => agendaNextDay(data.value?.agenda))
+
+const cards = computed(() => [
+  { to: '/expert', title: 'Genel bakış', text: 'Portföy özeti', image: '/katalog/genel-bakis.svg' },
+  { to: '/expert/calendar', title: 'Kontrol takvimi', text: 'Yaklaşan kontroller', image: '/katalog/takvim.svg' },
+  { to: '/expert/bulgu-takip', title: 'Bulgu takibi', text: openFindings.value === null ? 'Bulgular' : `${number(openFindings.value)} açık bulgu`, image: '/katalog/bulgu.svg' },
+  { to: '/expert/equipment', title: 'Ekipmanlar', text: data.value ? `${number(data.value.totals?.equipment || 0)} ekipman` : 'Ekipman kayıtları', image: '/katalog/ekipman.svg' },
+  { to: '/expert/installations', title: 'Tesisatlar', text: data.value ? `${number(data.value.installations?.length || 0)} tesisat` : 'Tesisat kayıtları', image: '/katalog/tesisat.svg' },
+  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', image: '/katalog/firmalar.svg' },
+  ...(SHOW_REPORT_CARD ? [{ to: '/expert/reports', title: 'Durum Raporu', text: 'Kontrol raporları', image: '/anasayfa/durum-raporu.png' }] : [])
+])
+
+// İşyerleri gelince (başka bir yer yüklüyor olabilir) bir kez: Genel bakış'ın verisi, bütün lokasyonlarla.
+const loadData = async () => {
+  if (!account.value || multiUser.value || !groups.value.length || data.value || loading.value) return
+  refreshFindings()
+  loading.value = true
+  error.value = ''
+  try { data.value = await get('/pk-dashboard', { 'location_ids[]': groups.value.map(group => group.location_id) }) }
+  catch (e: any) { error.value = errorMessage(e, 'İş planı alınamadı.') }
+  finally { loading.value = false }
+}
+watch(groups, loadData)
+
 // OSGB / kurumsal / kamu hesabında bu sayfa yok; adres elle yazılırsa Genel Bakış'a döner.
 onMounted(async () => {
   await load()
-  if (multiUser.value) await navigateTo('/expert', { replace: true })
+  if (multiUser.value) return navigateTo('/expert', { replace: true })
+  await loadWorkplaces()
+  loadData()
 })
 </script>
 
 <style scoped>
-/* Layout'un iç boşluğu sıfırlanır: arka plan görseli içerik alanının tamamını kaplasın. */
-.home-page { min-height: calc(100vh - 72px); margin: -30px -34px -40px; padding: 44px 34px 40px; background: url('/anasayfa/arkaplan.svg') right -80px / 1300px auto no-repeat; }
-/* Geniş ekranda yazı ve kartlar birlikte ortalanır; yazı kartların sol kenarıyla hizalı kalır. */
-.home-head { margin: 0 auto 34px; }
-.home-welcome { margin: 0; color: var(--admin-muted); font-size: 24px; }
-.home-head h1 { margin: 4px 0; color: var(--admin-heading); font-size: 48px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; }
-.home-head h2 { margin: 0 0 10px; color: #7288a8; font-size: 34px; font-weight: 700; letter-spacing: -.5px; line-height: 1.15; }
-.home-lead { margin: 0; color: var(--admin-muted); font-size: 16px; }
-.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0 auto; }
-.home-card { display: flex; flex-direction: column; gap: 16px; padding: 22px 24px; border: 1px solid var(--admin-border); border-radius: 16px; color: inherit; text-decoration: none; box-shadow: 0 10px 28px rgba(40, 70, 110, .08); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
-.home-card:hover, .home-card:focus-visible { transform: translateY(-2px); border-color: var(--pk-yellow); box-shadow: 0 14px 32px rgba(40, 70, 110, .14); }
-.home-card.blue { background: linear-gradient(135deg, #ffffff 40%, #eaf2fd); }
-.home-card.green { background: linear-gradient(135deg, #ffffff 40%, #e6f8ef); }
-.home-card.yellow { background: linear-gradient(135deg, #ffffff 40%, #fdf5df); }
-.home-card-image { width: 118px; height: 106px; object-fit: cover; border-radius: 20px; }
-.home-card-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-page { display: grid; gap: 22px; }
+.home-top { display: grid; grid-template-columns: minmax(360px, 470px) minmax(0, 1fr); gap: 24px; align-items: stretch; }
+.home-left { min-width: 0; }
+.crumb { display: flex; align-items: center; gap: 8px; color: var(--admin-muted); font-size: 14px; }
+.home-left h1 { margin: 10px 0 6px; color: var(--admin-heading); font-size: 44px; font-weight: 800; letter-spacing: -1.2px; line-height: 1.1; }
+.home-sub { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--admin-muted); font-size: 18px; }
+.home-sub span { font-size: 15px; }
+.sep { width: 6px; height: 6px; border-radius: 50%; background: var(--admin-border); }
+
+.plan-card { margin-top: 26px; padding: 22px 22px 18px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); box-shadow: 0 10px 28px rgba(120, 90, 0, .06); }
+.plan-card h2 { margin: 0 0 16px; color: var(--admin-heading); font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
+.plan-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 14px 16px; border-radius: 12px; color: var(--admin-heading); font-size: 16px; }
+.plan-row i { flex: none; font-size: 20px; }
+.plan-row strong { min-width: 0; font-weight: 700; }
+.plan-row.bad { background: var(--admin-danger-bg); }
+.plan-row.bad i { color: var(--admin-danger-text); }
+.plan-row.next { background: var(--admin-accent-soft); }
+.plan-row.next i { color: var(--pk-yellow-dark); }
+.plan-muted { margin: 0 0 10px; color: var(--admin-muted); font-size: 14px; }
+.error-text { color: var(--admin-danger-text); }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.plan-button { display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font-size: 15px; font-weight: 700; }
+.plan-button .pi-chevron-right { font-size: 12px; }
+.plan-button:hover { border-color: var(--pk-yellow); }
+.plan-button.primary { border-color: var(--pk-yellow); background: var(--pk-yellow); color: #111827; }
+.plan-button.primary:hover { background: var(--pk-yellow-dark); }
+.plan-findings { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 17px; }
+.plan-findings i { color: var(--admin-muted); font-size: 18px; }
+
+.home-hero { position: relative; min-width: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
+.home-hero img { width: 100%; max-height: 440px; object-fit: contain; }
+.home-hero figcaption, .home-hero figcaption i { display: inline-flex; align-items: center; gap: 8px; }
+.home-hero figcaption { position: absolute; right: 8px; bottom: 6px; padding: 9px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(120, 90, 0, .06); }
+
+.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.home-card { min-width: 0; min-height: 140px; display: flex; align-items: center; gap: 18px; padding: 12px 22px 12px 14px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); color: inherit; box-shadow: 0 10px 28px rgba(120, 90, 0, .06); transition: transform .15s ease, border-color .15s ease; }
+.home-card:hover, .home-card:focus-visible { transform: translateY(-2px); border-color: var(--pk-yellow); }
+.home-card-image { flex: none; width: 150px; height: 112px; object-fit: contain; }
+.home-card-text { flex: 1; min-width: 0; }
 .home-card strong { display: block; color: var(--admin-heading); font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
-.home-card span { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 14px; }
-.home-card i { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--admin-border); border-radius: 50%; background: rgba(255, 255, 255, .7); color: var(--admin-heading); font-size: 14px; }
-/* Görsel ve açık geçişler koyu temaya uymaz: temanın düz yüzeyi kullanılır. */
-:root.dark-theme .home-page { background: none; }
-:root.dark-theme .home-card { background: var(--admin-card); box-shadow: none; }
-:root.dark-theme .home-card i { background: transparent; }
-/* Dar ekranda çizim yazının altına girer: kaldırılır. */
+.home-card-text span { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 16px; }
+.home-card > i { flex: none; color: var(--admin-heading); font-size: 15px; }
+
+/* Dar ekranda çizim kalkar, kartlar ikili / tekli. */
 @media (max-width: 1100px) {
-  .home-page { background: none; }
+  .home-top { grid-template-columns: minmax(0, 1fr); }
+  .home-hero { display: none; }
   .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 800px) {
-  .home-page { margin: -20px -16px -30px; padding: 28px 16px 30px; }
-  .home-welcome { font-size: 19px; }
-  .home-head h1 { font-size: 34px; }
-  .home-head h2 { font-size: 24px; }
+  .home-left h1 { font-size: 34px; }
+  .home-card-image { width: 110px; height: 84px; }
 }
-@media (max-width: 560px) { .home-cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .home-cards { grid-template-columns: minmax(0, 1fr); } }
 </style>

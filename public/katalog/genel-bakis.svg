@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="presentation" aria-hidden="true">
+  <!-- Genel bakış kartı: ofis binası (elle çizildi) -->
+  <defs>
+    <radialGradient id="golge" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity=".2"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f86a0"/><stop offset=".55" stop-color="#aabdd0"/><stop offset="1" stop-color="#5a718c"/></linearGradient>
+  </defs>
+  <ellipse cx="82" cy="106" rx="68" ry="9" fill="url(#golge)"/>
+  <polygon points="58,26 70,19 112,19 100,26" fill="#f4f6f8" stroke="#d3d9e0"/>
+  <polygon points="100,26 112,19 112,48 100,54" fill="#bcc6d1"/>
+  <rect x="58" y="26" width="42" height="28" fill="#e9edf1"/>
+  <rect x="62" y="30" width="34" height="9" fill="url(#cam)"/><rect x="62" y="42" width="34" height="9" fill="url(#cam)"/>
+  <polygon points="22,62 36,54 132,54 118,62" fill="#f4f6f8" stroke="#d3d9e0"/>
+  <polygon points="118,62 132,54 132,96 118,104" fill="#c3ccd6"/>
+  <polygon points="121,66 129,61 129,72 121,77" fill="url(#cam)" opacity=".8"/><polygon points="121,82 129,77 129,88 121,93" fill="url(#cam)" opacity=".8"/>
+  <rect x="22" y="62" width="96" height="42" fill="#e6eaef"/>
+  <rect x="26" y="67" width="88" height="12" fill="url(#cam)"/>
+  <g stroke="#e9eef3" stroke-width="1.5"><line x1="48" y1="67" x2="48" y2="79"/><line x1="70" y1="67" x2="70" y2="79"/><line x1="92" y1="67" x2="92" y2="79"/></g>
+  <rect x="26" y="85" width="36" height="14" fill="url(#cam)"/><rect x="84" y="85" width="30" height="14" fill="url(#cam)"/>
+  <rect x="66" y="84" width="14" height="20" fill="#4b5d72"/>
+  <rect x="11" y="86" width="3" height="18" fill="#8b6b4a"/><circle cx="12.5" cy="80" r="10" fill="#5fae5a"/><circle cx="8" cy="87" r="6" fill="#4f9d4b"/>
+  <rect x="140" y="88" width="3" height="16" fill="#8b6b4a"/><circle cx="141.5" cy="83" r="9" fill="#6bbb63"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="presentation" aria-hidden="true">
+  <!-- Kontrol takvimi kartı: duvar takvimi (elle çizildi) -->
+  <defs>
+    <radialGradient id="golge" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity=".2"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="82" cy="108" rx="56" ry="8" fill="url(#golge)"/>
+  <rect x="39" y="30" width="92" height="78" rx="10" fill="#dfe5eb"/>
+  <rect x="34" y="26" width="92" height="78" rx="10" fill="#ffffff" stroke="#d6dce4" stroke-width="2"/>
+  <path d="M34 36 a10 10 0 0 1 10 -10 h72 a10 10 0 0 1 10 10 v12 h-92 Z" fill="#f5b800"/>
+  <rect x="54" y="16" width="8" height="20" rx="4" fill="#374151"/><rect x="98" y="16" width="8" height="20" rx="4" fill="#374151"/>
+  <g fill="#e6ebf0">
+    <rect x="44" y="56" width="12" height="10" rx="2"/><rect x="60" y="56" width="12" height="10" rx="2"/><rect x="76" y="56" width="12" height="10" rx="2"/><rect x="92" y="56" width="12" height="10" rx="2"/><rect x="108" y="56" width="12" height="10" rx="2"/>
+    <rect x="44" y="70" width="12" height="10" rx="2"/><rect x="60" y="70" width="12" height="10" rx="2"/><rect x="92" y="70" width="12" height="10" rx="2"/><rect x="108" y="70" width="12" height="10" rx="2"/>
+    <rect x="44" y="84" width="12" height="10" rx="2"/><rect x="60" y="84" width="12" height="10" rx="2"/><rect x="76" y="84" width="12" height="10" rx="2"/><rect x="92" y="84" width="12" height="10" rx="2"/>
+  </g>
+  <rect x="76" y="70" width="12" height="10" rx="2" fill="#f5b800"/>
+  <path d="M79 75 l2.5 2.5 l4 -5" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

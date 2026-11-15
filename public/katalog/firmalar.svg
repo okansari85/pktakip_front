@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="presentation" aria-hidden="true">
+  <!-- Firmalarım kartı: binalar ve ağaçlar (elle çizildi) -->
+  <defs>
+    <radialGradient id="golge" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1f2937" stop-opacity=".2"/><stop offset="1" stop-color="#1f2937" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f86a0"/><stop offset=".55" stop-color="#aabdd0"/><stop offset="1" stop-color="#5a718c"/></linearGradient>
+  </defs>
+  <ellipse cx="80" cy="106" rx="72" ry="9" fill="url(#golge)"/>
+  <polygon points="62,16 74,10 104,10 92,16" fill="#f4f6f8" stroke="#d3d9e0"/>
+  <polygon points="92,16 104,10 104,84 92,90" fill="#bcc6d1"/>
+  <rect x="62" y="16" width="30" height="74" fill="#e9edf1"/>
+  <g fill="url(#cam)">
+    <rect x="66" y="21" width="6" height="7"/><rect x="74" y="21" width="6" height="7"/><rect x="82" y="21" width="6" height="7"/>
+    <rect x="66" y="32" width="6" height="7"/><rect x="74" y="32" width="6" height="7"/><rect x="82" y="32" width="6" height="7"/>
+    <rect x="66" y="43" width="6" height="7"/><rect x="74" y="43" width="6" height="7"/><rect x="82" y="43" width="6" height="7"/>
+  </g>
+  <polygon points="22,46 34,40 66,40 54,46" fill="#f4f6f8" stroke="#d3d9e0"/>
+  <polygon points="54,46 66,40 66,94 54,100" fill="#c3ccd6"/>
+  <rect x="22" y="46" width="32" height="54" fill="#e6eaef"/>
+  <g fill="url(#cam)">
+    <rect x="26" y="51" width="10" height="8"/><rect x="40" y="51" width="10" height="8"/>
+    <rect x="26" y="63" width="10" height="8"/><rect x="40" y="63" width="10" height="8"/>
+    <rect x="26" y="75" width="10" height="8"/><rect x="40" y="75" width="10" height="8"/>
+  </g>
+  <rect x="33" y="88" width="10" height="12" fill="#4b5d72"/>
+  <polygon points="96,52 108,46 140,46 128,52" fill="#f4f6f8" stroke="#d3d9e0"/>
+  <polygon points="128,52 140,46 140,90 128,96" fill="#c3ccd6"/>
+  <rect x="96" y="52" width="32" height="44" fill="#e6eaef"/>
+  <g fill="url(#cam)">
+    <rect x="100" y="57" width="10" height="8"/><rect x="114" y="57" width="10" height="8"/>
+    <rect x="100" y="69" width="10" height="8"/><rect x="114" y="69" width="10" height="8"/>
+  </g>
+  <rect x="107" y="84" width="10" height="12" fill="#4b5d72"/>
+  <rect x="14" y="92" width="3" height="12" fill="#8b6b4a"/><circle cx="15.5" cy="88" r="8" fill="#5fae5a"/>
+  <rect x="145" y="90" width="3" height="14" fill="#8b6b4a"/><circle cx="146.5" cy="85" r="8" fill="#6bbb63"/>
+  <ellipse cx="78" cy="100" rx="12" ry="5" fill="#5fae5a"/>
+</svg>
