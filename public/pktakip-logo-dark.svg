@@ -1,7 +1,8 @@
 <svg width="520" height="150" viewBox="0 0 520 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="4" y="8" width="118" height="118" rx="20" fill="#FFC107"/>
-  <path d="M30 68L55 93L101 39" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M62 8V18M62 116V126M4 67H14M112 67H122" stroke="white" stroke-width="5" stroke-linecap="round"/>
-  <text x="145" y="82" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2"><tspan fill="#FFC107">PK</tspan><tspan fill="#FFFFFF">Takip</tspan></text>
+  <!-- PKTakip logosu (tasarım kataloğu): mavi altıgen içinde beyaz ✓ -->
+  <defs><linearGradient id="pk-logo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3D8BF8"/><stop offset=".55" stop-color="#1A6FF4"/><stop offset="1" stop-color="#1159E6"/></linearGradient></defs>
+  <path transform="translate(4 8) scale(1.18)" d="M40.5 5.5Q50 0 59.5 5.5L83.8 19.5Q93.3 25 93.3 36L93.3 64Q93.3 75 83.8 80.5L59.5 94.5Q50 100 40.5 94.5L16.2 80.5Q6.7 75 6.7 64L6.7 36Q6.7 25 16.2 19.5Z" fill="url(#pk-logo)"/>
+  <path d="M34 69L56 91L96 43" stroke="white" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="145" y="82" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2" fill="#FFFFFF">PKTakip</text>
   <text x="148" y="116" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#D1D5DB">Periyodik Kontrol Takip</text>
 </svg>

@@ -32,7 +32,7 @@ const print = () => window.print()
 
         <div class="qr-label">
           <div class="label-head">
-            <span class="label-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" /></svg></span>
+            <span class="label-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" /></svg></span>
             <span class="label-brand"><span class="pk">PK</span>Takip</span>
             <span class="label-kicker">PERİYODİK KONTROL</span>
           </div>
@@ -79,9 +79,9 @@ const print = () => window.print()
 /* Etiket: tanıtım sitesi features/QrLabel.vue ile aynı */
 .qr-label { width: 244px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1); overflow: hidden; font-family: Inter, system-ui, sans-serif; }
 .label-head { background: #111827; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
-.label-mark { width: 20px; height: 20px; border-radius: 5px; background: #ffc107; display: flex; align-items: center; justify-content: center; }
+.label-mark { width: 20px; height: 20px; background: var(--pk-logo); mask: var(--pk-logo-shape) center / contain no-repeat; display: flex; align-items: center; justify-content: center; }
 .label-brand { font-size: 13px; font-weight: 800; color: #fff; }
-.pk { color: #ffc107; }
+.pk { color: inherit; }
 .label-kicker { margin-left: auto; font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; color: #94a3b8; }
 .label-body { padding: 14px; display: flex; gap: 12px; align-items: center; }
 .qr { flex-shrink: 0; line-height: 0; }

@@ -1,4 +1,12 @@
 import Aura from '@primevue/themes/aura'
+import { definePreset } from '@primevue/themes'
+
+// Tasarım kataloğu: PrimeVue birincil rengi katalog mavisi (Aura'nın yeşili yerine; onay kutusu, ilerleme çubuğu, seçim düğmesi, sayfalama).
+const PKTakipTheme = definePreset(Aura, {
+  semantic: {
+    primary: { 50: '#eef5ff', 100: '#d9e8ff', 200: '#bcd6ff', 300: '#8ebcff', 400: '#5996fb', 500: '#1a6ff4', 600: '#1259d6', 700: '#1048ad', 800: '#133d8a', 900: '#15366f', 950: '#0f2247' }
+  }
+})
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-22',
@@ -22,7 +30,7 @@ export default defineNuxtConfig({
         clear: 'Temizle'
       },
       theme: {
-        preset: Aura,
+        preset: PKTakipTheme,
         options: {
           prefix: 'p',
           darkModeSelector: 'system',

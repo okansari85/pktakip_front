@@ -1,6 +1,19 @@
 :root {
-  --pk-yellow: #ffc107;
-  --pk-yellow-dark: #e6a900;
+  /* Vurgu rengi (tasarım kataloğu mavisi): birincil düğme, seçili menü, sekme çizgisi, odak halkası. */
+  --pk-accent: #1a6ff4;
+  --pk-accent-rgb: 26, 111, 244;
+  --pk-accent-hover: #1259d6;
+  /* Vurgu zemini üstündeki yazı (birincil düğme, seçili menü) */
+  --pk-on-accent: #ffffff;
+  --pk-focus-ring: rgba(26, 111, 244, .16);
+  /* Kart / çip gölgelerinin tonu (katalogda serin, mavimsi gri) */
+  --pk-shadow-rgb: 30, 64, 140;
+  /* Logo: katalogdaki gibi mavi altıgen (içinde ✓) */
+  --pk-logo: linear-gradient(155deg, #3d8bf8 0%, #1a6ff4 55%, #1159e6 100%);
+  --pk-logo-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M40.5 5.5Q50 0 59.5 5.5L83.8 19.5Q93.3 25 93.3 36L93.3 64Q93.3 75 83.8 80.5L59.5 94.5Q50 100 40.5 94.5L16.2 80.5Q6.7 75 6.7 64L6.7 36Q6.7 25 16.2 19.5Z'/%3E%3C/svg%3E");
+  /* Eski adlar (kodda çok yerde geçer): artık vurgu mavisini verir. */
+  --pk-yellow: var(--pk-accent);
+  --pk-yellow-dark: var(--pk-accent-hover);
   --pk-black: #111827;
   --pk-text: #172554;
   --pk-muted: #64748b;
@@ -10,34 +23,36 @@
   --pk-success: #16a34a;
   --pk-danger: #ef4444;
 
-  --admin-background: #f6f8fb;
-  /* Uzman paneli zemini (tasarım kataloğu, sarı tonlu): açık zemin üstünde yumuşak sarı ışık lekeleri. */
+  --admin-background: #f2f4f9;
+  /* Panel zemini (tasarım kataloğu): açık serin zemin, üstte mavi, sağ altta sıcak şeftali ışık. */
   --admin-backdrop:
-    radial-gradient(1100px 620px at 88% -8%, rgba(255, 193, 7, .20), transparent 62%),
-    radial-gradient(900px 560px at -6% 28%, rgba(255, 214, 102, .16), transparent 60%),
-    radial-gradient(1000px 640px at 55% 112%, rgba(255, 228, 150, .30), transparent 62%),
-    #fbfaf5;
+    radial-gradient(1100px 620px at 62% -10%, rgba(26, 111, 244, .10), transparent 62%),
+    radial-gradient(900px 560px at -6% 28%, rgba(96, 140, 245, .07), transparent 60%),
+    radial-gradient(1000px 640px at 92% 108%, rgba(255, 205, 160, .34), transparent 62%),
+    #f2f4f9;
   --admin-surface: #ffffff;
-  /* Kartlar yarı saydam beyaz: zemindeki sarı ışık hafifçe görünür. */
+  /* Kartlar yarı saydam beyaz: zemindeki ışık hafifçe görünür. */
   --admin-card: rgba(255, 255, 255, .86);
   --admin-soft: #f8fafc;
   --admin-border: #e2e8f0;
   --admin-heading: #0f172a;
   --admin-text: #334155;
   --admin-muted: #64748b;
-  --admin-sidebar: #111827;
-  --admin-sidebar-text: #cbd5e1;
-  --admin-sidebar-muted: #94a3b8;
-  --admin-sidebar-hover: #1f2937;
-  --admin-sidebar-border: #263244;
+  /* Süper admin menüsü: katalogdaki gibi açık (koyu temada aşağıda koyu). */
+  --admin-sidebar: #ffffff;
+  --admin-sidebar-text: #344054;
+  --admin-sidebar-muted: #667085;
+  --admin-sidebar-hover: #eef4ff;
+  --admin-sidebar-border: #e4e8f0;
+  --admin-sidebar-strong: #0f172a;
 
   /* Sayfa içi yüzeyler ve durum renkleri (koyu temada aşağıda yeniden tanımlanır). */
   --admin-input: #ffffff;
   --admin-hover: #f5f7fa;
   --admin-row-border: #edf0f5;
   --admin-chip: #f2f4f7;
-  --admin-accent-soft: #fff9df;
-  --admin-accent-text: #7a5b00;
+  --admin-accent-soft: #e9f1fe;
+  --admin-accent-text: #1259d6;
   --admin-overlay: rgba(15, 23, 42, .16);
   --admin-shadow: rgba(15, 23, 42, .16);
   --admin-success-bg: #ecfdf3;
@@ -53,12 +68,17 @@
 
 :root.dark-theme {
   color-scheme: dark;
+  /* Koyu zeminde okunur mavi: dolgu #2563eb (beyaz yazı 5,2:1), üstüne gelince açılır. */
+  --pk-accent: #2563eb;
+  --pk-accent-rgb: 37, 99, 235;
+  --pk-accent-hover: #3b82f6;
+  --pk-focus-ring: rgba(96, 165, 250, .25);
   --admin-input: #0f1729;
   --admin-hover: #1a2436;
   --admin-row-border: #1e293b;
   --admin-chip: #1e293b;
-  --admin-accent-soft: rgba(255, 193, 7, .12);
-  --admin-accent-text: #fcd34d;
+  --admin-accent-soft: rgba(59, 130, 246, .16);
+  --admin-accent-text: #93c5fd;
   --admin-overlay: rgba(0, 0, 0, .55);
   --admin-shadow: rgba(0, 0, 0, .5);
   --admin-success-bg: rgba(34, 197, 94, .14);
@@ -71,9 +91,9 @@
   --admin-link: #60a5fa;
   --admin-background: #0b1120;
   --admin-backdrop:
-    radial-gradient(1100px 620px at 88% -8%, rgba(255, 193, 7, .10), transparent 62%),
-    radial-gradient(900px 560px at -6% 28%, rgba(255, 214, 102, .06), transparent 60%),
-    radial-gradient(1000px 640px at 55% 112%, rgba(255, 193, 7, .08), transparent 62%),
+    radial-gradient(1100px 620px at 62% -10%, rgba(37, 99, 235, .16), transparent 62%),
+    radial-gradient(900px 560px at -6% 28%, rgba(59, 130, 246, .07), transparent 60%),
+    radial-gradient(1000px 640px at 92% 108%, rgba(37, 99, 235, .08), transparent 62%),
     #0b1120;
   --admin-surface: #111827;
   --admin-card: rgba(17, 24, 39, .88);
@@ -87,6 +107,7 @@
   --admin-sidebar-muted: #7f8da3;
   --admin-sidebar-hover: #172033;
   --admin-sidebar-border: #1e293b;
+  --admin-sidebar-strong: #ffffff;
 }
 
 * { box-sizing: border-box; }
@@ -109,14 +130,14 @@ a { color: inherit; text-decoration: none; }
 .p-button.pk-primary {
   background: var(--pk-yellow);
   border-color: var(--pk-yellow);
-  color: var(--pk-black);
+  color: var(--pk-on-accent);
   font-weight: 600;
 }
 
 .p-button.pk-primary:hover {
   background: var(--pk-yellow-dark);
   border-color: var(--pk-yellow-dark);
-  color: var(--pk-black);
+  color: var(--pk-on-accent);
 }
 
 /* Login ekranında marka yalnızca sol panelde gösterilir. */

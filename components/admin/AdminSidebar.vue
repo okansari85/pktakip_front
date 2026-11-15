@@ -45,22 +45,22 @@ const { logout } = useAuth()
 .admin-sidebar { width: 250px; min-height: 100vh; padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0; background: var(--admin-sidebar); color: var(--admin-sidebar-text); border-right: 1px solid var(--admin-sidebar-border); transition: width .2s ease, padding .2s ease; }
 .admin-sidebar.collapsed { width: 76px; padding-left: 10px; padding-right: 10px; }
 .sidebar-brand { display: flex; align-items: center; justify-content: flex-start; gap: 11px; padding: 4px 10px 20px; }
-.brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: #111827; font-size: 25px; font-weight: 800; }
-.sidebar-brand strong { display: block; font-size: 20px; letter-spacing: -.5px; color: #fff; }
-.sidebar-brand strong span { color: var(--pk-yellow); }
+.brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: var(--pk-logo); mask: var(--pk-logo-shape) center / contain no-repeat; color: var(--pk-on-accent); font-size: 22px; font-weight: 800; }
+.sidebar-brand strong { display: block; font-size: 20px; letter-spacing: -.5px; color: var(--admin-sidebar-strong); }
+.sidebar-brand strong span { color: inherit; }
 .sidebar-brand small { display: block; margin-top: 2px; color: var(--admin-sidebar-muted); font-size: 10px; }
 .collapse-button { width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; border: 1px solid var(--admin-sidebar-border); border-radius: 8px; background: transparent; color: var(--admin-sidebar-muted); cursor: pointer; font-size: 11px; }
-.collapse-button:hover { color: #fff; background: var(--admin-sidebar-hover); }
+.collapse-button:hover { color: var(--admin-sidebar-strong); background: var(--admin-sidebar-hover); }
 .sidebar-label { padding: 0 12px 8px; color: var(--admin-sidebar-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
 .sidebar-nav { display: grid; gap: 5px; }
 .sidebar-link { display: flex; align-items: center; justify-content: flex-start; gap: 11px; min-height: 44px; padding: 0 13px; border-radius: 9px; color: var(--admin-sidebar-text); transition: .15s ease; }
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
-.sidebar-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
-.sidebar-link.router-link-active { background: var(--pk-yellow); color: #111827; font-weight: 700; }
+.sidebar-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
+.sidebar-link.router-link-active { background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 700; }
 .sidebar-bottom { margin-top: auto; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
 .admin-badge, .logout-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; color: var(--admin-sidebar-muted); font-size: 12px; }
 .logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
 .collapsed .logout-link { justify-content: center; padding: 0; }
-.logout-link:hover { background: var(--admin-sidebar-hover); color: #fff; }
+.logout-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
 @media (max-width: 800px) { .admin-sidebar { width: 100%; min-height: auto; } .admin-sidebar.collapsed { width: 100%; } }
 </style>

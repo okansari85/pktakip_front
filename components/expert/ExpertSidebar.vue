@@ -197,10 +197,10 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 :global(.dark-theme) .expert-sidebar { --admin-sidebar: rgba(15, 23, 42, .9); --admin-sidebar-text: #cbd5e1; --admin-sidebar-muted: #94a3b8; --admin-sidebar-hover: rgba(255, 193, 7, .12); --admin-sidebar-border: #1e293b; --admin-sidebar-strong: #fff; box-shadow: 0 14px 36px rgba(0, 0, 0, .35); }
 .expert-sidebar.collapsed { width: 84px; padding-left: 12px; padding-right: 12px; }
 .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 4px 10px 20px; }
-.brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 11px; background: var(--pk-yellow); color: #111827; font-size: 25px; font-weight: 800; }
+.brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: var(--pk-logo); mask: var(--pk-logo-shape) center / contain no-repeat; color: var(--pk-on-accent); font-size: 22px; font-weight: 800; }
 .sidebar-brand strong { display: block; font-size: 20px; letter-spacing: -.5px; color: var(--admin-sidebar-strong); }
 .collapsed .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
-.sidebar-brand strong span { color: var(--pk-yellow); }
+.sidebar-brand strong span { color: inherit; }
 .sidebar-brand small { display: block; margin-top: 2px; color: var(--admin-sidebar-muted); font-size: 10px; }
 .sidebar-label { padding: 0 12px 8px; color: var(--admin-sidebar-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
 .sidebar-nav { display: grid; gap: 5px; }
