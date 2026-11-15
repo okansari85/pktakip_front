@@ -76,7 +76,8 @@
           </NuxtLink>
         </div>
         <figure class="gb-hero">
-          <img src="/katalog/yerlesim.svg" alt="" />
+          <!-- Katalogdaki görsel (tasarım kataloğu 02'den kırpıldı, marka yazıları silindi); elle çizilmiş karşılığı public/katalog/yerlesim.svg -->
+          <img src="/katalog/genel-bakis-katalog.webp" alt="" />
           <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
         </figure>
         <div class="gb-side">

@@ -20,8 +20,8 @@
         <div v-if="loading && !finding" class="card state"><i class="pi pi-spin pi-spinner" /> Bulgu yükleniyor...</div>
         <div v-else-if="loadError" class="card state error-text">{{ loadError }}</div>
         <template v-else-if="finding">
-          <!-- İzometrik çizim: platformda forklift, direk zincirinde işaret ve büyüteç (public/katalog, elle çizildi) -->
-          <figure class="hero"><img src="/katalog/bulgu-detay.svg" alt="" /></figure>
+          <!-- Katalogdaki görsel (tasarım kataloğu 21'den kırpıldı, marka yazıları silindi); elle çizilmiş karşılığı public/katalog/bulgu-detay.svg -->
+          <figure class="hero"><img src="/katalog/bulgu-detay-katalog.webp" alt="" /></figure>
           <p class="meta">
             <span><i :class="finding.subject?.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" aria-hidden="true" /> <strong>{{ subjectText || '—' }}</strong><template v-if="placeText"> · {{ placeText }}</template></span>
             <span class="meta-sep" aria-hidden="true" />

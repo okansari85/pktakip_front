@@ -29,8 +29,8 @@
           </div>
         </section>
         <figure class="hero">
-          <!-- İzometrik çizim: platformda forklift, direk zincirinde işaret ve büyüteç (public/katalog, elle çizildi) -->
-          <img src="/katalog/bulgu-takip.svg" alt="" />
+          <!-- Katalogdaki görsel (tasarım kataloğu 04'ten kırpıldı, marka yazıları silindi); elle çizilmiş karşılığı public/katalog/bulgu-takip.svg -->
+          <img src="/katalog/bulgu-takip-katalog.webp" alt="" />
         </figure>
         <div v-if="topSubject" class="hero-tag">
           <span class="hero-tag-icon"><i :class="subjectIcon(topSubject.kind)" /></span>

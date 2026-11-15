@@ -48,11 +48,14 @@
               <span v-if="nextDay" class="cal-hero-tag"><i class="pi pi-box" /> {{ agendaGroupsText(nextDay.entries) }} · {{ longDate(nextDay.date) }}</span>
               <button class="plan-button" type="button" @click="openNewPlan"><i class="pi pi-calendar" /> Kontrol planla <i class="pi pi-arrow-right" /></button>
             </div>
-            <!-- İzometrik çizim: platformda forklift (public/katalog) ve en yakın kontrol gününü gösteren masa takvimi (elle çizildi) -->
+            <!-- Katalogdaki görsel (tasarım kataloğu 03'ten kırpıldı: forklift, işaret ve yazısız masa takvimi; marka yazıları silindi).
+                 Takvimin günü ve ayı en yakın kontrol günü, görselin üstüne yazılır. Elle çizilmiş karşılığı forklift-izometrik.svg + SVG takvim. -->
             <div class="cal-hero-art">
-              <span class="cal-hero-pin" aria-hidden="true"><i class="pi pi-calendar" /></span>
-              <img src="/katalog/forklift-izometrik.svg" alt="" />
-              <svg class="cal-hero-cal" viewBox="0 0 150 200" aria-hidden="true">
+              <span v-if="SHOW_HERO_PIN" class="cal-hero-pin" aria-hidden="true"><i class="pi pi-calendar" /></span>
+              <img src="/katalog/takvim-katalog.webp" alt="" />
+              <span class="cal-hero-day" aria-hidden="true">{{ heroDate.day }}</span>
+              <span class="cal-hero-month" aria-hidden="true">{{ heroDate.month }}</span>
+              <svg v-if="SHOW_SVG_CALENDAR" class="cal-hero-cal" viewBox="0 0 150 200" aria-hidden="true">
                 <ellipse cx="78" cy="176" rx="66" ry="16" fill="#1f2937" fill-opacity=".14" />
                 <polygon points="40,70 135.3,15 100.7,125 5.4,180" fill="#aeb7c1" />
                 <g transform="translate(-5 -3)"><rect width="110" height="120" rx="12" fill="#c3cad2" transform="matrix(0.866 -0.5 0 1 40 70)" /></g>
@@ -218,6 +221,9 @@ const overdueGroups = computed(() => agenda.value.filter(entry => entry.days_lef
 
 // Orta: en yakın kontrol günü (bugün ya da sonrası).
 const nextDay = computed(() => agendaNextDay(agenda.value))
+// Eski elle çizilmiş takvim ve işaret: katalog görselinde ikisi de var; gizli, ileride açılabilir (forklift-izometrik.svg ile).
+const SHOW_SVG_CALENDAR = false
+const SHOW_HERO_PIN = false
 const heroDate = computed(() => {
   const date = agendaDate(nextDay.value?.date || todayKey)
   return { day: date.getDate(), month: new Intl.DateTimeFormat('tr-TR', { month: 'short' }).format(date).toLocaleUpperCase('tr-TR') }
@@ -391,7 +397,11 @@ const onPlanDeleted = () => {
 .cal-hero-actions{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 .cal-hero-tag{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);color:var(--admin-heading);font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.06)}
 .cal-hero-tag i{color:var(--pk-yellow-dark)}
-.cal-hero-art{position:relative;width:min(100%,400px)}
+.cal-hero-art{position:relative;width:min(100%,600px);container-type:inline-size}
+/* Görseldeki masa takviminin kırmızı ve beyaz yüzü (görselde gün merkezi x %78,3 y %67, ay x %76,8 y %80) */
+.cal-hero-day,.cal-hero-month{position:absolute;transform:translate(-50%,-50%);font-weight:800;line-height:1;white-space:nowrap}
+.cal-hero-day{left:78.3%;top:67%;color:#fff;font-size:9.2cqw}
+.cal-hero-month{left:76.8%;top:80%;color:#1f2937;font-size:6.4cqw}
 .cal-hero-art img{display:block;width:100%}
 .cal-hero-cal{position:absolute;right:3%;bottom:10%;width:30%;font-family:inherit}
 .cal-hero-pin{position:absolute;top:-4%;left:26%;width:42px;height:42px;display:grid;place-items:center;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pk-yellow);color:var(--pk-on-accent);box-shadow:0 6px 16px var(--admin-shadow)}

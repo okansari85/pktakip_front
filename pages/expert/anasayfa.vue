@@ -28,7 +28,8 @@
       </div>
 
       <figure class="home-hero">
-        <img src="/katalog/yerlesim.svg" alt="" />
+        <!-- Katalogdaki görsel (tasarım kataloğu 01'den kırpıldı, tabeladaki kurum adı ve marka yazıları silindi); elle çizilmiş karşılığı public/katalog/yerlesim.svg -->
+        <img src="/katalog/anasayfa-katalog.webp" alt="" />
         <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
       </figure>
     </div>
@@ -71,12 +72,12 @@ const overdueGroups = computed(() => (data.value?.agenda || []).filter((entry: a
 const nextDay = computed(() => agendaNextDay(data.value?.agenda))
 
 const cards = computed(() => [
-  { to: '/expert', title: 'Genel bakış', text: 'Portföy özeti', image: '/katalog/genel-bakis.svg' },
-  { to: '/expert/calendar', title: 'Kontrol takvimi', text: 'Yaklaşan kontroller', image: '/katalog/takvim.svg' },
-  { to: '/expert/bulgu-takip', title: 'Bulgu takibi', text: openFindings.value === null ? 'Bulgular' : `${number(openFindings.value)} açık bulgu`, image: '/katalog/bulgu.svg' },
-  { to: '/expert/equipment', title: 'Ekipmanlar', text: data.value ? `${number(data.value.totals?.equipment || 0)} ekipman` : 'Ekipman kayıtları', image: '/katalog/ekipman.svg' },
-  { to: '/expert/installations', title: 'Tesisatlar', text: data.value ? `${number(data.value.installations?.length || 0)} tesisat` : 'Tesisat kayıtları', image: '/katalog/tesisat.svg' },
-  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', image: '/katalog/firmalar.svg' },
+  { to: '/expert', title: 'Genel bakış', text: 'Portföy özeti', image: '/katalog/kart-genel-bakis-katalog.webp' },
+  { to: '/expert/calendar', title: 'Kontrol takvimi', text: 'Yaklaşan kontroller', image: '/katalog/kart-takvim-katalog.webp' },
+  { to: '/expert/bulgu-takip', title: 'Bulgu takibi', text: openFindings.value === null ? 'Bulgular' : `${number(openFindings.value)} açık bulgu`, image: '/katalog/kart-bulgu-katalog.webp' },
+  { to: '/expert/equipment', title: 'Ekipmanlar', text: data.value ? `${number(data.value.totals?.equipment || 0)} ekipman` : 'Ekipman kayıtları', image: '/katalog/kart-ekipman-katalog.webp' },
+  { to: '/expert/installations', title: 'Tesisatlar', text: data.value ? `${number(data.value.installations?.length || 0)} tesisat` : 'Tesisat kayıtları', image: '/katalog/kart-tesisat-katalog.webp' },
+  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', image: '/katalog/kart-firmalar-katalog.webp' },
   ...(SHOW_REPORT_CARD ? [{ to: '/expert/reports', title: 'Durum Raporu', text: 'Kontrol raporları', image: '/anasayfa/durum-raporu.png' }] : [])
 ])
 
