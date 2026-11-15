@@ -1,19 +1,20 @@
 <template>
-  <!-- Ödemelerim: paket siparişleri, en yeni önce (Kredi hareketleri tablosuyla aynı biçim). -->
+  <!-- Ödemelerim: paket siparişleri, en yeni önce (tasarım kataloğu 20: Ödeme geçmişi). -->
   <section class="card">
+    <h2 class="list-title">Ödeme geçmişi</h2>
     <div v-if="loading && !rows.length" class="state">Yükleniyor...</div>
     <div v-else-if="error" class="state error-text">{{ error }}</div>
     <div v-else-if="!rows.length" class="state">Henüz ödeme yok.</div>
     <div v-else class="table-wrap">
       <table>
-        <thead><tr><th>Tarih</th><th>Paket</th><th>Dönem</th><th class="amount">Tutar (KDV dahil)</th><th>Durum</th><th>Sipariş no</th></tr></thead>
+        <thead><tr><th>Tarih</th><th>Paket</th><th>Dönem</th><th>Tutar (KDV dahil)</th><th>Durum</th><th>Sipariş no</th></tr></thead>
         <tbody>
           <tr v-for="order in rows" :key="order.merchant_oid">
-            <td class="nowrap">{{ formatEntryDate(order.created_at) }}</td>
+            <td class="nowrap" :title="formatEntryDate(order.created_at)">{{ formatDay(order.created_at) }}</td>
             <td>{{ order.package?.name || '—' }}</td>
             <td>{{ PERIOD_LABELS[order.period] || order.period }}</td>
             <td class="amount">{{ formatTl(order.total_amount) }}</td>
-            <td><Tag :value="ORDER_STATUS[order.status]?.label || order.status" :severity="ORDER_STATUS[order.status]?.severity" /></td>
+            <td><Tag :value="ORDER_STATUS[order.status]?.label || order.status" :severity="ORDER_STATUS[order.status]?.severity" :icon="STATUS_ICON[order.status]" rounded :title="STATUS_HINT[order.status]" /></td>
             <td class="mono">{{ order.merchant_oid }}</td>
           </tr>
         </tbody>
@@ -27,6 +28,11 @@
 </template>
 
 <script setup lang="ts">
+// loaded: yüklenen satırlar (Hesabım'daki Ödeme özeti son ödemeyi ve durumunu buradan alır).
+const emit = defineEmits<{ loaded: [rows: PkOrder[]] }>()
+const STATUS_ICON: Record<string, string> = { paid: 'pi pi-check-circle', failed: 'pi pi-times-circle', pending: 'pi pi-clock', attention: 'pi pi-info-circle' }
+// Eski açıklama metni (Ödemelerim üstünde gizli) durum etiketinin ipucunda.
+const STATUS_HINT: Record<string, string> = { pending: 'Ödeme ekranı açıldı, sonuç gelmedi.', attention: 'Ödeme alındı ama ekibimizin kontrolü gerekiyor; gerekirse sizinle iletişime geçeriz.' }
 const { orders } = useBilling()
 const { errorMessage } = useExpertApi()
 const rows = ref<PkOrder[]>([])
@@ -45,6 +51,7 @@ const loadPage = async (next: number) => {
     total.value = data.total
     page.value = data.current_page
     lastPage.value = data.last_page
+    emit('loaded', rows.value)
   } catch (e: any) {
     error.value = errorMessage(e, 'Ödemeler alınamadı.')
   } finally { loading.value = false }
@@ -53,12 +60,14 @@ onMounted(() => loadPage(1))
 </script>
 
 <style scoped>
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
-.state{padding:40px 20px;text-align:center;color:var(--admin-muted);font-size:12px}.error-text{color:var(--admin-danger-text)}
+.card{padding:22px 24px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.list-title{margin:0 0 16px;color:var(--admin-heading);font-size:26px;font-weight:800}
+.state{padding:40px 20px;text-align:center;color:var(--admin-muted);font-size:13px}.error-text{color:var(--admin-danger-text)}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}
-th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text)}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
-.nowrap{white-space:nowrap}.amount{text-align:right;font-weight:800;white-space:nowrap}.mono{font-family:ui-monospace,monospace;font-size:11px;color:var(--admin-muted)}
-.table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:var(--admin-muted);font-size:12px}
+th,td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:16px;color:var(--admin-heading)}
+th{font-size:15px;font-weight:700;background:var(--admin-soft);white-space:nowrap}
+th:first-child{border-radius:12px 0 0 12px}th:last-child{border-radius:0 12px 12px 0}
+.nowrap{white-space:nowrap}.amount{font-size:17px;font-weight:800;white-space:nowrap}.mono{font-variant-numeric:tabular-nums;color:var(--admin-text)}
+.table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;color:var(--admin-muted);font-size:12px}
 .secondary-button{min-height:34px;padding:0 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
 </style>

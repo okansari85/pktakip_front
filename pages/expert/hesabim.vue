@@ -60,10 +60,20 @@
           </div>
         </section>
 
-        <!-- Ödemelerim: paket siparişleri -->
-        <section v-else-if="tab === 'orders'" class="orders">
-          <p class="muted">Uygulamadan yaptığınız paket ödemeleri. "Bekliyor": ödeme ekranı açıldı, sonuç gelmedi. "İnceleniyor": ödeme alındı ama ekibimizin kontrolü gerekiyor; gerekirse sizinle iletişime geçeriz.</p>
-          <ExpertOrderList />
+        <!-- Ödemelerim (katalog 20): ödeme özeti; ödeme geçmişi aşağıda (OrderList) -->
+        <section v-else-if="tab === 'orders'" class="card orders-card">
+          <h2 class="card-title">Ödeme özeti</h2>
+          <dl class="info-rows">
+            <div><dt><i class="pi pi-clone" /> Mevcut paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
+            <div><dt><i class="pi pi-calendar" /> Son ödeme</dt><dd>{{ lastPaid ? formatDay(lastPaid.paid_at || lastPaid.created_at) : '—' }}</dd></div>
+            <div>
+              <dt><i class="pi pi-check-circle" /> Ödeme durumu</dt>
+              <dd><span v-if="orderRows[0]" class="order-chip" :class="orderRows[0].status">{{ ORDER_STATUS[orderRows[0].status]?.label || orderRows[0].status }}</span><template v-else>—</template></dd>
+            </div>
+          </dl>
+          <button class="outline-button blue" type="button" @click="tab = 'billing'"><i class="pi pi-file" /> Fatura bilgileri</button>
+          <!-- Bekliyor / İnceleniyor açıklaması: katalogda yok, gizli (aynı açıklama durum etiketinin ipucunda) -->
+          <p v-if="SHOW_ORDER_HINT" class="muted">Uygulamadan yaptığınız paket ödemeleri. "Bekliyor": ödeme ekranı açıldı, sonuç gelmedi. "İnceleniyor": ödeme alındı ama ekibimizin kontrolü gerekiyor; gerekirse sizinle iletişime geçeriz.</p>
         </section>
 
         <div v-else-if="loading" class="state">Yükleniyor...</div>
@@ -192,11 +202,18 @@
             <span v-if="billing" class="hero-pill package-pill"><i class="pi pi-check" /><span><strong class="plain">{{ billing.package?.name || MODE_LABELS[billing.mode] }}</strong><strong v-if="billing.mode !== 'none'">Aktif</strong></span></span>
           </div>
         </figure>
+
+        <!-- Ödemelerim: katalogdaki fatura kutusu (katalog 20'den kırpıldı) -->
+        <figure v-else-if="tab === 'orders'" class="hero">
+          <div class="hero-art"><img src="/katalog/odemelerim-katalog.webp" alt="" /></div>
+        </figure>
       </aside>
     </div>
 
     <!-- Paketim: paket seçenekleri ve satın alma akışı (PayTR) -->
     <ExpertPackageShop v-if="tab === 'package'" id="paket-secenekleri" />
+    <!-- Ödemelerim: ödeme geçmişi; yüklenen satırlar üstteki ödeme özetine gider -->
+    <ExpertOrderList v-else-if="tab === 'orders'" @loaded="orderRows = $event" />
   </div>
 </template>
 
@@ -222,6 +239,10 @@ const CLASSES = ['A', 'B', 'C']
 // kayıt tarihi). Kayıtlı değerler korunur, profil kaydında aynen gönderilir.
 const SHOW_PROFESSION_CARD = false
 const SHOW_LEGACY_ACCOUNT_CARD = false
+// Ödemelerim üstündeki Bekliyor / İnceleniyor açıklaması: katalogda yok, gizli (durum etiketinin ipucunda)
+const SHOW_ORDER_HINT = false
+const orderRows = ref<PkOrder[]>([])
+const lastPaid = computed(() => orderRows.value.find(order => order.status === 'paid') || null)
 const SUBTITLES: Record<string, string> = {
   profile: 'Profil ve iletişim bilgilerinizi yönetin.',
   billing: 'Fatura bilgilerinizi yönetin.',
@@ -330,8 +351,6 @@ onMounted(() => {
 .card-head h2 { margin: 0; color: var(--admin-heading); font-size: 17px; }
 .card-head p { margin: 3px 0 0; color: var(--admin-muted); font-size: 12.5px; }
 .muted { margin: 12px 0 0; color: var(--admin-muted); font-size: 13px; line-height: 1.55; }
-.orders { display: grid; gap: 12px; }
-.orders .muted { margin: 0; }
 /* Profil bilgileri */
 .profile-form { display: grid; gap: 20px; }
 .profile-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; }
@@ -402,6 +421,16 @@ onMounted(() => {
 .package-actions { display: flex; align-items: center; gap: 36px; flex-wrap: wrap; margin-top: 16px; }
 .package-actions .primary-button { min-width: 0; }
 .credit-link { display: inline-flex; align-items: center; gap: 10px; color: var(--admin-link); font-size: 17px; font-weight: 700; text-decoration: underline; }
+/* Ödeme özeti */
+.orders-card .card-title { margin-bottom: 6px; }
+.orders-card .info-rows { margin-bottom: 18px; }
+.order-chip { display: inline-block; padding: 4px 16px; border-radius: 999px; font-size: 16px; font-weight: 700; }
+.order-chip.paid { background: var(--admin-success-bg); color: var(--admin-success-text); }
+.order-chip.failed { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
+.order-chip.pending { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
+.order-chip.attention { background: var(--admin-accent-soft); color: var(--admin-link); }
+.outline-button.blue { border: 1.5px solid var(--pk-accent); color: var(--admin-link); }
+.outline-button.blue:hover { background: var(--admin-accent-soft); }
 .side-card .card-title { margin-bottom: 8px; }
 .note-card { display: flex; align-items: center; gap: 20px; }
 .note-icon { flex: none; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 16px; background: var(--admin-soft); color: var(--admin-heading); font-size: 30px; box-shadow: 0 6px 16px rgba(var(--pk-shadow-rgb), .08); }
