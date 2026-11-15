@@ -13,9 +13,9 @@
       <span v-if="!collapsed">Menüyü daralt</span>
     </button>
 
-    <!-- Ayrı Ayarlar menüsü yalnız süper admin için: bireysel uzmanda ve OSGB / kurumsal / kamu hesabında Ayarlar sayfalarında da
-         aynı tek menü görünür (OSGB / kurumsal / kamuda Kullanıcılar ve Analiz geçmişi ana menüde). -->
-    <template v-if="mode === 'settings' && !individual && (!multiUser || superAdmin)">
+    <!-- Bireysel uzmanda ve OSGB / kurumsal / kamu hesabında ayrı Ayarlar menüsü yok: Ayarlar sayfalarında da aynı tek menü görünür
+         (OSGB / kurumsal / kamuda Kullanıcılar ve Analiz geçmişi ana menüde; süper admin hesaba girdiğinde de müşterinin gördüğü menü). -->
+    <template v-if="mode === 'settings' && !individual && !multiUser">
       <NuxtLink to="/expert/workplaces" class="back-link" :title="collapsed ? 'Panele dön' : undefined">
         <i class="pi pi-arrow-left" />
         <span v-if="!collapsed">Panele dön</span>
@@ -124,7 +124,7 @@
               </div>
             </div>
           </template>
-          <NuxtLink v-else-if="!multiUser || superAdmin" :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
+          <NuxtLink v-else-if="!multiUser" :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
             <i class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
