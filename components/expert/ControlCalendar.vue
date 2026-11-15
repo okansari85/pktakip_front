@@ -32,9 +32,7 @@
         <span v-if="undated" class="undated">{{ undated }} ekipmanın kontrol tarihi yok; takvimde görünmez.</span>
       </div>
 
-      <!-- Seçili yılda hiç kontrol yoksa 12 boş ay yerine tek mesaj (yıl seçici kalır). -->
-      <p v-if="!months.some(month => month.days.length)" class="empty">Kontrol yok</p>
-      <div v-else class="months">
+      <div class="months">
         <article v-for="month in months" :key="month.key" class="month" :class="{ current: month.key === thisMonthKey }">
           <header>
             <strong>{{ month.name }}</strong>
