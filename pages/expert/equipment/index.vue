@@ -9,10 +9,10 @@
       </div>
       <div class="head-actions">
         <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
-        <button class="ai-button outline" type="button" :disabled="!context || bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu Rapor Yükle</button>
+        <button v-tooltip.bottom="'Birden fazla tek ekipmanlı raporu birlikte yükleyin; sırayla okunur, ekipmanlarla eşleştirilip kaydedilir (yangın ekipmanları hariç).'" class="ai-button outline" type="button" :disabled="!context || bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu Rapor Yükle</button>
         <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
-        <button class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> P.K. Raporu Yükle</button>
-        <button class="primary-button" type="button" :disabled="!context" @click="openCreate"><i class="pi pi-plus" /> Yeni Ekipman</button>
+        <button v-tooltip.bottom="'Periyodik kontrol raporunu yükleyin; eşleşen ekipmana eklenir ya da rapordaki ekipman yeni tanımlanır.'" class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> P.K. Raporu Yükle</button>
+        <button v-tooltip.bottom="'Ekipmanı rapor olmadan, elle tanımlayın.'" class="primary-button" type="button" :disabled="!context" @click="openCreate"><i class="pi pi-plus" /> Yeni Ekipman</button>
       </div>
     </div>
 
@@ -138,13 +138,13 @@
                 </td>
                 <td class="actions-col" @click.stop>
                   <div class="row-actions">
-                    <button class="icon-button" type="button" title="Önizle" aria-label="Önizle" @click="previewItem = item"><i class="pi pi-eye" /></button>
+                    <button v-tooltip.top="'Önizle'" class="icon-button" type="button" aria-label="Önizle" @click="previewItem = item"><i class="pi pi-eye" /></button>
                     <!-- Pasif ekipmana kontrol eklenmez. Tesisata bağlı ekipman: kontrolü tesisat raporundan gelir (rapor / rapor bekleniyor tesisatta) -->
                     <template v-if="!item.is_active" />
-                    <NuxtLink v-else-if="item.installation" class="icon-button" to="/expert/installations" :title="`Kontrolü ${item.installation.name} raporundan gelir`" :aria-label="`Kontrolü ${item.installation.name} raporundan gelir`"><i class="pi pi-sitemap" /></NuxtLink>
+                    <NuxtLink v-else-if="item.installation" v-tooltip.top="`Kontrolü ${item.installation.name} raporundan gelir`" class="icon-button" to="/expert/installations" :aria-label="`Kontrolü ${item.installation.name} raporundan gelir`"><i class="pi pi-sitemap" /></NuxtLink>
                     <template v-else>
-                      <button class="icon-button" type="button" title="Yeni Periyodik Kontrol Raporu Yükle" aria-label="Yeni Periyodik Kontrol Raporu Yükle" @click="reportItem = item"><i class="pi pi-file-arrow-up" /></button>
-                      <button class="icon-button" type="button" title="Rapor bekleniyor olarak işaretle" aria-label="Rapor bekleniyor olarak işaretle" @click="pendingItem = item"><i class="pi pi-hourglass" /></button>
+                      <button v-tooltip.top="'Yeni Periyodik Kontrol Raporu Yükle'" class="icon-button" type="button" aria-label="Yeni Periyodik Kontrol Raporu Yükle" @click="reportItem = item"><i class="pi pi-file-arrow-up" /></button>
+                      <button v-tooltip.top="'Rapor bekleniyor olarak işaretle'" class="icon-button" type="button" aria-label="Rapor bekleniyor olarak işaretle" @click="pendingItem = item"><i class="pi pi-hourglass" /></button>
                     </template>
                   </div>
                 </td>
