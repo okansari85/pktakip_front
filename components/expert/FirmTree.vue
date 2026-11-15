@@ -883,6 +883,8 @@ onMounted(async () => {
   await load()
   // "Başka Lokasyon Ekle" ile gelindiyse form hemen açılır.
   if (route.query.lokasyon && nodes.value[0]) startLocation(nodes.value[0])
+  // Firmalarım tablosundaki "Düzenle" ile gelindiyse firmanın (kök) düzenleme kartı açılır.
+  else if (route.query.duzenle && canEdit.value && nodes.value[0]) startEdit(nodes.value[0])
 })
 </script>
 
