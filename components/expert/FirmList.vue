@@ -29,7 +29,12 @@
         <div class="toolbar">
           <label class="search"><i class="pi pi-search" /><span class="sr-only">Firma ara</span><input v-model="search" type="text" placeholder="Firma adı ile ara..." /></label>
         </div>
-        <div class="table-wrap">
+        <!-- OSGB: bütün müşteriler tek ağaçta; müşteri satırına tıklanınca yapısı yüklenip açılır (bireysel uzmanda tablo aynen). -->
+        <div v-if="multiUser" class="tree-list">
+          <ExpertFirmTree v-for="firm in filtered" :key="firm.id" embedded :customer-id="firm.id" :preview="firm" @changed="load" />
+          <p v-if="!filtered.length" class="state">Aramanızla eşleşen firma yok.</p>
+        </div>
+        <div v-else class="table-wrap">
           <table>
             <thead><tr><th>Firma Adı</th><th>Firma Türü</th><th class="num">Lokasyon</th><th class="num">İşyeri</th><th class="end"><span class="sr-only">İşlem</span></th></tr></thead>
             <tbody>
@@ -110,6 +115,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 30px; letter-spacing: -.
 .search input:focus { border-color: #d7a900; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .table-wrap { position: relative; overflow-x: auto; }
+.tree-list { padding: 10px 14px 14px; }
 table { width: 100%; min-width: 640px; border-collapse: collapse; }
 th { padding: 11px 16px; background: var(--admin-soft); color: var(--admin-muted); font-size: 12.5px; font-weight: 700; text-align: left; }
 td { padding: 12px 16px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 14px; }
