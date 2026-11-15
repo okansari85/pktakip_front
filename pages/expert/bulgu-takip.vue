@@ -107,6 +107,14 @@ const result = ref<any>(null)
 const loading = ref(false)
 const error = ref('')
 const openId = ref<number | null>(null)
+// Bildirim zilinden ?bulgu=ID ile gelinirse o bulgunun detay paneli açılır; adres temizlenir (aynı bildirim yeniden açılabilsin).
+const route = useRoute()
+const router = useRouter()
+watch(() => route.query.bulgu, (value) => {
+  if (!Number(value)) return
+  openId.value = Number(value)
+  router.replace({ query: { ...route.query, bulgu: undefined } })
+}, { immediate: true })
 const responsibles = ref<{ id: number; name: string }[]>([])
 
 // Bekleyen istek varken yenisi gelirse eskisinin sonucu yazılmaz.
