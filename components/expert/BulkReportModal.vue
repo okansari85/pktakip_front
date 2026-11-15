@@ -346,7 +346,7 @@ const analyze = async () => {
   try {
     const data = await postForm('/pk-equipment/report-analysis', body)
     if (!data.bulk) {
-      error.value = 'Bu rapor tüp kontrol formu olarak tanınmadı. Tek ekipmanın raporuysa "Rapordan Ekipman Tanımla" ile yükleyin.'
+      error.value = 'Bu rapor tüp kontrol formu olarak tanınmadı. Tek ekipmanın raporuysa "P.K. Raporu Yükle" ile yükleyin.'
       return
     }
     load(data)

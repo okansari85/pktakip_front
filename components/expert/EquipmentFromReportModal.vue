@@ -2,7 +2,7 @@
   <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
-        <div><h2><i class="pi pi-sparkles" /> Rapordan Ekipman Tanımla</h2><p>{{ context?.location_name }}<template v-if="context?.type === 'workplace' && context.company_name"> · {{ context.company_name }}</template></p></div>
+        <div><h2><i class="pi pi-sparkles" /> P.K. Raporu Yükle</h2><p>{{ context?.location_name }}<template v-if="context?.type === 'workplace' && context.company_name"> · {{ context.company_name }}</template></p></div>
         <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
       </div>
 

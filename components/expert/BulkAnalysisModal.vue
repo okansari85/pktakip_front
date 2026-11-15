@@ -409,13 +409,13 @@ const blockReason = (item: Item) => {
   if (!data) return ''
   if (data.bulk) return 'Tüp kontrol formu; Kontrol Formları\'ndan yükleyin.'
   if (data.duplicate) return data.duplicate.message
-  if (!data.detected_type) return 'Ekipman türü bulunamadı; tek tek "Rapordan Ekipman Tanımla" ile yükleyin.'
+  if (!data.detected_type) return 'Ekipman türü bulunamadı; tek tek "P.K. Raporu Yükle" ile yükleyin.'
   const category = props.catalog.find(entry => entry.types.some(type => type.id === data.detected_type.id))
-  if (!category) return `Bu rapor ${data.detected_type.name} raporu; tek tek "Rapordan Ekipman Tanımla" ile yükleyin.`
+  if (!category) return `Bu rapor ${data.detected_type.name} raporu; tek tek "P.K. Raporu Yükle" ile yükleyin.`
   if (category.slug === EXCLUDED_CATEGORY) return `Bu rapor ${data.detected_type.name} raporu; yangın ekipmanları toplu yüklenmez.`
   return ''
 }
-const missingReason = (item: Item) => !STATUS_LABELS[item.result?.status] || !item.result?.control_date ? 'Sonuç ya da kontrol tarihi okunamadı; bu raporu tek tek "Rapordan Ekipman Tanımla" ile yükleyin.' : ''
+const missingReason = (item: Item) => !STATUS_LABELS[item.result?.status] || !item.result?.control_date ? 'Sonuç ya da kontrol tarihi okunamadı; bu raporu tek tek "P.K. Raporu Yükle" ile yükleyin.' : ''
 const canSave = (item: Item) => ['read', 'save_error'].includes(item.state) && !blockReason(item) && !!item.choice && !missingReason(item)
 const savable = computed(() => items.value.filter(canSave))
 const selectedRows = computed(() => savable.value.filter(item => item.selected))

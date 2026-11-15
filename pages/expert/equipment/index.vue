@@ -11,7 +11,7 @@
         <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
         <button class="ai-button outline" type="button" :disabled="!context || bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu Rapor Yükle</button>
         <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
-        <button class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> Rapordan Ekipman Tanımla</button>
+        <button class="ai-button" type="button" :disabled="!context" @click="fromReportOpen = true"><i class="pi pi-sparkles" /> P.K. Raporu Yükle</button>
         <button class="primary-button" type="button" :disabled="!context" @click="openCreate"><i class="pi pi-plus" /> Yeni Ekipman</button>
       </div>
     </div>
