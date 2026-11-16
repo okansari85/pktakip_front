@@ -3,7 +3,8 @@
     <div v-show="!minimized" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
-          <div><h2><i class="pi pi-copy" /> Toplu Rapor Yükle</h2><p>{{ contextText }} · tek ekipmanlı raporlar (yangın ekipmanları hariç)</p></div>
+          <div class="title"><h2>Toplu Rapor Yükle</h2><p>{{ contextText }} · tek ekipmanlı raporlar (yangın ekipmanları hariç)</p></div>
+          <ExpertReportSteps :step="saving ? 3 : items.length ? 2 : 1" />
           <div class="head-buttons">
             <button class="close-button" type="button" title="Küçült" aria-label="Küçült" @click="minimized = true"><i class="pi pi-window-minimize" /></button>
             <button class="close-button" type="button" title="Kapat" aria-label="Kapat" @click="close"><i class="pi pi-times" /></button>
@@ -15,7 +16,7 @@
         <!-- Dosyalar: çoklu seçim ya da sürükle bırak; aynı dosya listeye bir kez girer -->
         <input ref="fileInput" type="file" accept="application/pdf" multiple hidden @change="onPick" />
         <button class="file-box" :class="{ over: dragOver }" type="button" @click="fileInput?.click()" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
-          <i class="pi pi-cloud-upload" />
+          <i class="pi pi-file-pdf" />
           <span>
             <strong>{{ items.length ? 'Rapor ekle' : 'Periyodik kontrol raporlarını seçin ya da buraya sürükleyin' }}</strong>
             <small>PDF · her dosya tek ekipmanın raporu (raf, kapı, transpalet, forklift…; yangın ekipmanları hariç). Raporlar sırayla, birer birer okunur; daha önce yüklenmiş dosya okunmaz, son 24 saatte okunup kaydedilmemiş dosya yeniden okunmaz.</small>
@@ -28,7 +29,7 @@
 
         <template v-if="items.length">
           <!-- İlerleme: okuma (öz yinelemeli, tek tek) ve kaydetme -->
-          <div class="progress-box">
+          <div class="rd-card progress-box">
             <div class="progress-line">
               <span class="progress-title">
                 <i v-if="running" class="pi pi-spin pi-spinner" />
@@ -51,51 +52,54 @@
             </template>
           </div>
 
-          <div class="rows-head">
-            <label class="check-line"><input type="checkbox" :checked="allSelected" :disabled="!savable.length || saving" @change="toggleAll" /> Tümünü seç <small>({{ selectedRows.length }} / {{ savable.length }} kaydedilebilir)</small></label>
+          <div class="rd-card list-card">
+            <div class="card-head">
+              <h3>Okunan bilgileri doğrulayın</h3>
+              <label class="check-line"><input type="checkbox" :checked="allSelected" :disabled="!savable.length || saving" @change="toggleAll" /> Tümünü seç <small>({{ selectedRows.length }} / {{ savable.length }} kaydedilebilir)</small></label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th /><th>Dosya</th><th>Tür</th><th>Raporda</th><th>Sonuç</th><th>Kontrol</th><th>Gelecek</th><th>Ekipman</th><th /></tr></thead>
+                <tbody>
+                  <tr v-for="item in items" :key="item.key" :class="rowClass(item)">
+                    <td><input v-model="item.selected" type="checkbox" :disabled="!canSave(item) || saving" /></td>
+                    <td class="file-cell">
+                      <strong :title="item.file.name">{{ item.file.name }}</strong>
+                      <span class="state" :class="item.state"><i v-if="item.state === 'reading' || item.state === 'saving' || item.state === 'checking'" class="pi pi-spin pi-spinner" />{{ STATE_LABELS[item.state] }}<template v-if="item.result?.fixture"> · test verisi</template><template v-else-if="item.result?.reused_at"> · önceki okuma</template></span>
+                      <small v-if="rowNote(item)" class="note" :class="rowNoteKind(item)">{{ rowNote(item) }}
+                        <NuxtLink v-if="linkId(item)" :to="`/expert/equipment/${linkId(item)}`">Ekipmana git</NuxtLink>
+                      </small>
+                    </td>
+                    <td>{{ item.result?.detected_type?.name || '—' }}</td>
+                    <td>{{ reportIdentity(item) }}</td>
+                    <td><span v-if="item.result?.status" class="status" :class="item.result.status">{{ STATUS_LABELS[item.result.status] || item.result.status }}</span><span v-else class="muted-cell">—</span></td>
+                    <td class="nowrap">{{ formatDate(item.result?.control_date) }}</td>
+                    <td class="nowrap">{{ formatDate(item.result?.next_control_date) }}</td>
+                    <td>
+                      <template v-if="item.result && !blockReason(item)">
+                        <select v-model="item.choice" class="cell-input" :disabled="item.state === 'saving' || item.state === 'saved' || saving" @change="onChoice(item)">
+                          <option value="new">Yeni ekipman</option>
+                          <optgroup v-if="item.result.candidates?.length" label="Önerilen">
+                            <option v-for="candidate in item.result.candidates" :key="candidate.id" :value="`e${candidate.id}`">{{ candidateText(candidate) }}</option>
+                          </optgroup>
+                          <optgroup v-if="othersFor(item).length" :label="`Diğer ${item.result.detected_type?.name || ''}`">
+                            <option v-for="other in othersFor(item)" :key="other.id" :value="`e${other.id}`">{{ equipmentText(other) }}</option>
+                          </optgroup>
+                        </select>
+                        <small v-if="choiceNote(item)" class="choice-note" :class="{ warn: choiceWarn(item) }">{{ choiceNote(item) }}</small>
+                      </template>
+                      <span v-else class="muted-cell">—</span>
+                    </td>
+                    <td class="actions">
+                      <button v-if="item.state === 'error'" class="icon-button" type="button" title="Tekrar oku" aria-label="Tekrar oku" @click="retry(item)"><i class="pi pi-refresh" /></button>
+                      <button v-if="removable(item)" class="icon-button" type="button" title="Listeden çıkar" aria-label="Listeden çıkar" @click="remove(item)"><i class="pi pi-times" /></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="hint"><i class="pi pi-info-circle" /> Mevcut ekipmanla eşleşmeyen rapor için yeni ekipman açılır; isterseniz satırdan mevcut bir ekipman seçin. Toplu kayıtta mevcut ekipmanın teknik özellikleri değişmez, yeni özellik de eklenmez; yeni ekipman rapordaki bilgilerle açılır.</p>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th /><th>Dosya</th><th>Tür</th><th>Raporda</th><th>Sonuç</th><th>Kontrol</th><th>Gelecek</th><th>Ekipman</th><th /></tr></thead>
-              <tbody>
-                <tr v-for="item in items" :key="item.key" :class="rowClass(item)">
-                  <td><input v-model="item.selected" type="checkbox" :disabled="!canSave(item) || saving" /></td>
-                  <td class="file-cell">
-                    <strong :title="item.file.name">{{ item.file.name }}</strong>
-                    <span class="state" :class="item.state"><i v-if="item.state === 'reading' || item.state === 'saving' || item.state === 'checking'" class="pi pi-spin pi-spinner" />{{ STATE_LABELS[item.state] }}<template v-if="item.result?.fixture"> · test verisi</template><template v-else-if="item.result?.reused_at"> · önceki okuma</template></span>
-                    <small v-if="rowNote(item)" class="note" :class="rowNoteKind(item)">{{ rowNote(item) }}
-                      <NuxtLink v-if="linkId(item)" :to="`/expert/equipment/${linkId(item)}`">Ekipmana git</NuxtLink>
-                    </small>
-                  </td>
-                  <td>{{ item.result?.detected_type?.name || '—' }}</td>
-                  <td>{{ reportIdentity(item) }}</td>
-                  <td><span v-if="item.result?.status" class="status" :class="item.result.status">{{ STATUS_LABELS[item.result.status] || item.result.status }}</span><span v-else class="muted-cell">—</span></td>
-                  <td class="nowrap">{{ formatDate(item.result?.control_date) }}</td>
-                  <td class="nowrap">{{ formatDate(item.result?.next_control_date) }}</td>
-                  <td>
-                    <template v-if="item.result && !blockReason(item)">
-                      <select v-model="item.choice" class="cell-input" :disabled="item.state === 'saving' || item.state === 'saved' || saving" @change="onChoice(item)">
-                        <option value="new">Yeni ekipman</option>
-                        <optgroup v-if="item.result.candidates?.length" label="Önerilen">
-                          <option v-for="candidate in item.result.candidates" :key="candidate.id" :value="`e${candidate.id}`">{{ candidateText(candidate) }}</option>
-                        </optgroup>
-                        <optgroup v-if="othersFor(item).length" :label="`Diğer ${item.result.detected_type?.name || ''}`">
-                          <option v-for="other in othersFor(item)" :key="other.id" :value="`e${other.id}`">{{ equipmentText(other) }}</option>
-                        </optgroup>
-                      </select>
-                      <small v-if="choiceNote(item)" class="choice-note" :class="{ warn: choiceWarn(item) }">{{ choiceNote(item) }}</small>
-                    </template>
-                    <span v-else class="muted-cell">—</span>
-                  </td>
-                  <td class="actions">
-                    <button v-if="item.state === 'error'" class="icon-button" type="button" title="Tekrar oku" aria-label="Tekrar oku" @click="retry(item)"><i class="pi pi-refresh" /></button>
-                    <button v-if="removable(item)" class="icon-button" type="button" title="Listeden çıkar" aria-label="Listeden çıkar" @click="remove(item)"><i class="pi pi-times" /></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="hint"><i class="pi pi-info-circle" /> Mevcut ekipmanla eşleşmeyen rapor için yeni ekipman açılır; isterseniz satırdan mevcut bir ekipman seçin. Toplu kayıtta mevcut ekipmanın teknik özellikleri değişmez, yeni özellik de eklenmez; yeni ekipman rapordaki bilgilerle açılır.</p>
         </template>
 
         <p v-if="error" class="error-text">{{ error }}</p>
@@ -120,7 +124,7 @@
             </select>
           </label>
           <button class="secondary-button" type="button" @click="minimized = true">Küçült</button>
-          <button class="primary-button" type="button" :disabled="!selectedRows.length || saving" @click="saveSelected">{{ saving ? 'Kaydediliyor...' : `Seçilenleri kaydet (${selectedRows.length})` }}</button>
+          <button class="primary-button" type="button" :disabled="!selectedRows.length || saving" @click="saveSelected"><i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : `Seçilenleri kaydet (${selectedRows.length})` }}</button>
         </div>
       </section>
     </div>
@@ -651,57 +655,53 @@ onBeforeUnmount(() => {
 })
 </script>
 
+<style scoped src="~/assets/css/rapor-yukleme.css"></style>
 <style scoped>
-.modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--admin-overlay)}
-.modal-card{width:min(1180px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-card);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
-.modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:16px}
-h2{display:flex;align-items:center;gap:8px;margin:0;color:var(--admin-heading);font-size:18px}h2 i{color:#6d28d9}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
-.head-buttons{display:flex;gap:4px}
-.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
-.file-box{width:100%;display:flex;align-items:center;gap:14px;padding:16px;border:1.5px dashed var(--admin-border);border-radius:10px;background:var(--admin-soft);color:var(--admin-muted);text-align:left;cursor:pointer;font:inherit}
-.file-box:hover,.file-box.over{border-color:#6d28d9}.file-box i{font-size:24px}
-.file-box span{display:flex;flex-direction:column;gap:3px;min-width:0}.file-box strong{color:var(--admin-heading);font-size:13px}.file-box small{font-size:11px;color:var(--admin-muted)}
-.fixture-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border:1px dashed var(--admin-border);border-radius:9px;color:var(--admin-muted);font-size:12px;cursor:pointer}
+.head-buttons{display:flex;gap:6px}
+/* Dosyalar: katalogdaki kesik çizgili "rapor ekle" kutusu (sürükle bırak) */
+.file-box{width:100%;display:flex;align-items:center;gap:16px;padding:16px 20px;border:1.5px dashed var(--admin-border);border-radius:16px;background:var(--admin-card);color:var(--admin-muted);font:inherit;text-align:left;cursor:pointer}
+.file-box:hover,.file-box.over{border-color:var(--pk-accent);background:var(--admin-accent-soft)}
+.file-box > i{flex:none;width:46px;height:46px;display:grid;place-items:center;border-radius:12px;background:var(--admin-accent-soft);color:var(--admin-link);font-size:22px}
+.file-box span{display:flex;flex-direction:column;gap:4px;min-width:0}.file-box strong{color:var(--admin-heading);font-size:16px}.file-box small{color:var(--admin-muted);font-size:12px;line-height:1.45}
+.fixture-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border:1px dashed var(--admin-border);border-radius:10px;color:var(--admin-muted);font-size:12px;cursor:pointer}
 .fixture-line span{display:inline-flex;align-items:center;gap:6px;font-weight:700}.fixture-line small{font-weight:400}
-.progress-box{margin-top:14px;padding:14px;border:1px solid var(--admin-border);border-radius:10px}
-.progress-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
-.progress-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;min-width:0}.progress-title i{color:#6d28d9}
-.progress-title strong{color:var(--admin-heading);font-size:14px}.progress-title small{color:var(--admin-muted);font-size:12px}
+.progress-box{margin-top:14px}
+.progress-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.progress-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;min-width:0}.progress-title i{color:var(--admin-link)}
+.progress-title strong{color:var(--admin-heading);font-size:17px;font-weight:800}.progress-title small{color:var(--admin-muted);font-size:13px}
+.progress-line .secondary-button{min-height:42px;font-size:14px}
 .save-line{margin:14px 0 8px}
 .bar{height:8px}.bar.save :deep(.p-progressbar-value){background:var(--admin-success-text)}
-.rows-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
-.check-line{display:flex;align-items:center;gap:8px;color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}.check-line small{color:var(--admin-muted);font-weight:400}
-.link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.link-button:disabled{opacity:.5;cursor:not-allowed}
-.table-wrap{max-height:460px;overflow:auto;margin-top:10px;border:1px solid var(--admin-border);border-radius:9px}
-table{width:100%;border-collapse:collapse}th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text);vertical-align:top}
-th{position:sticky;top:0;z-index:1;font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
+.list-card{margin-top:14px}
+.list-card .card-head{margin-bottom:12px}
+.check-line{display:flex;align-items:center;gap:8px;margin-left:auto;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.check-line small{color:var(--admin-muted);font-weight:400}
+.table-wrap{max-height:460px;overflow:auto;border:1px solid var(--admin-border);border-radius:12px}
+table{width:100%;border-collapse:collapse}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--admin-row-border);color:var(--admin-text);font-size:12px;vertical-align:top}
+th{position:sticky;top:0;z-index:1;background:var(--admin-soft);color:var(--admin-muted);font-size:11px;font-weight:700;white-space:nowrap}
 tr.pending td{background:var(--admin-warning-bg)}
 tr.blocked td{background:var(--admin-danger-bg)}
 tr.saved td{opacity:.65}
 .file-cell{max-width:260px}.file-cell strong{display:block;overflow:hidden;color:var(--admin-heading);text-overflow:ellipsis;white-space:nowrap}
 .state{display:inline-flex;align-items:center;gap:5px;margin-top:3px;padding:1px 8px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:10px;font-weight:700}
-.state i{font-size:10px}.state.reading,.state.saving{color:#6d28d9}.state.read{color:var(--admin-heading)}
+.state i{font-size:10px}.state.reading,.state.saving{background:var(--admin-accent-soft);color:var(--admin-link)}.state.read{color:var(--admin-heading)}
 .state.saved{background:var(--admin-success-bg);color:var(--admin-success-text)}
 .state.error,.state.save_error,.state.duplicate{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .note{display:block;margin-top:4px;font-size:11px;line-height:1.4}.note.danger{color:var(--admin-danger-text)}.note.warn{color:var(--admin-warning-text)}
 .note a{margin-left:4px;color:inherit;font-weight:700;text-decoration:underline}
-.status{font-weight:700}.status.uygun{color:var(--admin-success-text)}.status.uygun_degil{color:var(--admin-danger-text)}
+/* Sonuç: katalogdaki "Uygun değil" hapı */
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
+.status.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .muted-cell{color:var(--admin-muted)}.nowrap{white-space:nowrap}
-.cell-input{width:100%;min-width:200px;max-width:300px;height:32px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
+.cell-input{width:100%;min-width:200px;max-width:300px;height:32px;padding:0 8px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
 .choice-note{display:block;max-width:300px;margin-top:4px;color:var(--admin-muted);font-size:11px;line-height:1.4}.choice-note.warn{color:var(--admin-danger-text)}
 .actions{white-space:nowrap}
-.icon-button{width:30px;height:30px;display:inline-grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover{background:var(--admin-hover);color:var(--admin-heading)}.icon-button:disabled{opacity:.5;cursor:not-allowed}
-.hint{display:flex;align-items:center;gap:6px;margin:10px 0 0;color:var(--admin-muted);font-size:12px}.hint.warn{color:var(--admin-warning-text)}
-.error-text{margin:12px 0 0;color:var(--admin-danger-text);font-size:12px}
-.modal-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}
-.place-select{display:flex;align-items:center;gap:8px;margin-right:auto;color:var(--admin-heading);font-size:12px;font-weight:700}
+.icon-button{width:30px;height:30px}.icon-button:hover{color:var(--admin-heading)}.icon-button:disabled{opacity:.5;cursor:not-allowed}
+.modal-actions{margin-top:18px}
+.place-select{display:flex;align-items:center;gap:8px;margin-right:auto;color:var(--admin-heading);font-size:13px;font-weight:700}
 .place-select + .place-select{margin-left:-8px}
-.place-select select{height:36px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
-.primary-button,.ai-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
-.primary-button{background:var(--pk-yellow);color:var(--pk-on-accent)}.ai-button{background:#6d28d9;color:#fff}.primary-button:disabled,.ai-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}.secondary-button:disabled{opacity:.6;cursor:not-allowed}
-.mini{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;align-items:center;gap:12px;width:min(340px,calc(100vw - 32px));padding:12px 14px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);box-shadow:0 12px 36px var(--admin-shadow);color:var(--admin-muted);text-align:left;cursor:pointer;font:inherit}
-.mini > i{font-size:18px;color:#6d28d9}.mini span{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.place-select select{height:40px;padding:0 10px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px}
+.mini{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;align-items:center;gap:12px;width:min(340px,calc(100vw - 32px));padding:12px 14px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-card);box-shadow:0 12px 36px var(--admin-shadow);color:var(--admin-muted);font:inherit;text-align:left;cursor:pointer}
+.mini > i{color:var(--admin-link);font-size:18px}.mini span{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
 .mini strong{color:var(--admin-heading);font-size:13px}.mini small{overflow:hidden;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.mini-bar{height:6px}
-@media(max-width:640px){.modal-backdrop{padding:10px}.modal-card{padding:16px}.mini{right:16px;bottom:16px}}
+@media(max-width:640px){.mini{right:16px;bottom:16px}}
 </style>

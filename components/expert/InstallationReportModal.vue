@@ -2,132 +2,142 @@
   <div class="modal-backdrop">
     <section class="modal-card">
       <div class="modal-head">
-        <div>
+        <div class="title">
           <h2>{{ system ? 'Sistem Raporu Yükle' : installation ? 'Kontrol Ekle' : 'Yeni Tesisat Raporu Yükle' }}</h2>
           <p>{{ system ? `${system.name} · ${installation.name}` : installation ? `${installation.name} · ${installation.location?.name || ''}` : placeLabel }}</p>
         </div>
+        <ExpertReportSteps :step="saving ? 3 : file && formVisible ? 2 : 1" />
         <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
       </div>
 
       <!-- Rapor dosyası (her iki yolda da zorunlu: dijital arşiv) -->
       <input ref="fileInput" type="file" accept="application/pdf,image/jpeg,image/png" hidden @change="onFile" />
-      <button class="file-box" :class="{ filled: file }" type="button" :disabled="busy" @click="fileInput?.click()">
-        <i :class="file ? 'pi pi-file-pdf' : 'pi pi-cloud-upload'" />
-        <span v-if="file"><strong>{{ file.name }}</strong><small>değiştirmek için tıklayın</small></span>
-        <span v-else><strong>{{ system ? 'Sistemin periyodik kontrol raporunu seçin' : 'Tesisat periyodik kontrol raporunu seçin' }}</strong><small>PDF, JPG ya da PNG · en fazla 50 MB</small></span>
-      </button>
+      <div class="rd-grid">
+        <ExpertReportSource :file="file" :disabled="busy" @pick="fileInput?.click()">
+          <strong>{{ system ? 'Sistemin periyodik kontrol raporunu seçin' : 'Tesisat periyodik kontrol raporunu seçin' }}</strong><small>PDF, JPG ya da PNG · en fazla 50 MB</small>
+        </ExpertReportSource>
 
-      <div class="mode">
-        <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><i class="pi pi-pencil" /> Elle doldur</button>
-        <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><i class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
+        <section class="rd-card">
+          <div class="card-head">
+            <h3>{{ mode === 'ai' && analysis ? 'Okunan bilgileri doğrulayın' : 'Rapor bilgileri' }}</h3>
+            <span v-if="mode === 'ai' && analysis" class="done-chip"><i class="pi pi-check-circle" /> Okuma tamamlandı</span>
+          </div>
+
+          <div class="mode">
+            <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><i class="pi pi-pencil" /> Elle doldur</button>
+            <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><i class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
+          </div>
+
+          <!-- Yapay zeka: önce analiz -->
+          <template v-if="mode === 'ai' && !analysis">
+            <p v-if="file && !isPdf && !fixtureId" class="hint warn">Yapay zeka analizi yalnızca PDF raporlarda çalışır. Görsel raporu "Elle doldur" ile yükleyin.</p>
+            <div v-else class="ai-box">
+              <template v-if="analyzing">
+                <i class="pi pi-spin pi-spinner" />
+                <span><strong>Rapor okunuyor...</strong><small>Tesisat türü, sistemler, sonuçlar ve bulgular çıkarılıyor. 1-3 dakika sürebilir, pencereyi kapatmayın.</small></span>
+              </template>
+              <template v-else>
+                <i class="pi pi-sparkles" />
+                <span><strong>Rapor yapay zeka ile okunacak</strong><small>Tesisat türü ve sistemlerin sonuçları doldurulur; kaydetmeden önce kontrol edersiniz.</small></span>
+                <button class="ai-button" type="button" :disabled="!file && !fixtureId" @click="analyze">Analiz et</button>
+              </template>
+            </div>
+            <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
+              <span><i class="pi pi-database" /> Test verisi</span>
+              <select v-model="fixtureId">
+                <option value="">Kullanma — raporu yapay zeka ile oku</option>
+                <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
+              </select>
+            </label>
+          </template>
+
+          <template v-if="analysis">
+            <p v-if="analysis.fixture" class="hint"><i class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
+            <!-- Elektrik ailesi: rapor başka bir tesisata ait; bu tesisata kaydedilmez -->
+            <div v-if="wrongPlace" class="duplicate">
+              <i class="pi pi-ban" />
+              <span>{{ wrongPlace }}</span>
+            </div>
+            <p v-else-if="typeWarning" class="hint warn"><i class="pi pi-exclamation-triangle" /> {{ typeWarning }}</p>
+            <!-- Elektrik ailesi, bina bazında rapor: raporun binası açık kayıtla tutmuyor; nereye kaydedileceğini kullanıcı seçer
+                 (seçilene kadar Kaydet kapalı). Binanın kaydı yoksa yeni tesisat olarak eklenmesi sorulur. -->
+            <div v-if="buildingQuestion" class="building-question">
+              <p><i class="pi pi-building" /> {{ buildingQuestion.text }}</p>
+              <label><input v-model="buildingChoice" type="radio" value="other" /> {{ buildingQuestion.other }}</label>
+              <label><input v-model="buildingChoice" type="radio" value="this" /> {{ buildingQuestion.self }}</label>
+            </div>
+            <!-- Sistemin raporu: rapordan yalnızca bu sistem alınır -->
+            <!-- Elektrik, Kontrol Ekle: yapay zeka tek bir sistemin raporu olarak okudu; sistem raporu olarak kaydedilir -->
+            <p v-if="autoSystem" class="hint"><i class="pi pi-sparkles" /> Yapay zeka bunu {{ autoSystem.name ? `${autoSystem.name} raporu` : 'tek bir sistemin raporu' }} olarak okudu; sistem raporu olarak kaydedilecek.<template v-if="!autoSystem.system_id"> Sistemini aşağıdaki listeden seçin.</template></p>
+            <p v-if="fixedSystem && systemMissing" class="hint warn"><i class="pi pi-exclamation-triangle" /> Raporda {{ fixedSystemName }} bulunamadı; doğru raporu yüklediğinizden emin olun. Sonucu ve bulguları siz girin.</p>
+            <p v-if="fixedSystem && otherSystems.length" class="hint warn"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ otherSystems.join(', ') }}. Bu yüklemede yalnızca {{ fixedSystemName }} kaydedilir.</p>
+            <!-- Elektrik ailesi, sistemin raporu: rapordaki diğer sistemler de kendi sonuçlarıyla kaydedilir -->
+            <p v-if="fixedSystem && extraSystemNames.length" class="hint"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ extraSystemNames.join(', ') }}. Onlar da kendi sonuçlarıyla kaydedilir; istemediğinizi ✕ ile çıkarın.</p>
+            <!-- Elektrik ailesi, sistem satırından yüklendi ama yapay zeka tesisatın genel raporu olarak okudu -->
+            <p v-if="readAsGeneral" class="hint warn"><i class="pi pi-info-circle" /> Yapay zeka bunu tesisatın genel raporu olarak okudu. Tesisatın genel durumunu belirlemesi için Kontrol Ekle'den yükleyin; buradan kaydedilirse yalnızca sistemleri günceller.</p>
+            <!-- Kontrol Ekle (tesisat raporu): rapordan tek sistem çıktıysa sistem raporu olabilir (kaydı engellemez) -->
+            <p v-if="singleSystemName" class="hint warn">
+              <i class="pi pi-info-circle" /> Raporda yalnızca {{ singleSystemName }} bulundu. Bu bir sistem raporuysa Sistemler listesinde o sistemin “Rapor yükle” ikonunu kullanın; buradan yüklenen rapor tesisat raporu sayılır ve tesisatın genel durumunu belirler.
+            </p>
+            <p v-if="analysis.input === 'ocr'" class="hint warn"><i class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
+            <div v-if="analysis.duplicate" class="duplicate">
+              <i class="pi pi-ban" />
+              <span>{{ analysis.duplicate.message }}</span>
+            </div>
+          </template>
+
+          <!-- Kontrol bilgileri: elle ya da yapay zeka önerisiyle dolu -->
+          <template v-if="formVisible">
+            <div class="rows">
+              <label v-if="!installation" class="row"><span>Tesisat türü <b class="req">*</b></span>
+                <select v-model="form.installation_type_id" @change="onTypeChange">
+                  <option :value="null" disabled>Seçin</option>
+                  <option v-for="type in catalog" :key="type.id" :value="type.id">{{ type.name }}</option>
+                </select>
+              </label>
+            </div>
+            <p v-if="analysis?.type_evidence && !installation" class="hint">Yapay zekanın dayanağı: “{{ analysis.type_evidence }}”</p>
+            <p v-if="!installation && selectedType" class="target" :class="{ new: !target }">
+              <i :class="target ? 'pi pi-link' : 'pi pi-plus-circle'" />
+              <template v-if="target">Rapor bu lokasyondaki <strong>{{ target.name }}</strong> kaydına eklenecek.</template>
+              <template v-else>Bu lokasyonda {{ selectedType.name }} kaydı yok; rapor kaydedilince oluşturulacak.</template>
+            </p>
+
+            <p v-if="fixedSystem" class="hint">
+              <i class="pi pi-info-circle" /> Bu rapor yalnızca {{ [fixedSystemName, ...extraSystemNames].join(', ') }} {{ extraSystemNames.length ? 'sistemlerini' : 'sistemini' }} günceller; tesisatın genel durumu, tarihleri ve genel bulguları değişmez.
+            </p>
+
+            <div class="rows">
+              <label class="row"><span>{{ fixedSystem ? 'Raporun sonucu' : 'Genel sonuç' }} <b class="req">*</b></span>
+                <select v-model="form.status" :class="form.status">
+                  <option value="" disabled>Seçin</option>
+                  <option value="uygun">Uygun</option>
+                  <option value="uygun_degil">Uygun değil</option>
+                </select>
+              </label>
+              <label class="row"><span>Kontrol tarihi <b class="req">*</b></span><input v-model="form.control_date" type="date" /></label>
+              <label class="row"><span>Geçerlilik tarihi (sonraki kontrol)</span><input v-model="form.next_control_date" type="date" /></label>
+              <label class="row"><span>Rapor no</span><input v-model="form.report_no" type="text" placeholder="Raporda yazan numara" /></label>
+              <label class="row"><span>Kontrolü yapan kuruluş</span><input v-model="form.inspection_body" type="text" placeholder="Periyodik kontrolü yapan firma" /></label>
+              <label class="row top"><span>Sonuç ve kanaat</span><textarea v-model="form.conclusion" rows="2" placeholder="Raporun sonuç ve kanaat bölümü" /></label>
+              <!-- Elektrik ailesi: raporun notlar bölümü (tesisat sayfasında Notlar kartı) -->
+              <label v-if="isElectrical || analysis?.notes" class="row top"><span>Kusur açıklamaları / Notlar</span><textarea v-model="form.notes" rows="2" placeholder="Raporun kusur açıklamaları ve notlar bölümü" /></label>
+            </div>
+            <p v-if="analysis && !analysis.status && !(fixedSystem && form.status)" class="hint warn">Raporun genel sonucu net okunamadı, siz seçin.</p>
+            <p v-if="analysis?.next_control_source === 'period'" class="hint">Raporda geçerlilik tarihi bulunamadı; gelecek kontrol 12 aylık periyoda göre hesaplandı.</p>
+            <!-- Aynı rapor no ile yüklenmiş raporlar: seçilen türe ve sistemlere göre (kural kayıtta da uygulanır) -->
+            <div v-if="reportNoConflict" class="duplicate">
+              <i class="pi pi-ban" />
+              <span>{{ reportNoConflict }}</span>
+            </div>
+            <p v-else-if="reportNoInfo" class="hint"><i class="pi pi-info-circle" /> {{ reportNoInfo }}</p>
+          </template>
+        </section>
       </div>
 
-      <!-- Yapay zeka: önce analiz -->
-      <template v-if="mode === 'ai' && !analysis">
-        <p v-if="file && !isPdf && !fixtureId" class="hint warn">Yapay zeka analizi yalnızca PDF raporlarda çalışır. Görsel raporu "Elle doldur" ile yükleyin.</p>
-        <div v-else class="ai-box">
-          <template v-if="analyzing">
-            <i class="pi pi-spin pi-spinner" />
-            <span><strong>Rapor okunuyor...</strong><small>Tesisat türü, sistemler, sonuçlar ve bulgular çıkarılıyor. 1-3 dakika sürebilir, pencereyi kapatmayın.</small></span>
-          </template>
-          <template v-else>
-            <i class="pi pi-sparkles" />
-            <span><strong>Rapor yapay zeka ile okunacak</strong><small>Tesisat türü ve sistemlerin sonuçları doldurulur; kaydetmeden önce kontrol edersiniz.</small></span>
-            <button class="ai-button" type="button" :disabled="!file && !fixtureId" @click="analyze">Analiz et</button>
-          </template>
-        </div>
-        <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
-          <span><i class="pi pi-database" /> Test verisi</span>
-          <select v-model="fixtureId">
-            <option value="">Kullanma — raporu yapay zeka ile oku</option>
-            <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
-          </select>
-        </label>
-      </template>
-
-      <template v-if="analysis">
-        <p v-if="analysis.fixture" class="hint"><i class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
-        <!-- Elektrik ailesi: rapor başka bir tesisata ait; bu tesisata kaydedilmez -->
-        <div v-if="wrongPlace" class="duplicate">
-          <i class="pi pi-ban" />
-          <span>{{ wrongPlace }}</span>
-        </div>
-        <p v-else-if="typeWarning" class="hint warn"><i class="pi pi-exclamation-triangle" /> {{ typeWarning }}</p>
-        <!-- Elektrik ailesi, bina bazında rapor: raporun binası açık kayıtla tutmuyor; nereye kaydedileceğini kullanıcı seçer
-             (seçilene kadar Kaydet kapalı). Binanın kaydı yoksa yeni tesisat olarak eklenmesi sorulur. -->
-        <div v-if="buildingQuestion" class="building-question">
-          <p><i class="pi pi-building" /> {{ buildingQuestion.text }}</p>
-          <label><input v-model="buildingChoice" type="radio" value="other" /> {{ buildingQuestion.other }}</label>
-          <label><input v-model="buildingChoice" type="radio" value="this" /> {{ buildingQuestion.self }}</label>
-        </div>
-        <!-- Sistemin raporu: rapordan yalnızca bu sistem alınır -->
-        <!-- Elektrik, Kontrol Ekle: yapay zeka tek bir sistemin raporu olarak okudu; sistem raporu olarak kaydedilir -->
-        <p v-if="autoSystem" class="hint"><i class="pi pi-sparkles" /> Yapay zeka bunu {{ autoSystem.name ? `${autoSystem.name} raporu` : 'tek bir sistemin raporu' }} olarak okudu; sistem raporu olarak kaydedilecek.<template v-if="!autoSystem.system_id"> Sistemini aşağıdaki listeden seçin.</template></p>
-        <p v-if="fixedSystem && systemMissing" class="hint warn"><i class="pi pi-exclamation-triangle" /> Raporda {{ fixedSystemName }} bulunamadı; doğru raporu yüklediğinizden emin olun. Sonucu ve bulguları siz girin.</p>
-        <p v-if="fixedSystem && otherSystems.length" class="hint warn"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ otherSystems.join(', ') }}. Bu yüklemede yalnızca {{ fixedSystemName }} kaydedilir.</p>
-        <!-- Elektrik ailesi, sistemin raporu: rapordaki diğer sistemler de kendi sonuçlarıyla kaydedilir -->
-        <p v-if="fixedSystem && extraSystemNames.length" class="hint"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ extraSystemNames.join(', ') }}. Onlar da kendi sonuçlarıyla kaydedilir; istemediğinizi ✕ ile çıkarın.</p>
-        <!-- Elektrik ailesi, sistem satırından yüklendi ama yapay zeka tesisatın genel raporu olarak okudu -->
-        <p v-if="readAsGeneral" class="hint warn"><i class="pi pi-info-circle" /> Yapay zeka bunu tesisatın genel raporu olarak okudu. Tesisatın genel durumunu belirlemesi için Kontrol Ekle'den yükleyin; buradan kaydedilirse yalnızca sistemleri günceller.</p>
-        <!-- Kontrol Ekle (tesisat raporu): rapordan tek sistem çıktıysa sistem raporu olabilir (kaydı engellemez) -->
-        <p v-if="singleSystemName" class="hint warn">
-          <i class="pi pi-info-circle" /> Raporda yalnızca {{ singleSystemName }} bulundu. Bu bir sistem raporuysa Sistemler listesinde o sistemin “Rapor yükle” ikonunu kullanın; buradan yüklenen rapor tesisat raporu sayılır ve tesisatın genel durumunu belirler.
-        </p>
-        <p v-if="analysis.input === 'ocr'" class="hint warn"><i class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
-        <div v-if="analysis.duplicate" class="duplicate">
-          <i class="pi pi-ban" />
-          <span>{{ analysis.duplicate.message }}</span>
-        </div>
-      </template>
-
-      <!-- Kontrol bilgileri: elle ya da yapay zeka önerisiyle dolu -->
-      <template v-if="formVisible">
-        <div class="form-grid">
-          <label v-if="!installation" class="wide">Tesisat türü <span>*</span>
-            <select v-model="form.installation_type_id" @change="onTypeChange">
-              <option :value="null" disabled>Seçin</option>
-              <option v-for="type in catalog" :key="type.id" :value="type.id">{{ type.name }}</option>
-            </select>
-          </label>
-        </div>
-        <p v-if="analysis?.type_evidence && !installation" class="hint">Yapay zekanın dayanağı: “{{ analysis.type_evidence }}”</p>
-        <p v-if="!installation && selectedType" class="target" :class="{ new: !target }">
-          <i :class="target ? 'pi pi-link' : 'pi pi-plus-circle'" />
-          <template v-if="target">Rapor bu lokasyondaki <strong>{{ target.name }}</strong> kaydına eklenecek.</template>
-          <template v-else>Bu lokasyonda {{ selectedType.name }} kaydı yok; rapor kaydedilince oluşturulacak.</template>
-        </p>
-
-        <p v-if="fixedSystem" class="hint">
-          <i class="pi pi-info-circle" /> Bu rapor yalnızca {{ [fixedSystemName, ...extraSystemNames].join(', ') }} {{ extraSystemNames.length ? 'sistemlerini' : 'sistemini' }} günceller; tesisatın genel durumu, tarihleri ve genel bulguları değişmez.
-        </p>
-
-        <div class="form-grid">
-          <label>{{ fixedSystem ? 'Raporun sonucu' : 'Genel sonuç' }} <span>*</span>
-            <select v-model="form.status">
-              <option value="" disabled>Seçin</option>
-              <option value="uygun">Uygun</option>
-              <option value="uygun_degil">Uygun değil</option>
-            </select>
-          </label>
-          <label>Kontrol tarihi <span>*</span><input v-model="form.control_date" type="date" /></label>
-          <label>Geçerlilik tarihi (sonraki kontrol)<input v-model="form.next_control_date" type="date" /></label>
-          <label>Rapor no<input v-model="form.report_no" type="text" placeholder="Raporda yazan numara" /></label>
-          <label class="wide">Kontrolü yapan kuruluş<input v-model="form.inspection_body" type="text" placeholder="Periyodik kontrolü yapan firma" /></label>
-          <label class="wide">Sonuç ve kanaat<textarea v-model="form.conclusion" rows="2" placeholder="Raporun sonuç ve kanaat bölümü" /></label>
-          <!-- Elektrik ailesi: raporun notlar bölümü (tesisat sayfasında Notlar kartı) -->
-          <label v-if="isElectrical || analysis?.notes" class="wide">Kusur açıklamaları / Notlar<textarea v-model="form.notes" rows="2" placeholder="Raporun kusur açıklamaları ve notlar bölümü" /></label>
-        </div>
-        <p v-if="analysis && !analysis.status && !(fixedSystem && form.status)" class="hint warn">Raporun genel sonucu net okunamadı, siz seçin.</p>
-        <p v-if="analysis?.next_control_source === 'period'" class="hint">Raporda geçerlilik tarihi bulunamadı; gelecek kontrol 12 aylık periyoda göre hesaplandı.</p>
-        <!-- Aynı rapor no ile yüklenmiş raporlar: seçilen türe ve sistemlere göre (kural kayıtta da uygulanır) -->
-        <div v-if="reportNoConflict" class="duplicate">
-          <i class="pi pi-ban" />
-          <span>{{ reportNoConflict }}</span>
-        </div>
-        <p v-else-if="reportNoInfo" class="hint"><i class="pi pi-info-circle" /> {{ reportNoInfo }}</p>
-
+      <div v-if="formVisible" class="rd-stack">
         <!-- Sistemler: katalogdan (ön tanımlı); sonuç, bulgular, rapordaki ekipman özeti -->
-        <div class="systems">
+        <div class="rd-card systems">
           <div class="systems-head">
             <strong>{{ fixedSystem ? (systems.length > 1 ? 'Sistemler' : 'Sistem') : 'Kontrol edilen sistemler' }}</strong>
             <button v-if="!fixedSystem" class="link-button" type="button" :disabled="!selectedType" @click="addSystem"><i class="pi pi-plus" /> Sistem ekle</button>
@@ -188,7 +198,7 @@
 
         <!-- Elektrik ailesi: ölçüm sonuçları (rapordaki tablolar) raporda nasılsa öyle — sütunlar raporun başlıkları ve sırasıyla;
              sistemle birlikte saklanır, Ekipmanlar'a eklenmez -->
-        <div v-if="isElectrical && measurementTables.length" class="systems">
+        <div v-if="isElectrical && measurementTables.length" class="rd-card systems">
           <div class="systems-head">
             <strong>{{ resultsTitle }} <small class="muted">({{ measurementTables.reduce((total, table) => total + table.rows.length, 0) }})</small></strong>
           </div>
@@ -233,7 +243,7 @@
         </div>
 
         <!-- Rapordaki ekipmanlar: Ekipmanlar'daki karşılığı (mevcut / yeni / ekleme); her birine bu raporla kontrol kaydı -->
-        <div v-if="!isElectrical && equipmentRows.length" class="systems">
+        <div v-if="!isElectrical && equipmentRows.length" class="rd-card systems">
           <div class="systems-head">
             <strong>Rapordaki ekipmanlar <small class="muted">({{ equipmentRows.length }})</small></strong>
             <span v-if="missingStatus" class="bulk-status">
@@ -290,7 +300,7 @@
         </div>
 
         <!-- Hiçbir sisteme bağlı olmayan bulgular (sistemin raporunda yok: bulgular sistemin altında) -->
-        <div v-if="!fixedSystem" class="systems">
+        <div v-if="!fixedSystem" class="rd-card systems">
           <div class="systems-head">
             <strong>Genel bulgular <small class="muted">(sisteme bağlı olmayan)</small></strong>
           </div>
@@ -314,18 +324,21 @@
             </ul>
           </div>
         </div>
-      </template>
+      </div>
 
       <ul v-if="readWarnings.length" class="error-text">
         <li v-for="(warning, index) in readWarnings" :key="index">{{ warning }}</li>
       </ul>
 
       <p v-if="error" class="error-text">{{ error }}</p>
-      <div class="modal-actions">
-        <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
-        <button v-if="formVisible && !analysis?.duplicate" class="primary-button" type="button" :disabled="busy || !canSave" @click="save">
-          {{ saving ? 'Kaydediliyor...' : 'Kaydet' }}
-        </button>
+      <div class="rd-foot">
+        <p class="note-bar"><i class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
+          <button v-if="formVisible && !analysis?.duplicate" class="primary-button" type="button" :disabled="busy || !canSave" @click="save">
+            <i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : 'Onayla ve kaydet' }}
+          </button>
+        </div>
       </div>
     </section>
   </div>
@@ -887,36 +900,15 @@ onMounted(async () => {
 })
 </script>
 
+<style scoped src="~/assets/css/rapor-yukleme.css"></style>
 <style scoped>
-.modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--admin-overlay)}
-.modal-card{width:min(1000px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-card);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
-.modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:18px}
-h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
-.close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
-.file-box{width:100%;display:flex;align-items:center;gap:14px;padding:16px;border:1.5px dashed var(--admin-border);border-radius:10px;background:var(--admin-soft);color:var(--admin-muted);text-align:left;cursor:pointer;font:inherit}
-.file-box:hover{border-color:var(--pk-accent)}.file-box.filled{border-style:solid}.file-box i{font-size:24px}.file-box.filled i{color:var(--admin-danger-text)}
-.file-box span,.ai-box span{display:flex;flex-direction:column;gap:3px;min-width:0}.file-box strong,.ai-box strong{color:var(--admin-heading);font-size:13px;overflow-wrap:anywhere}.file-box small,.ai-box small{font-size:11px;color:var(--admin-muted)}
-.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
-.mode button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border:1px solid var(--admin-border);border-radius:9px;background:var(--admin-card);color:var(--admin-text);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.mode button.active{border-color:var(--pk-accent);background:var(--admin-accent-soft);color:var(--admin-heading)}
-.ai-box{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--admin-border);border-radius:10px}.ai-box > i{font-size:22px;color:#6d28d9}.ai-box .ai-button{margin-left:auto;flex-shrink:0}
-.fixture-select{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 12px;border:1px dashed var(--admin-border);border-radius:9px;font-size:12px;color:var(--admin-muted)}
-.fixture-select span{display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
-.fixture-select select{flex:1;min-width:0;height:34px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
-.hint{display:flex;align-items:center;gap:6px;margin:10px 0 0;color:var(--admin-muted);font-size:12px}.hint.warn{color:var(--admin-warning-text)}
+.rd-card > .rows{margin-top:14px}
 /* Bina sorusu: rapor başka bir binanın (ya da tesis genelinin); nereye kaydedileceği seçilir */
-.building-question{display:grid;gap:7px;margin-top:14px;padding:12px 14px;border:1px solid var(--admin-warning-text);border-radius:10px;background:var(--admin-warning-bg);color:var(--admin-warning-text);font-size:13px}
+.building-question{display:grid;gap:7px;margin-top:12px;padding:12px 14px;border:1px solid var(--admin-warning-text);border-radius:12px;background:var(--admin-warning-bg);color:var(--admin-warning-text);font-size:13px}
 .building-question p{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:700}.building-question p i{margin-top:2px}
 .building-question label{display:flex;align-items:center;gap:8px;color:var(--admin-heading);font-weight:600;cursor:pointer}
-.duplicate{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px 14px;border:1px solid var(--admin-danger-text);border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:13px;font-weight:700}.duplicate a{margin-left:6px;color:inherit;text-decoration:underline}
-.target{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:9px 12px;border-radius:9px;background:var(--admin-success-bg);color:var(--admin-success-text);font-size:12px}.target.new{background:var(--admin-soft);color:var(--admin-text)}
-.system-fixed{flex:1;min-width:0;color:var(--admin-heading);font-size:13px}
-/* Elektrik: rapordaki ekipmanlar (Ekipmanlar'a eklenmez) */
-.component-row{display:grid;grid-template-columns:minmax(90px,1fr) minmax(90px,1fr) minmax(160px,2fr) 125px 60px;gap:6px;align-items:center;padding:6px 12px;border-top:1px solid var(--admin-row-border)}
-.component-row.component-head{padding-top:7px;padding-bottom:7px;color:var(--admin-muted);font-size:11px;font-weight:700}
-.component-row .type-text{overflow-wrap:anywhere}.component-row strong.type-text{color:var(--admin-heading)}
-.component-row .status-select{width:100%;height:32px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);font:inherit;font-size:12px}
-.component-row.skipped{opacity:.55}
+.target{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--admin-success-bg);color:var(--admin-success-text);font-size:13px}.target.new{background:var(--admin-soft);color:var(--admin-text)}
+.system-fixed{flex:1;min-width:0;color:var(--admin-heading);font-size:14px}
 /* Ölçüm sonuçları: rapordaki tablo; geniş tablolar yana kayar */
 .table-wrap{overflow-x:auto}
 .measure-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -928,24 +920,22 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .measure-table.skipped{opacity:.55}
 .facility-list{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;margin:8px 0 0;font-size:12px}
 .facility-list dt{color:var(--admin-muted)}.facility-list dd{margin:0;color:var(--admin-heading);overflow-wrap:anywhere}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:14px}
-.form-grid label{display:block;color:var(--admin-heading);font-size:12px;font-weight:700}.form-grid label > span{color:var(--admin-danger-text)}.wide{grid-column:1 / -1}
-.form-grid input,.form-grid select,.form-grid textarea{display:block;width:100%;margin-top:6px;padding:0 10px;height:40px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;outline:0}
-.form-grid textarea{height:auto;padding:9px 10px;resize:vertical}
-.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
-.systems{display:grid;gap:8px;margin-top:18px}
-.systems-head{display:flex;align-items:center;justify-content:space-between;color:var(--admin-heading);font-size:13px}
-.system-row{display:grid;gap:6px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:10px}.system-row.missing{border-color:var(--admin-warning-text)}
+/* Sistemler, ölçüm sonuçları, rapordaki ekipmanlar, genel bulgular: ızgaranın altında tam genişlik kartlar */
+.systems{display:grid;gap:10px}
+.systems-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--admin-heading);font-size:18px}
+.systems-head > strong{font-weight:800}.systems-head small{font-size:12px;font-weight:600}
+.system-row{display:grid;gap:6px;padding:10px 12px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card)}.system-row.missing{border-color:var(--admin-warning-text)}
 .system-line{display:flex;align-items:center;gap:8px}
-.system-line select{height:36px;padding:0 8px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
+.system-line select{height:38px;padding:0 10px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px}
 .system-line select:first-child{flex:1;min-width:0}
-.status-select{width:140px}.status-select.uygun{color:var(--admin-success-text)}.status-select.uygun_degil{color:var(--admin-danger-text)}
+.status-select{width:140px}
+.status-select.uygun{border-color:var(--admin-success-text);color:var(--admin-success-text)}.status-select.uygun_degil{border-color:var(--admin-danger-text);background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .source{color:var(--admin-muted);font-size:11px}.source.warn{color:var(--admin-warning-text)}
-.bulk-status{display:inline-flex;align-items:center;gap:6px;color:var(--admin-muted);font-size:11px;font-weight:600}
-.chip-button{height:26px;padding:0 10px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.bulk-status{display:inline-flex;align-items:center;gap:6px;color:var(--admin-muted);font-size:12px;font-weight:600}
+.chip-button{height:28px;padding:0 11px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .chip-button.ok{color:var(--admin-success-text)}.chip-button.bad{color:var(--admin-danger-text)}
-.equipment-group{border:1px solid var(--admin-border);border-radius:10px;overflow:hidden}
-.group-head{display:flex;align-items:baseline;gap:8px;padding:9px 12px;background:var(--admin-soft);color:var(--admin-heading);font-size:12px}.group-head small{color:var(--admin-muted)}.group-head small.warn{color:var(--admin-warning-text)}
+.equipment-group{border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
+.group-head{display:flex;align-items:baseline;gap:8px;padding:9px 12px;background:var(--admin-soft);color:var(--admin-heading);font-size:13px}.group-head small{color:var(--admin-muted)}.group-head small.warn{color:var(--admin-warning-text)}
 .eq-row{display:grid;grid-template-columns:70px minmax(90px,1fr) minmax(110px,1fr) 125px minmax(160px,1.3fr) 60px;gap:6px;align-items:center;padding:6px 12px;border-top:1px solid var(--admin-row-border)}
 .eq-row.with-variant{grid-template-columns:70px minmax(90px,1fr) minmax(110px,1fr) minmax(100px,.8fr) 125px minmax(160px,1.3fr) 60px}
 .eq-row.eq-head{padding-top:7px;padding-bottom:7px;color:var(--admin-muted);font-size:11px;font-weight:700}
@@ -962,14 +952,8 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .findings-edit{display:grid;gap:6px}
 .findings-edit ol{display:grid;gap:6px;margin:0;padding-left:22px;color:var(--admin-muted);font-size:12px}
 .findings-edit li > *{vertical-align:top}
-.findings-edit li textarea{display:inline-block;width:calc(100% - 40px);padding:8px 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;resize:vertical;outline:0}
-.link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}.link-button:disabled{opacity:.5;cursor:not-allowed}
-.icon-button{width:32px;height:32px;display:inline-grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--admin-muted);cursor:pointer}.icon-button:hover{background:var(--admin-hover);color:var(--admin-danger-text)}
-.muted{margin:0;color:var(--admin-muted);font-size:12px}
-.error-text{margin:12px 0 0;color:var(--admin-danger-text);font-size:12px}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-.primary-button,.ai-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer}
-.primary-button{background:var(--pk-yellow);color:var(--pk-on-accent)}.ai-button{background:#6d28d9;color:#fff}.primary-button:disabled,.ai-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
-@media(max-width:640px){.form-grid{grid-template-columns:1fr}.system-line{flex-wrap:wrap}.eq-row,.eq-row.with-variant,.component-row{grid-template-columns:1fr 1fr}.eq-row.eq-head,.component-row.component-head{display:none}}
+.findings-edit li textarea{display:inline-block;width:calc(100% - 40px);padding:8px 10px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;resize:vertical;outline:0}
+.findings-edit .link-button{justify-self:start}
+ul.error-text{padding-left:20px}
+@media(max-width:640px){.system-line{flex-wrap:wrap}.eq-row,.eq-row.with-variant{grid-template-columns:1fr 1fr}.eq-row.eq-head{display:none}}
 </style>
