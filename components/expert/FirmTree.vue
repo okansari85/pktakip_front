@@ -472,7 +472,7 @@ function toggleLocation(location: FirmLocation) {
 }
 // Kart ağacı itmez, üstünde durur: ekranın altında kalırsa görünene kadar kaydırılır.
 const focusForm = () => nextTick(() => {
-  inTree('.float-card')?.scrollIntoView({ block: 'nearest' })
+  inTree('.float-card')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   inTree<HTMLElement>('.float-card select, .float-card input')?.focus({ preventScroll: true })
 })
 // Aynı anda tek kart açık olur; aynı simgeye yeniden basmak kapatır.
@@ -1191,7 +1191,17 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .overview { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 24px; }
 .side { display: grid; gap: 24px; align-content: start; min-width: 0; }
 .panel-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
-.panel-card .float-card { display: grid; gap: 14px; }
+.panel-card .float-card { position: static; width: auto; max-height: none; overflow: visible; box-shadow: none; display: grid; gap: 14px; }
+.panel-card .add-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.panel-card .add-row-head h3 { margin: 0; color: var(--admin-heading); font-size: 16px; font-weight: 700; line-height: 1.3; }
+.panel-card .field { color: var(--admin-heading); font-size: 13px; font-weight: 600; }
+.panel-card .field input, .panel-card .field select, .panel-card .field textarea { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 400; }
+.panel-card .field textarea { padding: 10px 12px; }
+.panel-card .field input:focus, .panel-card .field select:focus, .panel-card .field textarea:focus { outline: 0; border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--pk-focus-ring); }
+.panel-card .close-button { flex: none; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.panel-card .close-button:hover { background: rgba(145, 158, 171, .12); color: var(--admin-heading); }
+.panel-card .primary-button.wide { min-height: 40px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 8px; background: var(--pk-accent); color: var(--pk-on-accent); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.panel-card .primary-button.wide:disabled { opacity: .5; box-shadow: none; cursor: default; }
 .panel-card .field { display: grid; gap: 6px; }
 .panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .panel-actions .secondary-button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }

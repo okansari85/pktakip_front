@@ -25,7 +25,7 @@
       <template #node-org="{ id, data }">
         <div class="chart-group" :class="{ 'has-area': data.hasLocations, target: dropId === id }">
           <Handle type="target" :position="Position.Top" class="handle" />
-          <div class="chart-node" :class="{ root: data.root, on: selectedKey === id }" :style="{ '--c': data.color.main, '--c-soft': data.color.soft }">
+          <div class="chart-node" :class="{ root: data.root, on: selectedKey === id, collapsed: data.collapsed }" :style="{ '--c': data.color.main, '--c-soft': data.color.soft }">
             <span class="chart-node-top">
               <span class="chart-node-icon"><component :is="data.root ? Building2 : Network" :size="18" :stroke-width="1.8" aria-hidden="true" /></span>
               <span class="chart-node-text"><strong>{{ data.name }}</strong><small>{{ data.subtitle }}</small></span>
@@ -112,15 +112,53 @@ const COLORS = [
 ]
 const ROOT_COLOR = { main: '#0047ff', soft: '#d6e2ff' }
 // Bağlantı çizgisi: yuvarlak köşeli basamak (organizasyon şeması görünümü), yumuşak mavi.
-// İnce, kavisli köşeli düz çizgi (mockup); rengi gittiği alt birimin rengi.
-const EDGE = { type: 'smoothstep', pathOptions: { borderRadius: 22 } } as const
+// İnce, kavisli köşeli, akış yönünde hareketli çizgi; rengi gittiği alt birimin rengi.
+const EDGE = { type: 'smoothstep', animated: true, pathOptions: { borderRadius: 22 } } as const
 const flowNodes = ref<Node[]>([])
 const flowEdges = ref<Edge[]>([])
 // Düğüm → üst düğüm (döngü kontrolü için).
 const parentOf = new Map<string, string | null>()
+// --- Aç / kapa (akordeon): alt birimleri gösterilen düğümler. Açılınca aynı seviyedeki kardeşler kapanır.
+// İlk açılış: kök ve tek çocuklu zincirler açık (çok başkanlık eklense de şema dağılmasın).
+const expanded = ref<Set<string>>(new Set())
+const childrenOf = (id: string) => { const out: FirmNode[] = []; const find = (list: FirmNode[]) => list.forEach(n => { if (`n${n.id}` === id) out.push(...(n.children || [])); else find(n.children || []) }); find(props.nodes); return out }
+function defaultExpanded() {
+  const set = new Set<string>()
+  const walk = (node: FirmNode, open: boolean) => { if (!open) return; set.add(`n${node.id}`); const kids = node.children || []; if (kids.length === 1) walk(kids[0], true) }
+  props.nodes.forEach(node => walk(node, true))
+  return set
+}
+let structureKey = ''
+function toggle(id: string) {
+  const set = new Set(expanded.value)
+  if (set.has(id)) set.delete(id)
+  else {
+    // Kardeşler (aynı üstün diğer çocukları) ve onların altları kapanır.
+    const parent = parentOf.get(id)
+    const siblings = parent ? childrenOf(parent) : props.nodes
+    for (const sibling of siblings) {
+      const sid = `n${sibling.id}`
+      if (sid === id) continue
+      const close = (n: FirmNode) => { set.delete(`n${n.id}`); (n.children || []).forEach(close) }
+      close(sibling)
+    }
+    set.add(id)
+  }
+  expanded.value = set
+  layout()
+  fit()
+}
 const depthOf = (id: string) => { let d = 0; for (let p = parentOf.get(id); p; p = parentOf.get(p)) d++; return d }
 
 function layout() {
+  const key = JSON.stringify(props.nodes.map(function ids(n: FirmNode): unknown { return [n.id, (n.children || []).map(ids)] }))
+  if (key !== structureKey) {
+    const fresh = defaultExpanded()
+    // Önceden açık olanlar (hâlâ varsa) açık kalır: taşıma / ekleme sonrası şema aynı görünür.
+    if (structureKey) expanded.value.forEach(id => fresh.add(id))
+    expanded.value = fresh
+    structureKey = key
+  }
   const g = new dagre.graphlib.Graph()
   g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 64, marginx: 16, marginy: 16 })
   g.setDefaultEdgeLabel(() => ({}))
@@ -144,7 +182,7 @@ function layout() {
     const color = parent ? COLORS[colorIndex++ % COLORS.length] : ROOT_COLOR
     groups.push({ id, node, parent, locs, width, height, blockWidth, summary, count: all.length, color })
     if (parent) { g.setEdge(`n${parent.id}`, id); edges.push({ id: `e${parent.id}-${node.id}`, source: `n${parent.id}`, target: id, ...EDGE, style: { stroke: color.main, strokeWidth: 1.6, opacity: 0.75 } }) }
-    for (const child of node.children || []) walk(child, node)
+    if (expanded.value.has(id)) for (const child of node.children || []) walk(child, node)
   }
   props.nodes.forEach(node => walk(node, null))
   dagre.layout(g)
@@ -165,7 +203,8 @@ function layout() {
       style: { width: `${group.width}px`, height: `${group.height}px` },
       draggable: props.canEdit && !!group.parent,
       data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary, count: group.count, color: group.color,
-        subtitle: [group.parent ? branchLabel.value : 'Ana yapı', group.count ? `${group.count} lokasyon` : '', props.labels[String(group.node.id)] || ''].filter(Boolean).join(' · ') }
+        collapsed: !!group.node.children?.length && !expanded.value.has(group.id),
+        subtitle: [group.parent ? branchLabel.value : 'Ana yapı', group.node.children?.length ? `${group.node.children.length} alt ${branchLabel.value.toLocaleLowerCase('tr-TR')}` : '', group.count ? `${group.count} lokasyon` : '', props.labels[String(group.node.id)] || ''].filter(Boolean).join(' · ') }
     })
     group.locs.forEach((location, i) => {
       nodes.push({
@@ -182,7 +221,10 @@ function layout() {
 }
 watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); fit() }, { immediate: true, deep: true })
 
-const onNodeClick = ({ node }: NodeMouseEvent) => emit('select', node.id)
+const onNodeClick = ({ node }: NodeMouseEvent) => {
+  emit('select', node.id)
+  if (node.type === 'org' && childrenOf(node.id).length) toggle(node.id)
+}
 
 // --- Sürükle bırak: bırakılan alanın dalı hedeftir; geçersizse kutu yerine döner. ---
 const dragId = ref<string | null>(null)
@@ -225,6 +267,8 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 <style scoped>
 .org-chart { position: relative; height: 560px; border-radius: 12px; background: rgba(145, 158, 171, .04); overflow: hidden; }
 .org-chart :deep(.vue-flow__node) { cursor: pointer; }
+.org-chart :deep(.vue-flow__edge.animated path) { stroke-dasharray: 6 4; animation-duration: 1.4s; }
+@media (prefers-reduced-motion: reduce) { .org-chart :deep(.vue-flow__edge.animated path) { animation: none; stroke-dasharray: none; } }
 .org-chart :deep(.vue-flow__edge.animated path) { stroke-dasharray: 6 5; animation-duration: 1.2s; }
 @media (prefers-reduced-motion: reduce) { .org-chart :deep(.vue-flow__edge.animated path) { animation: none; } }
 .org-chart :deep(.vue-flow__node.draggable) { cursor: grab; }
@@ -236,6 +280,9 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-group { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
 .chart-area { position: absolute; left: 0; right: 0; top: 122px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
 .chart-group.target .chart-area { border-color: var(--pk-success-main); background: rgba(0, 171, 85, .08); }
+/* Alt birimleri kapalı: arkasında üst üste kart (gizli alt birim var) */
+.chart-node.collapsed { box-shadow: 0 0 0 1px rgba(145, 158, 171, .22), 0 8px 20px -6px rgba(145, 158, 171, .35), 6px 6px 0 -1px var(--admin-card), 6px 6px 0 0 color-mix(in srgb, var(--c) 45%, transparent), 12px 12px 0 -1px var(--admin-card), 12px 12px 0 0 color-mix(in srgb, var(--c) 25%, transparent); }
+.chart-node.collapsed.on { box-shadow: 0 0 0 2px var(--c), 6px 6px 0 -1px var(--admin-card), 6px 6px 0 0 color-mix(in srgb, var(--c) 45%, transparent), 12px 12px 0 -1px var(--admin-card), 12px 12px 0 0 color-mix(in srgb, var(--c) 25%, transparent); }
 .chart-group.target .chart-node { box-shadow: 0 0 0 3px var(--pk-success-main), 0 8px 16px rgba(0, 171, 85, .25); }
 /* Dal kutusu (mockup): üstte simge + ad + alt yazı, çizginin altında işlem simgeleri, kutunun altında koyu "+" */
 .chart-node { --c: #0047ff; --c-soft: #d6e2ff; position: relative; z-index: 1; width: 300px; height: 108px; display: grid; grid-template-rows: 1fr auto; padding: 10px 12px 0; border-radius: 14px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .22), 0 8px 20px -6px rgba(145, 158, 171, .35); transition: box-shadow .15s ease; }
