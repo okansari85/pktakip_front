@@ -48,7 +48,7 @@
           <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
           <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
         </section>
-        <section v-if="listNode" class="card loc-cards-card">
+        <section v-if="listNode" class="loc-cards-card">
           <ul class="loc-rows">
             <li v-for="location in filteredList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
               <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
@@ -1353,12 +1353,13 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-pill { padding: 2px 8px; border-radius: 6px; background: var(--admin-success-bg); color: var(--admin-success-text); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .count-pill.none { background: rgba(145, 158, 171, .12); color: var(--admin-muted); }
 /* Sade lokasyon listesi (mockup): avatar, ad, alt yazı, işyeri, işlemler; iç kaydırma yok, sayfa uzar */
-.loc-cards-card { padding: 6px 0; }
-.loc-rows { display: grid; margin: 0; padding: 0; list-style: none; }
-.loc-row { display: flex; align-items: center; gap: 14px; padding: 12px 20px; cursor: pointer; transition: background .15s ease; }
-.loc-row + .loc-row { border-top: 1px solid rgba(145, 158, 171, .14); }
-.loc-row:hover, .loc-row:focus-visible { outline: 0; background: rgba(145, 158, 171, .06); }
-.loc-row.selected { background: var(--admin-accent-soft); }
+.loc-cards-card { padding: 0; }
+/* Her lokasyon ayrı kart (tablo satırı değil): beyaz, yuvarlak, gölgeli, aralarında boşluk */
+.loc-rows { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.loc-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; background: var(--admin-card); box-shadow: var(--pk-card-shadow); cursor: pointer; transition: box-shadow .15s ease, transform .15s ease; }
+.loc-row:hover, .loc-row:focus-visible { outline: 0; transform: translateY(-1px); box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 16px 28px -6px rgba(145, 158, 171, .28); }
+.loc-row.selected { box-shadow: 0 0 0 2px var(--pk-accent), 0 12px 24px -6px rgba(var(--pk-accent-rgb), .22); }
+.loc-rows > .location-empty { padding: 24px; border-radius: 14px; background: var(--admin-card); text-align: center; }
 .loc-avatar { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
 .loc-avatar.big { width: 72px; height: 72px; font-size: 22px; }
 .loc-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
