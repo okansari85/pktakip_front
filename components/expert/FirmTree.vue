@@ -33,7 +33,7 @@
       <div v-if="!embedded && nodes.length" class="overview">
         <section class="card schema-card">
           <header class="schema-head">
-            <div><h2>{{ topLabel }} şeması</h2><small>{{ firms.length }} firma · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
           <div class="schema">
             <div v-for="item in schemaRows" :key="item.key" class="schema-row" :class="{ child: item.depth }" :style="{ '--depth': item.depth }">
@@ -94,7 +94,7 @@
           <p class="muted location-empty">Henüz lokasyon yok. Şemada ana firmanın yanındaki <i class="pi pi-map-marker" /> + ile ilk lokasyonu ekleyin.</p>
         </section>
         <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları, şemanın yanında hep görünür; işyeri yalnız bunlarla açılır. -->
-        <section id="firmalar" class="card firms-card">
+        <section v-if="firm.type !== 'public'" id="firmalar" class="card firms-card">
           <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
           <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
             <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
@@ -266,7 +266,7 @@
                 </div>
                 <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
                 <div class="add-grid">
-                  <label v-if="firm.type !== 'individual'" class="field">Firma <span class="req">*</span>
+                  <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
                     <select v-model="companyChoice" :disabled="!companyOptions.length">
                       <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
                     </select>
@@ -784,7 +784,8 @@ const rowNotice = ref('')
 const freshIds = ref<number[]>([])
 const companyFor = (location: FirmLocation) => {
   const type = firm.value?.type
-  if (type === 'individual') return firm.value!.name
+  // Şahıs işletmesi ve kamu kurumu: işyerinin firması ana firmanın kendisi (kamu: kullanıcı 17 Kas 2026).
+  if (type === 'individual' || type === 'public') return firm.value!.name
   return companyChoice.value
 }
 function resetRow(keepNothing = false) {

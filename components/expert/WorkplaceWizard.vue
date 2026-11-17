@@ -260,7 +260,7 @@ const findDuplicate = (name: string) => {
 const companyLabel = (c: { business_entity_id: number; name: string }) => titleOf.value[c.business_entity_id] ? `${c.name} · ${titleOf.value[c.business_entity_id]}` : c.name
 // Ana firmanın kendisi (şahıs işletmesi ya da Firmalar listesi boş): ana firmayla aynı adı taşıyan firma kartı; yoksa kayıtta açılır.
 const selfCompany = computed(() => props.customerName ? findDuplicate(props.customerName) : null)
-const isSelf = computed(() => customerType.value === 'individual' || companySelection.value === SELF)
+const isSelf = computed(() => customerType.value === 'individual' || customerType.value === 'public' || companySelection.value === SELF)
 // Şahıs işletmesinde her lokasyon bir şubedir: işyerine lokasyonun adı verilir (firma kartı işletmenin kendisi).
 const namedByLocation = computed(() => customerType.value === 'individual')
 const chosenId = computed<number | null>(() => isSelf.value
@@ -278,7 +278,8 @@ const subTaken = computed(() => {
 
 const steps = computed<Step[]>(() => [
   ...(typeAsked.value ? ['ctype' as Step] : []),
-  ...(customerType.value === 'corporate' || customerType.value === 'public' ? ['company' as Step] : []),
+  // Kamu kurumunda firma sorulmaz: işyerinin firması kurumun kendisi (kullanıcı 17 Kas 2026).
+  ...(customerType.value === 'corporate' ? ['company' as Step] : []),
   'sub', 'nace', 'hazard', 'employees', 'sgk', 'summary'
 ])
 const stepIndex = ref(0)
