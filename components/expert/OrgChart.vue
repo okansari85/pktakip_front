@@ -97,7 +97,7 @@ const { getNodes, fitView } = useVueFlow(flowId)
 // Kutular ölçüldükten sonra (ilk açılış ve her yeniden yerleşim) şema alana sığdırılır; çok büyütülmez.
 const fit = () => nextTick(() => setTimeout(() => fitView({ padding: 0.08, maxZoom: 1, duration: 150 }), 60))
 
-const ORG = { width: 300, height: 98 }
+const ORG = { width: 300, height: 108 }
 const LOC = { width: 230, height: 54 }
 const COLS = 4
 // Bu sayıdan fazla lokasyonu olan dalda lokasyonlar şemada özet kutu olur (liste sağ panelde).
@@ -234,11 +234,11 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .handle { opacity: 0; pointer-events: none; }
 /* Dal alanı: üstte dal kutusu, altında lokasyonların durduğu kesik çizgili alan */
 .chart-group { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
-.chart-area { position: absolute; left: 0; right: 0; top: 112px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
+.chart-area { position: absolute; left: 0; right: 0; top: 122px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
 .chart-group.target .chart-area { border-color: var(--pk-success-main); background: rgba(0, 171, 85, .08); }
 .chart-group.target .chart-node { box-shadow: 0 0 0 3px var(--pk-success-main), 0 8px 16px rgba(0, 171, 85, .25); }
 /* Dal kutusu (mockup): üstte simge + ad + alt yazı, çizginin altında işlem simgeleri, kutunun altında koyu "+" */
-.chart-node { --c: #0047ff; --c-soft: #d6e2ff; position: relative; z-index: 1; width: 300px; height: 98px; display: grid; grid-template-rows: 1fr auto; padding: 10px 12px 0; border-radius: 14px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .22), 0 8px 20px -6px rgba(145, 158, 171, .35); transition: box-shadow .15s ease; }
+.chart-node { --c: #0047ff; --c-soft: #d6e2ff; position: relative; z-index: 1; width: 300px; height: 108px; display: grid; grid-template-rows: 1fr auto; padding: 10px 12px 0; border-radius: 14px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .22), 0 8px 20px -6px rgba(145, 158, 171, .35); transition: box-shadow .15s ease; }
 .chart-node::before { content: ""; position: absolute; top: -5px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border: 2px solid var(--c); border-radius: 50%; background: var(--admin-card); }
 .chart-node.root::before { display: none; }
 .chart-node.on { box-shadow: 0 0 0 2px var(--c), 0 10px 22px -6px rgba(145, 158, 171, .45); }
@@ -247,7 +247,8 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-node-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .chart-node-text strong { display: -webkit-box; overflow: hidden; color: var(--admin-heading); font-size: 13.5px; font-weight: 700; line-height: 1.25; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .chart-node-text small { overflow: hidden; color: var(--admin-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.chart-node-actions { display: flex; justify-content: space-around; padding: 4px 0; border-top: 1px solid rgba(145, 158, 171, .2); }
+/* Alttaki boşluk "+" düğmesine: simgelerin üstüne binmesin */
+.chart-node-actions { display: flex; justify-content: space-around; padding: 4px 0 14px; border-top: 1px solid rgba(145, 158, 171, .2); }
 .chart-node-actions button { width: 30px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font-size: 13px; cursor: pointer; }
 .chart-node-actions button:hover, .chart-node-actions button:focus-visible { background: var(--c-soft); color: var(--c); }
 .chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 24px; height: 24px; margin-left: -12px; display: grid; place-items: center; border: 0; border-radius: 7px; background: #212b36; color: #fff; font-size: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); }
