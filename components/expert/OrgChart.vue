@@ -42,7 +42,7 @@
           <span v-if="data.hasLocations" class="chart-area" aria-hidden="true" />
           <!-- Çok lokasyonlu dal: lokasyonlar tek tek çizilmez, özet kutu; tıklayınca liste sağ panelde açılır -->
           <button v-if="data.summary" type="button" class="chart-summary nodrag" :class="{ on: selectedKey === `s${data.nodeId}` }" :aria-label="`${data.name}: ${data.summary} lokasyonun listesini aç`" @click.stop="emit('open-list', data.nodeId)">
-            <i class="pi pi-map-marker" aria-hidden="true" /><strong>{{ data.summary }} lokasyon</strong><span>Listeyi aç</span><i class="pi pi-angle-right" aria-hidden="true" />
+            <MapPin :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><strong>{{ data.summary }} lokasyon</strong><span>Listeyi aç</span><ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" />
           </button>
           <Handle type="source" :position="Position.Bottom" class="handle" />
         </div>
@@ -50,12 +50,12 @@
 
       <template #node-loc="{ id, data }">
         <div class="chart-location" :class="{ on: selectedKey === id }">
-          <i class="pi pi-map-marker" aria-hidden="true" />
+          <MapPin :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" />
           <span><strong>{{ data.name }}</strong><small>{{ data.count ? `${data.count} işyeri` : 'İşyeri yok' }}<template v-if="data.city"> · {{ data.city }}</template></small></span>
         </div>
       </template>
     </VueFlow>
-    <p v-if="canEdit" class="chart-hint"><i class="pi pi-arrows-alt" aria-hidden="true" /> Lokasyonu ya da {{ branchLabel.toLocaleLowerCase('tr-TR') }}ı tutup taşıyabilirsiniz: lokasyon başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın alanına, {{ branchLabel.toLocaleLowerCase('tr-TR') }} başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın kutusunun üstüne.</p>
+    <p v-if="canEdit" class="chart-hint"><Move :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyonu ya da {{ branchLabel.toLocaleLowerCase('tr-TR') }}ı tutup taşıyabilirsiniz: lokasyon başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın alanına, {{ branchLabel.toLocaleLowerCase('tr-TR') }} başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın kutusunun üstüne.</p>
   </div>
 </template>
 
@@ -64,7 +64,7 @@ import { VueFlow, Handle, Position, useVueFlow, type Node, type Edge, type NodeM
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import dagre from '@dagrejs/dagre'
-import { Building2, EllipsisVertical, List, MapPinPlus, Network, PencilLine, Plus } from 'lucide-vue-next'
+import { Building2, ChevronRight, EllipsisVertical, List, MapPin, MapPinPlus, Move, Network, PencilLine, Plus } from 'lucide-vue-next'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'

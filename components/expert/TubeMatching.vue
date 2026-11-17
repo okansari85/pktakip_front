@@ -11,8 +11,8 @@
 
     <div v-if="loading && !loaded" class="state">Yükleniyor...</div>
     <div v-else-if="error" class="state error-text">{{ error }}</div>
-    <div v-else-if="!board.forms.length" class="state empty"><i class="pi pi-file-check" /><strong>Henüz tüp kontrol formu yok</strong></div>
-    <div v-else-if="!total" class="state empty"><i class="pi pi-check-circle" /><strong>Fark yok</strong><span>Envanter ile kontrol formları birebir aynı.</span></div>
+    <div v-else-if="!board.forms.length" class="state empty"><PkIcon class="pi pi-file-check" /><strong>Henüz tüp kontrol formu yok</strong></div>
+    <div v-else-if="!total" class="state empty"><PkIcon class="pi pi-check-circle" /><strong>Fark yok</strong><span>Envanter ile kontrol formları birebir aynı.</span></div>
 
     <div v-else class="board">
       <!-- Sol: envanterde olup yeni raporda olmayan tüpler -->
@@ -21,7 +21,7 @@
           <h4>Envanterden çıkarılacaklar <span class="count">{{ board.left.length }}</span></h4>
           <small>Envanterde olup yeni raporda olmayan tüpler</small>
         </header>
-        <div class="search"><i class="pi pi-search" /><input v-model="leftSearch" type="text" placeholder="Yer ya da no ile ara" /></div>
+        <div class="search"><PkIcon class="pi pi-search" /><input v-model="leftSearch" type="text" placeholder="Yer ya da no ile ara" /></div>
         <label class="select-all"><input type="checkbox" :checked="allChecked(leftView, leftChecked)" :disabled="!leftView.length" @change="toggleAll(leftView, leftChecked)" /> Tümünü seç</label>
         <ul class="items">
           <!-- Satıra tıklamak seçer -->
@@ -36,7 +36,7 @@
         </ul>
         <footer>
           <button class="secondary-button" type="button" :disabled="working || !leftChecked.length" @click="deactivateIds = [...leftChecked]">
-            <i class="pi pi-ban" /> Seçilenleri envanterden çıkar ({{ leftChecked.length }})
+            <PkIcon class="pi pi-ban" /> Seçilenleri envanterden çıkar ({{ leftChecked.length }})
           </button>
         </footer>
       </div>
@@ -47,7 +47,7 @@
           <h4>Yeni eklenecekler <span class="count">{{ board.right.length }}</span></h4>
           <small>Yeni raporda olup envanterde olmayan tüpler</small>
         </header>
-        <div class="search"><i class="pi pi-search" /><input v-model="rightSearch" type="text" placeholder="Yer ya da no ile ara" /></div>
+        <div class="search"><PkIcon class="pi pi-search" /><input v-model="rightSearch" type="text" placeholder="Yer ya da no ile ara" /></div>
         <label class="select-all"><input type="checkbox" :checked="allChecked(rightView, rightChecked)" :disabled="!rightView.length" @change="toggleAll(rightView, rightChecked)" /> Tümünü seç</label>
         <ul class="items">
           <!-- Satıra tıklamak seçer -->
@@ -62,7 +62,7 @@
         </ul>
         <footer>
           <button class="secondary-button" type="button" :disabled="working || !rightChecked.length" @click="addChecked">
-            <i class="pi pi-plus" /> Seçilenleri yeni tüp olarak ekle ({{ rightChecked.length }})
+            <PkIcon class="pi pi-plus" /> Seçilenleri yeni tüp olarak ekle ({{ rightChecked.length }})
           </button>
         </footer>
       </div>
@@ -71,7 +71,7 @@
     <!-- Seçili çift: soldan ve sağdan birer seçim → eşleştir -->
     <div v-if="board.forms.length && (leftChecked.length || rightChecked.length)" class="match-bar">
       <span class="pick" :class="{ empty: !leftItem }">{{ leftItem ? tubeLabel(leftItem) : leftChecked.length ? `Solda ${leftChecked.length} tüp seçili` : 'Soldan bir tüp seçin' }}</span>
-      <i class="pi pi-arrow-right-arrow-left" />
+      <PkIcon class="pi pi-arrow-right-arrow-left" />
       <span class="pick" :class="{ empty: !rightItem }">{{ rightItem ? rowLabel(rightItem) : rightChecked.length ? `Sağda ${rightChecked.length} satır seçili` : 'Sağdan bir satır seçin' }}</span>
       <small v-if="leftChecked.length > 1 || rightChecked.length > 1">Eşleştirmek için iki listeden birer tane seçin.</small>
       <small v-if="leftItem && rightItem">Tüp yeni rapordaki adı alır: <strong>{{ [rightItem.place, rightItem.code && `no ${rightItem.code}`].filter(Boolean).join(' · ') }}</strong></small>
@@ -79,7 +79,7 @@
       <div class="bar-actions">
         <button class="secondary-button" type="button" :disabled="working" @click="clearPick">Vazgeç</button>
         <button class="primary-button" type="button" :disabled="!leftItem || !rightItem || working" @click="match">
-          <i :class="working ? 'pi pi-spin pi-spinner' : 'pi pi-link'" /> Eşleştir
+          <PkIcon :class="working ? 'pi pi-spin pi-spinner' : 'pi pi-link'" /> Eşleştir
         </button>
       </div>
     </div>

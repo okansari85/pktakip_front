@@ -6,7 +6,7 @@
           <h2>Ekipman Ekle</h2>
           <p>{{ system.name }} · {{ installation.workplace ? workplaceLabel(installation.workplace.id, installation.workplace.company_name) : 'Lokasyon geneli' }} · {{ installation.location?.name }}</p>
         </div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <p class="hint">Her satır bir ekipman. Eklenen ekipmanlar Ekipmanlar menüsünde de görünür; marka, model ve seri no ekipmanın kendi sayfasından girilir.</p>
@@ -25,13 +25,13 @@
             <option value="">{{ variantsOf(row).length ? 'Seçilmedi' : '—' }}</option>
             <option v-for="variant in variantsOf(row)" :key="variant" :value="variant">{{ variant }}</option>
           </select>
-          <button class="icon-button" type="button" title="Satırı sil" aria-label="Satırı sil" :disabled="saving || rows.length === 1" @click="rows.splice(index, 1)"><i class="pi pi-times" /></button>
+          <button class="icon-button" type="button" title="Satırı sil" aria-label="Satırı sil" :disabled="saving || rows.length === 1" @click="rows.splice(index, 1)"><PkIcon class="pi pi-times" /></button>
           <small v-if="row.error" class="row-error">{{ row.error }}</small>
         </div>
       </div>
       <div class="add-rows">
-        <button class="link-button" type="button" :disabled="saving" @click="addRows(1)"><i class="pi pi-plus" /> Satır ekle</button>
-        <button class="link-button" type="button" :disabled="saving" @click="addRows(5)"><i class="pi pi-plus" /> 5 satır ekle</button>
+        <button class="link-button" type="button" :disabled="saving" @click="addRows(1)"><PkIcon class="pi pi-plus" /> Satır ekle</button>
+        <button class="link-button" type="button" :disabled="saving" @click="addRows(5)"><PkIcon class="pi pi-plus" /> 5 satır ekle</button>
         <small>Yeni satırın numarası bir öncekinden devam eder (YD-01 → YD-02).</small>
       </div>
 

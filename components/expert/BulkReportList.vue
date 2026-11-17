@@ -2,13 +2,13 @@
   <section class="card forms-card">
     <div class="forms-head">
       <div><h3>Kontrol formları <span class="count">{{ reports.length }}</span></h3><small>Tüplerin toplu periyodik kontrol formları. Satıra tıklayınca bölümler ve tüplerin sonuçları açılır.</small></div>
-      <button class="primary-button" type="button" @click="emit('upload')"><i class="pi pi-file-arrow-up" /> Tüp Kontrol Formu Yükle</button>
+      <button class="primary-button" type="button" @click="emit('upload')"><PkIcon class="pi pi-file-arrow-up" /> Tüp Kontrol Formu Yükle</button>
     </div>
 
     <div v-if="loading && !reports.length" class="state">Formlar yükleniyor...</div>
     <div v-else-if="error" class="state error-text">{{ error }}</div>
     <div v-else-if="!reports.length" class="state empty">
-      <i class="pi pi-file-check" />
+      <PkIcon class="pi pi-file-check" />
       <strong>Henüz tüp kontrol formu yok</strong>
       <span>“Tüp Kontrol Formu Yükle” ile yükleyin; tüpler Ekipmanlar'daki kayıtlarla eşleşir, her tüpe kendi sonucuyla kontrol kaydı açılır.</span>
     </div>
@@ -28,7 +28,7 @@
               </td>
               <td>{{ formatDate(report.next_control_date) }}</td>
               <td @click.stop>
-                <button v-if="report.has_report" class="link-button" type="button" :title="report.report_file_name" @click="openPdf(report)"><i class="pi pi-file-pdf" /> {{ report.report_no || 'Görüntüle' }}</button>
+                <button v-if="report.has_report" class="link-button" type="button" :title="report.report_file_name" @click="openPdf(report)"><PkIcon class="pi pi-file-pdf" /> {{ report.report_no || 'Görüntüle' }}</button>
                 <span v-else class="muted">{{ report.report_no || '—' }}</span>
               </td>
               <td class="body-cell">{{ report.inspection_body || '—' }}</td>
@@ -45,7 +45,7 @@
               <td>{{ report.findings_count || '—' }}</td>
               <td>{{ report.created_by || '—' }}<small class="muted block">{{ report.source === 'ai' ? 'Yapay zeka ile okundu' : 'Elle girildi' }}</small></td>
               <td class="actions-col" @click.stop>
-                <button class="icon-button" type="button" title="Formu sil" aria-label="Formu sil" @click="remove(report)"><i class="pi pi-trash" /></button>
+                <button class="icon-button" type="button" title="Formu sil" aria-label="Formu sil" @click="remove(report)"><PkIcon class="pi pi-trash" /></button>
               </td>
             </tr>
             <tr v-if="openId === report.id" class="detail-row">

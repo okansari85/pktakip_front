@@ -2,37 +2,37 @@
   <div class="home-page">
     <div class="home-top">
       <div class="home-left">
-        <nav class="crumb" aria-label="Sayfa yolu"><i class="pi pi-home" aria-hidden="true" /><span>Ana Sayfa</span></nav>
+        <nav class="crumb" aria-label="Sayfa yolu"><PkIcon class="pi pi-home" aria-hidden="true" /><span>Ana Sayfa</span></nav>
         <h1>Ana sayfa</h1>
         <p class="home-sub">Merhaba, {{ firstName }}<i class="sep" aria-hidden="true" /><span>{{ today }}</span></p>
 
         <section class="plan-card">
           <h2>Bugünkü iş planınız</h2>
-          <p v-if="loading" class="plan-muted"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p v-if="loading" class="plan-muted"><PkIcon class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
           <p v-else-if="error" class="plan-muted error-text">{{ error }}</p>
           <p v-else-if="loaded && !groups.length" class="plan-muted">Henüz işyeriniz yok. Firmalarım'dan firma ekleyin.</p>
           <template v-else-if="data">
-            <div v-if="overdueGroups" class="plan-row bad"><i class="pi pi-exclamation-triangle" /><strong>{{ number(overdueGroups) }} gecikmiş kontrol grubu</strong></div>
+            <div v-if="overdueGroups" class="plan-row bad"><PkIcon class="pi pi-exclamation-triangle" /><strong>{{ number(overdueGroups) }} gecikmiş kontrol grubu</strong></div>
             <div v-if="nextDay" class="plan-row next">
-              <i class="pi pi-calendar" />
+              <PkIcon class="pi pi-calendar" />
               <strong>{{ agendaGroupsText(nextDay.entries) }} kontrolü {{ nextDay.days_left === 0 ? 'bugün' : `${nextDay.days_left} gün sonra` }}</strong>
             </div>
             <p v-if="!overdueGroups && !nextDay" class="plan-muted">Gecikmiş ya da yaklaşan kontrol yok.</p>
           </template>
           <div class="plan-actions">
-            <NuxtLink to="/expert/calendar" class="plan-button primary"><i class="pi pi-calendar" /> Kontrol takvimi <i class="pi pi-chevron-right" /></NuxtLink>
-            <NuxtLink to="/expert/bulgu-takip" class="plan-button"><i class="pi pi-clipboard" /> Bulguları aç <i class="pi pi-chevron-right" /></NuxtLink>
+            <NuxtLink to="/expert/calendar" class="plan-button primary"><PkIcon class="pi pi-calendar" /> Kontrol takvimi <PkIcon class="pi pi-chevron-right" /></NuxtLink>
+            <NuxtLink to="/expert/bulgu-takip" class="plan-button"><PkIcon class="pi pi-clipboard" /> Bulguları aç <PkIcon class="pi pi-chevron-right" /></NuxtLink>
           </div>
-          <div v-if="openFindings !== null" class="plan-findings"><i class="pi pi-clipboard" /><strong>{{ number(openFindings) }} açık bulgu</strong></div>
+          <div v-if="openFindings !== null" class="plan-findings"><PkIcon class="pi pi-clipboard" /><strong>{{ number(openFindings) }} açık bulgu</strong></div>
         </section>
       </div>
     </div>
 
     <nav class="home-cards" aria-label="Ana sayfa bağlantıları">
       <NuxtLink v-for="card in cards" :key="card.to" :to="card.to" class="home-card">
-        <span class="home-card-icon" :class="card.tone" aria-hidden="true"><i :class="card.icon" /></span>
+        <span class="home-card-icon" :class="card.tone" aria-hidden="true"><PkIcon :class="card.icon" /></span>
         <span class="home-card-text"><strong>{{ card.title }}</strong><span>{{ card.text }}</span></span>
-        <i class="pi pi-chevron-right" aria-hidden="true" />
+        <PkIcon class="pi pi-chevron-right" aria-hidden="true" />
       </NuxtLink>
     </nav>
   </div>

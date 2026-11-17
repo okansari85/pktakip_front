@@ -6,7 +6,7 @@
           <h2>{{ plan ? 'Planı düzenle' : 'Kontrol planla' }}</h2>
           <p>Plan takvimde ve ajandada mevcut kontrollerle birlikte görünür.<template v-if="plan?.created_by_name"> Planlayan: {{ plan.created_by_name }}</template></p>
         </div>
-        <button class="close-button" type="button" aria-label="Kapat" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" aria-label="Kapat" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div class="form-grid">
@@ -60,7 +60,7 @@
       <p v-if="optionsError" class="error-text">{{ optionsError }}</p>
       <p v-if="error" class="error-text">{{ error }}</p>
       <div class="modal-actions">
-        <button v-if="plan" class="danger-button" type="button" :disabled="saving" @click="remove"><i class="pi pi-trash" /> Sil</button>
+        <button v-if="plan" class="danger-button" type="button" :disabled="saving" @click="remove"><PkIcon class="pi pi-trash" /> Sil</button>
         <button class="secondary-button" type="button" @click="close">İptal</button>
         <button class="primary-button" type="button" :disabled="saving || !form.date || !form.location_id" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
       </div>

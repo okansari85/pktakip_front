@@ -12,31 +12,31 @@
          (OSGB / kurumsal / kamuda Kullanıcılar ve Analiz geçmişi ana menüde; süper admin hesaba girdiğinde de müşterinin gördüğü menü). -->
     <template v-if="mode === 'settings' && !individual && !multiUser">
       <NuxtLink to="/expert/workplaces" class="back-link" :title="collapsed ? 'Panele dön' : undefined">
-        <i class="pi pi-arrow-left" />
+        <PkIcon class="pi pi-arrow-left" />
         <span v-if="!collapsed">Panele dön</span>
       </NuxtLink>
       <div v-if="!collapsed" class="sidebar-label">AYARLAR · TANIMLAR</div>
       <nav class="sidebar-nav">
         <!-- Müşteriler / Organizasyon / Lokasyonlar / Firmalar menüde yok: yapı Firmalarım'daki ağaçtan yönetilir (sayfalar silinmedi, adresleri çalışır). -->
         <NuxtLink v-if="isManager" to="/expert/settings/users" class="sidebar-link" :title="collapsed ? 'Kullanıcılar' : undefined">
-          <i class="pi pi-id-card" />
+          <PkIcon class="pi pi-id-card" />
           <span v-if="!collapsed">Kullanıcılar</span>
         </NuxtLink>
         <NuxtLink to="/expert/settings/catalog-requests" class="sidebar-link" :title="collapsed ? 'Katalog talepleri' : undefined">
-          <i class="pi pi-inbox" />
+          <PkIcon class="pi pi-inbox" />
           <span v-if="!collapsed">Katalog talepleri</span>
         </NuxtLink>
         <NuxtLink to="/expert/settings/analyses" class="sidebar-link" :title="collapsed ? 'Analiz geçmişi' : undefined">
-          <i class="pi pi-history" />
+          <PkIcon class="pi pi-history" />
           <span v-if="!collapsed">Analiz geçmişi</span>
         </NuxtLink>
         <!-- Yalnızca süper admin: yapay zeka ayarı ve test sayfası (test verisi üretme) -->
         <NuxtLink v-if="superAdmin" to="/expert/settings/ai" class="sidebar-link" :title="collapsed ? 'Yapay zeka' : undefined">
-          <i class="pi pi-sparkles" />
+          <PkIcon class="pi pi-sparkles" />
           <span v-if="!collapsed">Yapay zeka</span>
         </NuxtLink>
         <NuxtLink v-if="superAdmin" to="/expert/test" class="sidebar-link" :title="collapsed ? 'Test' : undefined">
-          <i class="pi pi-code" />
+          <PkIcon class="pi pi-code" />
           <span v-if="!collapsed">Test</span>
         </NuxtLink>
       </nav>
@@ -49,35 +49,35 @@
       <nav class="sidebar-nav">
         <!-- Yalnızca bireysel uzman; hesap bilgisi gelmeden gösterilmez (OSGB / kurumsalda bir an görünmesin) -->
         <NuxtLink v-if="account && !multiUser" to="/expert/anasayfa" class="sidebar-link" :title="collapsed ? 'Ana Sayfa' : undefined">
-          <i class="pi pi-home" />
+          <PkIcon class="pi pi-home" />
           <span v-if="!collapsed">Ana Sayfa</span>
         </NuxtLink>
         <NuxtLink to="/expert" class="sidebar-link" active-class="" exact-active-class="router-link-active" :title="collapsed ? 'Genel Bakış' : undefined">
-          <i class="pi pi-th-large" />
+          <PkIcon class="pi pi-th-large" />
           <span v-if="!collapsed">Genel Bakış</span>
         </NuxtLink>
         <NuxtLink to="/expert/calendar" class="sidebar-link" :title="collapsed ? 'Kontrol Takvimi' : undefined">
-          <i class="pi pi-calendar" />
+          <PkIcon class="pi pi-calendar" />
           <span v-if="!collapsed">Kontrol Takvimi</span>
         </NuxtLink>
         <NuxtLink to="/expert/bulgu-takip" class="sidebar-link" :title="collapsed ? 'Bulgu Takip' : undefined">
-          <i class="pi pi-list-check" />
+          <PkIcon class="pi pi-list-check" />
           <span v-if="!collapsed">Bulgu Takip</span>
           <b v-if="findingCount" class="count-badge" :class="{ dot: collapsed }">{{ collapsed ? '' : findingCount }}</b>
         </NuxtLink>
         <!-- Periyodik Kontroller: ekipmanlar + tesisatlar (daraltılmış menüde yalnızca simgeler) -->
         <template v-if="collapsed">
-          <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
+          <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><PkIcon :class="item.icon" /></NuxtLink>
         </template>
         <div v-else class="sidebar-group" :class="{ open: periodicOpen, active: periodicActive }">
           <button class="sidebar-link group-toggle" type="button" :aria-expanded="periodicOpen" @click="periodicOpen = !periodicOpen">
-            <i class="pi pi-calendar-clock" />
+            <PkIcon class="pi pi-calendar-clock" />
             <span>Periyodik Kontroller</span>
-            <i class="pi pi-chevron-down chevron" />
+            <PkIcon class="pi pi-chevron-down chevron" />
           </button>
           <div v-show="periodicOpen" class="sidebar-children">
             <NuxtLink v-for="item in PERIODIC" :key="item.to" :to="item.to" class="sidebar-link child">
-              <i :class="item.icon" />
+              <PkIcon :class="item.icon" />
               <span>{{ item.label }}</span>
             </NuxtLink>
           </div>
@@ -87,45 +87,45 @@
       <div class="sidebar-section">
         <nav class="sidebar-nav">
           <NuxtLink to="/expert/workplaces" class="sidebar-link" :title="collapsed ? (kamu ? 'İşyerlerim' : 'Firmalarım') : undefined">
-            <i class="pi pi-briefcase" />
+            <PkIcon class="pi pi-briefcase" />
             <span v-if="!collapsed">{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</span>
           </NuxtLink>
           <!-- OSGB / kurumsal / kamu: Ayarlar yerine Kullanıcılar (yönetici) ve Analiz geçmişi ana menüde; Katalog talepleri gösterilmez -->
           <template v-if="multiUser">
             <NuxtLink v-if="isManager" to="/expert/settings/users" class="sidebar-link" :title="collapsed ? 'Kullanıcılar' : undefined">
-              <i class="pi pi-id-card" />
+              <PkIcon class="pi pi-id-card" />
               <span v-if="!collapsed">Kullanıcılar</span>
             </NuxtLink>
             <NuxtLink to="/expert/settings/analyses" class="sidebar-link" :title="collapsed ? 'Analiz geçmişi' : undefined">
-              <i class="pi pi-history" />
+              <PkIcon class="pi pi-history" />
               <span v-if="!collapsed">Analiz geçmişi</span>
             </NuxtLink>
           </template>
           <template v-if="individual">
             <template v-if="collapsed">
-              <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><i :class="item.icon" /></NuxtLink>
+              <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link" :title="item.label"><PkIcon :class="item.icon" /></NuxtLink>
             </template>
             <div v-else class="sidebar-group" :class="{ open: settingsOpen, active: settingsActive }">
               <button class="sidebar-link group-toggle" type="button" :aria-expanded="settingsOpen" @click="settingsOpen = !settingsOpen">
-                <i class="pi pi-cog" />
+                <PkIcon class="pi pi-cog" />
                 <span>Ayarlar</span>
-                <i class="pi pi-chevron-down chevron" />
+                <PkIcon class="pi pi-chevron-down chevron" />
               </button>
               <div v-show="settingsOpen" class="sidebar-children">
                 <NuxtLink v-for="item in individualSettings" :key="item.to" :to="item.to" class="sidebar-link child">
-                  <i :class="item.icon" />
+                  <PkIcon :class="item.icon" />
                   <span>{{ item.label }}</span>
                 </NuxtLink>
               </div>
             </div>
           </template>
           <NuxtLink v-else-if="!multiUser" :to="settingsHome" class="sidebar-link" :title="collapsed ? 'Ayarlar' : undefined">
-            <i class="pi pi-cog" />
+            <PkIcon class="pi pi-cog" />
             <span v-if="!collapsed">Ayarlar</span>
           </NuxtLink>
           <!-- Tüm hesap türlerinde: Hesabım (profil, fatura, Paketim, ödemeler; satın alma yalnız ödeme yapabilende) -->
           <NuxtLink to="/expert/hesabim" class="sidebar-link" :title="collapsed ? 'Hesabım' : undefined">
-            <i class="pi pi-user" />
+            <PkIcon class="pi pi-user" />
             <span v-if="!collapsed">Hesabım</span>
           </NuxtLink>
         </nav>
@@ -135,9 +135,9 @@
     <div class="sidebar-bottom">
       <!-- Kalan kredi ve işyeri doluluğu; tıklayınca Hesabım → Paketim (kredi hareketleri oradan) -->
       <NuxtLink v-if="!collapsed" to="/expert/hesabim?tab=package" class="credit-link" title="Paketim"><ExpertCreditSummary compact /></NuxtLink>
-      <div v-if="!collapsed" class="expert-badge"><i class="pi pi-user" /><span>{{ roleLabel }}</span></div>
+      <div v-if="!collapsed" class="expert-badge"><PkIcon class="pi pi-user" /><span>{{ roleLabel }}</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">
-        <i class="pi pi-sign-out" />
+        <PkIcon class="pi pi-sign-out" />
         <span v-if="!collapsed">Çıkış Yap</span>
       </button>
     </div>

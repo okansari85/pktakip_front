@@ -7,7 +7,7 @@
           <p>{{ system ? `${system.name} · ${installation.name}` : installation ? `${installation.name} · ${installation.location?.name || ''}` : placeLabel }}</p>
         </div>
         <ExpertReportSteps :step="saving ? 3 : file && formVisible ? 2 : 1" />
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <!-- Rapor dosyası (her iki yolda da zorunlu: dijital arşiv) -->
@@ -20,12 +20,12 @@
         <section class="rd-card">
           <div class="card-head">
             <h3>{{ mode === 'ai' && analysis ? 'Okunan bilgileri doğrulayın' : 'Rapor bilgileri' }}</h3>
-            <span v-if="mode === 'ai' && analysis" class="done-chip"><i class="pi pi-check-circle" /> Okuma tamamlandı</span>
+            <span v-if="mode === 'ai' && analysis" class="done-chip"><PkIcon class="pi pi-check-circle" /> Okuma tamamlandı</span>
           </div>
 
           <div class="mode">
-            <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><i class="pi pi-pencil" /> Elle doldur</button>
-            <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><i class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
+            <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><PkIcon class="pi pi-pencil" /> Elle doldur</button>
+            <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><PkIcon class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
           </div>
 
           <!-- Yapay zeka: önce analiz -->
@@ -33,17 +33,17 @@
             <p v-if="file && !isPdf && !fixtureId" class="hint warn">Yapay zeka analizi yalnızca PDF raporlarda çalışır. Görsel raporu "Elle doldur" ile yükleyin.</p>
             <div v-else class="ai-box">
               <template v-if="analyzing">
-                <i class="pi pi-spin pi-spinner" />
+                <PkIcon class="pi pi-spin pi-spinner" />
                 <span><strong>Rapor okunuyor...</strong><small>Tesisat türü, sistemler, sonuçlar ve bulgular çıkarılıyor. 1-3 dakika sürebilir, pencereyi kapatmayın.</small></span>
               </template>
               <template v-else>
-                <i class="pi pi-sparkles" />
+                <PkIcon class="pi pi-sparkles" />
                 <span><strong>Rapor yapay zeka ile okunacak</strong><small>Tesisat türü ve sistemlerin sonuçları doldurulur; kaydetmeden önce kontrol edersiniz.</small></span>
                 <button class="ai-button" type="button" :disabled="!file && !fixtureId" @click="analyze">Analiz et</button>
               </template>
             </div>
             <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
-              <span><i class="pi pi-database" /> Test verisi</span>
+              <span><PkIcon class="pi pi-database" /> Test verisi</span>
               <select v-model="fixtureId">
                 <option value="">Kullanma — raporu yapay zeka ile oku</option>
                 <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
@@ -52,36 +52,36 @@
           </template>
 
           <template v-if="analysis">
-            <p v-if="analysis.fixture" class="hint"><i class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
+            <p v-if="analysis.fixture" class="hint"><PkIcon class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
             <!-- Elektrik ailesi: rapor başka bir tesisata ait; bu tesisata kaydedilmez -->
             <div v-if="wrongPlace" class="duplicate">
-              <i class="pi pi-ban" />
+              <PkIcon class="pi pi-ban" />
               <span>{{ wrongPlace }}</span>
             </div>
-            <p v-else-if="typeWarning" class="hint warn"><i class="pi pi-exclamation-triangle" /> {{ typeWarning }}</p>
+            <p v-else-if="typeWarning" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" /> {{ typeWarning }}</p>
             <!-- Elektrik ailesi, bina bazında rapor: raporun binası açık kayıtla tutmuyor; nereye kaydedileceğini kullanıcı seçer
                  (seçilene kadar Kaydet kapalı). Binanın kaydı yoksa yeni tesisat olarak eklenmesi sorulur. -->
             <div v-if="buildingQuestion" class="building-question">
-              <p><i class="pi pi-building" /> {{ buildingQuestion.text }}</p>
+              <p><PkIcon class="pi pi-building" /> {{ buildingQuestion.text }}</p>
               <label><input v-model="buildingChoice" type="radio" value="other" /> {{ buildingQuestion.other }}</label>
               <label><input v-model="buildingChoice" type="radio" value="this" /> {{ buildingQuestion.self }}</label>
             </div>
             <!-- Sistemin raporu: rapordan yalnızca bu sistem alınır -->
             <!-- Elektrik, Kontrol Ekle: yapay zeka tek bir sistemin raporu olarak okudu; sistem raporu olarak kaydedilir -->
-            <p v-if="autoSystem" class="hint"><i class="pi pi-sparkles" /> Yapay zeka bunu {{ autoSystem.name ? `${autoSystem.name} raporu` : 'tek bir sistemin raporu' }} olarak okudu; sistem raporu olarak kaydedilecek.<template v-if="!autoSystem.system_id"> Sistemini aşağıdaki listeden seçin.</template></p>
-            <p v-if="fixedSystem && systemMissing" class="hint warn"><i class="pi pi-exclamation-triangle" /> Raporda {{ fixedSystemName }} bulunamadı; doğru raporu yüklediğinizden emin olun. Sonucu ve bulguları siz girin.</p>
-            <p v-if="fixedSystem && otherSystems.length" class="hint warn"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ otherSystems.join(', ') }}. Bu yüklemede yalnızca {{ fixedSystemName }} kaydedilir.</p>
+            <p v-if="autoSystem" class="hint"><PkIcon class="pi pi-sparkles" /> Yapay zeka bunu {{ autoSystem.name ? `${autoSystem.name} raporu` : 'tek bir sistemin raporu' }} olarak okudu; sistem raporu olarak kaydedilecek.<template v-if="!autoSystem.system_id"> Sistemini aşağıdaki listeden seçin.</template></p>
+            <p v-if="fixedSystem && systemMissing" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" /> Raporda {{ fixedSystemName }} bulunamadı; doğru raporu yüklediğinizden emin olun. Sonucu ve bulguları siz girin.</p>
+            <p v-if="fixedSystem && otherSystems.length" class="hint warn"><PkIcon class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ otherSystems.join(', ') }}. Bu yüklemede yalnızca {{ fixedSystemName }} kaydedilir.</p>
             <!-- Elektrik ailesi, sistemin raporu: rapordaki diğer sistemler de kendi sonuçlarıyla kaydedilir -->
-            <p v-if="fixedSystem && extraSystemNames.length" class="hint"><i class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ extraSystemNames.join(', ') }}. Onlar da kendi sonuçlarıyla kaydedilir; istemediğinizi ✕ ile çıkarın.</p>
+            <p v-if="fixedSystem && extraSystemNames.length" class="hint"><PkIcon class="pi pi-info-circle" /> Raporda başka sistemler de var: {{ extraSystemNames.join(', ') }}. Onlar da kendi sonuçlarıyla kaydedilir; istemediğinizi ✕ ile çıkarın.</p>
             <!-- Elektrik ailesi, sistem satırından yüklendi ama yapay zeka tesisatın genel raporu olarak okudu -->
-            <p v-if="readAsGeneral" class="hint warn"><i class="pi pi-info-circle" /> Yapay zeka bunu tesisatın genel raporu olarak okudu. Tesisatın genel durumunu belirlemesi için Kontrol Ekle'den yükleyin; buradan kaydedilirse yalnızca sistemleri günceller.</p>
+            <p v-if="readAsGeneral" class="hint warn"><PkIcon class="pi pi-info-circle" /> Yapay zeka bunu tesisatın genel raporu olarak okudu. Tesisatın genel durumunu belirlemesi için Kontrol Ekle'den yükleyin; buradan kaydedilirse yalnızca sistemleri günceller.</p>
             <!-- Kontrol Ekle (tesisat raporu): rapordan tek sistem çıktıysa sistem raporu olabilir (kaydı engellemez) -->
             <p v-if="singleSystemName" class="hint warn">
-              <i class="pi pi-info-circle" /> Raporda yalnızca {{ singleSystemName }} bulundu. Bu bir sistem raporuysa Sistemler listesinde o sistemin “Rapor yükle” ikonunu kullanın; buradan yüklenen rapor tesisat raporu sayılır ve tesisatın genel durumunu belirler.
+              <PkIcon class="pi pi-info-circle" /> Raporda yalnızca {{ singleSystemName }} bulundu. Bu bir sistem raporuysa Sistemler listesinde o sistemin “Rapor yükle” ikonunu kullanın; buradan yüklenen rapor tesisat raporu sayılır ve tesisatın genel durumunu belirler.
             </p>
-            <p v-if="analysis.input === 'ocr'" class="hint warn"><i class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
+            <p v-if="analysis.input === 'ocr'" class="hint warn"><PkIcon class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
             <div v-if="analysis.duplicate" class="duplicate">
-              <i class="pi pi-ban" />
+              <PkIcon class="pi pi-ban" />
               <span>{{ analysis.duplicate.message }}</span>
             </div>
           </template>
@@ -98,13 +98,13 @@
             </div>
             <p v-if="analysis?.type_evidence && !installation" class="hint">Yapay zekanın dayanağı: “{{ analysis.type_evidence }}”</p>
             <p v-if="!installation && selectedType" class="target" :class="{ new: !target }">
-              <i :class="target ? 'pi pi-link' : 'pi pi-plus-circle'" />
+              <PkIcon :class="target ? 'pi pi-link' : 'pi pi-plus-circle'" />
               <template v-if="target">Rapor bu lokasyondaki <strong>{{ target.name }}</strong> kaydına eklenecek.</template>
               <template v-else>Bu lokasyonda {{ selectedType.name }} kaydı yok; rapor kaydedilince oluşturulacak.</template>
             </p>
 
             <p v-if="fixedSystem" class="hint">
-              <i class="pi pi-info-circle" /> Bu rapor yalnızca {{ [fixedSystemName, ...extraSystemNames].join(', ') }} {{ extraSystemNames.length ? 'sistemlerini' : 'sistemini' }} günceller; tesisatın genel durumu, tarihleri ve genel bulguları değişmez.
+              <PkIcon class="pi pi-info-circle" /> Bu rapor yalnızca {{ [fixedSystemName, ...extraSystemNames].join(', ') }} {{ extraSystemNames.length ? 'sistemlerini' : 'sistemini' }} günceller; tesisatın genel durumu, tarihleri ve genel bulguları değişmez.
             </p>
 
             <div class="rows">
@@ -127,10 +127,10 @@
             <p v-if="analysis?.next_control_source === 'period'" class="hint">Raporda geçerlilik tarihi bulunamadı; gelecek kontrol 12 aylık periyoda göre hesaplandı.</p>
             <!-- Aynı rapor no ile yüklenmiş raporlar: seçilen türe ve sistemlere göre (kural kayıtta da uygulanır) -->
             <div v-if="reportNoConflict" class="duplicate">
-              <i class="pi pi-ban" />
+              <PkIcon class="pi pi-ban" />
               <span>{{ reportNoConflict }}</span>
             </div>
-            <p v-else-if="reportNoInfo" class="hint"><i class="pi pi-info-circle" /> {{ reportNoInfo }}</p>
+            <p v-else-if="reportNoInfo" class="hint"><PkIcon class="pi pi-info-circle" /> {{ reportNoInfo }}</p>
           </template>
         </section>
       </div>
@@ -140,11 +140,11 @@
         <div class="rd-card systems">
           <div class="systems-head">
             <strong>{{ fixedSystem ? (systems.length > 1 ? 'Sistemler' : 'Sistem') : 'Kontrol edilen sistemler' }}</strong>
-            <button v-if="!fixedSystem" class="link-button" type="button" :disabled="!selectedType" @click="addSystem"><i class="pi pi-plus" /> Sistem ekle</button>
+            <button v-if="!fixedSystem" class="link-button" type="button" :disabled="!selectedType" @click="addSystem"><PkIcon class="pi pi-plus" /> Sistem ekle</button>
           </div>
           <p v-if="installation && !analysis && !fixedSystem" class="muted">Tesisatın sistemleri listelendi; kontrolde olmayanları çıkarın. Raporda olup tesisatta olmayan sistem, kayıtta tesisata eklenir.</p>
           <p v-if="unmatchedCount" class="hint warn">
-            <i class="pi pi-link" /> {{ unmatchedCount }} sistem katalogla eşleşmedi. Karşılığını listeden seçin; seçmezseniz tesisata eklenmez, isterseniz kataloğa eklenmesi için talep gönderilir.
+            <PkIcon class="pi pi-link" /> {{ unmatchedCount }} sistem katalogla eşleşmedi. Karşılığını listeden seçin; seçmezseniz tesisata eklenmez, isterseniz kataloğa eklenmesi için talep gönderilir.
           </p>
           <p v-if="!selectedType" class="muted">Önce tesisat türünü seçin.</p>
           <p v-else-if="!systems.length && systemsOptional && analysis" class="muted">Raporda ayrı bir sistem bölümü yok; rapor tesisatın genel durumunu ve bulgularını verir. Sistemlerin durumu sistem raporlarından gelir.</p>
@@ -168,9 +168,9 @@
                 <option value="uygun_degil">Uygun değil</option>
               </select>
               <button class="link-button" type="button" @click="system.open = !system.open">
-                Bulgular <i :class="system.open ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                Bulgular <PkIcon :class="system.open ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
               </button>
-              <button v-if="!fixedSystem || index > 0" class="icon-button" type="button" title="Sistemi çıkar" aria-label="Sistemi çıkar" @click="systems.splice(index, 1)"><i class="pi pi-times" /></button>
+              <button v-if="!fixedSystem || index > 0" class="icon-button" type="button" title="Sistemi çıkar" aria-label="Sistemi çıkar" @click="systems.splice(index, 1)"><PkIcon class="pi pi-times" /></button>
             </div>
             <label v-if="isUnmatched(system)" class="request-check"><input v-model="system.request" type="checkbox" /> Kataloğa eklenmesi için talep gönder</label>
             <small v-if="!system.system_id && !system.source_names.length" class="source warn">Listeden sistem seçin ya da satırı çıkarın.</small>
@@ -187,11 +187,11 @@
               <ol v-if="system.findings.length">
                 <li v-for="(_, findingIndex) in system.findings" :key="findingIndex">
                   <textarea v-model="system.findings[findingIndex]" rows="2" placeholder="Bulgu / kusur açıklaması" />
-                  <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="system.findings.splice(findingIndex, 1)"><i class="pi pi-times" /></button>
+                  <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="system.findings.splice(findingIndex, 1)"><PkIcon class="pi pi-times" /></button>
                 </li>
               </ol>
               <p v-else class="muted">Bulgu yok.</p>
-              <button class="link-button" type="button" @click="system.findings.push('')"><i class="pi pi-plus" /> Bulgu ekle</button>
+              <button class="link-button" type="button" @click="system.findings.push('')"><PkIcon class="pi pi-plus" /> Bulgu ekle</button>
             </div>
           </div>
         </div>
@@ -296,7 +296,7 @@
               <ol v-if="row.open" class="row-findings"><li v-for="(finding, index) in row.findings" :key="index">{{ finding }}</li></ol>
             </template>
           </div>
-          <p v-if="equipmentProblem" class="hint warn"><i class="pi pi-exclamation-triangle" /> {{ equipmentProblem }}</p>
+          <p v-if="equipmentProblem" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" /> {{ equipmentProblem }}</p>
         </div>
 
         <!-- Hiçbir sisteme bağlı olmayan bulgular (sistemin raporunda yok: bulgular sistemin altında) -->
@@ -308,10 +308,10 @@
             <ol v-if="generalFindings.length">
               <li v-for="(_, findingIndex) in generalFindings" :key="findingIndex">
                 <textarea v-model="generalFindings[findingIndex]" rows="2" placeholder="Bulgu / kusur açıklaması" />
-                <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="generalFindings.splice(findingIndex, 1)"><i class="pi pi-times" /></button>
+                <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="generalFindings.splice(findingIndex, 1)"><PkIcon class="pi pi-times" /></button>
               </li>
             </ol>
-            <button class="link-button" type="button" @click="generalFindings.push('')"><i class="pi pi-plus" /> Bulgu ekle</button>
+            <button class="link-button" type="button" @click="generalFindings.push('')"><PkIcon class="pi pi-plus" /> Bulgu ekle</button>
           </div>
           <!-- Yapay zekanın kusur saymadığı satırlar: kaçan kusur uzmanın önüne gelsin -->
           <div v-if="notKusurLines.length" class="findings-edit">
@@ -319,7 +319,7 @@
             <ul>
               <li v-for="(line, index) in notKusurLines" :key="index">
                 <span class="muted">{{ line }}</span>
-                <button class="link-button" type="button" @click="generalFindings.push(line); notKusurLines.splice(index, 1)"><i class="pi pi-plus" /> Bulguya ekle</button>
+                <button class="link-button" type="button" @click="generalFindings.push(line); notKusurLines.splice(index, 1)"><PkIcon class="pi pi-plus" /> Bulguya ekle</button>
               </li>
             </ul>
           </div>
@@ -332,11 +332,11 @@
 
       <p v-if="error" class="error-text">{{ error }}</p>
       <div class="rd-foot">
-        <p class="note-bar"><i class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
+        <p class="note-bar"><PkIcon class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
           <button v-if="formVisible && !analysis?.duplicate" class="primary-button" type="button" :disabled="busy || !canSave" @click="save">
-            <i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : 'Onayla ve kaydet' }}
+            <PkIcon :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : 'Onayla ve kaydet' }}
           </button>
         </div>
       </div>

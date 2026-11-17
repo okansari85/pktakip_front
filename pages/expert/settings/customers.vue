@@ -2,12 +2,12 @@
   <div class="customers-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>{{ t.page }}</strong></div>
+        <div class="breadcrumb"><span>Ayarlar</span><PkIcon class="pi pi-angle-right" /><strong>{{ t.page }}</strong></div>
         <h1>{{ t.page }}</h1>
         <p>{{ t.intro }}</p>
       </div>
       <button class="primary-button" type="button" @click="wizardOpen = true">
-        <i class="pi pi-plus" />
+        <PkIcon class="pi pi-plus" />
         <span>{{ t.add }}</span>
       </button>
     </div>
@@ -15,19 +15,19 @@
     <section class="table-card">
       <div class="toolbar">
         <div class="search-box">
-          <i class="pi pi-search" />
+          <PkIcon class="pi pi-search" />
           <input v-model="search" type="text" :placeholder="t.search" />
         </div>
       </div>
 
-      <div v-if="notice" class="notice-row"><i class="pi pi-exclamation-triangle" /> {{ notice }}</div>
+      <div v-if="notice" class="notice-row"><PkIcon class="pi pi-exclamation-triangle" /> {{ notice }}</div>
       <div v-if="loading" class="state-row">{{ t.loading }}</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="filteredCustomers.length === 0" class="state-row empty-state">
-        <i class="pi pi-building" />
+        <PkIcon class="pi pi-building" />
         <strong>{{ t.emptyTitle }}</strong>
         <span>{{ t.emptyText }}</span>
-        <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus" /> {{ orgMode ? 'İlk ana firmanızı ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
+        <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><PkIcon class="pi pi-plus" /> {{ orgMode ? 'İlk ana firmanızı ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -44,7 +44,7 @@
           <tbody>
             <tr v-for="customer in filteredCustomers" :key="customer.id">
               <td>
-                <div class="customer-name"><span class="customer-icon"><i class="pi pi-building" /></span><strong>{{ customer.name }}</strong></div>
+                <div class="customer-name"><span class="customer-icon"><PkIcon class="pi pi-building" /></span><strong>{{ customer.name }}</strong></div>
               </td>
               <td>
                 <span v-if="customerTypes[String(customer.id)]" class="type-chip">{{ customerTypeLabel(customerTypes[String(customer.id)]) }}</span>
@@ -55,9 +55,9 @@
               <td>{{ formatDate(customer.created_at) }}</td>
               <td class="actions">
                 <button class="icon-button tree-button" type="button" title="Yapıyı yönet" @click="openOrganization(customer)">
-                  <i class="pi pi-sitemap" />
+                  <PkIcon class="pi pi-sitemap" />
                 </button>
-                <button class="icon-button delete-button" type="button" :title="orgMode ? 'Ana firmayı sil' : 'Müşteriyi sil'" @click="openDelete(customer)"><i class="pi pi-trash" /></button>
+                <button class="icon-button delete-button" type="button" :title="orgMode ? 'Ana firmayı sil' : 'Müşteriyi sil'" @click="openDelete(customer)"><PkIcon class="pi pi-trash" /></button>
               </td>
             </tr>
           </tbody>
@@ -71,16 +71,16 @@
         <div class="drawer-head">
           <div>
             <h2>{{ orgMode ? 'Ana Firma Yapısı' : 'Müşteri Yapısı' }}</h2>
-            <div class="drawer-customer"><i class="pi pi-building" /><div><strong>{{ selectedCustomer?.name }}</strong><span>Dalları yönetin.</span></div></div>
+            <div class="drawer-customer"><PkIcon class="pi pi-building" /><div><strong>{{ selectedCustomer?.name }}</strong><span>Dalları yönetin.</span></div></div>
           </div>
-          <button class="close-button" type="button" @click="closeOrganization"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeOrganization"><PkIcon class="pi pi-times" /></button>
         </div>
 
         <div class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openOrganizationForm(orgMode ? rootNode : null)"><i class="pi pi-plus" /> Dal Ekle</button>
+          <button class="primary-button small" type="button" @click="openOrganizationForm(orgMode ? rootNode : null)"><PkIcon class="pi pi-plus" /> Dal Ekle</button>
         </div>
 
-        <div class="drawer-search search-box"><i class="pi pi-search" /><input v-model="organizationSearch" type="text" placeholder="Dal ara..." /></div>
+        <div class="drawer-search search-box"><PkIcon class="pi pi-search" /><input v-model="organizationSearch" type="text" placeholder="Dal ara..." /></div>
 
         <div v-if="organizationLoading" class="drawer-state">Dallar yükleniyor...</div>
         <div v-else-if="organizationError" class="drawer-state error-state">{{ organizationError }}</div>
@@ -102,23 +102,23 @@
     <div v-if="customerFormOpen" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon"><i class="pi pi-building" /></span><div><h2>Müşteri Ekle</h2><p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu ekleyin. Müşterinin altına dallarını, lokasyonlarını ve işyerlerini sonra eklersiniz.</p></div></div>
-          <button class="close-button" type="button" @click="closeCustomerForm"><i class="pi pi-times" /></button>
+          <div class="head-title"><span class="head-icon"><PkIcon class="pi pi-building" /></span><div><h2>Müşteri Ekle</h2><p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu ekleyin. Müşterinin altına dallarını, lokasyonlarını ve işyerlerini sonra eklersiniz.</p></div></div>
+          <button class="close-button" type="button" @click="closeCustomerForm"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>Müşteri Adı <span>*</span><input v-model="customerName" type="text" placeholder="Örn. ABC Holding" /></label>
-        <p class="field-hint"><i class="pi pi-info-circle" /> Listelerde ve raporlarda bu ad görünür. Grup şirketleri varsa en üstteki adı (holding ya da ana şirket) yazın.</p>
+        <p class="field-hint"><PkIcon class="pi pi-info-circle" /> Listelerde ve raporlarda bu ad görünür. Grup şirketleri varsa en üstteki adı (holding ya da ana şirket) yazın.</p>
         <!-- Müşteri türü (kullanıcı 18 Ekim 2026): işyeri tanımlarken sorular buna göre değişir -->
         <div class="type-field">
           <span class="type-label">Müşteri Türü <span>*</span></span>
           <div class="type-options">
             <button v-for="ct in CUSTOMER_TYPES" :key="ct.id" type="button" class="type-option" :class="{ on: customerTypeChoice === ct.id }" @click="customerTypeChoice = ct.id">
-              <i :class="ct.icon" /><span><strong>{{ ct.label }}</strong><small>{{ ct.text }}</small></span>
+              <PkIcon :class="ct.icon" /><span><strong>{{ ct.label }}</strong><small>{{ ct.text }}</small></span>
             </button>
           </div>
         </div>
-        <p class="field-hint"><i class="pi pi-info-circle" /> Tür, işyeri tanımlarken sorulan soruları belirler: şahıs işletmesinde firma sorulmaz, kurumsal firmada ve kamu kurumunda firma müşterinin Firmalar listesinden seçilir.</p>
+        <p class="field-hint"><PkIcon class="pi pi-info-circle" /> Tür, işyeri tanımlarken sorulan soruları belirler: şahıs işletmesinde firma sorulmaz, kurumsal firmada ve kamu kurumunda firma müşterinin Firmalar listesinden seçilir.</p>
         <label>Not <small>(Opsiyonel)</small><textarea v-model="customerNotes" rows="3" placeholder="Örn. sözleşme dönemi, yetkili kişi..."></textarea></label>
-        <p class="field-hint"><i class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
+        <p class="field-hint"><PkIcon class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeCustomerForm">İptal</button><button class="primary-button" type="button" :disabled="saving || !customerTypeChoice" @click="createCustomer">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
       </section>
     </div>
@@ -127,10 +127,10 @@
     <div v-if="deleteTarget" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon danger"><i class="pi pi-trash" /></span><div><h2>{{ orgMode ? 'Ana Firmayı Sil' : 'Müşteriyi Sil' }}</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir.</p></div></div>
-          <button class="close-button" type="button" @click="closeDelete"><i class="pi pi-times" /></button>
+          <div class="head-title"><span class="head-icon danger"><PkIcon class="pi pi-trash" /></span><div><h2>{{ orgMode ? 'Ana Firmayı Sil' : 'Müşteriyi Sil' }}</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir.</p></div></div>
+          <button class="close-button" type="button" @click="closeDelete"><PkIcon class="pi pi-times" /></button>
         </div>
-        <div class="info-box danger"><i class="pi pi-exclamation-triangle" /><span>Bu işlem <strong>geri alınamaz</strong>. Dallar, lokasyonlar, işyerleri, periyodik kontrol ekipmanları ve kontrol raporları (dosyalarıyla) birlikte silinir. Firma kartları silinmez; gerekirse Firmalar sayfasından ayrıca silebilirsiniz.</span></div>
+        <div class="info-box danger"><PkIcon class="pi pi-exclamation-triangle" /><span>Bu işlem <strong>geri alınamaz</strong>. Dallar, lokasyonlar, işyerleri, periyodik kontrol ekipmanları ve kontrol raporları (dosyalarıyla) birlikte silinir. Firma kartları silinmez; gerekirse Firmalar sayfasından ayrıca silebilirsiniz.</span></div>
         <p v-if="deleteSummaryLoading" class="muted-text">{{ orgMode ? 'Ana firmanın' : 'Müşterinin' }} altındaki kayıtlar hesaplanıyor...</p>
         <template v-else-if="deleteSummary">
           <p v-if="!deleteHasData" class="muted-text">Bu {{ orgMode ? 'ana firmanın' : 'müşterinin' }} altında kayıt yok.</p>
@@ -154,12 +154,12 @@
     <div v-if="organizationFormOpen" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon"><i :class="editingOrganization ? 'pi pi-pencil' : 'pi pi-sitemap'" /></span><div><h2>{{ editingOrganization ? 'Dalı Düzenle' : 'Dal Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" dalının adını değiştirin.</p><p v-else>{{ organizationParent ? `"${organizationParent.name}" altına` : orgMode ? 'En üst düzeye' : 'Müşteri köküne' }} yeni bir dal ekleyin.</p></div></div>
-          <button class="close-button" type="button" @click="closeOrganizationForm"><i class="pi pi-times" /></button>
+          <div class="head-title"><span class="head-icon"><PkIcon :class="editingOrganization ? 'pi pi-pencil' : 'pi pi-sitemap'" /></span><div><h2>{{ editingOrganization ? 'Dalı Düzenle' : 'Dal Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" dalının adını değiştirin.</p><p v-else>{{ organizationParent ? `"${organizationParent.name}" altına` : orgMode ? 'En üst düzeye' : 'Müşteri köküne' }} yeni bir dal ekleyin.</p></div></div>
+          <button class="close-button" type="button" @click="closeOrganizationForm"><PkIcon class="pi pi-times" /></button>
         </div>
-        <div v-if="!editingOrganization" class="info-box"><i class="pi pi-lightbulb" /><span>Dal, büyük yapılarda birimleri gruplamak içindir: daire başkanlığı, müdürlük, fabrika, bölge müdürlüğü gibi. Lokasyonlar bu dallara bağlanır; raporlar ve listeler dala göre süzülebilir.</span></div>
+        <div v-if="!editingOrganization" class="info-box"><PkIcon class="pi pi-lightbulb" /><span>Dal, büyük yapılarda birimleri gruplamak içindir: daire başkanlığı, müdürlük, fabrika, bölge müdürlüğü gibi. Lokasyonlar bu dallara bağlanır; raporlar ve listeler dala göre süzülebilir.</span></div>
         <label>Dal Adı <span>*</span><input v-model="organizationName" type="text" :placeholder="editingOrganization ? editingOrganization.name : 'Örn. Üretim Müdürlüğü'" /></label>
-        <p class="field-hint"><i class="pi pi-info-circle" /> {{ editingOrganization ? 'Yeni ad listelerde, lokasyonlarda ve raporlarda hemen görünür.' : 'Altına sonra başka dallar da ekleyebilirsiniz (+ düğmesi).' }}</p>
+        <p class="field-hint"><PkIcon class="pi pi-info-circle" /> {{ editingOrganization ? 'Yeni ad listelerde, lokasyonlarda ve raporlarda hemen görünür.' : 'Altına sonra başka dallar da ekleyebilirsiniz (+ düğmesi).' }}</p>
         <p v-if="organizationFormError" class="form-error">{{ organizationFormError }}</p>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeOrganizationForm">İptal</button><button class="primary-button" type="button" :disabled="savingOrganization" @click="editingOrganization ? renameOrganization() : createOrganization()">{{ savingOrganization ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
       </section>

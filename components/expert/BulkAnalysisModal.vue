@@ -6,17 +6,17 @@
           <div class="title"><h2>Toplu Rapor Yükle</h2><p>{{ contextText }} · tek ekipmanlı raporlar (yangın ekipmanları hariç)</p></div>
           <ExpertReportSteps :step="saving ? 3 : items.length ? 2 : 1" />
           <div class="head-buttons">
-            <button class="close-button" type="button" title="Küçült" aria-label="Küçült" @click="minimized = true"><i class="pi pi-window-minimize" /></button>
-            <button class="close-button" type="button" title="Kapat" aria-label="Kapat" @click="close"><i class="pi pi-times" /></button>
+            <button class="close-button" type="button" title="Küçült" aria-label="Küçült" @click="minimized = true"><PkIcon class="pi pi-window-minimize" /></button>
+            <button class="close-button" type="button" title="Kapat" aria-label="Kapat" @click="close"><PkIcon class="pi pi-times" /></button>
           </div>
         </div>
 
-        <p v-if="!sameContext" class="hint warn"><i class="pi pi-exclamation-triangle" /> Üstte seçili lokasyon değişti; bu pencere {{ contextText }} için açıldı. Yeni ekipmanlar oraya eklenir.</p>
+        <p v-if="!sameContext" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" /> Üstte seçili lokasyon değişti; bu pencere {{ contextText }} için açıldı. Yeni ekipmanlar oraya eklenir.</p>
 
         <!-- Dosyalar: çoklu seçim ya da sürükle bırak; aynı dosya listeye bir kez girer -->
         <input ref="fileInput" type="file" accept="application/pdf" multiple hidden @change="onPick" />
         <button class="file-box" :class="{ over: dragOver }" type="button" @click="fileInput?.click()" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
-          <i class="pi pi-file-pdf" />
+          <PkIcon class="pi pi-file-pdf" />
           <span>
             <strong>{{ items.length ? 'Rapor ekle' : 'Periyodik kontrol raporlarını seçin ya da buraya sürükleyin' }}</strong>
             <small>PDF · her dosya tek ekipmanın raporu (raf, kapı, transpalet, forklift…; yangın ekipmanları hariç). Raporlar sırayla, birer birer okunur; daha önce yüklenmiş dosya okunmaz, son 24 saatte okunup kaydedilmemiş dosya yeniden okunmaz.</small>
@@ -24,7 +24,7 @@
         </button>
         <label v-if="showFixtures && catalogFixtures.length" class="fixture-line">
           <input v-model="useFixtures" type="checkbox" :disabled="running" />
-          <span><i class="pi pi-database" /> Test verisi kullan <small>— dosya adı aynı olan test verisi okunur, yapay zeka çağrılmaz</small></span>
+          <span><PkIcon class="pi pi-database" /> Test verisi kullan <small>— dosya adı aynı olan test verisi okunur, yapay zeka çağrılmaz</small></span>
         </label>
 
         <template v-if="items.length">
@@ -32,19 +32,19 @@
           <div class="rd-card progress-box">
             <div class="progress-line">
               <span class="progress-title">
-                <i v-if="running" class="pi pi-spin pi-spinner" />
+                <PkIcon v-if="running" class="pi pi-spin pi-spinner" />
                 <strong>{{ progressTitle }}</strong>
                 <small>{{ countsText }}<template v-if="etaText"> · {{ etaText }}</template></small>
               </span>
               <button v-if="running" class="secondary-button" type="button" :disabled="stopRequested" @click="stopRequested = true">{{ stopRequested ? 'Okunan bitince duracak' : 'Durdur' }}</button>
-              <button v-else-if="queuedCount" class="ai-button" type="button" @click="start"><i class="pi pi-sparkles" /> {{ startedOnce ? 'Devam et' : 'Analizi başlat' }}</button>
+              <button v-else-if="queuedCount" class="ai-button" type="button" @click="start"><PkIcon class="pi pi-sparkles" /> {{ startedOnce ? 'Devam et' : 'Analizi başlat' }}</button>
             </div>
             <ProgressBar :value="readPercent" :show-value="false" class="bar" />
-            <p v-if="stopMessage" class="hint warn"><i class="pi pi-pause-circle" /> {{ stopMessage }}</p>
+            <p v-if="stopMessage" class="hint warn"><PkIcon class="pi pi-pause-circle" /> {{ stopMessage }}</p>
             <template v-if="saveTotal">
               <div class="progress-line save-line">
                 <span class="progress-title">
-                  <i v-if="saving" class="pi pi-spin pi-spinner" />
+                  <PkIcon v-if="saving" class="pi pi-spin pi-spinner" />
                   <strong>{{ saving ? `Kaydediliyor: ${saveDone} / ${saveTotal}` : `Kayıt bitti: ${saveTotal - saveFailed} kaydedildi${saveFailed ? `, ${saveFailed} kaydedilemedi` : ''}` }}</strong>
                 </span>
               </div>
@@ -65,7 +65,7 @@
                     <td><input v-model="item.selected" type="checkbox" :disabled="!canSave(item) || saving" /></td>
                     <td class="file-cell">
                       <strong :title="item.file.name">{{ item.file.name }}</strong>
-                      <span class="state" :class="item.state"><i v-if="item.state === 'reading' || item.state === 'saving' || item.state === 'checking'" class="pi pi-spin pi-spinner" />{{ STATE_LABELS[item.state] }}<template v-if="item.result?.fixture"> · test verisi</template><template v-else-if="item.result?.reused_at"> · önceki okuma</template></span>
+                      <span class="state" :class="item.state"><PkIcon v-if="item.state === 'reading' || item.state === 'saving' || item.state === 'checking'" class="pi pi-spin pi-spinner" />{{ STATE_LABELS[item.state] }}<template v-if="item.result?.fixture"> · test verisi</template><template v-else-if="item.result?.reused_at"> · önceki okuma</template></span>
                       <small v-if="rowNote(item)" class="note" :class="rowNoteKind(item)">{{ rowNote(item) }}
                         <NuxtLink v-if="linkId(item)" :to="`/expert/equipment/${linkId(item)}`">Ekipmana git</NuxtLink>
                       </small>
@@ -91,14 +91,14 @@
                       <span v-else class="muted-cell">—</span>
                     </td>
                     <td class="actions">
-                      <button v-if="item.state === 'error'" class="icon-button" type="button" title="Tekrar oku" aria-label="Tekrar oku" @click="retry(item)"><i class="pi pi-refresh" /></button>
-                      <button v-if="removable(item)" class="icon-button" type="button" title="Listeden çıkar" aria-label="Listeden çıkar" @click="remove(item)"><i class="pi pi-times" /></button>
+                      <button v-if="item.state === 'error'" class="icon-button" type="button" title="Tekrar oku" aria-label="Tekrar oku" @click="retry(item)"><PkIcon class="pi pi-refresh" /></button>
+                      <button v-if="removable(item)" class="icon-button" type="button" title="Listeden çıkar" aria-label="Listeden çıkar" @click="remove(item)"><PkIcon class="pi pi-times" /></button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p class="hint"><i class="pi pi-info-circle" /> Mevcut ekipmanla eşleşmeyen rapor için yeni ekipman açılır; isterseniz satırdan mevcut bir ekipman seçin. Toplu kayıtta mevcut ekipmanın teknik özellikleri değişmez, yeni özellik de eklenmez; yeni ekipman rapordaki bilgilerle açılır.</p>
+            <p class="hint"><PkIcon class="pi pi-info-circle" /> Mevcut ekipmanla eşleşmeyen rapor için yeni ekipman açılır; isterseniz satırdan mevcut bir ekipman seçin. Toplu kayıtta mevcut ekipmanın teknik özellikleri değişmez, yeni özellik de eklenmez; yeni ekipman rapordaki bilgilerle açılır.</p>
           </div>
         </template>
 
@@ -124,20 +124,20 @@
             </select>
           </label>
           <button class="secondary-button" type="button" @click="minimized = true">Küçült</button>
-          <button class="primary-button" type="button" :disabled="!selectedRows.length || saving" @click="saveSelected"><i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : `Seçilenleri kaydet (${selectedRows.length})` }}</button>
+          <button class="primary-button" type="button" :disabled="!selectedRows.length || saving" @click="saveSelected"><PkIcon :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : `Seçilenleri kaydet (${selectedRows.length})` }}</button>
         </div>
       </section>
     </div>
 
     <!-- Küçültülmüş: sayfanın altında ilerleme; tıklayınca pencere açılır -->
     <button v-if="minimized" class="mini" type="button" @click="minimized = false">
-      <i :class="running || saving ? 'pi pi-spin pi-spinner' : 'pi pi-copy'" />
+      <PkIcon :class="running || saving ? 'pi pi-spin pi-spinner' : 'pi pi-copy'" />
       <span>
         <strong>Toplu analiz · {{ running ? 'okunuyor' : queuedCount ? 'durdu' : 'bitti' }} · {{ doneCount }} / {{ items.length }}</strong>
         <small>{{ saving ? `Kaydediliyor ${saveDone} / ${saveTotal}` : countsText }}</small>
         <ProgressBar :value="readPercent" :show-value="false" class="mini-bar" />
       </span>
-      <i class="pi pi-window-maximize" />
+      <PkIcon class="pi pi-window-maximize" />
     </button>
   </div>
 </template>

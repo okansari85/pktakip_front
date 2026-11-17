@@ -4,16 +4,16 @@
       <div class="page-head">
         <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
+          <PkIcon class="pi pi-home" aria-hidden="true" />
           <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-          <i class="pi pi-angle-right" aria-hidden="true" />
+          <PkIcon class="pi pi-angle-right" aria-hidden="true" />
           <strong>Rapor algılama testi</strong>
         </nav>
         <h1>Rapor algılama testi</h1>
         <p>Raporu yükleyin, çıkarılan alanları doğrulayın</p>
       </div>
-      <span v-if="running" class="hero-pill run"><i class="pi pi-spin pi-spinner" /> Analiz ediliyor · {{ elapsed }} sn</span>
-      <span v-else-if="selected" class="hero-pill ok"><i class="pi pi-check" /> Analiz tamamlandı</span>
+      <span v-if="running" class="hero-pill run"><PkIcon class="pi pi-spin pi-spinner" /> Analiz ediliyor · {{ elapsed }} sn</span>
+      <span v-else-if="selected" class="hero-pill ok"><PkIcon class="pi pi-check" /> Analiz tamamlandı</span>
     </div>
 
     <!-- Adımlar: rapor seçilmediyse 1, seçildi / analiz sürüyorsa 2, sonuç açıksa 3 -->
@@ -23,14 +23,14 @@
 
     <div class="work">
       <section class="card source">
-        <h2><i class="pi pi-file" /> Kaynak rapor</h2>
+        <h2><PkIcon class="pi pi-file" /> Kaynak rapor</h2>
         <div class="file-box">
           <span class="pdf-icon">PDF</span>
           <span class="file-meta">
             <strong>{{ sourceName || 'PDF seçilmedi' }}</strong>
             <small>{{ file ? `${formatSize(file.size)} • PDF` : legacyId ? 'Eski test PDF\'i' : selected ? `${selected.page_count || '—'} sayfa • PDF` : 'Bilgisayarınızdan bir PDF seçin' }}</small>
           </span>
-          <button class="outline-button" type="button" :disabled="running" @click="fileInput?.click()"><i class="pi pi-refresh" /> {{ sourceName ? 'Dosya değiştir' : 'Dosya seç' }}</button>
+          <button class="outline-button" type="button" :disabled="running" @click="fileInput?.click()"><PkIcon class="pi pi-refresh" /> {{ sourceName ? 'Dosya değiştir' : 'Dosya seç' }}</button>
           <input ref="fileInput" type="file" accept="application/pdf" hidden :disabled="running" @change="onFileChange" />
         </div>
         <label class="row-field">
@@ -61,14 +61,14 @@
         <iframe v-if="previewUrl" :src="previewUrl" class="preview" title="Rapor önizleme" />
         <div class="source-foot">
           <label class="sample" title="Eski test PDF'lerinden seç">
-            <span>Örnek rapor <i class="pi pi-info-circle" /></span>
+            <span>Örnek rapor <PkIcon class="pi pi-info-circle" /></span>
             <select v-model="legacyId" :disabled="running || !!file" @change="file = null">
               <option value="">Seçiniz</option>
               <option v-for="item in legacyFixtures" :key="item.fixture_id" :value="item.fixture_id">{{ item.original_file_name }}{{ item.report_category ? ` (${item.report_category})` : '' }}</option>
             </select>
           </label>
           <button class="primary-button" type="button" :disabled="running || (!file && !legacyId) || (kind === 'short' && !shortType)" @click="runAnalysis">
-            <i :class="running ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" />
+            <PkIcon :class="running ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" />
             {{ running ? `Analiz ediliyor... ${elapsed} sn` : 'Analiz et' }}
           </button>
         </div>
@@ -79,21 +79,21 @@
       <!-- Algılanan alanlar: açık analizin özeti; tamamı aşağıdaki ayrıntıda -->
       <section class="card detected">
         <header class="detected-head">
-          <h2><i class="pi pi-bullseye" /> Algılanan alanlar</h2>
-          <span v-if="selected" class="done-chip"><i class="pi pi-check-circle" /> Tamamlandı</span>
+          <h2><PkIcon class="pi pi-bullseye" /> Algılanan alanlar</h2>
+          <span v-if="selected" class="done-chip"><PkIcon class="pi pi-check-circle" /> Tamamlandı</span>
         </header>
         <div v-if="!selected" class="empty">Rapor seçip analiz edin ya da aşağıdan kayıtlı bir analizi açın; algılanan alanlar burada görünür.</div>
         <template v-else>
           <div class="tiles">
             <div v-for="tile in tiles" :key="tile.label" class="tile">
-              <i :class="tile.icon" />
+              <PkIcon :class="tile.icon" />
               <span><small>{{ tile.label }}</small><strong v-if="!tile.status" :title="tile.value">{{ tile.value }}</strong><span v-else class="status-badge" :class="statusKey(tile.status)">{{ statusLabel(tile.status) }}</span></span>
             </div>
           </div>
-          <h3><i class="pi pi-list" /> Bulgular</h3>
+          <h3><PkIcon class="pi pi-list" /> Bulgular</h3>
           <div v-if="!detectedFindings.length" class="empty">Bulgu yok.</div>
           <ul v-else class="finding-list">
-            <li v-for="(finding, index) in detectedFindings.slice(0, FINDING_LIMIT)" :key="finding.id || index"><i class="pi pi-exclamation-triangle" /> {{ finding.description }}</li>
+            <li v-for="(finding, index) in detectedFindings.slice(0, FINDING_LIMIT)" :key="finding.id || index"><PkIcon class="pi pi-exclamation-triangle" /> {{ finding.description }}</li>
           </ul>
           <p v-if="detectedFindings.length > FINDING_LIMIT" class="muted">+{{ detectedFindings.length - FINDING_LIMIT }} bulgu daha; tamamı aşağıdaki ayrıntıda.</p>
         </template>
@@ -104,7 +104,7 @@
       <section class="card">
         <div class="card-head">
           <h2>Kayıtlı analizler</h2>
-          <button class="icon-button" type="button" title="Yenile" @click="loadList"><i class="pi pi-refresh" /></button>
+          <button class="icon-button" type="button" title="Yenile" @click="loadList"><PkIcon class="pi pi-refresh" /></button>
         </div>
         <div v-if="listLoading" class="empty">Yükleniyor...</div>
         <div v-else-if="listError" class="empty error-text">{{ listError }}</div>
@@ -142,7 +142,7 @@
           <h2>{{ selected.original_file_name }}</h2>
           <div class="head-actions">
             <span class="muted">{{ selected.model || 'Yapay zeka' }} {{ selected.duration_s }} sn<template v-if="selected.tables"> · Tablo {{ selected.tables.duration_s }} sn</template> · {{ selected.page_count }} sayfa</span>
-            <button v-if="selected.input !== 'image'" class="secondary-button" type="button" :disabled="rereading" @click="rereadTables"><i :class="rereading ? 'pi pi-spin pi-spinner' : 'pi pi-table'" /> {{ rereading ? 'Okunuyor...' : 'Tabloları yeniden oku' }}</button>
+            <button v-if="selected.input !== 'image'" class="secondary-button" type="button" :disabled="rereading" @click="rereadTables"><PkIcon :class="rereading ? 'pi pi-spin pi-spinner' : 'pi pi-table'" /> {{ rereading ? 'Okunuyor...' : 'Tabloları yeniden oku' }}</button>
           </div>
         </div>
       </template>

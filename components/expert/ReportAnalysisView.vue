@@ -40,11 +40,11 @@
           <strong>{{ system.system_name }}</strong>
           <VerdictBadge :verdict="system.verdict" />
         </div>
-        <p v-if="system.verdict?.evidence" class="evidence"><i class="pi pi-info-circle" /> {{ system.verdict.evidence }}</p>
+        <p v-if="system.verdict?.evidence" class="evidence"><PkIcon class="pi pi-info-circle" /> {{ system.verdict.evidence }}</p>
 
         <div v-for="(definition, index) in system.equipment_definitions || []" :key="index" class="equipment">
           <div class="equipment-head">
-            <span><i class="pi pi-box" /> {{ definition.equipment_name }}</span>
+            <span><PkIcon class="pi pi-box" /> {{ definition.equipment_name }}</span>
             <span class="axis">{{ axisLabel(definition.instance_structure) }}</span>
             <VerdictBadge v-if="definition.instance_structure?.equipment_axis === 'none'" :verdict="definition.verdict" />
           </div>

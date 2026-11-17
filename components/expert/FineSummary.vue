@@ -77,7 +77,7 @@ watch(() => [props.locationId, props.workplaceId], () => { open.value = new Set(
 
   <!-- Sekme (Ceza) -->
   <div v-else class="fine-tab">
-    <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Hesaplanıyor...</div>
+    <div v-if="loading && !data" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Hesaplanıyor...</div>
     <div v-else-if="error && !data" class="card state error-text">{{ error }}</div>
     <template v-else-if="data">
       <div class="kpis three">
@@ -109,7 +109,7 @@ watch(() => [props.locationId, props.workplaceId], () => { open.value = new Set(
           <tbody>
             <template v-for="g in groups" :key="g.type">
               <tr class="group-row" :class="{ open: open.has(g.type) }" tabindex="0" :aria-expanded="open.has(g.type)" @click="toggle(g.type)" @keydown.enter.prevent="toggle(g.type)" @keydown.space.prevent="toggle(g.type)">
-                <td><i class="pi" :class="open.has(g.type) ? 'pi-chevron-down' : 'pi-chevron-right'" /> {{ g.type }}</td>
+                <td><PkIcon class="pi" :class="open.has(g.type) ? 'pi-chevron-down' : 'pi-chevron-right'" /> {{ g.type }}</td>
                 <td class="num">{{ g.items.length }}</td>
                 <td :class="{ 'error-text': g.overdue }">{{ g.overdue || '—' }}</td>
                 <td :class="{ 'error-text': g.nonconforming }">{{ g.nonconforming || '—' }}</td>

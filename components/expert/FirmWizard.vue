@@ -2,20 +2,20 @@
   <div class="modal-backdrop">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="firm-wizard-title">
       <div class="modal-head">
-        <span class="head-icon"><i :class="step === 'done' ? 'pi pi-check' : 'pi pi-building'" /></span>
+        <span class="head-icon"><PkIcon :class="step === 'done' ? 'pi pi-check' : 'pi pi-building'" /></span>
         <div>
           <h2 id="firm-wizard-title">{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
-        <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <!-- 1: tür -->
       <div v-if="step === 'kind'" class="kinds">
         <button v-for="k in FIRM_KINDS" :key="k.id" type="button" class="kind" :class="k.tone" @click="pick(k.id)">
-          <span class="kind-icon"><i :class="k.icon" /></span>
+          <span class="kind-icon"><PkIcon :class="k.icon" /></span>
           <span class="kind-text"><strong>{{ k.title }}</strong><small>{{ k.text }}</small></span>
-          <i class="pi pi-angle-right" />
+          <PkIcon class="pi pi-angle-right" />
         </button>
       </div>
 
@@ -25,28 +25,28 @@
           <input ref="nameInput" v-model="name" type="text" :placeholder="kindInfo.placeholder" :disabled="!!progress.customerId" />
         </label>
         <p v-if="duplicate" class="hint warn">
-          <i class="pi pi-exclamation-triangle" /> <span>"{{ duplicate.name }}" zaten kayıtlı. <NuxtLink :to="`/expert/firma/${duplicate.id}`">Firmayı aç</NuxtLink> ve oradan lokasyon ekleyin.</span>
+          <PkIcon class="pi pi-exclamation-triangle" /> <span>"{{ duplicate.name }}" zaten kayıtlı. <NuxtLink :to="`/expert/firma/${duplicate.id}`">Firmayı aç</NuxtLink> ve oradan lokasyon ekleyin.</span>
         </p>
         <ExpertFirmLocationFields v-if="!kindInfo.hasTree" :draft="draft" />
-        <p v-else class="hint info"><i class="pi pi-info-circle" /> Sonraki ekranda {{ kind === 'holding' ? 'şirketleri ve lokasyonlarını' : 'birimleri ve lokasyonları' }} tek yerden ekleyeceksiniz.</p>
+        <p v-else class="hint info"><PkIcon class="pi pi-info-circle" /> Sonraki ekranda {{ kind === 'holding' ? 'şirketleri ve lokasyonlarını' : 'birimleri ve lokasyonları' }} tek yerden ekleyeceksiniz.</p>
       </div>
 
       <!-- 3: hazır -->
       <div v-else class="done">
-        <div class="done-box"><i class="pi pi-check-circle" /><div><strong>{{ name.trim() }} hazır.</strong><span>{{ draft.name.trim() }} lokasyonu ve işyeri oluşturuldu.</span></div></div>
+        <div class="done-box"><PkIcon class="pi pi-check-circle" /><div><strong>{{ name.trim() }} hazır.</strong><span>{{ draft.name.trim() }} lokasyonu ve işyeri oluşturuldu.</span></div></div>
         <p class="next">Şimdi ne yapmak istersiniz?</p>
-        <button class="primary-button full" type="button" @click="goEquipment"><i class="pi pi-wrench" /> Ekipman Ekle</button>
-        <button class="secondary-button full" type="button" @click="openFirm"><i class="pi pi-map-marker" /> Başka Lokasyon Ekle</button>
+        <button class="primary-button full" type="button" @click="goEquipment"><PkIcon class="pi pi-wrench" /> Ekipman Ekle</button>
+        <button class="secondary-button full" type="button" @click="openFirm"><PkIcon class="pi pi-map-marker" /> Başka Lokasyon Ekle</button>
         <button class="link-button" type="button" @click="emit('close')">Şimdilik bu kadar</button>
       </div>
 
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
       <div v-if="step !== 'done'" class="modal-actions">
-        <button v-if="step === 'form' && !progress.customerId" class="secondary-button" type="button" :disabled="saving" @click="step = 'kind'; error = ''"><i class="pi pi-arrow-left" /> Geri</button>
+        <button v-if="step === 'form' && !progress.customerId" class="secondary-button" type="button" :disabled="saving" @click="step = 'kind'; error = ''"><PkIcon class="pi pi-arrow-left" /> Geri</button>
         <button v-else class="secondary-button" type="button" :disabled="saving" @click="close">İptal</button>
         <button v-if="step === 'form'" class="primary-button" type="button" :disabled="!canSave || saving" @click="save">
-          {{ saving ? 'Oluşturuluyor...' : kindInfo.hasTree ? 'Devam Et' : 'Firmayı Oluştur' }} <i v-if="!saving" class="pi pi-arrow-right" />
+          {{ saving ? 'Oluşturuluyor...' : kindInfo.hasTree ? 'Devam Et' : 'Firmayı Oluştur' }} <PkIcon v-if="!saving" class="pi pi-arrow-right" />
         </button>
       </div>
     </section>

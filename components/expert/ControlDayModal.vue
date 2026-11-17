@@ -6,45 +6,45 @@
           <h2>{{ longDate }}</h2>
           <p><span class="days" :class="timingOf(daysLeft)">{{ daysText(daysLeft) }}</span> · {{ summary }}</p>
         </div>
-        <button class="close-button" type="button" @click="emit('close')"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <!-- Bulgu Takip: o gün tekrar kontrolü planlanan bulgular -->
       <div v-if="rechecks?.length" class="entry">
-        <h3><i class="pi pi-list-check" /> Bulgu tekrar kontrolleri</h3>
+        <h3><PkIcon class="pi pi-list-check" /> Bulgu tekrar kontrolleri</h3>
         <ul class="rechecks">
           <li v-for="item in rechecks" :key="item.id">
             <strong>{{ item.text }}</strong>
             <small>{{ [item.subject?.name, item.subject?.code, item.subject?.detail].filter(Boolean).join(' · ') }} · {{ locationLabel(item.location?.id, item.location?.name) }}<template v-if="item.responsible"> · Sorumlu: {{ item.responsible.name }}</template></small>
           </li>
         </ul>
-        <NuxtLink class="link-button" to="/expert/bulgu-takip">Bulgu Takip <i class="pi pi-arrow-right" /></NuxtLink>
+        <NuxtLink class="link-button" to="/expert/bulgu-takip">Bulgu Takip <PkIcon class="pi pi-arrow-right" /></NuxtLink>
       </div>
 
       <!-- Kontrol planlama: o gün planlanan kontroller (yalnız Kontrol Takvimi verir) -->
       <div v-if="plans?.length" class="entry">
-        <h3><i class="pi pi-calendar-plus" /> Planlanan kontroller</h3>
+        <h3><PkIcon class="pi pi-calendar-plus" /> Planlanan kontroller</h3>
         <ul class="rechecks">
           <li v-for="plan in plans" :key="plan.id" class="plan-line">
             <span>
               <strong>{{ planText(plan) }}</strong>
               <small>{{ [plan.title ? planSubject(plan) : '', plan.workplace_name, locationLabel(plan.location_id, plan.location_name), plan.note].filter(Boolean).join(' · ') }}</small>
             </span>
-            <button class="link-button" type="button" @click="emit('edit-plan', plan)"><i class="pi pi-pencil" /> Düzenle</button>
+            <button class="link-button" type="button" @click="emit('edit-plan', plan)"><PkIcon class="pi pi-pencil" /> Düzenle</button>
           </li>
         </ul>
       </div>
 
       <div v-for="entry in entries" :key="entry.location_id ?? 0" class="entry">
-        <h3><i class="pi pi-map-marker" /> {{ locationLabel(entry.location_id, entry.location_name) }}</h3>
+        <h3><PkIcon class="pi pi-map-marker" /> {{ locationLabel(entry.location_id, entry.location_name) }}</h3>
         <div v-for="group in entry.groups" :key="group.key" class="group" :class="{ open: isOpen(entry, group) }">
           <button type="button" class="group-toggle" @click="toggle(entry, group)">
-            <i class="pi" :class="isOpen(entry, group) ? 'pi-chevron-down' : 'pi-chevron-right'" />
+            <PkIcon class="pi" :class="isOpen(entry, group) ? 'pi-chevron-down' : 'pi-chevron-right'" />
             <strong>{{ groupText(group) }}</strong>
             <small v-if="group.kind === 'type' && shortName(group.name) !== group.name">{{ group.name }}</small>
           </button>
           <div v-if="isOpen(entry, group)" class="group-body">
-            <NuxtLink v-if="group.kind === 'installation'" class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink>
+            <NuxtLink v-if="group.kind === 'installation'" class="link-button" to="/expert/installations">Tesisatlar <PkIcon class="pi pi-arrow-right" /></NuxtLink>
             <p v-if="listOf(entry, group)?.loading" class="muted">Yükleniyor...</p>
             <p v-else-if="listOf(entry, group)?.error" class="error-text">{{ listOf(entry, group)?.error }}</p>
             <ExpertEquipmentDueTable v-else :items="listOf(entry, group)?.items || []" :limit="20" />

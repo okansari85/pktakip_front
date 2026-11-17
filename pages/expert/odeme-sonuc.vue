@@ -1,11 +1,11 @@
 <template>
   <div class="result-page">
     <section class="card" role="status">
-      <span class="icon" :class="ok ? 'ok' : 'fail'"><i :class="ok ? 'pi pi-check' : 'pi pi-times'" /></span>
+      <span class="icon" :class="ok ? 'ok' : 'fail'"><PkIcon :class="ok ? 'pi pi-check' : 'pi pi-times'" /></span>
       <template v-if="ok">
         <h1>Ödemeniz alındı</h1>
         <p v-if="applied">Paketiniz tanımlandı: <strong>{{ status?.package?.name }}</strong><template v-if="status?.paid_until"> · ödenen dönem bitişi {{ formatDay(status.paid_until) }}</template>.</p>
-        <p v-else-if="waiting"><i class="pi pi-spin pi-spinner" /> Paketiniz birkaç saniye içinde tanımlanır, lütfen bekleyin...</p>
+        <p v-else-if="waiting"><PkIcon class="pi pi-spin pi-spinner" /> Paketiniz birkaç saniye içinde tanımlanır, lütfen bekleyin...</p>
         <p v-else>Ödemeniz alındı; paketinizin tanımlanması biraz gecikebilir. Birkaç dakika sonra Paketim sayfasından kontrol edin.</p>
         <NuxtLink to="/expert/hesabim?tab=package" class="primary-button">Paketim'e dön</NuxtLink>
       </template>

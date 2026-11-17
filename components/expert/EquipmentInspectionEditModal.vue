@@ -3,7 +3,7 @@
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Kontrol Kaydını Düzenle</h2><p>{{ equipment.name || equipment.type?.name }}<template v-if="equipment.code"> · Ekipman no {{ equipment.code }}</template></p></div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
       <p v-if="pending" class="hint">Rapor bekleniyor kaydı. Sonuç, rapor gelince "Yeni Periyodik Kontrol Raporu Yükle" ile girilir.</p>
       <p v-else class="hint">Rapor dosyası<template v-if="inspection.analysis"> ve yapay zeka analizi</template> değişmez. Yanlış rapor yüklendiyse kaydı silip yeniden yükleyin.</p>
@@ -27,13 +27,13 @@
           <div class="wide findings-edit">
             <div class="findings-head">
               <span>Bulgular <small>(varsa, madde madde)</small></span>
-              <button class="link-button" type="button" @click="addFinding"><i class="pi pi-plus" /> Bulgu ekle</button>
+              <button class="link-button" type="button" @click="addFinding"><PkIcon class="pi pi-plus" /> Bulgu ekle</button>
             </div>
             <p v-if="!form.findings.length" class="muted">Bulgu yok.</p>
             <ol v-else>
               <li v-for="(_, index) in form.findings" :key="index">
                 <textarea v-model="form.findings[index]" rows="2" placeholder="Bulgu / kusur açıklaması" />
-                <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="form.findings.splice(index, 1)"><i class="pi pi-times" /></button>
+                <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="form.findings.splice(index, 1)"><PkIcon class="pi pi-times" /></button>
               </li>
             </ol>
           </div>

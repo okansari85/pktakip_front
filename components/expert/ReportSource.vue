@@ -1,16 +1,16 @@
 <template>
   <section class="source">
     <header>
-      <i class="pi pi-file head-icon" />
+      <PkIcon class="pi pi-file head-icon" />
       <h3>Kaynak rapor</h3>
       <template v-if="file">
         <strong :title="file.name">{{ file.name }}</strong>
         <span class="chip">{{ size }}</span>
-        <button class="outline-button" type="button" :disabled="disabled" @click="emit('pick')"><i class="pi pi-refresh" /> Dosya değiştir</button>
+        <button class="outline-button" type="button" :disabled="disabled" @click="emit('pick')"><PkIcon class="pi pi-refresh" /> Dosya değiştir</button>
       </template>
     </header>
     <button v-if="!file" class="pick" type="button" :disabled="disabled" @click="emit('pick')">
-      <i class="pi pi-cloud-upload" /><span><slot /></span>
+      <PkIcon class="pi pi-cloud-upload" /><span><slot /></span>
     </button>
     <!-- Seçilen dosyanın önizlemesi (tarayıcıda, sunucuya gitmez) -->
     <iframe v-else-if="isPdf" :src="url" class="preview" title="Rapor önizleme" />

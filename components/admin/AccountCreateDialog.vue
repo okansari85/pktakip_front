@@ -26,7 +26,7 @@
 
     <template #footer>
       <Button label="Vazgeç" text :disabled="saving" @click="visible = false" />
-      <Button :label="current.submit" icon="pi pi-check" class="pk-primary" :loading="saving" @click="submit" />
+      <Button :label="current.submit" class="pk-primary" :loading="saving" @click="submit"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check" :class="iconClass" /></template></Button>
     </template>
   </Dialog>
 </template>

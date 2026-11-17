@@ -38,9 +38,9 @@
         <Column header="İşlemler" headerStyle="width: 150px">
           <template #body="{ data }">
             <div class="actions">
-              <Button icon="pi pi-box" text rounded v-tooltip.top="'Paket ata'" @click="openAssign(data)" />
-              <Button icon="pi pi-plus-circle" text rounded v-tooltip.top="'Elle kredi'" @click="openCredit(data)" />
-              <Button icon="pi pi-list" text rounded v-tooltip.top="'Kredi hareketleri'" @click="entriesFor = data" />
+              <Button text rounded v-tooltip.top="'Paket ata'" @click="openAssign(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-box" :class="iconClass" /></template></Button>
+              <Button text rounded v-tooltip.top="'Elle kredi'" @click="openCredit(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-plus-circle" :class="iconClass" /></template></Button>
+              <Button text rounded v-tooltip.top="'Kredi hareketleri'" @click="entriesFor = data"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-list" :class="iconClass" /></template></Button>
             </div>
           </template>
         </Column>
@@ -49,7 +49,7 @@
 
     <!-- Paketler: hesap türüne göre -->
     <template v-else>
-      <div class="toolbar"><Button label="Yeni paket" icon="pi pi-plus" class="pk-primary" @click="openPackage(null)" /></div>
+      <div class="toolbar"><Button label="Yeni paket" class="pk-primary" @click="openPackage(null)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-plus" :class="iconClass" /></template></Button></div>
       <div class="table-card">
         <DataTable :value="packages" :loading="loading" responsiveLayout="scroll" emptyMessage="Paket yok.">
           <Column header="Paket"><template #body="{ data }"><strong>{{ data.name }}</strong></template></Column>
@@ -59,7 +59,7 @@
           <Column header="Aylık fiyat"><template #body="{ data }">{{ money(data.monthly_price) }}</template></Column>
           <Column header="Yıllık fiyat"><template #body="{ data }">{{ money(data.yearly_price) }}</template></Column>
           <Column header="Durum"><template #body="{ data }"><Tag :value="data.is_active ? 'Aktif' : 'Pasif'" :severity="data.is_active ? 'success' : 'secondary'" /></template></Column>
-          <Column header="" headerStyle="width: 70px"><template #body="{ data }"><Button icon="pi pi-pencil" text rounded @click="openPackage(data)" /></template></Column>
+          <Column header="" headerStyle="width: 70px"><template #body="{ data }"><Button text rounded @click="openPackage(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-pencil" :class="iconClass" /></template></Button></template></Column>
         </DataTable>
       </div>
       <p class="hint">Paketi değiştirmek, o paketin atanmış olduğu hesapları değiştirmez (hesap atama anındaki değerlerle devam eder); hesaba yeniden atanınca yeni değerler geçer.</p>
@@ -79,7 +79,7 @@
       <Message v-if="dialogError" severity="error" :closable="false">{{ dialogError }}</Message>
       <template #footer>
         <Button label="Vazgeç" text :disabled="saving" @click="packageOpen = false" />
-        <Button label="Kaydet" icon="pi pi-check" class="pk-primary" :loading="saving" :disabled="!packageForm.name.trim()" @click="savePackage" />
+        <Button label="Kaydet" class="pk-primary" :loading="saving" :disabled="!packageForm.name.trim()" @click="savePackage"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check" :class="iconClass" /></template></Button>
       </template>
     </Dialog>
 
@@ -95,7 +95,7 @@
       <Message v-if="dialogError" severity="error" :closable="false">{{ dialogError }}</Message>
       <template #footer>
         <Button label="Vazgeç" text :disabled="saving" @click="assignOpen = false" />
-        <Button label="Ata" icon="pi pi-check" class="pk-primary" :loading="saving" :disabled="!assignForm.choice" @click="saveAssign" />
+        <Button label="Ata" class="pk-primary" :loading="saving" :disabled="!assignForm.choice" @click="saveAssign"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check" :class="iconClass" /></template></Button>
       </template>
     </Dialog>
 
@@ -107,7 +107,7 @@
       <Message v-if="dialogError" severity="error" :closable="false">{{ dialogError }}</Message>
       <template #footer>
         <Button label="Vazgeç" text :disabled="saving" @click="creditOpen = false" />
-        <Button label="Kaydet" icon="pi pi-check" class="pk-primary" :loading="saving" :disabled="!creditForm.amount || !creditForm.note.trim()" @click="saveCredit" />
+        <Button label="Kaydet" class="pk-primary" :loading="saving" :disabled="!creditForm.amount || !creditForm.note.trim()" @click="saveCredit"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check" :class="iconClass" /></template></Button>
       </template>
     </Dialog>
 

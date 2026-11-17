@@ -4,16 +4,16 @@
     <div class="page-head">
       <div class="head-title">
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
+          <PkIcon class="pi pi-home" aria-hidden="true" />
           <template v-if="detailView && detail">
             <a href="/expert/installations" @click.prevent="closeDetail">Tesisatlar</a>
-            <i class="pi pi-angle-right" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right" aria-hidden="true" />
             <strong>{{ detail.name }}</strong>
           </template>
           <template v-else>
             <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
             <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-            <i class="pi pi-angle-right" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right" aria-hidden="true" />
             <strong>Tesisatlar</strong>
           </template>
         </nav>
@@ -22,13 +22,13 @@
       </div>
       <!-- Tesisat türleri: yalnız bu lokasyonda tanımlı olanlar (ve eklenmek üzere seçilen); başka tür sondaki kutudan seçilir -->
       <div v-if="context && !detailView && shownTabs.length" class="type-pills">
-        <button v-for="type in shownTabs" :key="type.slug" type="button" class="type-pill" :class="{ active: activeSlug === type.slug }" :aria-pressed="activeSlug === type.slug" @click="selectTab(type.slug)"><i :class="typeIcon(type.slug)" aria-hidden="true" /> {{ type.name }}</button>
+        <button v-for="type in shownTabs" :key="type.slug" type="button" class="type-pill" :class="{ active: activeSlug === type.slug }" :aria-pressed="activeSlug === type.slug" @click="selectTab(type.slug)"><PkIcon :class="typeIcon(type.slug)" aria-hidden="true" /> {{ type.name }}</button>
         <Select v-if="addableTabs.length" :model-value="null" :options="addableTabs" option-label="name" option-value="slug" placeholder="Tesisat türü ekle" class="type-add" @update:model-value="selectTab" />
       </div>
     </div>
 
     <div v-if="!context" class="card empty-state">
-      <i class="pi pi-map-marker" />
+      <PkIcon class="pi pi-map-marker" />
       <strong>Lokasyon seçilmedi</strong>
       <span>Tesisatları görmek için üstteki Lokasyon kutusundan seçim yapın.</span>
     </div>
@@ -39,10 +39,10 @@
 
       <!-- Bu lokasyonda tesisat yok -->
       <div v-else-if="!ofType.length" class="card empty-state">
-        <i class="pi pi-sitemap" />
+        <PkIcon class="pi pi-sitemap" />
         <strong>Bu lokasyonda {{ activeType?.name || 'tesisat' }} tanımlı değil</strong>
         <span>Tesisatı ve içindeki sistemleri ekleyin. Periyodik kontrol raporları sonradan eklenir.</span>
-        <button v-if="activeType" class="primary-button" type="button" @click="openCreate"><i class="pi pi-plus" /> Tesisat Ekle</button>
+        <button v-if="activeType" class="primary-button" type="button" @click="openCreate"><PkIcon class="pi pi-plus" /> Tesisat Ekle</button>
         <!-- Lokasyonda hiç tesisat yoksa önce tür seçilir; seçilen tür sekme olur, Tesisat Ekle açılır -->
         <Select v-else :model-value="null" :options="tabs" option-label="name" option-value="slug" placeholder="Tesisat türü seçin" @update:model-value="selectTab" />
       </div>
@@ -59,7 +59,7 @@
               <span v-if="isElectricalTab" class="dot" :class="item.status" /> {{ item.name }} <span>{{ installationArea(item.id) || placeOf(item) }}</span>
             </button>
             <button v-if="isElectricalTab" type="button" class="chip add" title="Bina bazında rapor geliyorsa her bina için ayrı kayıt" @click="openCreate">
-              <i class="pi pi-plus" /> Tesisat ekle
+              <PkIcon class="pi pi-plus" /> Tesisat ekle
             </button>
           </div>
         </template>
@@ -70,48 +70,48 @@
           <div class="top">
             <section class="card status-card">
               <header>
-                <i :class="typeIcon(detail.type?.slug)" class="type-icon" aria-hidden="true" />
+                <PkIcon :class="typeIcon(detail.type?.slug)" class="type-icon" aria-hidden="true" />
                 <h2>{{ detail.name }}</h2>
-                <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
+                <span class="status-pill" :class="detail.status"><PkIcon :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
               </header>
               <p v-if="ofType.length > 1 || installationArea(detail.id) || detail.workplace" class="place-line"><template v-if="installationArea(detail.id)">{{ installationArea(detail.id) }} · </template>{{ placeOf(detail) }}</p>
               <dl class="facts">
-                <div><dt><i class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
-                <div><dt><i class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
+                <div><dt><PkIcon class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
+                <div><dt><PkIcon class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
               </dl>
               <!-- Kalan gün / süresi geçti; kontrol yoksa ya da rapor bekleniyorsa kısa not -->
-              <p v-if="detail.status === 'rapor_bekleniyor'" class="due-strip soon"><i class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor</p>
-              <p v-else-if="detail.status === 'rapor_yok'" class="due-strip"><i class="pi pi-info-circle" /> {{ detail.reports.length ? 'Henüz tesisat raporu yok' : 'Henüz kontrol eklenmedi' }}</p>
-              <p v-else-if="dueText" class="due-strip" :class="daysKey(detail.days_left)"><i :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</p>
-              <button class="primary-button" type="button" @click="openControl()"><i class="pi pi-plus" /> Kontrol ekle</button>
-              <button class="outline-button" type="button" @click="openDetail()"><i class="pi pi-file" /> Detayları aç <i class="pi pi-angle-right push" /></button>
+              <p v-if="detail.status === 'rapor_bekleniyor'" class="due-strip soon"><PkIcon class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor</p>
+              <p v-else-if="detail.status === 'rapor_yok'" class="due-strip"><PkIcon class="pi pi-info-circle" /> {{ detail.reports.length ? 'Henüz tesisat raporu yok' : 'Henüz kontrol eklenmedi' }}</p>
+              <p v-else-if="dueText" class="due-strip" :class="daysKey(detail.days_left)"><PkIcon :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</p>
+              <button class="primary-button" type="button" @click="openControl()"><PkIcon class="pi pi-plus" /> Kontrol ekle</button>
+              <button class="outline-button" type="button" @click="openDetail()"><PkIcon class="pi pi-file" /> Detayları aç <PkIcon class="pi pi-angle-right push" /></button>
             </section>
             <div class="top-right">
               <div class="kpis">
                 <button type="button" class="kpi blue" @click="openDetail()">
-                  <span class="kpi-icon"><i class="pi pi-sitemap" /></span>
+                  <span class="kpi-icon"><PkIcon class="pi pi-sitemap" /></span>
                   <span class="kpi-text"><strong>{{ ofType.length }}</strong><small>Tesisat</small></span>
-                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                  <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
                 </button>
                 <button type="button" class="kpi ok" @click="openDetail()">
-                  <span class="kpi-icon"><i class="pi pi-shield" /></span>
+                  <span class="kpi-icon"><PkIcon class="pi pi-shield" /></span>
                   <span class="kpi-text"><strong>{{ listSystems.length }}</strong><small>Fiziksel sistem</small></span>
-                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                  <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
                 </button>
                 <button type="button" class="kpi warn wide" @click="navigateTo('/expert/bulgu-takip')">
-                  <span class="kpi-icon"><i class="pi pi-exclamation-triangle" /></span>
+                  <span class="kpi-icon"><PkIcon class="pi pi-exclamation-triangle" /></span>
                   <span class="kpi-text"><strong>{{ totalFindings }}</strong><small>Açık bulgu</small></span>
-                  <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+                  <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
                 </button>
               </div>
               <!-- Son tesisat raporu: kuruluş, rapor no, raporu aç -->
               <section class="card report-card">
-                <header><i class="pi pi-file" /><h3>Rapor</h3></header>
+                <header><PkIcon class="pi pi-file" /><h3>Rapor</h3></header>
                 <dl class="facts">
                   <div><dt>Kuruluş</dt><dd>{{ detail.inspection_body || '—' }}</dd></div>
                   <div><dt>Rapor No</dt><dd>{{ detail.report_no || '—' }}</dd></div>
                 </dl>
-                <button v-if="generalReport?.has_report" class="primary-button" type="button" @click="openReport(generalReport)"><i class="pi pi-external-link" /> Raporu aç</button>
+                <button v-if="generalReport?.has_report" class="primary-button" type="button" @click="openReport(generalReport)"><PkIcon class="pi pi-external-link" /> Raporu aç</button>
                 <p v-else class="muted">{{ detail.reports.length ? 'Rapor dosyası yok.' : 'Henüz tesisat raporu yok.' }}</p>
               </section>
             </div>
@@ -122,20 +122,20 @@
             <header class="systems-head">
               <h2>Sistemler</h2>
               <small v-if="cardSystems.length">Belge ve proje kontrolleri ayrıca izlenir</small>
-              <button class="primary-button" type="button" @click="editOpen = true"><i class="pi pi-plus" /> Sistem ekle</button>
+              <button class="primary-button" type="button" @click="editOpen = true"><PkIcon class="pi pi-plus" /> Sistem ekle</button>
             </header>
-            <div v-if="!listSystems.length" class="empty-inline"><i class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.</div>
+            <div v-if="!listSystems.length" class="empty-inline"><PkIcon class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.</div>
             <div v-else class="table-wrap">
               <table class="systems-table">
                 <thead><tr><th>Sistem</th><th>Ekipman</th><th>Son kontrol</th><th>Durum</th><th>Bulgular</th><th class="actions-col"><span class="sr-only">Aç</span></th></tr></thead>
                 <tbody>
                   <tr v-for="system in listSystems" :key="system.id" @click="openDetail(system.id)">
-                    <td><span class="system-cell"><i class="pi pi-th-large" aria-hidden="true" /> <strong>{{ system.name }}</strong></span></td>
+                    <td><span class="system-cell"><PkIcon class="pi pi-th-large" aria-hidden="true" /> <strong>{{ system.name }}</strong></span></td>
                     <td>{{ system.has_equipment ? system.equipment.length : (systemMeta(system) || '—') }}</td>
                     <td>{{ formatDate(system.last_control_date) }}</td>
-                    <td><span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" /> {{ STATUS_LABELS[system.status] }}</span></td>
+                    <td><span class="status-badge" :class="system.status"><PkIcon :class="STATUS_ICONS[system.status]" /> {{ STATUS_LABELS[system.status] }}</span></td>
                     <td>{{ system.findings.length }}</td>
-                    <td class="actions-col"><button class="icon-button" type="button" :aria-label="`${system.name} ayrıntıları`" @click.stop="openDetail(system.id)"><i class="pi pi-angle-right" /></button></td>
+                    <td class="actions-col"><button class="icon-button" type="button" :aria-label="`${system.name} ayrıntıları`" @click.stop="openDetail(system.id)"><PkIcon class="pi pi-angle-right" /></button></td>
                   </tr>
                 </tbody>
               </table>
@@ -147,35 +147,35 @@
           <!-- Genel bilgiler: katalogda yok, gizli (SHOW_LEGACY_OVERVIEW); Düzenle ve Rapor bekleniyor burada (Sistem ekle aynı düzenleme penceresini açar) -->
           <section v-if="SHOW_LEGACY_OVERVIEW" class="card overview" :class="detail.status">
             <div class="overview-main">
-              <div class="overview-icon"><i class="pi pi-shield" /></div>
+              <div class="overview-icon"><PkIcon class="pi pi-shield" /></div>
               <div class="overview-title">
                 <h2>{{ detail.name }}</h2>
                 <p><template v-if="installationArea(detail.id)">{{ installationArea(detail.id) }} · </template>{{ placeOf(detail) }} · {{ detail.location?.name }}</p>
               </div>
               <div class="overview-status">
                 <div class="pills">
-                  <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
+                  <span class="status-pill" :class="detail.status"><PkIcon :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
                   <!-- Kontrol süresi geçti: ayrı rozet -->
-                  <span v-if="overdueDays" class="status-pill overdue"><i class="pi pi-clock" /> Süresi geçti · {{ overdueDays }} gün</span>
+                  <span v-if="overdueDays" class="status-pill overdue"><PkIcon class="pi pi-clock" /> Süresi geçti · {{ overdueDays }} gün</span>
                 </div>
                 <small v-if="dueText && !overdueDays" class="due" :class="daysKey(detail.days_left)">{{ dueText }}</small>
               </div>
               <div class="overview-actions">
-                <button class="secondary-button" type="button" @click="editOpen = true"><i class="pi pi-pencil" /> Düzenle</button>
+                <button class="secondary-button" type="button" @click="editOpen = true"><PkIcon class="pi pi-pencil" /> Düzenle</button>
                 <!-- Tesisata bağlı ekipmanlar için de tek kayıt: ekipman bazında rapor bekleniyor yapılmaz -->
-                <button class="secondary-button" type="button" @click="pendingOpen = true"><i class="pi pi-hourglass" /> Rapor bekleniyor</button>
-                <button class="primary-button" type="button" @click="openControl()"><i class="pi pi-file-arrow-up" /> Kontrol Ekle</button>
+                <button class="secondary-button" type="button" @click="pendingOpen = true"><PkIcon class="pi pi-hourglass" /> Rapor bekleniyor</button>
+                <button class="primary-button" type="button" @click="openControl()"><PkIcon class="pi pi-file-arrow-up" /> Kontrol Ekle</button>
               </div>
             </div>
 
             <p v-if="detail.status === 'rapor_bekleniyor'" class="notice warn">
-              <i class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor. Sistemlerin ve ekipmanların durumu önceki kontrolden; rapor gelince “Kontrol Ekle” ile yükleyin.
+              <PkIcon class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor. Sistemlerin ve ekipmanların durumu önceki kontrolden; rapor gelince “Kontrol Ekle” ile yükleyin.
             </p>
             <p v-if="detail.status === 'rapor_yok' && detail.reports.length" class="notice">
-              <i class="pi pi-info-circle" /> Henüz tesisat raporu yok; yalnızca sistem raporları yüklendi. Genel durum ve kalan gün tesisat raporundan gelir; tesisat raporunu “Kontrol Ekle” ile yükleyin.
+              <PkIcon class="pi pi-info-circle" /> Henüz tesisat raporu yok; yalnızca sistem raporları yüklendi. Genel durum ve kalan gün tesisat raporundan gelir; tesisat raporunu “Kontrol Ekle” ile yükleyin.
             </p>
             <p v-else-if="detail.status === 'rapor_yok'" class="notice">
-              <i class="pi pi-info-circle" /> Bu tesisat için henüz kontrol eklenmedi. Periyodik kontrol raporunu “Kontrol Ekle” ile yükleyin; genel durum ve kalan gün tesisat raporundan gelir.
+              <PkIcon class="pi pi-info-circle" /> Bu tesisat için henüz kontrol eklenmedi. Periyodik kontrol raporunu “Kontrol Ekle” ile yükleyin; genel durum ve kalan gün tesisat raporundan gelir.
             </p>
             <div v-else class="info-strip">
               <div><small>Kontrolü yapan</small><strong>{{ detail.inspection_body || '—' }}</strong></div>
@@ -196,53 +196,53 @@
           <!-- Tesisat detayı: kontrol bilgileri ve durum, açık bulgular, belge kontrolleri -->
           <div class="top detail-top">
             <section class="card status-card">
-              <header><i class="pi pi-clipboard accent-icon" aria-hidden="true" /><h2>Kontrol bilgileri</h2></header>
+              <header><PkIcon class="pi pi-clipboard accent-icon" aria-hidden="true" /><h2>Kontrol bilgileri</h2></header>
               <div class="status-row">
-                <span class="status-pill" :class="detail.status"><i :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
-                <span v-if="dueShort && detail.status !== 'rapor_yok'" class="due-chip" :class="daysKey(detail.days_left)"><i :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</span>
+                <span class="status-pill" :class="detail.status"><PkIcon :class="STATUS_ICONS[detail.status]" /> {{ STATUS_LABELS[detail.status] }}</span>
+                <span v-if="dueShort && detail.status !== 'rapor_yok'" class="due-chip" :class="daysKey(detail.days_left)"><PkIcon :class="detail.days_left < 0 ? 'pi pi-exclamation-triangle' : 'pi pi-clock'" /> {{ dueShort }}</span>
               </div>
               <dl class="facts">
-                <div><dt><i class="pi pi-building" /> Kontrol kuruluşu</dt><dd>{{ detail.inspection_body || '—' }}</dd></div>
-                <div><dt><i class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
-                <div><dt><i class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
-                <div><dt><i class="pi pi-file" /> Rapor no</dt><dd>{{ detail.report_no || '—' }}</dd></div>
+                <div><dt><PkIcon class="pi pi-building" /> Kontrol kuruluşu</dt><dd>{{ detail.inspection_body || '—' }}</dd></div>
+                <div><dt><PkIcon class="pi pi-calendar" /> Son kontrol</dt><dd>{{ formatDate(detail.last_control_date) }}</dd></div>
+                <div><dt><PkIcon class="pi pi-calendar" /> Geçerlilik</dt><dd>{{ formatDate(detail.next_control_date) }}</dd></div>
+                <div><dt><PkIcon class="pi pi-file" /> Rapor no</dt><dd>{{ detail.report_no || '—' }}</dd></div>
               </dl>
               <p v-if="detail.status === 'rapor_bekleniyor'" class="notice warn">
-                <i class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor. Sistemlerin ve ekipmanların durumu önceki kontrolden; rapor gelince “Yeni kontrol ekle” ile yükleyin.
+                <PkIcon class="pi pi-hourglass" /> {{ formatDate(detail.last_control_date) }} kontrolünün raporu bekleniyor. Sistemlerin ve ekipmanların durumu önceki kontrolden; rapor gelince “Yeni kontrol ekle” ile yükleyin.
               </p>
               <p v-else-if="detail.status === 'rapor_yok' && detail.reports.length" class="notice">
-                <i class="pi pi-info-circle" /> Henüz tesisat raporu yok; yalnızca sistem raporları yüklendi. Genel durum ve kalan gün tesisat raporundan gelir.
+                <PkIcon class="pi pi-info-circle" /> Henüz tesisat raporu yok; yalnızca sistem raporları yüklendi. Genel durum ve kalan gün tesisat raporundan gelir.
               </p>
               <p v-else-if="detail.status === 'rapor_yok'" class="notice">
-                <i class="pi pi-info-circle" /> Bu tesisat için henüz kontrol eklenmedi. Genel durum ve kalan gün tesisat raporundan gelir.
+                <PkIcon class="pi pi-info-circle" /> Bu tesisat için henüz kontrol eklenmedi. Genel durum ve kalan gün tesisat raporundan gelir.
               </p>
-              <button class="primary-button" type="button" @click="openControl()"><i class="pi pi-plus" /> Yeni kontrol ekle</button>
+              <button class="primary-button" type="button" @click="openControl()"><PkIcon class="pi pi-plus" /> Yeni kontrol ekle</button>
             </section>
             <div class="top-right">
               <!-- Son kontrolün bulguları (sistemler, belge kontrolleri ve genel); işler Bulgu takibinde -->
               <section class="card side-card">
                 <header>
-                  <i class="pi pi-exclamation-triangle bad-icon" aria-hidden="true" />
+                  <PkIcon class="pi pi-exclamation-triangle bad-icon" aria-hidden="true" />
                   <h3>Açık bulgular</h3>
                   <span class="count-badge" :class="{ none: !openFindings.length }">{{ openFindings.length }}</span>
                 </header>
                 <ul v-if="openFindings.length" class="side-list">
                   <li v-for="(item, index) in openFindings.slice(0, 3)" :key="index">
                     <NuxtLink to="/expert/bulgu-takip" class="side-row" :title="item.system ? `${item.system}: ${item.text}` : item.text">
-                      <i class="pi pi-file" aria-hidden="true" /><span class="clamp">{{ item.text }}</span><i class="pi pi-angle-right" aria-hidden="true" />
+                      <PkIcon class="pi pi-file" aria-hidden="true" /><span class="clamp">{{ item.text }}</span><PkIcon class="pi pi-angle-right" aria-hidden="true" />
                     </NuxtLink>
                   </li>
                 </ul>
                 <p v-else class="muted">Son kontrolde bulgu yok.</p>
-                <NuxtLink v-if="openFindings.length" to="/expert/bulgu-takip" class="soft-link">Bulguları aç <i class="pi pi-arrow-right" /></NuxtLink>
+                <NuxtLink v-if="openFindings.length" to="/expert/bulgu-takip" class="soft-link">Bulguları aç <PkIcon class="pi pi-arrow-right" /></NuxtLink>
               </section>
               <!-- Belge ve kayıt / proje bilgileri: durum; satıra tıklayınca bulguları -->
               <section class="card side-card">
-                <header><i class="pi pi-file accent-icon" aria-hidden="true" /><h3>Belge kontrolleri</h3></header>
+                <header><PkIcon class="pi pi-file accent-icon" aria-hidden="true" /><h3>Belge kontrolleri</h3></header>
                 <ul v-if="docChecks.length" class="side-list">
                   <li v-for="system in docChecks" :key="system.id">
                     <button type="button" class="side-row doc-row" :aria-expanded="isOpen(system.id)" @click="toggle(system.id)">
-                      <i :class="system.status === 'uygun' ? 'pi pi-check ok-icon' : system.status === 'uygun_degil' ? 'pi pi-times bad-icon' : 'pi pi-minus'" aria-hidden="true" />
+                      <PkIcon :class="system.status === 'uygun' ? 'pi pi-check ok-icon' : system.status === 'uygun_degil' ? 'pi pi-times bad-icon' : 'pi pi-minus'" aria-hidden="true" />
                       <span>{{ system.name }}</span>
                       <span class="status-badge" :class="system.status">{{ STATUS_LABELS[system.status] }}</span>
                     </button>
@@ -293,17 +293,17 @@
           <section class="card tabs-card">
             <div class="tabs-row">
               <div class="tabs" role="tablist">
-                <button type="button" role="tab" :aria-selected="detailTab === 'systems'" :class="{ active: detailTab === 'systems' }" @click="detailTab = 'systems'"><i class="pi pi-th-large" /> Sistemler</button>
-                <button type="button" role="tab" :aria-selected="detailTab === 'history'" :class="{ active: detailTab === 'history' }" @click="detailTab = 'history'"><i class="pi pi-history" /> Kontrol geçmişi</button>
-                <button type="button" role="tab" :aria-selected="detailTab === 'docs'" :class="{ active: detailTab === 'docs' }" @click="detailTab = 'docs'"><i class="pi pi-file" /> Belgeler</button>
+                <button type="button" role="tab" :aria-selected="detailTab === 'systems'" :class="{ active: detailTab === 'systems' }" @click="detailTab = 'systems'"><PkIcon class="pi pi-th-large" /> Sistemler</button>
+                <button type="button" role="tab" :aria-selected="detailTab === 'history'" :class="{ active: detailTab === 'history' }" @click="detailTab = 'history'"><PkIcon class="pi pi-history" /> Kontrol geçmişi</button>
+                <button type="button" role="tab" :aria-selected="detailTab === 'docs'" :class="{ active: detailTab === 'docs' }" @click="detailTab = 'docs'"><PkIcon class="pi pi-file" /> Belgeler</button>
               </div>
-              <button v-if="detailTab === 'systems'" class="primary-button" type="button" @click="editOpen = true"><i class="pi pi-plus" /> Sistem ekle</button>
+              <button v-if="detailTab === 'systems'" class="primary-button" type="button" @click="editOpen = true"><PkIcon class="pi pi-plus" /> Sistem ekle</button>
             </div>
 
             <!-- Sistemler: satıra tıklayınca ekipmanları ve son kontrol bulguları açılır -->
             <template v-if="detailTab === 'systems'">
             <p v-if="detail.pending_systems?.length" class="pending-note">
-              <i class="pi pi-hourglass" />
+              <PkIcon class="pi pi-hourglass" />
               <span>
                 Katalog onayı bekliyor:
                 <template v-for="(item, index) in detail.pending_systems" :key="item.id"><strong>{{ item.name }}</strong> ({{ formatDate(item.control_date) }} kontrolü){{ index < detail.pending_systems.length - 1 ? ', ' : '' }}</template>.
@@ -311,7 +311,7 @@
               </span>
             </p>
             <div v-if="!listSystems.length" class="empty-inline">
-              <i class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.
+              <PkIcon class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.
             </div>
             <div v-else class="system-list">
               <div v-for="system in listSystems" :key="system.id" class="system-item" :class="{ open: isOpen(system.id) }">
@@ -325,16 +325,16 @@
                     <span class="meta">{{ system.has_equipment ? `${system.equipment.length} ekipman` : systemMeta(system) }}</span>
                     <span class="meta" :class="{ strong: system.findings.length }">{{ system.findings.length }} bulgu</span>
                     <span class="status-badge" :class="system.status">{{ STATUS_LABELS[system.status] }}</span>
-                    <i :class="isOpen(system.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                    <PkIcon :class="isOpen(system.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                   </button>
                   <!-- Sistemin raporu (dolap, pano…): yalnızca bu sistemi günceller; tesisatın genel durumu tesisat raporundan -->
-                  <button v-if="system.system_id" class="icon-button upload" type="button" title="Rapor yükle" aria-label="Rapor yükle" @click="openControl(system)"><i class="pi pi-file-arrow-up" /></button>
+                  <button v-if="system.system_id" class="icon-button upload" type="button" title="Rapor yükle" aria-label="Rapor yükle" @click="openControl(system)"><PkIcon class="pi pi-file-arrow-up" /></button>
                 </div>
                 <div v-if="isOpen(system.id)" class="system-body">
                   <template v-if="system.has_equipment">
                     <div class="body-head">
                       <h4>Ekipmanlar</h4>
-                      <button class="secondary-button small" type="button" @click="equipmentSystemId = system.id"><i class="pi pi-plus" /> Ekipman ekle</button>
+                      <button class="secondary-button small" type="button" @click="equipmentSystemId = system.id"><PkIcon class="pi pi-plus" /> Ekipman ekle</button>
                     </div>
                     <div v-if="system.equipment.length" class="table-wrap">
                       <table class="equipment-table">
@@ -370,7 +370,7 @@
                             <tr :class="{ previous: entryIndex >= currentOf(system).length }">
                               <td>{{ formatDate(entry.control_date) }}</td>
                               <td class="report-cell">
-                                <button v-if="entry.has_report" class="link-button" type="button" :title="entry.report_no || ''" @click="openReport({ id: entry.report_id })"><i class="pi pi-file-pdf" /> <span class="truncate">{{ entry.report_no || 'Görüntüle' }}</span></button>
+                                <button v-if="entry.has_report" class="link-button" type="button" :title="entry.report_no || ''" @click="openReport({ id: entry.report_id })"><PkIcon class="pi pi-file-pdf" /> <span class="truncate">{{ entry.report_no || 'Görüntüle' }}</span></button>
                                 <span v-else class="muted truncate" :title="entry.report_no || ''">{{ entry.report_no || '—' }}</span>
                               </td>
                               <td class="subject-cell">
@@ -381,7 +381,7 @@
                               <td>{{ entry.findings.length || '—' }}</td>
                               <td class="actions-col">
                                 <button v-if="entryHasDetail(entry)" class="icon-button" type="button" :title="isEntryOpen(system, entry) ? 'Kapat' : `Bulgular ve ${resultsLabel.title.toLocaleLowerCase('tr-TR')}`" @click="toggleEntry(system, entry)">
-                                  <i :class="isEntryOpen(system, entry) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                                  <PkIcon :class="isEntryOpen(system, entry) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                                 </button>
                               </td>
                             </tr>
@@ -426,7 +426,7 @@
                       </table>
                     </div>
                     <button v-if="previousOf(system).length" class="link-button" type="button" @click="togglePrevious(system)">
-                      <i :class="openPrevious.includes(system.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                      <PkIcon :class="openPrevious.includes(system.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                       {{ openPrevious.includes(system.id) ? 'Önceki raporları gizle' : `Önceki raporlar (${previousOf(system).length})` }}
                     </button>
                   </template>
@@ -439,13 +439,13 @@
               </div>
             </div>
               <button v-if="generalReport" class="view-link" type="button" @click="showReport(generalReport)">
-                <i class="pi pi-file" /> {{ formatDate(generalReport.control_date) }} kontrolünü görüntüle <i class="pi pi-arrow-right" />
+                <PkIcon class="pi pi-file" /> {{ formatDate(generalReport.control_date) }} kontrolünü görüntüle <PkIcon class="pi pi-arrow-right" />
               </button>
             </template>
 
             <!-- Kontrol geçmişi: tesisatın periyodik kontrol raporları -->
             <template v-else-if="detailTab === 'history'">
-            <div v-if="!detail.reports.length" class="empty-inline"><i class="pi pi-history" /> Henüz kontrol yok.</div>
+            <div v-if="!detail.reports.length" class="empty-inline"><PkIcon class="pi pi-history" /> Henüz kontrol yok.</div>
             <div v-else class="table-wrap">
               <table class="history-table">
                 <thead>
@@ -465,7 +465,7 @@
                       <td>{{ formatDate(report.next_control_date) }}</td>
                       <!-- Uzun rapor no / kuruluş adı kısaltılır (tablo yana taşmasın); tamamı üzerine gelince -->
                       <td class="report-cell">
-                        <button v-if="report.has_report" class="link-button" type="button" :title="[report.report_no, report.report_file_name].filter(Boolean).join('\n')" @click="openReport(report)"><i class="pi pi-file-pdf" /> <span class="truncate">{{ report.report_no || 'Görüntüle' }}</span></button>
+                        <button v-if="report.has_report" class="link-button" type="button" :title="[report.report_no, report.report_file_name].filter(Boolean).join('\n')" @click="openReport(report)"><PkIcon class="pi pi-file-pdf" /> <span class="truncate">{{ report.report_no || 'Görüntüle' }}</span></button>
                         <span v-else class="muted truncate" :title="[report.report_no, report.notes].filter(Boolean).join('\n')">{{ report.report_no || '—' }}</span>
                       </td>
                       <td class="body-cell"><span v-if="report.inspection_body" class="clamp" :title="report.inspection_body">{{ report.inspection_body }}</span><span v-else class="muted">—</span></td>
@@ -477,7 +477,7 @@
                         <td>{{ nonconforming(report) }} / {{ report.systems.length }}</td>
                         <td>
                           <button v-if="hasReportDetail(report)" class="link-button" type="button" @click="toggleReport(report)">
-                            {{ report.findings.length ? `${report.findings.length} bulgu` : 'Ayrıntı' }} <i :class="openReportId === report.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                            {{ report.findings.length ? `${report.findings.length} bulgu` : 'Ayrıntı' }} <PkIcon :class="openReportId === report.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                           </button>
                           <span v-else class="muted">Yok</span>
                         </td>
@@ -486,12 +486,12 @@
                       <td>
                         {{ report.created_by || '—' }}
                         <button v-if="report.analysis" class="link-button source-link" type="button" :title="SOURCE_LABELS[report.source] || ''" @click="toggleReport(report)">
-                          <i class="pi pi-sparkles" /> Yapay zeka <i :class="openReportId === report.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                          <PkIcon class="pi pi-sparkles" /> Yapay zeka <PkIcon :class="openReportId === report.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                         </button>
                         <small v-else class="muted block">{{ SOURCE_LABELS[report.source] || '' }}</small>
                       </td>
                       <td class="actions-col">
-                        <button class="icon-button" type="button" title="Kontrolü sil" aria-label="Kontrolü sil" @click="deleteReport(report)"><i class="pi pi-trash" /></button>
+                        <button class="icon-button" type="button" title="Kontrolü sil" aria-label="Kontrolü sil" @click="deleteReport(report)"><PkIcon class="pi pi-trash" /></button>
                       </td>
                     </tr>
                     <!-- Ekipmanlardaki gibi: sonuç ve kanaat, notlar, sistemler, bulgular ve yapay zekanın rapordan okudukları -->
@@ -511,7 +511,7 @@
                           </div>
                         </div>
                         <template v-if="report.analysis">
-                          <h4 class="analysis-title"><i class="pi pi-sparkles" /> Yapay zeka analizi</h4>
+                          <h4 class="analysis-title"><PkIcon class="pi pi-sparkles" /> Yapay zeka analizi</h4>
                           <p v-if="analysisState[report.id] === 'loading'" class="muted">Yükleniyor...</p>
                           <p v-else-if="analysisState[report.id] === 'error'" class="error-text">Yapay zeka analizi yüklenemedi.</p>
                           <ExpertEquipmentAnalysisDetail v-else-if="reportAnalyses[report.id]" :analysis="reportAnalyses[report.id]" />
@@ -528,12 +528,12 @@
             <div v-else class="tab-body">
               <ul v-if="reportFiles.length" class="doc-list">
                 <li v-for="report in reportFiles" :key="report.id">
-                  <button class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(report)"><i class="pi pi-file-pdf" /></button>
+                  <button class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(report)"><PkIcon class="pi pi-file-pdf" /></button>
                   <span class="doc-text"><strong>{{ report.report_no || report.report_file_name || 'Periyodik kontrol raporu' }}</strong><small>{{ formatDate(report.control_date) }} kontrolü<template v-if="report.scope === 'system'"> · Sistem raporu</template><template v-if="report.inspection_body"> · {{ report.inspection_body }}</template></small></span>
-                  <button class="link-button" type="button" @click="openReport(report)">Aç <i class="pi pi-external-link" /></button>
+                  <button class="link-button" type="button" @click="openReport(report)">Aç <PkIcon class="pi pi-external-link" /></button>
                 </li>
               </ul>
-              <p v-else class="empty-inline"><i class="pi pi-file" /> Henüz rapor dosyası yok. Kontrol eklenince burada listelenir.</p>
+              <p v-else class="empty-inline"><PkIcon class="pi pi-file" /> Henüz rapor dosyası yok. Kontrol eklenince burada listelenir.</p>
               <div v-if="facilitySystems.length || generalNotes" class="info-cards">
                 <article v-for="system in facilitySystems" :key="system.id" class="card info-card">
                   <header><div><strong>{{ system.name }}</strong><small>{{ cardHint(system) }}</small></div></header>

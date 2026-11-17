@@ -3,14 +3,14 @@
     <!-- Durum raporu (tasarım kataloğu 09 / 10): sayfa yolu, başlık, PDF indir ve Yazdır -->
     <div class="page-head">
       <div>
-        <nav class="crumb no-print" aria-label="Sayfa yolu"><i class="pi pi-home" aria-hidden="true" /><span>Raporlar</span><span class="sep">/</span><strong>Durum raporu</strong></nav>
+        <nav class="crumb no-print" aria-label="Sayfa yolu"><PkIcon class="pi pi-home" aria-hidden="true" /><span>Raporlar</span><span class="sep">/</span><strong>Durum raporu</strong></nav>
         <h1>Durum raporu</h1>
         <p>{{ scopeLabel }} · {{ today }}</p>
       </div>
       <!-- İkisi de tarayıcının yazdırma penceresini açar; PDF, pencerede "PDF olarak kaydet" ile alınır (ayrı PDF ucu yok) -->
       <div class="head-actions no-print">
-        <button class="primary-button" type="button" :disabled="!data" @click="print"><i class="pi pi-download" /> PDF indir</button>
-        <button class="outline-button" type="button" :disabled="!data" @click="print"><i class="pi pi-print" /> Yazdır</button>
+        <button class="primary-button" type="button" :disabled="!data" @click="print"><PkIcon class="pi pi-download" /> PDF indir</button>
+        <button class="outline-button" type="button" :disabled="!data" @click="print"><PkIcon class="pi pi-print" /> Yazdır</button>
       </div>
     </div>
 
@@ -19,7 +19,7 @@
       <button type="button" role="tab" :aria-selected="tab === 'installations'" :class="{ active: tab === 'installations' }" @click="tab = 'installations'">Tesisat bazında</button>
     </div>
 
-    <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Rapor hazırlanıyor...</div>
+    <div v-if="loading && !data" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Rapor hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
 
     <template v-else-if="data">
@@ -37,15 +37,15 @@
           <section class="card scope-card">
             <h2>Kapsam</h2>
             <dl class="facts">
-              <div><dt><i class="pi pi-building" aria-hidden="true" /> {{ topLabel }}</dt><dd>{{ organizationName }}</dd></div>
-              <div><dt><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyon</dt><dd>{{ locationName }}</dd></div>
-              <div><dt><i class="pi pi-calendar" aria-hidden="true" /> Rapor tarihi</dt><dd>{{ formatDate(reportDate) }}</dd></div>
+              <div><dt><PkIcon class="pi pi-building" aria-hidden="true" /> {{ topLabel }}</dt><dd>{{ organizationName }}</dd></div>
+              <div><dt><PkIcon class="pi pi-map-marker" aria-hidden="true" /> Lokasyon</dt><dd>{{ locationName }}</dd></div>
+              <div><dt><PkIcon class="pi pi-calendar" aria-hidden="true" /> Rapor tarihi</dt><dd>{{ formatDate(reportDate) }}</dd></div>
             </dl>
-            <span class="scope-chip"><i class="pi pi-box" aria-hidden="true" /> {{ data.totals.equipment }} ekipman</span>
+            <span class="scope-chip"><PkIcon class="pi pi-box" aria-hidden="true" /> {{ data.totals.equipment }} ekipman</span>
           </section>
           <div class="top-right">
             <section class="card bar-card">
-              <header><i class="pi pi-verified" aria-hidden="true" /><h3>Kontrol sonucu</h3></header>
+              <header><PkIcon class="pi pi-verified" aria-hidden="true" /><h3>Kontrol sonucu</h3></header>
               <div class="stack" role="img" :aria-label="segmentsText(resultSegments)">
                 <span v-for="segment in resultSegments.filter(item => item.value)" :key="segment.key" :class="segment.key" :style="{ flexGrow: segment.value }">{{ segment.value }}</span>
               </div>
@@ -54,27 +54,27 @@
               </ul>
             </section>
             <section class="card bar-card">
-              <header><i class="pi pi-clock" aria-hidden="true" /><h3>Süre durumu</h3></header>
+              <header><PkIcon class="pi pi-clock" aria-hidden="true" /><h3>Süre durumu</h3></header>
               <div class="stack" role="img" :aria-label="segmentsText(timeSegments)">
                 <span v-for="segment in timeSegments.filter(item => item.value)" :key="segment.key" :class="segment.key" :style="{ flexGrow: segment.value }">{{ segment.value }}</span>
               </div>
               <ul class="legend">
                 <li v-for="segment in timeSegments" :key="segment.key"><i :class="segment.key" aria-hidden="true" /> {{ segment.label }} <strong>{{ segment.value }}</strong></li>
               </ul>
-              <p class="note"><i class="pi pi-info-circle" aria-hidden="true" /> Kontrol sonucu ve süre ayrı değerlendirilir.</p>
+              <p class="note"><PkIcon class="pi pi-info-circle" aria-hidden="true" /> Kontrol sonucu ve süre ayrı değerlendirilir.</p>
             </section>
           </div>
         </div>
 
         <section class="card table-card">
-          <header class="table-head"><i class="pi pi-clone" aria-hidden="true" /><h3>Kategorilere göre durum</h3></header>
+          <header class="table-head"><PkIcon class="pi pi-clone" aria-hidden="true" /><h3>Kategorilere göre durum</h3></header>
           <p v-if="!data.categories.length" class="muted pad">Ekipman yok.</p>
           <div v-else class="table-wrap">
             <table class="pill-table">
               <thead><tr><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th>Belirtilmemiş</th><th v-for="[key, label] in categoryExtraStatus" :key="key">{{ label }}</th><th>Süresi geçen</th><th>Yaklaşan</th></tr></thead>
               <tbody>
                 <tr v-for="category in data.categories" :key="category.slug">
-                  <td><span class="category-cell"><i :class="['pi', categoryIcons[category.slug] || 'pi-box']" aria-hidden="true" /> {{ category.name }}</span></td>
+                  <td><span class="category-cell"><PkIcon :class="['pi', categoryIcons[category.slug] || 'pi-box']" aria-hidden="true" /> {{ category.name }}</span></td>
                   <td><span class="num total">{{ category.total }}</span></td>
                   <td><span class="num uygun">{{ category.status.uygun || 0 }}</span></td>
                   <td><span class="num uygun_degil">{{ category.status.uygun_degil || 0 }}</span></td>
@@ -98,7 +98,7 @@
               </tfoot>
             </table>
           </div>
-          <p class="scope-note"><i class="pi pi-info-circle" aria-hidden="true" /> Rapor kapsamı: Ekipmanlar</p>
+          <p class="scope-note"><PkIcon class="pi pi-info-circle" aria-hidden="true" /> Rapor kapsamı: Ekipmanlar</p>
         </section>
 
         <template v-if="SHOW_LEGACY_EQUIPMENT">
@@ -160,24 +160,24 @@
       <template v-else>
         <div class="inst-kpis">
           <NuxtLink to="/expert/installations" class="kpi-card blue">
-            <span class="kpi-icon"><i class="pi pi-clone" /></span>
+            <span class="kpi-icon"><PkIcon class="pi pi-clone" /></span>
             <span class="kpi-text"><strong>{{ data.installations.length }}</strong><small>Toplam tesisat</small></span>
-            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
           </NuxtLink>
           <NuxtLink to="/expert/installations" class="kpi-card bad">
-            <span class="kpi-icon"><i class="pi pi-exclamation-triangle" /></span>
+            <span class="kpi-icon"><PkIcon class="pi pi-exclamation-triangle" /></span>
             <span class="kpi-text"><strong>{{ installationCount('uygun_degil') }}</strong><small>Uygun değil</small></span>
-            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
           </NuxtLink>
           <NuxtLink to="/expert/installations" class="kpi-card warn">
-            <span class="kpi-icon"><i class="pi pi-calendar" /></span>
+            <span class="kpi-icon"><PkIcon class="pi pi-calendar" /></span>
             <span class="kpi-text"><strong>{{ overdueInstallations }}</strong><small>Süresi geçen</small></span>
-            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
           </NuxtLink>
           <NuxtLink to="/expert/bulgu-takip" class="kpi-card blue">
-            <span class="kpi-icon"><i class="pi pi-file" /></span>
+            <span class="kpi-icon"><PkIcon class="pi pi-file" /></span>
             <span class="kpi-text"><strong>{{ openFindings }}</strong><small>Açık bulgu</small></span>
-            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
           </NuxtLink>
         </div>
 
@@ -186,14 +186,14 @@
           <section class="card inst-card">
             <header>
               <h2>{{ installation.type?.name || installation.name }}</h2>
-              <span class="status-pill" :class="installation.status"><i :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span>
-              <span v-if="installation.status !== 'rapor_yok' && dueShort(installation.days_left)" class="due-chip" :class="dueKey(installation.days_left)"><i class="pi pi-calendar" aria-hidden="true" /> {{ dueShort(installation.days_left) }}</span>
+              <span class="status-pill" :class="installation.status"><PkIcon :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span>
+              <span v-if="installation.status !== 'rapor_yok' && dueShort(installation.days_left)" class="due-chip" :class="dueKey(installation.days_left)"><PkIcon class="pi pi-calendar" aria-hidden="true" /> {{ dueShort(installation.days_left) }}</span>
             </header>
             <!-- Kaydın adı (bina) türden farklıysa, lokasyon ve işyeri: birden çok tesisatta hangisi olduğu belli olsun -->
             <p class="place-line"><template v-if="installation.type?.name && installation.name !== installation.type.name">{{ installation.name }} · </template>{{ locationLabel(installation.location?.id, installation.location?.name) }}<template v-if="installation.workplace"> · {{ workplaceLabel(installation.workplace.id, installation.workplace.company_name) }}</template></p>
             <div class="date-strip">
-              <span><i class="pi pi-calendar" aria-hidden="true" /> Son kontrol <strong>{{ formatDate(installation.last_control_date) }}</strong></span>
-              <span><i class="pi pi-calendar" aria-hidden="true" /> Geçerlilik <strong>{{ formatDate(installation.next_control_date) }}</strong></span>
+              <span><PkIcon class="pi pi-calendar" aria-hidden="true" /> Son kontrol <strong>{{ formatDate(installation.last_control_date) }}</strong></span>
+              <span><PkIcon class="pi pi-calendar" aria-hidden="true" /> Geçerlilik <strong>{{ formatDate(installation.next_control_date) }}</strong></span>
             </div>
           </section>
           <section class="card systems-side">
@@ -201,9 +201,9 @@
             <ul v-if="physicalSystems(installation).length" class="row-list">
               <li v-for="system in physicalSystems(installation)" :key="system.name">
                 <NuxtLink :to="`/expert/installations?tesisat=${installation.id}`" class="list-row">
-                  <i class="pi pi-th-large row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
-                  <span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
-                  <i class="pi pi-angle-right" aria-hidden="true" />
+                  <PkIcon class="pi pi-th-large row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
+                  <span class="status-badge" :class="system.status"><PkIcon :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
+                  <PkIcon class="pi pi-angle-right" aria-hidden="true" />
                 </NuxtLink>
               </li>
             </ul>
@@ -213,14 +213,14 @@
               <ul class="row-list">
                 <li v-for="system in documentChecks(installation)" :key="system.name">
                   <NuxtLink :to="`/expert/installations?tesisat=${installation.id}`" class="list-row">
-                    <i class="pi pi-file row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
-                    <span class="status-badge" :class="system.status"><i :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
-                    <i class="pi pi-angle-right" aria-hidden="true" />
+                    <PkIcon class="pi pi-file row-icon" aria-hidden="true" /><span class="row-name">{{ system.name }}</span>
+                    <span class="status-badge" :class="system.status"><PkIcon :class="STATUS_ICONS[system.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[system.status] || system.status }}</span>
+                    <PkIcon class="pi pi-angle-right" aria-hidden="true" />
                   </NuxtLink>
                 </li>
               </ul>
             </template>
-            <NuxtLink to="/expert/bulgu-takip" class="primary-button wide no-print">İlgili bulguları aç <i class="pi pi-arrow-right" aria-hidden="true" /></NuxtLink>
+            <NuxtLink to="/expert/bulgu-takip" class="primary-button wide no-print">İlgili bulguları aç <PkIcon class="pi pi-arrow-right" aria-hidden="true" /></NuxtLink>
           </section>
         </div>
 
@@ -236,7 +236,7 @@
                   <td>{{ installation.report_no || '—' }}</td>
                   <td>{{ formatDate(installation.last_control_date) }}</td>
                   <td>{{ formatDate(installation.next_control_date) }}</td>
-                  <td><span class="status-badge" :class="installation.status"><i :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span></td>
+                  <td><span class="status-badge" :class="installation.status"><PkIcon :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span></td>
                 </tr>
               </tbody>
             </table>

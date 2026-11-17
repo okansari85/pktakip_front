@@ -6,7 +6,7 @@
           <small class="category">{{ data?.category?.name || summary.category?.name }} · {{ summary.type?.name }}<template v-if="summary.code"> · Ekipman no {{ summary.code }}</template></small>
           <h2>{{ summary.name || summary.type?.name }}<span v-if="summary.variant" class="tag">{{ summary.variant }}</span></h2>
         </div>
-        <button class="close-button" type="button" @click="emit('close')"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div v-if="loading" class="state">Yükleniyor...</div>
@@ -15,7 +15,7 @@
         <div class="top">
           <div class="photo">
             <img v-if="data.photo_url" :src="data.photo_url" :alt="data.type?.name" />
-            <div v-else class="photo-placeholder"><i class="pi pi-image" /><span>Fotoğraf yok</span></div>
+            <div v-else class="photo-placeholder"><PkIcon class="pi pi-image" /><span>Fotoğraf yok</span></div>
           </div>
           <dl class="info">
             <dt>Durum</dt><dd><span class="status-badge" :class="data.status">{{ STATUS_LABELS[data.status] }}</span></dd>
@@ -36,23 +36,23 @@
             <span class="status-badge" :class="inspection.status">{{ STATUS_LABELS[inspection.status] }}</span>
             <span>{{ formatDate(inspection.control_date) }}</span>
             <span v-if="inspection.next_control_date" class="muted">→ {{ formatDate(inspection.next_control_date) }}</span>
-            <small><i v-if="inspection.has_report" class="pi pi-file-pdf" title="Rapor yüklü" /> {{ SOURCE_LABELS[inspection.source] }}</small>
+            <small><PkIcon v-if="inspection.has_report" class="pi pi-file-pdf" title="Rapor yüklü" /> {{ SOURCE_LABELS[inspection.source] }}</small>
           </li>
         </ul>
       </template>
 
       <div class="modal-actions">
         <!-- Pasif ekipmana kontrol eklenmez. Tesisata bağlı ekipman: kontrolü tesisat raporundan gelir (rapor / rapor bekleniyor tesisatta) -->
-        <span v-if="data && !data.is_active" class="bound-note"><i class="pi pi-ban" /> Pasif ekipman; kontrol eklenmez.</span>
+        <span v-if="data && !data.is_active" class="bound-note"><PkIcon class="pi pi-ban" /> Pasif ekipman; kontrol eklenmez.</span>
         <template v-else-if="data?.installation">
-          <span class="bound-note"><i class="pi pi-info-circle" /> Kontrolü {{ data.installation.name }} raporundan gelir.</span>
-          <NuxtLink class="secondary-button" to="/expert/installations">{{ data.installation.name }} <i class="pi pi-arrow-right" /></NuxtLink>
+          <span class="bound-note"><PkIcon class="pi pi-info-circle" /> Kontrolü {{ data.installation.name }} raporundan gelir.</span>
+          <NuxtLink class="secondary-button" to="/expert/installations">{{ data.installation.name }} <PkIcon class="pi pi-arrow-right" /></NuxtLink>
         </template>
         <template v-else>
-          <button class="secondary-button" type="button" :disabled="!data" @click="emit('pending', data)"><i class="pi pi-hourglass" /> Rapor bekleniyor</button>
-          <button class="secondary-button" type="button" :disabled="!data" @click="emit('upload', data)"><i class="pi pi-file-arrow-up" /> Yeni Periyodik Kontrol Raporu Yükle</button>
+          <button class="secondary-button" type="button" :disabled="!data" @click="emit('pending', data)"><PkIcon class="pi pi-hourglass" /> Rapor bekleniyor</button>
+          <button class="secondary-button" type="button" :disabled="!data" @click="emit('upload', data)"><PkIcon class="pi pi-file-arrow-up" /> Yeni Periyodik Kontrol Raporu Yükle</button>
         </template>
-        <NuxtLink class="primary-button" :to="`/expert/equipment/${summary.id}`">Profili aç <i class="pi pi-arrow-right" /></NuxtLink>
+        <NuxtLink class="primary-button" :to="`/expert/equipment/${summary.id}`">Profili aç <PkIcon class="pi pi-arrow-right" /></NuxtLink>
       </div>
     </section>
   </div>

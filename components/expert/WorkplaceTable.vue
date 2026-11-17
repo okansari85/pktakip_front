@@ -18,14 +18,14 @@
       </label>
       <label class="field">
         <span>Ara</span>
-        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'İşyeri, lokasyon, NACE veya SGK no' : 'Firma, lokasyon, NACE veya SGK no'" /></div>
+        <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'İşyeri, lokasyon, NACE veya SGK no' : 'Firma, lokasyon, NACE veya SGK no'" /></div>
       </label>
     </div>
 
     <div v-if="loading" class="state-row">İşyerleri yükleniyor...</div>
     <div v-else-if="error" class="state-row error-state">{{ error }}</div>
     <div v-else-if="filtered.length === 0" class="state-row empty-state">
-      <i class="pi pi-map-marker" />
+      <PkIcon class="pi pi-map-marker" />
       <strong>İşyeri bulunmuyor</strong>
       <slot name="empty"><span>Aramanızla eşleşen işyeri yok.</span></slot>
     </div>
@@ -44,7 +44,7 @@
         </thead>
         <tbody>
           <tr v-for="item in filtered" :key="item.id">
-            <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><div class="stacked"><strong>{{ workplaceTitle(item.id, item.company_name) }}</strong><small v-if="workplaceFirm(item.id, item.company_name) || titleText(item)">{{ [workplaceFirm(item.id, item.company_name), titleText(item)].filter(Boolean).join(' · ') }}</small></div></div></td>
+            <td><div class="name-cell"><span class="row-icon"><PkIcon class="pi pi-briefcase" /></span><div class="stacked"><strong>{{ workplaceTitle(item.id, item.company_name) }}</strong><small v-if="workplaceFirm(item.id, item.company_name) || titleText(item)">{{ [workplaceFirm(item.id, item.company_name), titleText(item)].filter(Boolean).join(' · ') }}</small></div></div></td>
             <!-- Bireysel uzman: lokasyonun bağlı olduğu organizasyon (altında en üstteki); OSGB: müşteri (kullanıcı 18 Ekim 2026) -->
             <td v-if="!corporate && multiUser">{{ item.customer_name || '—' }}</td>
             <td v-else-if="!corporate"><div class="stacked"><strong>{{ item.organization_name || item.customer_name || '—' }}</strong><small v-if="item.organization_name && item.customer_name && item.organization_name !== item.customer_name">{{ item.customer_name }}</small></div></td>

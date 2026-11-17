@@ -4,14 +4,14 @@
       <div class="drawer-head">
         <div>
           <h2>Lokasyon Alanları</h2>
-          <div class="drawer-subtitle"><i class="pi pi-map-marker" /><div><strong>{{ location.name }}</strong><span>{{ customerName }}</span></div></div>
+          <div class="drawer-subtitle"><PkIcon class="pi pi-map-marker" /><div><strong>{{ location.name }}</strong><span>{{ customerName }}</span></div></div>
         </div>
-        <button class="close-button" type="button" @click="emit('close')"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
 
-      <p class="intro"><i class="pi pi-info-circle" /> Alan, lokasyondaki fiziksel yerdir (bina, depo, kat, yemekhane…); isteğe bağlıdır, alan eklenmeyen lokasyon bugünkü gibi çalışır. Alan firmaya bağlı değildir: ekipman firmaya ait kalır, alan yalnızca nerede olduğunu söyler. Ayrı yönetilen bölümler (ör. Müşteri Hizmetleri) alan değil, lokasyonun "Firmalar" listesinde firmanın birimidir.</p>
+      <p class="intro"><PkIcon class="pi pi-info-circle" /> Alan, lokasyondaki fiziksel yerdir (bina, depo, kat, yemekhane…); isteğe bağlıdır, alan eklenmeyen lokasyon bugünkü gibi çalışır. Alan firmaya bağlı değildir: ekipman firmaya ait kalır, alan yalnızca nerede olduğunu söyler. Ayrı yönetilen bölümler (ör. Müşteri Hizmetleri) alan değil, lokasyonun "Firmalar" listesinde firmanın birimidir.</p>
       <div v-if="canEdit" class="drawer-toolbar">
-        <button class="primary-button small" type="button" :disabled="loading" @click="openForm(null, null)"><i class="pi pi-plus" /> Alan Ekle</button>
+        <button class="primary-button small" type="button" :disabled="loading" @click="openForm(null, null)"><PkIcon class="pi pi-plus" /> Alan Ekle</button>
       </div>
 
       <div v-if="loading" class="drawer-state">Alanlar yükleniyor...</div>
@@ -25,9 +25,9 @@
               <small><span class="kind">{{ area.type.name }}</span><template v-if="!area.is_active"> · pasif</template><template v-if="area.equipment_count || area.installation_count"> · {{ countText(area) }}</template></small>
             </span>
             <span v-if="canEdit" class="area-actions">
-              <button class="icon-button" type="button" title="Alt alan ekle" @click="openForm(null, area)"><i class="pi pi-plus" /></button>
-              <button class="icon-button" type="button" title="Düzenle" @click="openForm(area, null)"><i class="pi pi-pencil" /></button>
-              <button class="icon-button danger" type="button" title="Sil" @click="remove(area)"><i class="pi pi-trash" /></button>
+              <button class="icon-button" type="button" title="Alt alan ekle" @click="openForm(null, area)"><PkIcon class="pi pi-plus" /></button>
+              <button class="icon-button" type="button" title="Düzenle" @click="openForm(area, null)"><PkIcon class="pi pi-pencil" /></button>
+              <button class="icon-button danger" type="button" title="Sil" @click="remove(area)"><PkIcon class="pi pi-trash" /></button>
             </span>
           </div>
           <ul v-if="area.children.length" class="child-list">
@@ -37,8 +37,8 @@
                 <small><span class="kind">{{ child.type.name }}</span><template v-if="!child.is_active"> · pasif</template><template v-if="child.equipment_count || child.installation_count"> · {{ countText(child) }}</template></small>
               </span>
               <span v-if="canEdit" class="area-actions">
-                <button class="icon-button" type="button" title="Düzenle" @click="openForm(child, area)"><i class="pi pi-pencil" /></button>
-                <button class="icon-button danger" type="button" title="Sil" @click="remove(child)"><i class="pi pi-trash" /></button>
+                <button class="icon-button" type="button" title="Düzenle" @click="openForm(child, area)"><PkIcon class="pi pi-pencil" /></button>
+                <button class="icon-button danger" type="button" title="Sil" @click="remove(child)"><PkIcon class="pi pi-trash" /></button>
               </span>
             </li>
           </ul>
@@ -55,7 +55,7 @@
             <h2>{{ editing ? 'Alanı Düzenle' : parent ? 'Alt Alan Ekle' : 'Alan Ekle' }}</h2>
             <p>{{ parent ? `${parent.name} içinde` : location.name }}</p>
           </div>
-          <button class="close-button" type="button" :disabled="saving" @click="formOpen = false"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" :disabled="saving" @click="formOpen = false"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>Alan Adı <span>*</span><input v-model="form.name" type="text" placeholder="Örn. Bilişim Depo, İdari Bina, Yemekhane" /></label>
         <label>Alan Türü <span>*</span>

@@ -7,7 +7,7 @@
           <p>{{ context?.location_name }}<template v-if="context?.type === 'workplace' && context.company_name"> · {{ context.company_name }}</template></p>
         </div>
         <ExpertReportSteps :step="saving ? 3 : analysis ? 2 : 1" />
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <!-- 1) Rapor dosyası + okuma ("Rapordan Ekipman Tanımla"dan gelindiyse okunmuş olarak açılır) -->
@@ -20,17 +20,17 @@
         <section v-if="!analysis" class="rd-card">
           <div class="ai-box">
             <template v-if="analyzing">
-              <i class="pi pi-spin pi-spinner" />
+              <PkIcon class="pi pi-spin pi-spinner" />
               <span><strong>Form okunuyor...</strong><small>Rapor bilgileri, bölümler ve tüp listesi çıkarılıyor. 1-3 dakika sürebilir.</small></span>
             </template>
             <template v-else>
-              <i class="pi pi-sparkles" />
+              <PkIcon class="pi pi-sparkles" />
               <span><strong>Yapay zeka formu okuyacak</strong><small>Tüpler Ekipmanlar'daki kayıtlarla eşleşir, her birine kendi sonucuyla kontrol kaydı açılır. Eşleşmeyenler eklenmez; formda eşleştirme bekler.</small></span>
               <button class="ai-button" type="button" :disabled="!file || analyzing" @click="analyze">Oku</button>
             </template>
           </div>
           <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
-            <span><i class="pi pi-database" /> Test verisi</span>
+            <span><PkIcon class="pi pi-database" /> Test verisi</span>
             <select v-model="fixtureId">
               <option value="">Kullanma — formu yapay zeka ile oku</option>
               <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
@@ -42,11 +42,11 @@
         <section v-else class="rd-card">
           <div class="card-head">
             <h3>Okunan bilgileri doğrulayın</h3>
-            <span class="done-chip"><i class="pi pi-check-circle" /> Okuma tamamlandı</span>
+            <span class="done-chip"><PkIcon class="pi pi-check-circle" /> Okuma tamamlandı</span>
           </div>
-          <p v-if="analysis.fixture" class="hint"><i class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
-          <p v-if="analysis.input === 'ocr'" class="hint warn"><i class="pi pi-image" /> Form taranmış; metin OCR ile okundu. Kaydetmeden önce değerleri kontrol edin.</p>
-          <div v-if="analysis.bulk_duplicate" class="duplicate"><i class="pi pi-ban" /><span>{{ analysis.bulk_duplicate.message }}</span></div>
+          <p v-if="analysis.fixture" class="hint"><PkIcon class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
+          <p v-if="analysis.input === 'ocr'" class="hint warn"><PkIcon class="pi pi-image" /> Form taranmış; metin OCR ile okundu. Kaydetmeden önce değerleri kontrol edin.</p>
+          <div v-if="analysis.bulk_duplicate" class="duplicate"><PkIcon class="pi pi-ban" /><span>{{ analysis.bulk_duplicate.message }}</span></div>
 
           <template v-else>
             <div class="rows">
@@ -107,8 +107,8 @@
               </button>
             </div>
           </div>
-          <p v-if="bulk?.table_error" class="hint warn"><i class="pi pi-exclamation-triangle" /> Tüp tablosu: {{ bulk.table_error }}</p>
-          <p v-if="rows.length && !existing.length" class="hint"><i class="pi pi-info-circle" /> Bu lokasyonda henüz tüp yok: kaydettikten sonra Kontrol Formları'nda bekleyen satırları seçip yeni tüp olarak ekleyin.</p>
+          <p v-if="bulk?.table_error" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" /> Tüp tablosu: {{ bulk.table_error }}</p>
+          <p v-if="rows.length && !existing.length" class="hint"><PkIcon class="pi pi-info-circle" /> Bu lokasyonda henüz tüp yok: kaydettikten sonra Kontrol Formları'nda bekleyen satırları seçip yeni tüp olarak ekleyin.</p>
           <p v-if="!rows.length" class="muted">Formda tüp satırı okunamadı.</p>
           <div v-else class="table-wrap">
             <table>
@@ -136,7 +136,7 @@
                   </td>
                   <td>
                     <button type="button" class="choice-button" :class="row.choice.startsWith('e') ? 'matched' : row.choice" @click="openPicker($event, row)">
-                      <span>{{ choiceLabel(row) }}</span><i class="pi pi-chevron-down" />
+                      <span>{{ choiceLabel(row) }}</span><PkIcon class="pi pi-chevron-down" />
                     </button>
                     <small v-if="row.reason" class="raw">{{ row.reason }}</small>
                   </td>
@@ -176,11 +176,11 @@
 
       <p v-if="error" class="error-text">{{ error }}</p>
       <div class="rd-foot">
-        <p class="note-bar"><i class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
+        <p class="note-bar"><PkIcon class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
           <button v-if="analysis && !analysis.bulk_duplicate" class="primary-button" type="button" :disabled="!canSave" @click="save">
-            <i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : `Onayla ve kaydet (${counts.new + counts.existing} tüp)` }}
+            <PkIcon :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : `Onayla ve kaydet (${counts.new + counts.existing} tüp)` }}
           </button>
         </div>
       </div>

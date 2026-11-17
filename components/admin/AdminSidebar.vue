@@ -9,26 +9,26 @@
     </div>
 
     <button class="collapse-button" type="button" :aria-label="collapsed ? 'Menüyü aç' : 'Menüyü daralt'" @click="emit('toggle')">
-      <i :class="collapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" />
+      <PkIcon :class="collapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" />
       <span v-if="!collapsed">Menüyü daralt</span>
     </button>
 
     <div v-if="!collapsed" class="sidebar-label">YÖNETİM</div>
     <nav class="sidebar-nav">
       <NuxtLink to="/customers" class="sidebar-link" :title="collapsed ? 'Müşteriler' : undefined">
-        <i class="pi pi-users" />
+        <PkIcon class="pi pi-users" />
         <span v-if="!collapsed">Müşteriler</span>
       </NuxtLink>
       <NuxtLink to="/packages" class="sidebar-link" :title="collapsed ? 'Paketler' : undefined">
-        <i class="pi pi-box" />
+        <PkIcon class="pi pi-box" />
         <span v-if="!collapsed">Paketler</span>
       </NuxtLink>
     </nav>
 
     <div class="sidebar-bottom">
-      <div v-if="!collapsed" class="admin-badge"><i class="pi pi-shield" /><span>Süper Admin</span></div>
+      <div v-if="!collapsed" class="admin-badge"><PkIcon class="pi pi-shield" /><span>Süper Admin</span></div>
       <button class="logout-link" type="button" :title="collapsed ? 'Çıkış Yap' : undefined" @click="logout">
-        <i class="pi pi-sign-out" />
+        <PkIcon class="pi pi-sign-out" />
         <span v-if="!collapsed">Çıkış Yap</span>
       </button>
     </div>

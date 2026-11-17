@@ -1,7 +1,7 @@
 <template>
   <div class="analysis">
     <div v-if="analysis.match" class="match-line" :class="analysis.match.status">
-      <i :class="MATCH_ICONS[analysis.match.status]" />
+      <PkIcon :class="MATCH_ICONS[analysis.match.status]" />
       <span>{{ MATCH_TEXT[analysis.match.status] }}<template v-if="analysis.match.confirmed_by_user"> — kullanıcı uyarıya rağmen kaydetti</template></span>
     </div>
 

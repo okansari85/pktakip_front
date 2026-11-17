@@ -6,7 +6,7 @@
           <h2>{{ installation ? 'Tesisatı Düzenle' : 'Tesisat Ekle' }}</h2>
           <p>{{ [type.name, locationName].filter(Boolean).join(' · ') }}</p>
         </div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div class="form-grid">
@@ -54,7 +54,7 @@
 
       <p v-if="error" class="error-text">{{ error }}</p>
       <div class="modal-actions">
-        <button v-if="installation" class="danger-link" type="button" :disabled="saving" @click="remove"><i class="pi pi-trash" /> Tesisatı sil</button>
+        <button v-if="installation" class="danger-link" type="button" :disabled="saving" @click="remove"><PkIcon class="pi pi-trash" /> Tesisatı sil</button>
         <button class="secondary-button" type="button" :disabled="saving" @click="close">İptal</button>
         <button class="primary-button" type="button" :disabled="saving" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
       </div>

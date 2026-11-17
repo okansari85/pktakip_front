@@ -27,7 +27,7 @@ const print = () => window.print()
       <div class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-baslik">
         <div class="qr-head">
           <h2 id="qr-baslik">Karekod etiketi</h2>
-          <button type="button" class="qr-close" aria-label="Kapat" @click="emit('close')"><i class="pi pi-times" /></button>
+          <button type="button" class="qr-close" aria-label="Kapat" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
         </div>
 
         <div class="qr-label">
@@ -50,8 +50,8 @@ const print = () => window.print()
         <p class="qr-note">Karekod okutulunca bu ekipmanın uygulamadaki sayfası açılır (giriş gerekir).</p>
         <div class="qr-actions">
           <button type="button" class="secondary-button" @click="emit('close')">İptal</button>
-          <button type="button" class="secondary-button" @click="download"><i class="pi pi-download" /> PNG indir</button>
-          <button type="button" class="primary-button" @click="print"><i class="pi pi-print" /> Yazdır</button>
+          <button type="button" class="secondary-button" @click="download"><PkIcon class="pi pi-download" /> PNG indir</button>
+          <button type="button" class="primary-button" @click="print"><PkIcon class="pi pi-print" /> Yazdır</button>
         </div>
       </div>
     </div>

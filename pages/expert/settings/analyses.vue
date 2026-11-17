@@ -3,9 +3,9 @@
     <div class="page-head">
       <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
       <nav class="crumb" aria-label="Sayfa yolu">
-        <i class="pi pi-home" aria-hidden="true" />
+        <PkIcon class="pi pi-home" aria-hidden="true" />
         <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-        <i class="pi pi-angle-right" aria-hidden="true" />
+        <PkIcon class="pi pi-angle-right" aria-hidden="true" />
         <strong>Analiz geçmişi</strong>
       </nav>
       <h1>Analiz geçmişi</h1>
@@ -15,21 +15,21 @@
     <!-- Üst sıra: listedeki en yeni okuma, kalan kredi -->
     <div class="top">
       <section class="card last">
-        <header class="card-title"><i class="pi pi-file" /><h3>Son rapor</h3></header>
+        <header class="card-title"><PkIcon class="pi pi-file" /><h3>Son rapor</h3></header>
         <template v-if="last">
           <strong class="last-name">{{ [last.detected_type, last.target?.label].filter(Boolean).join(' · ') || last.file_name || 'Rapor' }}</strong>
-          <span v-if="last.status === 'failed'" class="status-badge bad"><i class="pi pi-times-circle" /> Okunamadı</span>
-          <span v-else class="status-badge" :class="statusKey(last.overall_status)"><i :class="STATUS_ICON[statusKey(last.overall_status)]" /> {{ statusLabel(last.overall_status) }}</span>
-          <span class="last-findings"><i class="pi pi-search" /> {{ last.status === 'failed' ? '—' : `${last.summary?.finding_count ?? 0} bulgu` }}</span>
-          <button class="primary-button wide" type="button" :disabled="!last.target && last.status === 'failed'" @click="openLast">Kaydı aç <i class="pi pi-arrow-right" /></button>
+          <span v-if="last.status === 'failed'" class="status-badge bad"><PkIcon class="pi pi-times-circle" /> Okunamadı</span>
+          <span v-else class="status-badge" :class="statusKey(last.overall_status)"><PkIcon :class="STATUS_ICON[statusKey(last.overall_status)]" /> {{ statusLabel(last.overall_status) }}</span>
+          <span class="last-findings"><PkIcon class="pi pi-search" /> {{ last.status === 'failed' ? '—' : `${last.summary?.finding_count ?? 0} bulgu` }}</span>
+          <button class="primary-button wide" type="button" :disabled="!last.target && last.status === 'failed'" @click="openLast">Kaydı aç <PkIcon class="pi pi-arrow-right" /></button>
         </template>
         <p v-else class="muted">{{ loading ? 'Yükleniyor...' : 'Henüz okuma yok.' }}</p>
       </section>
       <section class="card credit">
-        <header class="card-title"><i class="pi pi-database" /><h3>Kalan kredi</h3></header>
+        <header class="card-title"><PkIcon class="pi pi-database" /><h3>Kalan kredi</h3></header>
         <strong class="credit-number" :class="{ empty: !billing?.unlimited && (billing?.credits ?? 0) <= 0 }">{{ billing ? billing.unlimited ? 'Sınırsız' : billing.credits ?? 0 : '—' }}</strong>
         <span class="credit-package">{{ billing?.package?.name ? `${billing.package.name} paket` : MODE_LABELS[billing?.mode || ''] || '' }}</span>
-        <button class="text-link" type="button" @click="setTab('credits')">Kredi hareketleri <i class="pi pi-angle-right" /></button>
+        <button class="text-link" type="button" @click="setTab('credits')">Kredi hareketleri <PkIcon class="pi pi-angle-right" /></button>
       </section>
     </div>
 
@@ -37,8 +37,8 @@
       <!-- Okumalar | Kredi hareketleri (paketin kredisi yalnızca rapor okumada düşer) -->
       <div class="tabs-row">
         <div class="tabs">
-          <button type="button" :class="{ active: tab === 'reads' }" @click="setTab('reads')"><i class="pi pi-file" /> Okumalar</button>
-          <button type="button" :class="{ active: tab === 'credits' }" @click="setTab('credits')"><i class="pi pi-database" /> Kredi hareketleri</button>
+          <button type="button" :class="{ active: tab === 'reads' }" @click="setTab('reads')"><PkIcon class="pi pi-file" /> Okumalar</button>
+          <button type="button" :class="{ active: tab === 'credits' }" @click="setTab('credits')"><PkIcon class="pi pi-database" /> Kredi hareketleri</button>
         </div>
         <!-- Kredi özeti: katalogda yok, gizli; ileride açılabilir (kalan kredi üstteki kartta) -->
         <ExpertCreditSummary v-if="SHOW_TAB_SUMMARY && tab === 'credits'" class="tab-summary" />
@@ -56,34 +56,34 @@
           <option value="">Lokasyon</option>
           <option v-for="location in locationOptions" :key="location.id" :value="String(location.id)">{{ location.name }}</option>
         </select>
-        <i class="pi pi-chevron-down" aria-hidden="true" />
+        <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
       </span>
       <span v-if="!ownOnly" class="pill-select">
         <select v-model="filters.user_id" aria-label="Uzman" @change="reload">
           <option value="">Tüm uzmanlar</option>
           <option v-for="user in users" :key="user.id" :value="String(user.id)">{{ user.name }}</option>
         </select>
-        <i class="pi pi-chevron-down" aria-hidden="true" />
+        <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
       </span>
       <span class="pill-select">
         <select v-model="filters.kind" aria-label="Rapor türü" @change="reload">
           <option value="">Rapor türü</option>
           <option v-for="(label, key) in KIND_LABELS" :key="key" :value="key">{{ label }}</option>
         </select>
-        <i class="pi pi-chevron-down" aria-hidden="true" />
+        <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
       </span>
       <span class="pill-select">
         <select v-model="filters.status" aria-label="Durum" @change="reload">
           <option value="">Durum</option>
           <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
         </select>
-        <i class="pi pi-chevron-down" aria-hidden="true" />
+        <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
       </span>
       <!-- Tarih aralığı ve Yenile: katalogda yok, gizli; ileride açılabilir -->
       <template v-if="SHOW_EXTRA_FILTERS">
         <label class="date"><span>Başlangıç</span><input v-model="filters.from" type="date" @change="reload" /></label>
         <label class="date"><span>Bitiş</span><input v-model="filters.to" type="date" @change="reload" /></label>
-        <button class="icon-button" type="button" title="Yenile" aria-label="Yenile" @click="reload"><i class="pi pi-refresh" /></button>
+        <button class="icon-button" type="button" title="Yenile" aria-label="Yenile" @click="reload"><PkIcon class="pi pi-refresh" /></button>
       </template>
     </div>
 
@@ -105,7 +105,7 @@
               <td class="nowrap" :title="formatDateTime(item.created_at)">{{ formatDay(item.created_at) }}</td>
               <td>
                 <span class="file-cell" :title="item.file_name">
-                  <i class="pi pi-file file-icon" />
+                  <PkIcon class="pi pi-file file-icon" />
                   <span class="file-text"><strong>{{ item.file_name || '—' }}</strong><small class="origin">{{ [KIND_LABELS[item.kind], item.input === 'image' && 'görüntüden okundu', item.input === 'ocr' && 'OCR ile okundu', item.model].filter(Boolean).join(' · ') }}</small></span>
                 </span>
               </td>
@@ -130,24 +130,24 @@
                 <td class="nowrap">{{ item.duration_s ? `${formatNumber(item.duration_s)} sn` : '—' }}</td>
               </template>
               <td>
-                <span v-if="item.status === 'failed'" class="status-badge bad"><i class="pi pi-times-circle" /> Okunamadı</span>
-                <span v-else class="status-badge" :class="statusKey(item.overall_status)"><i :class="STATUS_ICON[statusKey(item.overall_status)]" /> {{ statusLabel(item.overall_status) }}</span>
+                <span v-if="item.status === 'failed'" class="status-badge bad"><PkIcon class="pi pi-times-circle" /> Okunamadı</span>
+                <span v-else class="status-badge" :class="statusKey(item.overall_status)"><PkIcon :class="STATUS_ICON[statusKey(item.overall_status)]" /> {{ statusLabel(item.overall_status) }}</span>
               </td>
               <td class="center">{{ item.status === 'failed' ? '—' : item.summary?.finding_count || '—' }}</td>
               <td class="more-cell" @click.stop>
-                <button class="more-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openRowMenu($event, item)"><i class="pi pi-ellipsis-h" /></button>
+                <button class="more-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openRowMenu($event, item)"><PkIcon class="pi pi-ellipsis-h" /></button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="table-footer">
-        <span v-if="soleUser" class="by"><i class="pi pi-user" /> <strong>{{ soleUser }}</strong> tarafından işlendi.</span>
+        <span v-if="soleUser" class="by"><PkIcon class="pi pi-user" /> <strong>{{ soleUser }}</strong> tarafından işlendi.</span>
         <span class="shown">{{ rows.length }} / {{ total }} okuma</span>
         <button v-if="page < lastPage" class="secondary-button" type="button" :disabled="loading" @click="loadMore">{{ loading ? 'Yükleniyor...' : 'Daha fazla göster' }}</button>
       </div>
     </template>
-    <Menu ref="rowMenu" :model="rowMenuItems" popup :pt="{ root: { style: MENU_VARS } }" />
+    <Menu ref="rowMenu" :model="rowMenuItems" popup :pt="{ root: { style: MENU_VARS } }"><template #itemicon="{ item }"><PkIcon :class="item.icon" class="p-menu-item-icon" /></template></Menu>
     </template>
     </section>
 
@@ -168,8 +168,8 @@
             </small>
           </div>
           <div class="detail-actions">
-            <NuxtLink v-if="detail.target" class="secondary-button" :to="targetLink(detail.target)">{{ detail.target.label }} <i class="pi pi-arrow-right" /></NuxtLink>
-            <button v-if="detail.has_file" class="secondary-button" type="button" @click="openPdf(detail)"><i class="pi pi-file-pdf" /> PDF</button>
+            <NuxtLink v-if="detail.target" class="secondary-button" :to="targetLink(detail.target)">{{ detail.target.label }} <PkIcon class="pi pi-arrow-right" /></NuxtLink>
+            <button v-if="detail.has_file" class="secondary-button" type="button" @click="openPdf(detail)"><PkIcon class="pi pi-file-pdf" /> PDF</button>
           </div>
         </div>
       </template>

@@ -8,7 +8,7 @@
           <tr :class="{ group: group.items.length > 1, open: isOpen(group.key) }" @click="group.items.length > 1 && toggle(group.key)">
             <td>
               <span class="title">
-                <i v-if="group.items.length > 1" class="pi chevron" :class="isOpen(group.key) ? 'pi-chevron-down' : 'pi-chevron-right'" />
+                <PkIcon v-if="group.items.length > 1" class="pi chevron" :class="isOpen(group.key) ? 'pi-chevron-down' : 'pi-chevron-right'" />
                 <strong>{{ group.name }}</strong>
                 <span v-if="group.items.length > 1" class="count">{{ group.items.length }} kayıt</span>
               </span>

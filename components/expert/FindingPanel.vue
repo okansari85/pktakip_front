@@ -3,27 +3,27 @@
     <div class="detail-top">
       <div class="detail-main">
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
+          <PkIcon class="pi pi-home" aria-hidden="true" />
           <button type="button" class="crumb-link" @click="emit('close')">Bulgu takibi</button>
-          <template v-if="finding?.subject?.name"><i class="pi pi-angle-right" aria-hidden="true" /><span>{{ finding.subject.name }}</span></template>
-          <i class="pi pi-angle-right" aria-hidden="true" />
+          <template v-if="finding?.subject?.name"><PkIcon class="pi pi-angle-right" aria-hidden="true" /><span>{{ finding.subject.name }}</span></template>
+          <PkIcon class="pi pi-angle-right" aria-hidden="true" />
           <strong>Bulgu detayı</strong>
         </nav>
         <div class="title-row">
           <h1 id="finding-title">Bulgu detayı</h1>
           <!-- Son raporun sonucu (bulgunun geçtiği en yeni rapor) -->
           <span v-if="lastSource" class="result-chip" :class="lastSource.status === 'uygun' ? 'ok' : 'bad'">
-            <i :class="lastSource.status === 'uygun' ? 'pi pi-check' : 'pi pi-times'" aria-hidden="true" /> {{ lastSource.status === 'uygun' ? 'Uygun' : 'Uygun değil' }}
+            <PkIcon :class="lastSource.status === 'uygun' ? 'pi pi-check' : 'pi pi-times'" aria-hidden="true" /> {{ lastSource.status === 'uygun' ? 'Uygun' : 'Uygun değil' }}
           </span>
         </div>
 
-        <div v-if="loading && !finding" class="card state"><i class="pi pi-spin pi-spinner" /> Bulgu yükleniyor...</div>
+        <div v-if="loading && !finding" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Bulgu yükleniyor...</div>
         <div v-else-if="loadError" class="card state error-text">{{ loadError }}</div>
         <template v-else-if="finding">
           <p class="meta">
-            <span><i :class="finding.subject?.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" aria-hidden="true" /> <strong>{{ subjectText || '—' }}</strong><template v-if="placeText"> · {{ placeText }}</template></span>
+            <span><PkIcon :class="finding.subject?.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" aria-hidden="true" /> <strong>{{ subjectText || '—' }}</strong><template v-if="placeText"> · {{ placeText }}</template></span>
             <span class="meta-sep" aria-hidden="true" />
-            <span><i class="pi pi-file" aria-hidden="true" /> Rapor tarihi {{ findingDay(lastSource?.control_date || finding.last_seen_date) }}</span>
+            <span><PkIcon class="pi pi-file" aria-hidden="true" /> Rapor tarihi {{ findingDay(lastSource?.control_date || finding.last_seen_date) }}</span>
           </p>
           <div class="finding-head" :class="FINDING_STATUS[finding.status]?.tone">
             <h2>{{ finding.text }}</h2>
@@ -33,10 +33,10 @@
       </div>
 
       <section v-if="finding" class="card work-card" aria-labelledby="work-title">
-        <header class="card-head"><i class="pi pi-wrench" aria-hidden="true" /><h3 id="work-title">Düzeltici işlem</h3></header>
+        <header class="card-head"><PkIcon class="pi pi-wrench" aria-hidden="true" /><h3 id="work-title">Düzeltici işlem</h3></header>
         <!-- Yeni uygun rapor: kapatma önerisi (katalogda yok, gizli; ileride açılabilir) -->
         <div v-if="SHOW_CLOSE_SUGGESTION && finding.close_suggestion && finding.status !== 'kapandi'" class="suggestion">
-          <i class="pi pi-check-circle" />
+          <PkIcon class="pi pi-check-circle" />
           <div>
             <strong>Yeni rapor uygun ({{ findingDay(finding.close_suggestion.date) }})</strong>
             <span>Bu bulgu son raporda geçmiyor. Bulgu kapatılsın mı?</span>
@@ -52,18 +52,18 @@
           </label>
           <label class="form-row"><span>Sorumlu</span>
             <span class="field select">
-              <i class="pi pi-users" aria-hidden="true" />
+              <PkIcon class="pi pi-users" aria-hidden="true" />
               <select v-model="form.responsible_user_id" :disabled="closed">
                 <option :value="null">Seçilmedi</option>
                 <option v-for="person in responsibles" :key="person.id" :value="person.id">{{ person.name }}</option>
               </select>
-              <i class="pi pi-chevron-down" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
             </span>
           </label>
           <!-- Kullanıcı ekle: katalogda yok, gizli (pencere kodu yerinde); ileride açılabilir -->
-          <button v-if="SHOW_INVITE && canInvite && !closed" class="link-button invite" type="button" @click="openInvite"><i class="pi pi-user-plus" /> Listede yok mu? Kullanıcı ekle</button>
+          <button v-if="SHOW_INVITE && canInvite && !closed" class="link-button invite" type="button" @click="openInvite"><PkIcon class="pi pi-user-plus" /> Listede yok mu? Kullanıcı ekle</button>
           <label class="form-row"><span>Termin</span>
-            <span class="field"><i class="pi pi-calendar" aria-hidden="true" /><input v-model="form.due_date" type="date" :disabled="closed" /></span>
+            <span class="field"><PkIcon class="pi pi-calendar" aria-hidden="true" /><input v-model="form.due_date" type="date" :disabled="closed" /></span>
           </label>
           <!-- Durum "Kapandı" seçilip kaydedilince bulgu kapatılır; kapalı bulguda başka durum seçilince yeniden açılır -->
           <label class="form-row"><span>Durum</span>
@@ -72,28 +72,28 @@
               <select v-model="form.status">
                 <option v-for="(item, key) in FINDING_STATUS" :key="key" :value="key">{{ item.label }}</option>
               </select>
-              <i class="pi pi-chevron-down" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
             </span>
           </label>
           <label class="form-row"><span>Tekrar kontrol tarihi</span>
-            <span class="field"><i class="pi pi-calendar" aria-hidden="true" /><input v-model="form.recheck_date" type="date" :disabled="closed" /></span>
+            <span class="field"><PkIcon class="pi pi-calendar" aria-hidden="true" /><input v-model="form.recheck_date" type="date" :disabled="closed" /></span>
           </label>
         </div>
         <p v-if="SHOW_RECHECK_HINT" class="hint">Tekrar kontrol tarihi girilince durum "Tekrar kontrol bekliyor" olur ve tarih Kontrol Takvimi'nde görünür.</p>
         <p v-if="saveError" class="error-text small-text">{{ saveError }}</p>
         <div class="form-actions">
           <button class="secondary-button" type="button" :disabled="busy || !dirty" @click="fill(finding)">Vazgeç</button>
-          <button class="primary-button" type="button" :disabled="busy || !dirty" @click="save"><i class="pi pi-check" /> {{ busy ? 'Kaydediliyor...' : 'İşi ata' }}</button>
+          <button class="primary-button" type="button" :disabled="busy || !dirty" @click="save"><PkIcon class="pi pi-check" /> {{ busy ? 'Kaydediliyor...' : 'İşi ata' }}</button>
         </div>
       </section>
     </div>
 
     <div v-if="finding" class="detail-bottom">
       <section class="card notes-card" aria-labelledby="notes-title">
-        <header class="card-head"><i class="pi pi-file-edit" aria-hidden="true" /><h3 id="notes-title">Not ve kanıt</h3></header>
+        <header class="card-head"><PkIcon class="pi pi-file-edit" aria-hidden="true" /><h3 id="notes-title">Not ve kanıt</h3></header>
         <div class="tabs" role="tablist">
-          <button type="button" role="tab" :aria-selected="tab === 'notlar'" :class="{ on: tab === 'notlar' }" @click="tab = 'notlar'"><i class="pi pi-comment" /> Notlar</button>
-          <button type="button" role="tab" :aria-selected="tab === 'dosyalar'" :class="{ on: tab === 'dosyalar' }" @click="tab = 'dosyalar'"><i class="pi pi-paperclip" /> Dosyalar</button>
+          <button type="button" role="tab" :aria-selected="tab === 'notlar'" :class="{ on: tab === 'notlar' }" @click="tab = 'notlar'"><PkIcon class="pi pi-comment" /> Notlar</button>
+          <button type="button" role="tab" :aria-selected="tab === 'dosyalar'" :class="{ on: tab === 'dosyalar' }" @click="tab = 'dosyalar'"><PkIcon class="pi pi-paperclip" /> Dosyalar</button>
         </div>
         <template v-if="tab === 'notlar'">
           <!-- Not ve / ya da dosya: dosya seçiliyse not dosyayla birlikte kaydedilir -->
@@ -101,17 +101,17 @@
             <textarea v-model="note" rows="3" placeholder="İşlem notu ekleyin" aria-label="İşlem notu" />
             <label class="dropzone" :class="{ over: dragOver, has: !!file }" @dragover.prevent="dragOver = true" @dragleave="dragOver = false" @drop.prevent="dropFile">
               <input ref="fileInput" class="sr-only" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.doc,.docx,.xls,.xlsx" @change="pickFile" />
-              <i class="pi pi-cloud-upload" aria-hidden="true" />
+              <PkIcon class="pi pi-cloud-upload" aria-hidden="true" />
               <span>{{ file ? file.name : 'Fotoğraf veya belge ekleyin' }}</span>
             </label>
           </div>
           <div class="note-actions">
-            <button class="primary-button" type="button" :disabled="busy || (!note.trim() && !file)" @click="file ? upload() : addNote()"><i class="pi pi-comment" /> Not ekle</button>
+            <button class="primary-button" type="button" :disabled="busy || (!note.trim() && !file)" @click="file ? upload() : addNote()"><PkIcon class="pi pi-comment" /> Not ekle</button>
           </div>
           <ul v-if="notes.length" class="entries">
             <li v-for="item in notes" :key="item.id">
               <p>{{ item.note }}</p>
-              <button v-if="item.type === 'dosya'" class="link-button" type="button" @click="openFile(`pk-findings/${finding.id}/files/${item.id}`)"><i class="pi pi-paperclip" /> {{ item.file_name }}</button>
+              <button v-if="item.type === 'dosya'" class="link-button" type="button" @click="openFile(`pk-findings/${finding.id}/files/${item.id}`)"><PkIcon class="pi pi-paperclip" /> {{ item.file_name }}</button>
               <small>{{ item.user || '' }} · {{ formatTime(item.created_at) }}</small>
             </li>
           </ul>
@@ -119,7 +119,7 @@
         <template v-else>
           <ul v-if="files.length" class="entries">
             <li v-for="item in files" :key="item.id">
-              <button class="link-button" type="button" @click="openFile(`pk-findings/${finding.id}/files/${item.id}`)"><i class="pi pi-file" /> {{ item.file_name }}</button>
+              <button class="link-button" type="button" @click="openFile(`pk-findings/${finding.id}/files/${item.id}`)"><PkIcon class="pi pi-file" /> {{ item.file_name }}</button>
               <small>{{ item.user || '' }} · {{ formatTime(item.created_at) }}</small>
             </li>
           </ul>
@@ -128,19 +128,19 @@
       </section>
 
       <section class="card related-card" aria-labelledby="related-title">
-        <header class="card-head"><i class="pi pi-clone" aria-hidden="true" /><h3 id="related-title">İlgili kayıt</h3></header>
+        <header class="card-head"><PkIcon class="pi pi-clone" aria-hidden="true" /><h3 id="related-title">İlgili kayıt</h3></header>
         <div class="related-row">
-          <span class="related-icon"><i :class="finding.subject?.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" aria-hidden="true" /></span>
+          <span class="related-icon"><PkIcon :class="finding.subject?.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" aria-hidden="true" /></span>
           <span class="related-text"><strong>{{ finding.subject?.name || '—' }}</strong><small>{{ finding.subject?.kind === 'installation' ? 'Tesisat' : 'Ekipman profili' }}</small></span>
           <!-- Tesisatın kendi sayfası yok; Tesisatlar listesine gider -->
           <NuxtLink v-if="finding.subject?.id" class="soft-button" :to="finding.subject.kind === 'installation' ? '/expert/installations' : `/expert/equipment/${finding.subject.id}`">
-            <i class="pi pi-external-link" /> {{ finding.subject.kind === 'installation' ? 'Tesisatlar' : 'Profili aç' }}
+            <PkIcon class="pi pi-external-link" /> {{ finding.subject.kind === 'installation' ? 'Tesisatlar' : 'Profili aç' }}
           </NuxtLink>
         </div>
         <div class="related-row">
-          <span class="related-icon"><i class="pi pi-file" aria-hidden="true" /></span>
+          <span class="related-icon"><PkIcon class="pi pi-file" aria-hidden="true" /></span>
           <span class="related-text"><strong>Periyodik kontrol raporu</strong><small>{{ lastSource ? `Son rapor: ${findingDay(lastSource.control_date)}` : 'Bulgunun geçtiği rapor silinmiş.' }}</small></span>
-          <button v-if="lastSource?.file_url" class="soft-button" type="button" @click="openFile(lastSource.file_url)"><i class="pi pi-external-link" /> Raporu aç</button>
+          <button v-if="lastSource?.file_url" class="soft-button" type="button" @click="openFile(lastSource.file_url)"><PkIcon class="pi pi-external-link" /> Raporu aç</button>
         </div>
       </section>
     </div>
@@ -152,7 +152,7 @@
         <li v-for="source in finding.sources" :key="`${source.type}-${source.id}`">
           <span>{{ findingDay(source.control_date) }} raporu<template v-if="source.report_no"> · No {{ source.report_no }}</template></span>
           <span class="source-status" :class="source.status === 'uygun' ? 'ok' : 'bad'">{{ source.status === 'uygun' ? 'Uygun' : 'Uygun değil' }}</span>
-          <button v-if="source.file_url" class="link-button" type="button" @click="openFile(source.file_url)"><i class="pi pi-file-pdf" /> Raporu aç</button>
+          <button v-if="source.file_url" class="link-button" type="button" @click="openFile(source.file_url)"><PkIcon class="pi pi-file-pdf" /> Raporu aç</button>
         </li>
         <li v-if="!finding.sources.length" class="muted">Bulgunun geçtiği rapor silinmiş.</li>
       </ul>
@@ -166,11 +166,11 @@
           <textarea v-model="closeNote" rows="2" placeholder="Ör. Etiket yenilendi, fotoğraf eklendi." />
         </label>
         <div class="form-actions">
-          <button class="primary-button" type="button" :disabled="busy" @click="close(closeNote)"><i class="pi pi-check" /> Bulguyu kapat</button>
+          <button class="primary-button" type="button" :disabled="busy" @click="close(closeNote)"><PkIcon class="pi pi-check" /> Bulguyu kapat</button>
         </div>
       </template>
       <div v-else class="closed-row">
-        <span><i class="pi pi-check-circle" /> {{ formatTime(finding.closed_at) }} tarihinde kapatıldı.</span>
+        <span><PkIcon class="pi pi-check-circle" /> {{ formatTime(finding.closed_at) }} tarihinde kapatıldı.</span>
         <button class="secondary-button" type="button" :disabled="busy" @click="reopen">Yeniden aç</button>
       </div>
     </section>
@@ -195,7 +195,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Kullanıcı Ekle</h2><p>Davet e-postası gider; kullanıcı kendi şifresini belirler.</p></div>
-          <button class="close-button" type="button" aria-label="Kapat" @click="inviteOpen = false"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" aria-label="Kapat" @click="inviteOpen = false"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>Ad Soyad <span>*</span><input v-model="inviteForm.name" type="text" placeholder="Örn. Ayşe Demir" /></label>
         <label>E-posta <span>*</span><input v-model="inviteForm.email" type="email" placeholder="ornek@firma.com" /></label>

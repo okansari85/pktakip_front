@@ -3,27 +3,27 @@
     <section class="modal-card wizard">
       <div class="modal-head">
         <div class="head-title">
-          <span class="head-icon"><i class="pi pi-briefcase" /></span>
+          <span class="head-icon"><PkIcon class="pi pi-briefcase" /></span>
           <div>
             <h2>{{ kamuAccount ? 'Lokasyona İşyeri Ekle' : customerType === 'public' ? 'Lokasyona İşyeri Ata' : 'Lokasyona Firma Ata' }}</h2>
-            <p><i class="pi pi-map-marker" /> {{ location.name }}<template v-if="customerName"> · {{ customerName }}</template></p>
+            <p><PkIcon class="pi pi-map-marker" /> {{ location.name }}<template v-if="customerName"> · {{ customerName }}</template></p>
           </div>
         </div>
-        <button class="close-button" type="button" :disabled="saving" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" :disabled="saving" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div class="layout">
         <!-- Adım listesi -->
         <ol class="stepper" aria-label="Adımlar">
           <li v-for="(s, i) in steps" :key="s" :class="{ on: i === stepIndex, done: i < stepIndex }">
-            <span class="dot"><i :class="i < stepIndex ? 'pi pi-check' : meta[s].icon" /></span>
+            <span class="dot"><PkIcon :class="i < stepIndex ? 'pi pi-check' : meta[s].icon" /></span>
             <span class="name">{{ meta[s].name }}</span>
           </li>
         </ol>
 
         <div class="content">
           <div class="step-head">
-            <span class="step-icon"><i :class="meta[step].icon" /></span>
+            <span class="step-icon"><PkIcon :class="meta[step].icon" /></span>
             <div>
               <p class="step-count">Adım {{ stepIndex + 1 }} / {{ steps.length }}</p>
               <h3>{{ stepTitle }}</h3>
@@ -31,15 +31,15 @@
             </div>
           </div>
 
-          <div v-if="!ready" class="loading"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</div>
+          <div v-if="!ready" class="loading"><PkIcon class="pi pi-spin pi-spinner" /> Yükleniyor...</div>
 
           <!-- Müşteri türü (yalnız türü boş eski müşterilerde, bir kez): cevaba göre sonraki sorular değişir -->
           <template v-else-if="step === 'ctype'">
             <div class="cards">
               <button v-for="t in CUSTOMER_TYPES" :key="t.id" type="button" class="card" :class="{ on: pickedType === t.id }" @click="pickedType = t.id">
-                <span class="card-icon"><i :class="t.icon" /></span>
+                <span class="card-icon"><PkIcon :class="t.icon" /></span>
                 <span class="card-text"><strong>{{ t.label }}</strong><small>{{ t.text }}</small></span>
-                <i v-if="pickedType === t.id" class="pi pi-check-circle card-check" />
+                <PkIcon v-if="pickedType === t.id" class="pi pi-check-circle card-check" />
               </button>
             </div>
           </template>
@@ -53,7 +53,7 @@
                 <option v-for="c in firms" :key="c.business_entity_id" :value="c.business_entity_id">{{ companyLabel(c) }}</option>
               </select>
             </label>
-            <p v-if="!firms.length" class="hint"><i class="pi pi-info-circle" /> <span>Bu ana firmanın Firmalar listesi boş. Başka firma için firma sayfasındaki Firmalar sekmesinden ekleyin.</span></p>
+            <p v-if="!firms.length" class="hint"><PkIcon class="pi pi-info-circle" /> <span>Bu ana firmanın Firmalar listesi boş. Başka firma için firma sayfasındaki Firmalar sekmesinden ekleyin.</span></p>
           </template>
 
           <!-- Alt tesis (KSY-SIS): aynı firmanın bu lokasyondaki ikinci işyeri ayrı alt tesiste açılır; ad ile ayırma yok. -->
@@ -64,7 +64,7 @@
                 <option v-for="sub in subFacilities" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
               </select>
             </label>
-            <p v-if="subTaken" class="hint warn"><i class="pi pi-exclamation-triangle" />
+            <p v-if="subTaken" class="hint warn"><PkIcon class="pi pi-exclamation-triangle" />
               <span v-if="subFacilityId">"{{ chosenName }}" bu alt tesiste zaten kayıtlı. Başka bir alt tesis seçin.</span>
               <span v-else-if="subFacilities.length">"{{ chosenName }}" bu lokasyonda zaten kayıtlı. İkinci işyeri için bir alt tesis seçin.</span>
               <span v-else>"{{ chosenName }}" bu lokasyonda zaten kayıtlı. İkinci işyeri ayrı bir alt tesiste açılır; alt tesisi firma sayfasındaki lokasyon kartından ekleyin.</span>
@@ -77,9 +77,9 @@
           <!-- 4. Faaliyet (NACE) -->
           <template v-else-if="step === 'nace'">
             <label>NACE kodu ya da faaliyet
-              <span class="search"><i class="pi pi-search" /><input ref="focusInput" v-model="naceQuery" type="text" placeholder="Örn. 56.11 ya da lokanta, itfaiye, okul" @input="searchNace" /></span>
+              <span class="search"><PkIcon class="pi pi-search" /><input ref="focusInput" v-model="naceQuery" type="text" placeholder="Örn. 56.11 ya da lokanta, itfaiye, okul" @input="searchNace" /></span>
             </label>
-            <p v-if="selectedNace" class="selected"><i class="pi pi-check-circle" /> <strong>{{ selectedNace.nace_code }}</strong> {{ selectedNace.activity_name }}</p>
+            <p v-if="selectedNace" class="selected"><PkIcon class="pi pi-check-circle" /> <strong>{{ selectedNace.nace_code }}</strong> {{ selectedNace.activity_name }}</p>
             <ul v-else-if="naceResults.length" class="nace-results">
               <li v-for="item in naceResults" :key="item.id">
                 <button type="button" @click="selectNace(item)">
@@ -87,28 +87,28 @@
                 </button>
               </li>
             </ul>
-            <button type="button" class="link-button skip" @click="skipNace"><i class="pi pi-question-circle" /> Bilmiyorum, tehlike sınıfını kendim seçeceğim</button>
+            <button type="button" class="link-button skip" @click="skipNace"><PkIcon class="pi pi-question-circle" /> Bilmiyorum, tehlike sınıfını kendim seçeceğim</button>
             <!-- Uygulamada taşeron yok (kullanıcı 18 Ekim 2026): başka firma ekleme bağlantısı kaldırıldı; işyeri organizasyonun kendisi. -->
           </template>
 
           <!-- 5. Tehlike sınıfı -->
           <template v-else-if="step === 'hazard'">
             <template v-if="selectedNace && !hazardEdit">
-              <p class="hint"><i class="pi pi-info-circle" /> NACE listesine göre ({{ selectedNace.nace_code }}) tehlike sınıfı <em class="badge" :class="hazardClassKey(selectedNace.hazard_class)">{{ selectedNace.hazard_class }}</em>. Doğru mu?</p>
+              <p class="hint"><PkIcon class="pi pi-info-circle" /> NACE listesine göre ({{ selectedNace.nace_code }}) tehlike sınıfı <em class="badge" :class="hazardClassKey(selectedNace.hazard_class)">{{ selectedNace.hazard_class }}</em>. Doğru mu?</p>
               <div class="cards row">
                 <button type="button" class="card" @click="hazardClass = selectedNace.hazard_class; next()">
-                  <span class="card-icon ok"><i class="pi pi-check" /></span>
+                  <span class="card-icon ok"><PkIcon class="pi pi-check" /></span>
                   <span class="card-text"><strong>Evet, doğru</strong><small>NACE listesindeki sınıf kullanılır.</small></span>
                 </button>
                 <button type="button" class="card" @click="hazardEdit = true">
-                  <span class="card-icon"><i class="pi pi-pencil" /></span>
+                  <span class="card-icon"><PkIcon class="pi pi-pencil" /></span>
                   <span class="card-text"><strong>Değiştir</strong><small>Sınıfı kendiniz seçersiniz.</small></span>
                 </button>
               </div>
             </template>
             <div v-else class="cards row three">
               <button v-for="h in HAZARDS" :key="h.id" type="button" class="card hazard" :class="[{ on: hazardClass === h.id }, hazardClassKey(h.id)]" @click="hazardClass = h.id">
-                <span class="card-icon"><i :class="h.icon" /></span>
+                <span class="card-icon"><PkIcon :class="h.icon" /></span>
                 <span class="card-text"><strong>{{ h.id }}</strong><small>{{ h.text }}</small></span>
               </button>
             </div>
@@ -118,7 +118,7 @@
           <template v-else-if="step === 'employees'">
             <div class="cards row three">
               <button v-for="b in EMPLOYEE_BANDS" :key="b.value" type="button" class="card" :class="{ on: employeeBand === b.value }" @click="employeeBand = b.value; next()">
-                <span class="card-icon"><i :class="b.icon" /></span>
+                <span class="card-icon"><PkIcon :class="b.icon" /></span>
                 <span class="card-text"><strong>{{ b.label }}</strong><small>{{ b.text }}</small></span>
               </button>
             </div>
@@ -134,20 +134,20 @@
           <!-- 8. Özet -->
           <template v-else>
             <dl class="summary">
-              <template v-if="!isSelf"><dt><i class="pi pi-briefcase" /> Firma</dt><dd>{{ chosenName }}</dd></template>
-              <template v-else-if="customerName"><dt><i class="pi pi-sitemap" /> {{ account === 'osgb' ? 'Müşteri' : account === 'public' ? 'Organizasyon' : 'Ana firma' }}</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
-              <template v-if="!namedByLocation && displayName.trim()"><dt><i class="pi pi-tag" /> İşyeri adı</dt><dd>{{ displayName.trim() }} <small>· listelerde "{{ displayName.trim() }} · {{ chosenName }}"</small></dd></template>
-              <dt><i class="pi pi-map-marker" /> Lokasyon</dt><dd>{{ location.name }}</dd>
-              <dt><i class="pi pi-th-large" /> Alt tesis</dt><dd>{{ subFacilities.find(s => s.id === subFacilityId)?.name || 'Lokasyonun geneli' }}</dd>
-              <dt><i class="pi pi-search" /> Faaliyet</dt><dd>{{ selectedNace ? `${selectedNace.nace_code} ${selectedNace.activity_name}` : '—' }}</dd>
-              <dt><i class="pi pi-exclamation-triangle" /> Tehlike sınıfı</dt><dd><em class="badge" :class="hazardClassKey(hazardClass)">{{ hazardClass }}</em></dd>
-              <dt><i class="pi pi-users" /> Çalışan sayısı</dt><dd>{{ EMPLOYEE_BANDS.find(b => b.value === employeeBand)?.label }}</dd>
-              <dt><i class="pi pi-id-card" /> SGK sicil no</dt><dd>{{ sgkNumber.trim() || '—' }}</dd>
+              <template v-if="!isSelf"><dt><PkIcon class="pi pi-briefcase" /> Firma</dt><dd>{{ chosenName }}</dd></template>
+              <template v-else-if="customerName"><dt><PkIcon class="pi pi-sitemap" /> {{ account === 'osgb' ? 'Müşteri' : account === 'public' ? 'Organizasyon' : 'Ana firma' }}</dt><dd>{{ customerName }}<small v-if="customerType"> · {{ customerTypeLabel(customerType) }}</small></dd></template>
+              <template v-if="!namedByLocation && displayName.trim()"><dt><PkIcon class="pi pi-tag" /> İşyeri adı</dt><dd>{{ displayName.trim() }} <small>· listelerde "{{ displayName.trim() }} · {{ chosenName }}"</small></dd></template>
+              <dt><PkIcon class="pi pi-map-marker" /> Lokasyon</dt><dd>{{ location.name }}</dd>
+              <dt><PkIcon class="pi pi-th-large" /> Alt tesis</dt><dd>{{ subFacilities.find(s => s.id === subFacilityId)?.name || 'Lokasyonun geneli' }}</dd>
+              <dt><PkIcon class="pi pi-search" /> Faaliyet</dt><dd>{{ selectedNace ? `${selectedNace.nace_code} ${selectedNace.activity_name}` : '—' }}</dd>
+              <dt><PkIcon class="pi pi-exclamation-triangle" /> Tehlike sınıfı</dt><dd><em class="badge" :class="hazardClassKey(hazardClass)">{{ hazardClass }}</em></dd>
+              <dt><PkIcon class="pi pi-users" /> Çalışan sayısı</dt><dd>{{ EMPLOYEE_BANDS.find(b => b.value === employeeBand)?.label }}</dd>
+              <dt><PkIcon class="pi pi-id-card" /> SGK sicil no</dt><dd>{{ sgkNumber.trim() || '—' }}</dd>
             </dl>
             <label v-if="namedByLocation">İşyeri adı <small>(lokasyon adından gelir; isterseniz değiştirin)</small>
               <input v-model="displayName" type="text" :placeholder="location.name" />
             </label>
-            <p class="hint"><i class="pi pi-user" /> Bu işyerine siz uzman olarak atanırsınız; ekipmanları bu işyerine ekleyebilirsiniz.</p>
+            <p class="hint"><PkIcon class="pi pi-user" /> Bu işyerine siz uzman olarak atanırsınız; ekipmanları bu işyerine ekleyebilirsiniz.</p>
           </template>
 
           <p v-if="error" class="form-error">{{ error }}</p>
@@ -155,11 +155,11 @@
       </div>
 
       <div class="modal-actions">
-        <button v-if="stepIndex > 0" class="secondary-button" type="button" :disabled="saving || savingType" @click="back"><i class="pi pi-arrow-left" /> Geri</button>
+        <button v-if="stepIndex > 0" class="secondary-button" type="button" :disabled="saving || savingType" @click="back"><PkIcon class="pi pi-arrow-left" /> Geri</button>
         <button v-else class="secondary-button" type="button" @click="close">İptal</button>
         <button v-if="step === 'sgk' && !sgkNumber.trim()" class="secondary-button" type="button" @click="next">Atla</button>
-        <button v-if="step === 'summary'" class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-check" /> {{ kamuAccount ? (saving ? 'Ekleniyor...' : 'Ekle') : (saving ? 'Atanıyor...' : 'Ata') }}</button>
-        <button v-else-if="!(step === 'sgk' && !sgkNumber.trim())" class="primary-button" type="button" :disabled="!ready || !canNext || savingType" @click="next">{{ savingType ? 'Kaydediliyor...' : 'İleri' }} <i class="pi pi-arrow-right" /></button>
+        <button v-if="step === 'summary'" class="primary-button" type="button" :disabled="saving" @click="save"><PkIcon class="pi pi-check" /> {{ kamuAccount ? (saving ? 'Ekleniyor...' : 'Ekle') : (saving ? 'Atanıyor...' : 'Ata') }}</button>
+        <button v-else-if="!(step === 'sgk' && !sgkNumber.trim())" class="primary-button" type="button" :disabled="!ready || !canNext || savingType" @click="next">{{ savingType ? 'Kaydediliyor...' : 'İleri' }} <PkIcon class="pi pi-arrow-right" /></button>
       </div>
     </section>
   </div>

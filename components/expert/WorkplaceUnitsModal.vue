@@ -3,7 +3,7 @@
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Birimler</h2><p>{{ workplace.name }} · {{ location.name }}</p></div>
-        <button class="close-button" type="button" :disabled="saving" @click="emit('close')"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" :disabled="saving" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
       <p class="hint">Aynı işyerinde ayrı yönetilen birimler (ör. Müşteri Hizmetleri). Ekipman firmaya ait kalır; ekipman eklerken birimi de seçebilirsiniz.</p>
 
@@ -16,8 +16,8 @@
               <small>{{ [unit.manager && `Sorumlu: ${unit.manager}`, unit.areas.length ? unit.areas.map(area => area.name).join(', ') : 'alan seçilmedi', unit.equipment_count && `${unit.equipment_count} ekipman`, !unit.is_active && 'pasif'].filter(Boolean).join(' · ') }}</small>
             </div>
             <span v-if="canEdit" class="unit-actions">
-              <button class="icon-button" type="button" title="Düzenle" @click="openForm(unit)"><i class="pi pi-pencil" /></button>
-              <button class="icon-button danger" type="button" title="Sil" @click="removeUnit(unit)"><i class="pi pi-trash" /></button>
+              <button class="icon-button" type="button" title="Düzenle" @click="openForm(unit)"><PkIcon class="pi pi-pencil" /></button>
+              <button class="icon-button danger" type="button" title="Sil" @click="removeUnit(unit)"><PkIcon class="pi pi-trash" /></button>
             </span>
           </li>
         </ul>
@@ -38,7 +38,7 @@
             <button class="primary-button" type="button" :disabled="saving || !form.name.trim()" @click="saveUnit">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
           </div>
         </div>
-        <button v-else-if="canEdit" class="add-button" type="button" @click="openForm(null)"><i class="pi pi-plus" /> Birim ekle</button>
+        <button v-else-if="canEdit" class="add-button" type="button" @click="openForm(null)"><PkIcon class="pi pi-plus" /> Birim ekle</button>
       </template>
 
       <p v-if="error" class="form-error">{{ error }}</p>

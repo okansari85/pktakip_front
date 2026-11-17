@@ -2,12 +2,12 @@
   <div class="users-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Kullanıcılar</strong></div>
+        <div class="breadcrumb"><span>Ayarlar</span><PkIcon class="pi pi-angle-right" /><strong>Kullanıcılar</strong></div>
         <h1>Kullanıcılar</h1>
         <p>Hesabınızın kullanıcılarını yönetin. Uzmanları firmalara Firmalar sayfasından atarsınız.</p>
       </div>
       <button v-if="isManager" class="primary-button" type="button" @click="openInvite">
-        <i class="pi pi-plus" /><span>Kullanıcı Ekle</span>
+        <PkIcon class="pi pi-plus" /><span>Kullanıcı Ekle</span>
       </button>
     </div>
 
@@ -28,14 +28,14 @@
           </select>
         </label>
         <label class="field">Ara
-          <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Ad ya da e-posta" /></div>
+          <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="search" type="text" placeholder="Ad ya da e-posta" /></div>
         </label>
       </div>
 
       <div v-if="loading" class="state-row">Kullanıcılar yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="filteredUsers.length === 0" class="state-row empty-state">
-        <i class="pi pi-id-card" />
+        <PkIcon class="pi pi-id-card" />
         <strong>{{ users.length ? 'Filtreye uyan kullanıcı yok' : 'Henüz kullanıcı yok' }}</strong>
         <span v-if="!users.length">"Kullanıcı Ekle" ile uzman ya da operasyon yöneticisi davet edin.</span>
       </div>
@@ -64,12 +64,12 @@
               <td><span class="status-badge" :class="item.status">{{ STATUS_LABELS[item.status] }}</span></td>
               <td>{{ formatDate(item.created_at) }}</td>
               <td class="actions">
-                <button v-if="impersonating && item.status !== 'pasif' && item.id !== user?.id" class="icon-button" type="button" title="Bu kullanıcı olarak gir" @click="enterAs(item)"><i class="pi pi-sign-in" /></button>
+                <button v-if="impersonating && item.status !== 'pasif' && item.id !== user?.id" class="icon-button" type="button" title="Bu kullanıcı olarak gir" @click="enterAs(item)"><PkIcon class="pi pi-sign-in" /></button>
                 <template v-if="isManager">
-                  <button v-if="item.status === 'davet'" class="icon-button" type="button" title="Daveti yeniden gönder" :disabled="busyId === item.id" @click="resend(item)"><i class="pi pi-envelope" /></button>
-                  <button v-if="item.status !== 'pasif'" class="icon-button" type="button" title="Rolü değiştir" @click="openRole(item)"><i class="pi pi-pencil" /></button>
-                  <button v-if="item.status === 'pasif'" class="icon-button" type="button" title="Aktife al (yeni davet gönderilir)" :disabled="busyId === item.id" @click="activate(item)"><i class="pi pi-refresh" /></button>
-                  <button v-else-if="item.id !== user?.id" class="icon-button danger" type="button" title="Pasife al" @click="deactivateTarget = item"><i class="pi pi-ban" /></button>
+                  <button v-if="item.status === 'davet'" class="icon-button" type="button" title="Daveti yeniden gönder" :disabled="busyId === item.id" @click="resend(item)"><PkIcon class="pi pi-envelope" /></button>
+                  <button v-if="item.status !== 'pasif'" class="icon-button" type="button" title="Rolü değiştir" @click="openRole(item)"><PkIcon class="pi pi-pencil" /></button>
+                  <button v-if="item.status === 'pasif'" class="icon-button" type="button" title="Aktife al (yeni davet gönderilir)" :disabled="busyId === item.id" @click="activate(item)"><PkIcon class="pi pi-refresh" /></button>
+                  <button v-else-if="item.id !== user?.id" class="icon-button danger" type="button" title="Pasife al" @click="deactivateTarget = item"><PkIcon class="pi pi-ban" /></button>
                 </template>
               </td>
             </tr>
@@ -84,7 +84,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Kullanıcı Ekle</h2><p>Davet e-postası gider; kullanıcı kendi şifresini belirler.</p></div>
-          <button class="close-button" type="button" @click="closeInvite"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeInvite"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>Ad Soyad <span>*</span><input v-model="inviteForm.name" type="text" placeholder="Örn. Ayşe Demir" /></label>
         <label>E-posta <span>*</span><input v-model="inviteForm.email" type="email" placeholder="ornek@firma.com" /></label>
@@ -105,7 +105,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Rolü Değiştir</h2><p>{{ roleTarget.name }}</p></div>
-          <button class="close-button" type="button" @click="roleTarget = null"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="roleTarget = null"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>Rol
           <select v-model="roleValue"><option v-for="(label, key) in ROLE_LABELS" :key="key" :value="key">{{ label }}</option></select>
@@ -124,7 +124,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Pasife Al</h2><p>{{ deactivateTarget.name }}</p></div>
-          <button class="close-button" type="button" @click="deactivateTarget = null"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="deactivateTarget = null"><PkIcon class="pi pi-times" /></button>
         </div>
         <ul class="effects">
           <li>Giriş yapamaz, açık oturumları kapanır.</li>

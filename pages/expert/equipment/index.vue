@@ -5,9 +5,9 @@
       <div class="top-left">
         <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
+          <PkIcon class="pi pi-home" aria-hidden="true" />
           <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-          <i class="pi pi-angle-right" aria-hidden="true" />
+          <PkIcon class="pi pi-angle-right" aria-hidden="true" />
           <strong>Ekipmanlar</strong>
         </nav>
         <h1>Ekipmanlar</h1>
@@ -16,25 +16,25 @@
         <section v-if="context && featured" class="card featured">
           <div class="featured-head">
             <h2>{{ featuredTitle }}</h2>
-            <span class="due-pill" :class="daysKey(featured.days_left)"><i class="pi pi-clock" /> {{ dueText(featured.days_left) }}</span>
+            <span class="due-pill" :class="daysKey(featured.days_left)"><PkIcon class="pi pi-clock" /> {{ dueText(featured.days_left) }}</span>
           </div>
           <strong v-if="featuredModel" class="featured-model">{{ featuredModel }}</strong>
-          <div class="featured-row"><i class="pi pi-calendar" /><span>Sonraki kontrol</span><strong>{{ formatDate(featured.next_control_date) }}</strong></div>
+          <div class="featured-row"><PkIcon class="pi pi-calendar" /><span>Sonraki kontrol</span><strong>{{ formatDate(featured.next_control_date) }}</strong></div>
           <img v-if="featured.photo_url" class="featured-img" :src="featured.photo_url" alt="" />
-          <NuxtLink class="primary-button featured-link" :to="`/expert/equipment/${featured.id}`"><i class="pi pi-file" /> Profili aç <i class="pi pi-arrow-right" /></NuxtLink>
+          <NuxtLink class="primary-button featured-link" :to="`/expert/equipment/${featured.id}`"><PkIcon class="pi pi-file" /> Profili aç <PkIcon class="pi pi-arrow-right" /></NuxtLink>
         </section>
       </div>
       <div v-if="context" class="top-right">
         <!-- Sayılar lokasyondaki aktif ekipmanlardan; tıklayınca liste süzülür (Açık bulgu: Bulgu takibi) -->
         <div class="kpis">
           <button v-for="kpi in kpis" :key="kpi.key" type="button" class="kpi" :class="[kpi.tone, { active: kpi.key === 'total' ? false : statusFilter === kpi.key }]" @click="onKpi(kpi.key)">
-            <span class="kpi-icon"><i :class="kpi.icon" /></span>
+            <span class="kpi-icon"><PkIcon :class="kpi.icon" /></span>
             <span class="kpi-text"><strong>{{ kpi.value }}</strong><small>{{ kpi.label }}</small></span>
-            <i class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right kpi-arrow" aria-hidden="true" />
           </button>
         </div>
         <section class="card coverage">
-          <header><i class="pi pi-clone" /><h3>Kontrol kapsamı</h3></header>
+          <header><PkIcon class="pi pi-clone" /><h3>Kontrol kapsamı</h3></header>
           <div class="coverage-row">
             <span>Süresi geçen</span>
             <ProgressBar :value="share(counts.overdue)" :show-value="false" class="bar overdue" />
@@ -50,7 +50,7 @@
     </div>
 
     <div v-if="!context" class="card empty-state">
-      <i class="pi pi-map-marker" />
+      <PkIcon class="pi pi-map-marker" />
       <strong>Lokasyon seçilmedi</strong>
       <span>Ekipmanları görmek için üstteki Lokasyon kutusundan seçim yapın.</span>
     </div>
@@ -59,7 +59,7 @@
     <section v-else class="card list-card">
       <div v-if="visibleCategories.length" class="tabs">
         <button v-for="category in visibleCategories" :key="category.slug" type="button" :class="{ active: categoryFilter === category.slug }" @click="selectCategory(category.slug)">
-          <i :class="['pi', category.icon || 'pi-box']" aria-hidden="true" /> {{ category.name }} <span class="count">{{ countByCategory[category.slug] || 0 }}</span>
+          <PkIcon :class="['pi', category.icon || 'pi-box']" aria-hidden="true" /> {{ category.name }} <span class="count">{{ countByCategory[category.slug] || 0 }}</span>
         </button>
       </div>
 
@@ -70,7 +70,7 @@
               <option :value="null">Ekipman türü</option>
               <option v-for="type in visibleTypes" :key="type.id" :value="type.id">{{ type.name }} ({{ type.count }})</option>
             </select>
-            <i class="pi pi-chevron-down" aria-hidden="true" />
+            <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
           </span>
           <template v-if="!showForms">
             <span class="pill-select">
@@ -80,7 +80,7 @@
                 <option value="overdue">Süresi geçmiş</option>
                 <option value="soon">Kontrolü yaklaşan</option>
               </select>
-              <i class="pi pi-chevron-down" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
             </span>
             <!-- Pasife alınan ekipmanlar varsayılan olarak gizli -->
             <span class="pill-select">
@@ -89,24 +89,24 @@
                 <option value="passive">Pasif olanlar</option>
                 <option value="all">Tümü</option>
               </select>
-              <i class="pi pi-chevron-down" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
             </span>
-            <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Kod, marka veya seri no ara" aria-label="Ara" /></div>
+            <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="search" type="text" placeholder="Kod, marka veya seri no ara" aria-label="Ara" /></div>
           </template>
         </template>
         <span class="toolbar-spacer" />
         <!-- Toplu rapor yükleme (tek ekipmanlı raporlar, yangın ekipmanları hariç): raporlar sırayla okunur, satır satır eşleştirilip kaydedilir -->
-        <button v-tooltip.bottom="'Birden fazla tek ekipmanlı raporu birlikte yükleyin; sırayla okunur, ekipmanlarla eşleştirilip kaydedilir (yangın ekipmanları hariç).'" class="outline-button" type="button" :disabled="bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><i class="pi pi-copy" /> Toplu rapor yükle</button>
+        <button v-tooltip.bottom="'Birden fazla tek ekipmanlı raporu birlikte yükleyin; sırayla okunur, ekipmanlarla eşleştirilip kaydedilir (yangın ekipmanları hariç).'" class="outline-button" type="button" :disabled="bulkAnalysisOpen" @click="bulkAnalysisOpen = true"><PkIcon class="pi pi-copy" /> Toplu rapor yükle</button>
         <!-- Rapordan ekipman tanımla: eşleşen ekipmana ekler ya da yeni ekipman tanımlar -->
-        <button v-tooltip.bottom="'Periyodik kontrol raporunu yükleyin; eşleşen ekipmana eklenir ya da rapordaki ekipman yeni tanımlanır.'" class="outline-button" type="button" @click="fromReportOpen = true"><i class="pi pi-upload" /> Rapor yükle</button>
-        <button v-tooltip.bottom="'Ekipmanı rapor olmadan, elle tanımlayın.'" class="primary-button" type="button" @click="openCreate"><i class="pi pi-plus" /> Yeni ekipman</button>
+        <button v-tooltip.bottom="'Periyodik kontrol raporunu yükleyin; eşleşen ekipmana eklenir ya da rapordaki ekipman yeni tanımlanır.'" class="outline-button" type="button" @click="fromReportOpen = true"><PkIcon class="pi pi-upload" /> Rapor yükle</button>
+        <button v-tooltip.bottom="'Ekipmanı rapor olmadan, elle tanımlayın.'" class="primary-button" type="button" @click="openCreate"><PkIcon class="pi pi-plus" /> Yeni ekipman</button>
       </div>
 
       <!-- Yangın söndürme cihazı (tüp) seçiliyken: tüp listesi, toplu kontrol formları ve formlarda eşleştirme bekleyenler -->
       <div v-if="isTubeType" class="sub-tabs">
-        <button type="button" :class="{ active: tubeTab === 'list' }" @click="tubeTab = 'list'"><i class="pi pi-list" /> Tüpler <span class="count">{{ filtered.length }}</span></button>
-        <button type="button" :class="{ active: showForms }" @click="tubeTab = 'forms'"><i class="pi pi-file-check" /> Kontrol Formları</button>
-        <button type="button" :class="{ active: showMatching }" @click="tubeTab = 'matching'"><i class="pi pi-link" /> Eşleştirme bekliyor <span class="count" :class="{ warn: matchingCount }">{{ matchingCount }}</span></button>
+        <button type="button" :class="{ active: tubeTab === 'list' }" @click="tubeTab = 'list'"><PkIcon class="pi pi-list" /> Tüpler <span class="count">{{ filtered.length }}</span></button>
+        <button type="button" :class="{ active: showForms }" @click="tubeTab = 'forms'"><PkIcon class="pi pi-file-check" /> Kontrol Formları</button>
+        <button type="button" :class="{ active: showMatching }" @click="tubeTab = 'matching'"><PkIcon class="pi pi-link" /> Eşleştirme bekliyor <span class="count" :class="{ warn: matchingCount }">{{ matchingCount }}</span></button>
       </div>
       <div v-if="showForms || showMatching" class="inner">
         <ExpertBulkReportList v-if="showForms" :context="context" :refresh-key="formsKey" @upload="openBulk(null)" @changed="onTubesChanged" @matching="tubeTab = 'matching'" />
@@ -117,7 +117,7 @@
         <div v-if="loading" class="state">Ekipmanlar yükleniyor...</div>
         <div v-else-if="error" class="state error-text">{{ error }}</div>
         <div v-else-if="filtered.length === 0" class="state empty-state">
-          <i class="pi pi-wrench" />
+          <PkIcon class="pi pi-wrench" />
           <strong>{{ equipment.length ? 'Filtreye uyan ekipman yok' : 'Henüz ekipman yok' }}</strong>
           <span v-if="!equipment.length">"Yeni ekipman" ile ilk ekipmanınızı ekleyin.</span>
         </div>
@@ -139,10 +139,10 @@
             <strong>{{ selected.length }} ekipman seçildi</strong>
             <button class="link-button" type="button" @click="selected = []">Seçimi temizle</button>
             <span class="bulk-spacer" />
-            <button v-if="selectedActive.length" class="secondary-button small" type="button" @click="deactivateIds = selectedActive"><i class="pi pi-ban" /> Pasife al ({{ selectedActive.length }})</button>
-            <button v-if="selectedPassive.length" class="secondary-button small" type="button" :disabled="activating" @click="activate(selectedPassive)"><i class="pi pi-check-circle" /> Aktife al ({{ selectedPassive.length }})</button>
+            <button v-if="selectedActive.length" class="secondary-button small" type="button" @click="deactivateIds = selectedActive"><PkIcon class="pi pi-ban" /> Pasife al ({{ selectedActive.length }})</button>
+            <button v-if="selectedPassive.length" class="secondary-button small" type="button" :disabled="activating" @click="activate(selectedPassive)"><PkIcon class="pi pi-check-circle" /> Aktife al ({{ selectedPassive.length }})</button>
             <button class="danger-button" type="button" :disabled="bulkDeleting" @click="bulkDelete">
-              <i :class="bulkDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" /> Seçilenleri sil
+              <PkIcon :class="bulkDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" /> Seçilenleri sil
             </button>
           </div>
           <table>
@@ -188,19 +188,19 @@
                   <!-- Son raporun bulguları: sayı + üstüne gelince / odaklanınca liste. Katalogda yok, gizli (SHOW_FINDINGS_INFO). -->
                   <span v-if="SHOW_FINDINGS_INFO && item.findings_count" class="findings-info" tabindex="0" :aria-label="`${item.findings_count} bulgu: ${item.findings.join('; ')}`"
                     @click.stop @mouseenter="showFindings(item, $event)" @focus="showFindings(item, $event)" @mouseleave="hoverFindings = null" @blur="hoverFindings = null">
-                    {{ item.findings_count }} bulgu <i class="pi pi-info-circle" />
+                    {{ item.findings_count }} bulgu <PkIcon class="pi pi-info-circle" />
                   </span>
                 </td>
                 <td class="actions-col" @click.stop>
                   <div class="row-actions">
-                    <button v-tooltip.top="'Önizle'" class="icon-button" type="button" aria-label="Önizle" @click="previewItem = item"><i class="pi pi-eye" /></button>
+                    <button v-tooltip.top="'Önizle'" class="icon-button" type="button" aria-label="Önizle" @click="previewItem = item"><PkIcon class="pi pi-eye" /></button>
                     <!-- Pasif ekipmana kontrol eklenmez. Tesisata bağlı ekipman: kontrolü tesisat raporundan gelir (rapor / rapor bekleniyor tesisatta) -->
                     <template v-if="!item.is_active" />
-                    <NuxtLink v-else-if="item.installation" v-tooltip.top="`Kontrolü ${item.installation.name} raporundan gelir`" class="icon-button" to="/expert/installations" :aria-label="`Kontrolü ${item.installation.name} raporundan gelir`"><i class="pi pi-sitemap" /></NuxtLink>
+                    <NuxtLink v-else-if="item.installation" v-tooltip.top="`Kontrolü ${item.installation.name} raporundan gelir`" class="icon-button" to="/expert/installations" :aria-label="`Kontrolü ${item.installation.name} raporundan gelir`"><PkIcon class="pi pi-sitemap" /></NuxtLink>
                     <template v-else>
-                      <button v-tooltip.top="'Yeni Periyodik Kontrol Raporu Yükle'" class="icon-button" type="button" aria-label="Yeni Periyodik Kontrol Raporu Yükle" @click="reportItem = item"><i class="pi pi-file-arrow-up" /></button>
+                      <button v-tooltip.top="'Yeni Periyodik Kontrol Raporu Yükle'" class="icon-button" type="button" aria-label="Yeni Periyodik Kontrol Raporu Yükle" @click="reportItem = item"><PkIcon class="pi pi-file-arrow-up" /></button>
                       <!-- Diğer işlemler: rapor bekleniyor -->
-                      <button v-tooltip.top="'Diğer işlemler'" class="icon-button more" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openRowMenu($event, item)"><i class="pi pi-ellipsis-h" /></button>
+                      <button v-tooltip.top="'Diğer işlemler'" class="icon-button more" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openRowMenu($event, item)"><PkIcon class="pi pi-ellipsis-h" /></button>
                     </template>
                   </div>
                 </td>
@@ -210,15 +210,15 @@
           <div class="table-footer">
             <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filtered.length) }} / toplam {{ filtered.length }} ekipman · sayfada {{ PAGE_SIZE }}</span>
             <div v-if="pageCount > 1" class="pager">
-              <button type="button" :disabled="page === 1" @click="page--"><i class="pi pi-angle-left" /> Önceki</button>
+              <button type="button" :disabled="page === 1" @click="page--"><PkIcon class="pi pi-angle-left" /> Önceki</button>
               <span>Sayfa {{ page }} / {{ pageCount }}</span>
-              <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <i class="pi pi-angle-right" /></button>
+              <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <PkIcon class="pi pi-angle-right" /></button>
             </div>
           </div>
         </div>
       </template>
     </section>
-    <Menu ref="rowMenu" :model="rowMenuItems" popup :pt="{ root: { style: MENU_VARS } }" />
+    <Menu ref="rowMenu" :model="rowMenuItems" popup :pt="{ root: { style: MENU_VARS } }"><template #itemicon="{ item }"><PkIcon :class="item.icon" class="p-menu-item-icon" /></template></Menu>
 
     <!-- Bulgu kutusu tablonun dışında (tablo kaydırmalı; içeride kesilirdi), sayının hizasında ekrana sabit -->
     <Teleport to="body">
@@ -240,7 +240,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Yeni Ekipman</h2><p>{{ context?.location_name }}</p></div>
-          <button class="close-button" type="button" @click="closeCreate"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeCreate"><PkIcon class="pi pi-times" /></button>
         </div>
         <div class="form-grid">
           <label>Kategori <span>*</span>
@@ -290,7 +290,7 @@
         </div>
 
         <p v-if="selectedType?.default_period_months" class="hint">Yönetmelikteki azami kontrol süresi: {{ selectedType.default_period_months }} ay</p>
-        <p class="hint">Periyodik kontrol raporu, ekipman eklendikten sonra listedeki <i class="pi pi-file-arrow-up" /> ikonundan ya da profil sayfasından yüklenir.</p>
+        <p class="hint">Periyodik kontrol raporu, ekipman eklendikten sonra listedeki <PkIcon class="pi pi-file-arrow-up" /> ikonundan ya da profil sayfasından yüklenir.</p>
 
         <p v-if="formError" class="error-text">{{ formError }}</p>
         <div class="modal-actions">

@@ -2,19 +2,19 @@
   <div class="node-wrap">
     <div class="node-row" :style="{ paddingLeft: `${depth * 22}px` }">
       <button v-if="node.children?.length" class="expand-button" type="button" @click="expanded = !expanded">
-        <i :class="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+        <PkIcon :class="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
       </button>
       <span v-else class="expand-placeholder" />
-      <i class="pi pi-folder node-icon" />
+      <PkIcon class="pi pi-folder node-icon" />
       <span class="node-name">{{ node.name }}</span>
       <button class="node-menu" type="button" :title="kamu ? 'Alt birim ekle' : 'Dal ekle'" @click="emit('add-child', node)">
-        <i class="pi pi-plus" />
+        <PkIcon class="pi pi-plus" />
       </button>
       <button class="node-edit" type="button" title="Adını düzenle" @click="emit('edit', node)">
-        <i class="pi pi-pencil" />
+        <PkIcon class="pi pi-pencil" />
       </button>
       <button class="node-delete" type="button" :title="kamu ? 'Birimi sil' : 'Dalı sil'" @click="emit('delete', node)">
-        <i class="pi pi-trash" />
+        <PkIcon class="pi pi-trash" />
       </button>
     </div>
     <div v-if="expanded && node.children?.length" class="children">

@@ -21,13 +21,13 @@
       <Column header="İşlemler" headerStyle="width: 230px">
         <template #body="{ data }">
           <div class="actions">
-            <Button icon="pi pi-envelope" text rounded aria-label="Davet maili gönder" v-tooltip.top="'Davet maili gönder'" @click="sendInvite(data)" />
-            <Button icon="pi pi-sign-in" text rounded aria-label="Hesaba giriş yap" v-tooltip.top="'Hesaba giriş yap'" @click="impersonate(data)" />
+            <Button text rounded aria-label="Davet maili gönder" v-tooltip.top="'Davet maili gönder'" @click="sendInvite(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-envelope" :class="iconClass" /></template></Button>
+            <Button text rounded aria-label="Hesaba giriş yap" v-tooltip.top="'Hesaba giriş yap'" @click="impersonate(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-sign-in" :class="iconClass" /></template></Button>
             <!-- Pasife / aktife alma ve kalıcı silme (silme yalnız pasif hesapta; kullanıcı 19 Ekim 2026) -->
-            <Button v-if="data.status" icon="pi pi-ban" text rounded severity="warn" aria-label="Pasife al" v-tooltip.top="'Pasife al'" @click="emit('toggleStatus', data)" />
-            <Button v-else icon="pi pi-check-circle" text rounded severity="success" aria-label="Aktife al" v-tooltip.top="'Aktife al'" @click="emit('toggleStatus', data)" />
-            <Button v-if="!data.status" icon="pi pi-trash" text rounded severity="danger" aria-label="Hesabı sil" v-tooltip.top="'Hesabı sil'" @click="emit('remove', data)" />
-            <Button icon="pi pi-chevron-right" text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)" />
+            <Button v-if="data.status" text rounded severity="warn" aria-label="Pasife al" v-tooltip.top="'Pasife al'" @click="emit('toggleStatus', data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-ban" :class="iconClass" /></template></Button>
+            <Button v-else text rounded severity="success" aria-label="Aktife al" v-tooltip.top="'Aktife al'" @click="emit('toggleStatus', data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check-circle" :class="iconClass" /></template></Button>
+            <Button v-if="!data.status" text rounded severity="danger" aria-label="Hesabı sil" v-tooltip.top="'Hesabı sil'" @click="emit('remove', data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-trash" :class="iconClass" /></template></Button>
+            <Button text rounded aria-label="Müşteri detayını aç" @click="openTenant(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-chevron-right" :class="iconClass" /></template></Button>
           </div>
         </template>
       </Column>

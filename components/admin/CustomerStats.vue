@@ -1,15 +1,15 @@
 <template>
   <section class="stats-grid">
     <div class="stat-card">
-      <span class="stat-icon"><i class="pi pi-users" /></span>
+      <span class="stat-icon"><PkIcon class="pi pi-users" /></span>
       <div><small>Toplam Müşteri</small><strong>{{ total }}</strong><em v-if="detail">{{ detail }}</em></div>
     </div>
     <div class="stat-card">
-      <span class="stat-icon success"><i class="pi pi-check-circle" /></span>
+      <span class="stat-icon success"><PkIcon class="pi pi-check-circle" /></span>
       <div><small>Aktif</small><strong>{{ active }}</strong></div>
     </div>
     <div class="stat-card">
-      <span class="stat-icon muted"><i class="pi pi-ban" /></span>
+      <span class="stat-icon muted"><PkIcon class="pi pi-ban" /></span>
       <div><small>Pasif</small><strong>{{ inactive }}</strong></div>
     </div>
   </section>

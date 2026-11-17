@@ -2,25 +2,25 @@
   <div class="companies-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Firmalar</strong></div>
+        <div class="breadcrumb"><span>Ayarlar</span><PkIcon class="pi pi-angle-right" /><strong>Firmalar</strong></div>
         <h1>Firmalar</h1>
         <p v-if="canDelete">Firma tanımlarını yönetin. Firmaları lokasyonlara Lokasyonlar sayfasından atarsınız.</p>
         <p v-else>Hesaptaki firmalar. Firma tanımlarını yönetici değiştirir; uzman atamasını aşağıdan yaparsınız.</p>
       </div>
       <button v-if="canDelete" class="primary-button" type="button" @click="openCompanyForm(null)">
-        <i class="pi pi-plus" /><span>Firma Tanımla</span>
+        <PkIcon class="pi pi-plus" /><span>Firma Tanımla</span>
       </button>
     </div>
 
     <section class="table-card">
       <div class="toolbar single">
-        <div class="search-box"><i class="pi pi-search" /><input v-model="companySearch" type="text" placeholder="Firma ara" /></div>
+        <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="companySearch" type="text" placeholder="Firma ara" /></div>
       </div>
 
       <div v-if="companiesLoading" class="state-row">Firmalar yükleniyor...</div>
       <div v-else-if="companiesError" class="state-row error-state">{{ companiesError }}</div>
       <div v-else-if="filteredCompanies.length === 0" class="state-row empty-state">
-        <i class="pi pi-briefcase" />
+        <PkIcon class="pi pi-briefcase" />
         <strong>Henüz firma tanımı yok</strong>
         <span>Firmalar ana firmanın sayfasındaki Firmalar kartından eklenir.</span>
       </div>
@@ -38,14 +38,14 @@
           </thead>
           <tbody>
             <tr v-for="company in filteredCompanies" :key="company.business_entity_id">
-              <td><div class="name-cell"><span class="row-icon"><i class="pi pi-briefcase" /></span><strong>{{ company.name }}</strong></div></td>
+              <td><div class="name-cell"><span class="row-icon"><PkIcon class="pi pi-briefcase" /></span><strong>{{ company.name }}</strong></div></td>
               <td>{{ titleOf[company.business_entity_id] || '—' }}</td>
               <td>{{ companyTypeLabel(company.company_type) }}</td>
               <td>{{ company.locations_count ?? 0 }}</td>
               <td>{{ formatDate(company.created_at) }}</td>
               <td class="actions">
-                <button v-if="canDelete" class="icon-button" type="button" title="Düzenle" @click="openCompanyForm(company)"><i class="pi pi-pencil" /></button>
-                <button v-if="canDelete" class="icon-button danger" type="button" title="Sil" @click="openDelete(company)"><i class="pi pi-trash" /></button>
+                <button v-if="canDelete" class="icon-button" type="button" title="Düzenle" @click="openCompanyForm(company)"><PkIcon class="pi pi-pencil" /></button>
+                <button v-if="canDelete" class="icon-button danger" type="button" title="Sil" @click="openDelete(company)"><PkIcon class="pi pi-trash" /></button>
               </td>
             </tr>
           </tbody>
@@ -60,26 +60,26 @@
     <div v-if="companyFormOpen" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon"><i :class="editingCompany ? 'pi pi-pencil' : 'pi pi-briefcase'" /></span><div><h2>{{ editingCompany ? 'Firmayı Düzenle' : 'Firma Tanımla' }}</h2><p>{{ editingCompany ? 'Firma kartının bilgilerini güncelleyin; değişiklik firmanın bütün işyerlerinde görünür.' : 'Firma kartı, firmanın kimlik bilgileridir (ad, ünvan, tür).' }}</p></div></div>
-          <button class="close-button" type="button" @click="closeCompanyForm"><i class="pi pi-times" /></button>
+          <div class="head-title"><span class="head-icon"><PkIcon :class="editingCompany ? 'pi pi-pencil' : 'pi pi-briefcase'" /></span><div><h2>{{ editingCompany ? 'Firmayı Düzenle' : 'Firma Tanımla' }}</h2><p>{{ editingCompany ? 'Firma kartının bilgilerini güncelleyin; değişiklik firmanın bütün işyerlerinde görünür.' : 'Firma kartı, firmanın kimlik bilgileridir (ad, ünvan, tür).' }}</p></div></div>
+          <button class="close-button" type="button" @click="closeCompanyForm"><PkIcon class="pi pi-times" /></button>
         </div>
-        <div v-if="!editingCompany" class="info-box"><i class="pi pi-lightbulb" /><span>Firmayı bir lokasyona Lokasyonlar sayfasındaki <strong>Lokasyona Firma Tanımla</strong> ile atarsınız. Aynı firma birden fazla lokasyonda işyeri olabilir; firma kartı bir kez tanımlanır.</span></div>
+        <div v-if="!editingCompany" class="info-box"><PkIcon class="pi pi-lightbulb" /><span>Firmayı bir lokasyona Lokasyonlar sayfasındaki <strong>Lokasyona Firma Tanımla</strong> ile atarsınız. Aynı firma birden fazla lokasyonda işyeri olabilir; firma kartı bir kez tanımlanır.</span></div>
         <label>Firma Adı <span>*</span><input v-model="companyForm.name" type="text" placeholder="Örn. ABC Gıda A.Ş." /></label>
-        <p v-if="!duplicateCompany" class="field-hint"><i class="pi pi-info-circle" /> Listelerde ve raporlarda görünen ad.</p>
+        <p v-if="!duplicateCompany" class="field-hint"><PkIcon class="pi pi-info-circle" /> Listelerde ve raporlarda görünen ad.</p>
         <p v-if="duplicateCompany" class="hint warn">"{{ duplicateCompany.name }}" zaten kayıtlı.</p>
         <!-- Ünvan bir kez tanımlanır; aynı şirketin işletmeleri listeden aynı ünvanı seçer -->
         <label>Unvan <small>(Opsiyonel)</small><input v-model="companyForm.title" type="text" list="company-titles" placeholder="Örn. ABC Gıda Sanayi ve Ticaret A.Ş." /></label>
         <datalist id="company-titles"><option v-for="title in titles" :key="title.id" :value="title.name" /></datalist>
-        <p class="field-hint"><i class="pi pi-info-circle" /> Resmî ünvan. Aynı şirketin birden fazla firması varsa hepsine aynı ünvanı seçin; daha önce girilenler öneri olarak çıkar.</p>
+        <p class="field-hint"><PkIcon class="pi pi-info-circle" /> Resmî ünvan. Aynı şirketin birden fazla firması varsa hepsine aynı ünvanı seçin; daha önce girilenler öneri olarak çıkar.</p>
         <!-- Kısa Ad formdan kaldırıldı (kullanıcı 18 Ekim 2026: PKTakip'te kullanılmıyor); düzenlemede mevcut değer aynen geri gönderilir. -->
         <div class="type-field">
           <span class="type-label">Firma Türü <span>*</span></span>
           <div class="type-options">
             <button type="button" class="type-option" :class="{ on: companyForm.company_type === 'corporate' }" @click="companyForm.company_type = 'corporate'">
-              <i class="pi pi-building" /><span><strong>Kurumsal</strong><small>Şirket (A.Ş., Ltd. Şti.) ya da kamu kurumu.</small></span>
+              <PkIcon class="pi pi-building" /><span><strong>Kurumsal</strong><small>Şirket (A.Ş., Ltd. Şti.) ya da kamu kurumu.</small></span>
             </button>
             <button type="button" class="type-option" :class="{ on: companyForm.company_type === 'individual' }" @click="companyForm.company_type = 'individual'">
-              <i class="pi pi-user" /><span><strong>Bireysel (Şahıs)</strong><small>Tek kişiye ait işletme.</small></span>
+              <PkIcon class="pi pi-user" /><span><strong>Bireysel (Şahıs)</strong><small>Tek kişiye ait işletme.</small></span>
             </button>
           </div>
         </div>
@@ -95,13 +95,13 @@
     <div v-if="deleteTarget" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon danger"><i class="pi pi-trash" /></span><div><h2>Firmayı Sil</h2><p>"{{ deleteTarget.name }}" firma kartı kalıcı olarak silinir. Verisi (işyeri, ekipman, rapor) olan firma, kayıtlar kaybolmasın diye silinmez.</p></div></div>
-          <button class="close-button" type="button" :disabled="deleting" @click="closeDelete"><i class="pi pi-times" /></button>
+          <div class="head-title"><span class="head-icon danger"><PkIcon class="pi pi-trash" /></span><div><h2>Firmayı Sil</h2><p>"{{ deleteTarget.name }}" firma kartı kalıcı olarak silinir. Verisi (işyeri, ekipman, rapor) olan firma, kayıtlar kaybolmasın diye silinmez.</p></div></div>
+          <button class="close-button" type="button" :disabled="deleting" @click="closeDelete"><PkIcon class="pi pi-times" /></button>
         </div>
-        <p v-if="deleteLoading" class="delete-text"><i class="pi pi-spin pi-spinner" /> Firmanın kayıtları kontrol ediliyor...</p>
+        <p v-if="deleteLoading" class="delete-text"><PkIcon class="pi pi-spin pi-spinner" /> Firmanın kayıtları kontrol ediliyor...</p>
         <template v-else-if="deleteSummary">
           <div v-if="!deleteSummary.deletable" class="delete-block">
-            <i class="pi pi-ban" />
+            <PkIcon class="pi pi-ban" />
             <div>
               <strong>Bu firma silinemez</strong>
               <span>Bağlı kayıtlar: {{ deleteSummary.blockers.map(row => `${row.count} ${row.label}`).join(', ') }}.</span>

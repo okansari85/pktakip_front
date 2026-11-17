@@ -4,7 +4,7 @@
       <div class="modal-head">
         <div class="title"><h2>P.K. Raporu Yükle</h2><p>{{ context?.location_name }}<template v-if="context?.type === 'workplace' && context.company_name"> · {{ context.company_name }}</template></p></div>
         <ExpertReportSteps :step="result ? 2 : 1" />
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <input ref="fileInput" type="file" accept="application/pdf" hidden @change="onFile" />
@@ -21,17 +21,17 @@
           <section v-if="!result" class="rd-card">
             <div class="ai-box">
               <template v-if="analyzing">
-                <i class="pi pi-spin pi-spinner" />
+                <PkIcon class="pi pi-spin pi-spinner" />
                 <span><strong>Rapor okunuyor...</strong><small>Ekipman türü, bilgileri ve teknik özellikleri çıkarılıyor. 1-3 dakika sürebilir.</small></span>
               </template>
               <template v-else>
-                <i class="pi pi-sparkles" />
+                <PkIcon class="pi pi-sparkles" />
                 <span><strong>Analiz et</strong><small>Rapor mevcut bir ekipmanla eşleşirse ona eklenir, eşleşmezse yeni ekipman tanımlanır.</small></span>
                 <button class="ai-button" type="button" :disabled="!file || analyzing" @click="analyze">Analiz et</button>
               </template>
             </div>
             <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
-              <span><i class="pi pi-database" /> Test verisi</span>
+              <span><PkIcon class="pi pi-database" /> Test verisi</span>
               <select v-model="fixtureId">
                 <option value="">Kullanma — raporu yapay zeka ile oku</option>
                 <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
@@ -43,14 +43,14 @@
           <section v-else class="rd-card">
             <div class="card-head">
               <h3>Okunan bilgileri doğrulayın</h3>
-              <span class="done-chip"><i class="pi pi-check-circle" /> Okuma tamamlandı</span>
+              <span class="done-chip"><PkIcon class="pi pi-check-circle" /> Okuma tamamlandı</span>
             </div>
-            <p v-if="result.fixture" class="hint"><i class="pi pi-database" /> Test verisi kullanıldı: {{ result.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
-            <p v-if="result.input === 'image'" class="hint warn"><i class="pi pi-image" /> Rapor görüntü olarak kaydedilmiş; yapay zeka sayfa görüntülerinden okudu. Kaydetmeden önce değerleri dikkatle kontrol edin.</p>
-            <p v-if="result.input === 'ocr'" class="hint warn"><i class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
+            <p v-if="result.fixture" class="hint"><PkIcon class="pi pi-database" /> Test verisi kullanıldı: {{ result.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
+            <p v-if="result.input === 'image'" class="hint warn"><PkIcon class="pi pi-image" /> Rapor görüntü olarak kaydedilmiş; yapay zeka sayfa görüntülerinden okudu. Kaydetmeden önce değerleri dikkatle kontrol edin.</p>
+            <p v-if="result.input === 'ocr'" class="hint warn"><PkIcon class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
 
             <div v-if="result.duplicate" class="duplicate">
-              <i class="pi pi-ban" />
+              <PkIcon class="pi pi-ban" />
               <span>{{ result.duplicate.message }} <NuxtLink :to="`/expert/equipment/${result.duplicate.equipment_id}`" @click="emit('close')">Ekipmana git</NuxtLink></span>
             </div>
 
@@ -144,11 +144,11 @@
       </div>
 
       <div class="rd-foot">
-        <p class="note-bar"><i class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
+        <p class="note-bar"><PkIcon class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
           <button v-if="result && !result.duplicate" class="primary-button" type="button" :disabled="busy || !canContinue" @click="proceed">
-            Devam — raporu kaydet <i class="pi pi-arrow-right" />
+            Devam — raporu kaydet <PkIcon class="pi pi-arrow-right" />
           </button>
         </div>
       </div>

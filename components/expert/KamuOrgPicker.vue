@@ -1,16 +1,16 @@
 <template>
   <div ref="root" class="picker select-field" :class="{ field: page }">
-    <span><i v-if="!page" class="pi pi-sitemap" /> Birim</span>
+    <span><PkIcon v-if="!page" class="pi pi-sitemap" /> Birim</span>
     <button type="button" class="trigger" :class="{ open }" @click="toggle">
       <span class="trigger-text">{{ currentLabel }}</span>
-      <i class="pi pi-chevron-down" />
+      <PkIcon class="pi pi-chevron-down" />
     </button>
 
     <div v-if="open" class="panel">
       <div class="search">
-        <i class="pi pi-search" />
+        <PkIcon class="pi pi-search" />
         <input ref="searchInput" v-model="query" type="text" placeholder="Daire, şube ya da bina ara" @keydown.esc="open = false" @keydown.enter.prevent="pickFirst" />
-        <button v-if="query" type="button" class="clear" title="Temizle" @click="query = ''"><i class="pi pi-times" /></button>
+        <button v-if="query" type="button" class="clear" title="Temizle" @click="query = ''"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div class="list">
@@ -22,7 +22,7 @@
         <p v-if="searching && rows.length" class="section">BİRİMLER</p>
         <div v-for="row in rows" :key="row.value" class="row" :class="{ on: value === row.value, empty: !count(row.value), match: row.match }" :style="{ paddingLeft: `${10 + row.depth * 16}px` }">
           <button v-if="row.hasChildren && !searching" type="button" class="caret" :title="expanded.has(row.value) ? 'Kapat' : 'Aç'" @click.stop="toggleNode(row.value)">
-            <i :class="expanded.has(row.value) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+            <PkIcon :class="expanded.has(row.value) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
           </button>
           <span v-else class="caret-space" />
           <button type="button" class="pick" @click="pickOrganization(row.value)">
@@ -32,7 +32,7 @@
         <template v-if="searching">
           <p v-if="buildings.length" class="section">BİNALAR (LOKASYON)</p>
           <button v-for="item in buildings" :key="item.key" type="button" class="row building" @click="pickLocation(item.key)">
-            <i class="pi pi-map-marker" />
+            <PkIcon class="pi pi-map-marker" />
             <span class="name">{{ item.name }}<small v-if="item.sub">{{ item.sub }}</small></span>
           </button>
           <p v-if="!rows.length && !buildings.length" class="none">"{{ query.trim() }}" ile eşleşen birim ya da bina yok.</p>

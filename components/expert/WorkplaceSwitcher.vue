@@ -5,17 +5,17 @@
       <!-- Kamu hesabı: yüzlerce birim için aramalı ağaç (diğer hesaplarda düz kutu aynen) -->
       <ExpertKamuOrgPicker v-if="kamu" :options="orgOptions" :value="orgScope" :count="orgCount" :total="groups.length" :buildings="buildingItems" @organization="applyOrganization" @location="pickLocationId" />
       <label v-else class="select-field">
-        <span><i class="pi pi-sitemap" /> {{ topLabel }}</span>
+        <span><PkIcon class="pi pi-sitemap" /> {{ topLabel }}</span>
         <select :value="orgScope" @change="onOrganizationChange">
           <option value="">Tümü</option>
           <option v-for="option in orgOptions" :key="option.value" :value="option.value">{{ INDENT.repeat(option.depth) + option.label }} ({{ orgCount(option.value) }})</option>
         </select>
       </label>
-      <i class="pi pi-angle-right separator" />
+      <PkIcon class="pi pi-angle-right separator" />
     </template>
 
     <label class="select-field">
-      <span><i class="pi pi-map-marker" /> Lokasyon</span>
+      <span><PkIcon class="pi pi-map-marker" /> Lokasyon</span>
       <select :value="showAll ? ALL : contextVisible ? context?.location_id : ''" :disabled="!loaded || groups.length <= 1" @change="onLocationChange">
         <option value="" disabled>{{ !loaded ? 'Yükleniyor...' : groups.length === 0 ? 'İşyeri yok' : 'Lokasyon seçin' }}</option>
         <!-- Genel Bakış / Durum Raporu: bütün lokasyonlar birlikte (seçili lokasyon hatırlanır, diğer sayfalar onunla açılır) -->
@@ -31,10 +31,10 @@
     </label>
 
     <!-- Seçili lokasyonda tek firma varsa firma kutusu yok (seçilecek bir şey yok; lokasyonun tamamı o firma) -->
-    <i v-if="!singleWorkplace" class="pi pi-angle-right separator" />
+    <PkIcon v-if="!singleWorkplace" class="pi pi-angle-right separator" />
 
     <label v-if="!singleWorkplace" class="select-field">
-      <span><i class="pi pi-briefcase" /> Firma</span>
+      <span><PkIcon class="pi pi-briefcase" /> Firma</span>
       <select :value="showAll || !contextVisible ? '' : context?.workplace_id ?? ''" :disabled="!selectedGroup || showAll" @change="onWorkplaceChange">
         <option value="">{{ showAll || selectedGroup ? 'Tüm firmalar' : 'Önce lokasyon seçin' }}</option>
         <!-- İşyeri adı varsa "Ad · Firma" (aynı firmanın lokasyonda birden çok işyeri ayırt edilir) -->

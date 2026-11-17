@@ -7,7 +7,7 @@
         <p>PKTakip müşterilerini (uzman, OSGB, kurumsal, kamu) yönetin.</p>
       </div>
       <button type="button" class="new-expert-button" @click="openCreateDialog">
-        <i class="pi pi-plus" />
+        <PkIcon class="pi pi-plus" />
         <span>Yeni Müşteri</span>
       </button>
     </div>

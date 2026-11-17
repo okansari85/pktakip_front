@@ -7,7 +7,7 @@
 
     <div class="topbar-actions">
       <button class="theme-toggle" type="button" :aria-label="isDark ? 'Açık temaya geç' : 'Koyu temaya geç'" @click="toggleTheme">
-        <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" />
+        <PkIcon :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" />
       </button>
       <div class="user-chip">
         <span class="avatar">{{ initials }}</span>

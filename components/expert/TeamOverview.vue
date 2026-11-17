@@ -1,13 +1,13 @@
 <template>
   <div class="team-overview">
-    <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Uzman özeti hazırlanıyor...</div>
+    <div v-if="loading && !data" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Uzman özeti hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <template v-else-if="data">
       <!-- Uzman bazında PK durumu: atandığı firmalar ve o lokasyonların lokasyon geneli ekipmanı -->
       <section class="card list-card">
         <header>
           <div><h3>Uzmanlar</h3><small>Uzman bazında PK durumu (yüzde kaçı tamam): atandığı firmaların ve o lokasyonların lokasyon geneli ekipmanı; en çok süresi geçmiş üstte.</small></div>
-          <NuxtLink v-if="isManager" class="link-button" to="/expert/settings/users">Kullanıcılar <i class="pi pi-arrow-right" /></NuxtLink>
+          <NuxtLink v-if="isManager" class="link-button" to="/expert/settings/users">Kullanıcılar <PkIcon class="pi pi-arrow-right" /></NuxtLink>
         </header>
         <p v-if="!data.experts.length" class="muted pad">Hesapta aktif uzman yok.</p>
         <div v-for="row in data.experts" :key="row.id" class="location-row static">
@@ -26,7 +26,7 @@
         <section class="card list-card">
           <header>
             <div><h3>Uzmanı olmayan firmalar</h3><small>Kimseye atanmamış firmalar; Firmalar sayfasından uzman atanır.</small></div>
-            <NuxtLink class="link-button" to="/expert/settings/companies">Uzman ata <i class="pi pi-arrow-right" /></NuxtLink>
+            <NuxtLink class="link-button" to="/expert/settings/companies">Uzman ata <PkIcon class="pi pi-arrow-right" /></NuxtLink>
           </header>
           <p v-if="!data.unassigned.length" class="muted pad">Bütün firmaların uzmanı var.</p>
           <div v-for="item in data.unassigned" :key="item.id" class="line">

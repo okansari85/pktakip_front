@@ -10,9 +10,9 @@
           <p>Periyodik kontrollerinizi dijital<br />olarak yönetin, güvenli bir gelecek<br />için bugün adım atın.</p>
         </div>
         <div class="hero-features">
-          <div class="feature"><i class="pi pi-shield"></i><span>Güvenli<br />Veri Yönetimi</span></div>
-          <div class="feature"><i class="pi pi-file-edit"></i><span>Dijital<br />Süreçler</span></div>
-          <div class="feature"><i class="pi pi-chart-bar"></i><span>Daha Verimli<br />Operasyonlar</span></div>
+          <div class="feature"><PkIcon class="pi pi-shield" /><span>Güvenli<br />Veri Yönetimi</span></div>
+          <div class="feature"><PkIcon class="pi pi-file-edit" /><span>Dijital<br />Süreçler</span></div>
+          <div class="feature"><PkIcon class="pi pi-chart-bar" /><span>Daha Verimli<br />Operasyonlar</span></div>
         </div>
       </div>
     </section>
@@ -22,14 +22,14 @@
         <h1>Sisteme Giriş Yapın</h1>
         <p class="intro">Hesabınızla giriş yaparak devam edin.</p>
         <form @submit.prevent="submit">
-          <div class="field"><label for="email">E-posta</label><div class="input-wrap"><i class="pi pi-envelope"></i><InputText id="email" v-model="email" type="email" placeholder="E-posta adresiniz" autocomplete="email" fluid /></div></div>
-          <div class="field"><label for="password">Şifre</label><div class="input-wrap"><i class="pi pi-lock"></i><Password id="password" v-model="password" :feedback="false" toggleMask placeholder="Şifreniz" autocomplete="current-password" fluid /></div></div>
+          <div class="field"><label for="email">E-posta</label><div class="input-wrap"><PkIcon class="pi pi-envelope" /><InputText id="email" v-model="email" type="email" placeholder="E-posta adresiniz" autocomplete="email" fluid /></div></div>
+          <div class="field"><label for="password">Şifre</label><div class="input-wrap"><PkIcon class="pi pi-lock" /><Password id="password" v-model="password" :feedback="false" toggleMask placeholder="Şifreniz" autocomplete="current-password" fluid /></div></div>
           <div class="form-options"><label class="remember"><Checkbox v-model="remember" :binary="true" /><span>Beni hatırla</span></label><a href="#" @click.prevent>Şifremi unuttum?</a></div>
           <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
-          <Button type="submit" label="Giriş Yap" icon="pi pi-arrow-right" iconPos="right" class="login-button" :loading="loading" fluid />
+          <Button type="submit" label="Giriş Yap" iconPos="right" class="login-button" :loading="loading" fluid><template #icon="{ class: iconClass }"><PkIcon class="pi pi-arrow-right" :class="iconClass" /></template></Button>
         </form>
         <div class="divider"><span></span><b>veya</b><span></span></div>
-        <div class="security-box"><i class="pi pi-shield"></i><div><strong>Yetkili Kullanım</strong><p>Bu sistem yalnızca yetkili kullanıcılar içindir.<br />Tüm erişimler kayıt altına alınmaktadır.</p></div></div>
+        <div class="security-box"><PkIcon class="pi pi-shield" /><div><strong>Yetkili Kullanım</strong><p>Bu sistem yalnızca yetkili kullanıcılar içindir.<br />Tüm erişimler kayıt altına alınmaktadır.</p></div></div>
       </div>
     </section>
   </main>

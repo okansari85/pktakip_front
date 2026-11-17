@@ -5,17 +5,17 @@
       <div>
         <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
-          <template v-if="individual"><NuxtLink to="/expert/anasayfa">Ana Sayfa</NuxtLink><i class="pi pi-angle-right" aria-hidden="true" /></template>
+          <PkIcon class="pi pi-home" aria-hidden="true" />
+          <template v-if="individual"><NuxtLink to="/expert/anasayfa">Ana Sayfa</NuxtLink><PkIcon class="pi pi-angle-right" aria-hidden="true" /></template>
           <strong>Genel Bakış</strong>
         </nav>
         <h1>Genel bakış</h1>
         <p>Kontrol portföyünüzün güncel durumu</p>
       </div>
-      <span v-if="data && groups.length" class="scope-pill"><i class="pi pi-building" /> {{ scopePill }}</span>
+      <span v-if="data && groups.length" class="scope-pill"><PkIcon class="pi pi-building" /> {{ scopePill }}</span>
       <div v-if="SHOW_DETAIL_TABLES && individual" class="view-switch" role="group" aria-label="Görünüm">
-        <button type="button" :class="{ on: view === 'ozet' }" :aria-pressed="view === 'ozet'" @click="view = 'ozet'"><i class="pi pi-th-large" /> Özet</button>
-        <button type="button" :class="{ on: view === 'detay' }" :aria-pressed="view === 'detay'" @click="view = 'detay'"><i class="pi pi-table" /> Detaylı Tablolar</button>
+        <button type="button" :class="{ on: view === 'ozet' }" :aria-pressed="view === 'ozet'" @click="view = 'ozet'"><PkIcon class="pi pi-th-large" /> Özet</button>
+        <button type="button" :class="{ on: view === 'detay' }" :aria-pressed="view === 'detay'" @click="view = 'detay'"><PkIcon class="pi pi-table" /> Detaylı Tablolar</button>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
     <template v-if="showSummary">
       <div class="top-kpis">
         <div v-for="kpi in topKpis" :key="kpi.label" class="top-kpi">
-          <span class="top-kpi-icon" :class="kpi.tone"><i :class="kpi.icon" /></span>
+          <span class="top-kpi-icon" :class="kpi.tone"><PkIcon :class="kpi.icon" /></span>
           <div><small>{{ kpi.label }}</small><strong>{{ kpi.value }}</strong><span>{{ kpi.text }}</span></div>
         </div>
       </div>
@@ -51,16 +51,16 @@
 
     <!-- Sekmeler: önce hizmet verilen lokasyonlar, sonra genel durum, tesisat ve formlar (takvim sol menüde: Kontrol Takvimi) -->
     <div v-if="detailTables" class="tabs">
-      <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><i :class="item.icon" /> {{ item.label }}</button>
+      <button v-for="item in tabs" :key="item.key" type="button" :class="{ active: tab === item.key }" @click="tab = item.key"><PkIcon :class="item.icon" /> {{ item.label }}</button>
     </div>
     <!-- Haritada il seçiliyken sayfanın tamamı o ile göre -->
     <div v-if="selectedCity && detailTables" class="city-bar">
-      <i :class="cityLoading ? 'pi pi-spin pi-spinner' : 'pi pi-map-marker'" />
+      <PkIcon :class="cityLoading ? 'pi pi-spin pi-spinner' : 'pi pi-map-marker'" />
       <span>Sayfa <strong>{{ selectedCityName }}</strong> iline göre gösteriliyor.</span>
       <button class="link-button" type="button" @click="selectedCity = null">Tüm iller</button>
     </div>
 
-    <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Özet hazırlanıyor...</div>
+    <div v-if="loading && !data" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Özet hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
 
@@ -97,7 +97,7 @@
         <NuxtLink v-for="kpi in sideKpis" :key="kpi.to" :to="kpi.to" class="gb-tile" :class="kpi.tone">
           <span class="gb-tile-label">{{ kpi.label }}</span>
           <strong>{{ kpi.value }}</strong>
-          <span class="gb-tile-icon"><i :class="kpi.icon" /></span>
+          <span class="gb-tile-icon"><PkIcon :class="kpi.icon" /></span>
         </NuxtLink>
       </div>
 
@@ -105,7 +105,7 @@
         <header class="gb-panel-head"><h3>Öncelikli kontroller</h3><small>Süresi geçen ve 30 gün içinde dolan kontroller</small></header>
         <p v-if="!priorityRows.length" class="muted gb-empty">Gecikmiş ya da 30 gün içinde dolan kontrol yok.</p>
         <div v-for="row in priorityRows" :key="row.key" class="gb-row">
-          <span class="gb-row-icon"><i :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
+          <span class="gb-row-icon"><PkIcon :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
           <span class="gb-row-name"><strong>{{ row.name }}</strong><small v-if="row.meta">{{ row.meta }}</small></span>
           <span class="gb-pill" :class="row.days_left < 0 ? 'bad' : 'warn'">{{ row.when }}</span>
           <button type="button" class="gb-inspect" @click="priorityDate = row.date">İncele</button>
@@ -197,7 +197,7 @@
         <!-- Ekipman türleri: Durum Raporu'ndaki tablo (yalnızca tablo); kapsam sayfayla aynı (filtre + seçili il) -->
         <section v-if="!multiUser || typesLoading || typesError || typeRows.length" class="card list-card" :class="{ loading: typesLoading && typeRows.length }">
           <header><div><h3>Ekipman türleri</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Tür başına durum ve kontrol zamanı</small></div></header>
-          <p v-if="typesLoading && !typeRows.length" class="muted pad"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p v-if="typesLoading && !typeRows.length" class="muted pad"><PkIcon class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
           <p v-else-if="typesError" class="muted pad error-text">{{ typesError }}</p>
           <p v-else-if="!typeRows.length" class="muted pad">Ekipman yok.</p>
           <ExpertTypeStatusTable v-else :types="typeRows" />
@@ -206,7 +206,7 @@
         <section v-if="!multiUser || data.installations.length" class="card list-card">
           <header>
             <div><h3>Tesisat özeti</h3><small>{{ selectedCityName ? `${selectedCityName} · ` : '' }}Her tesisat kaydının son durumu; en sorunlu üstte</small></div>
-            <NuxtLink class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink>
+            <NuxtLink class="link-button" to="/expert/installations">Tesisatlar <PkIcon class="pi pi-arrow-right" /></NuxtLink>
           </header>
           <p v-if="!data.installations.length" class="muted pad">Tesisat yok.</p>
           <ExpertInstallationSummaryTable v-else :installations="data.installations" />
@@ -241,7 +241,7 @@
             <div v-for="row in box.rows" :key="row.name" class="progress-row" :class="{ open: isOpenRow(box.key, row.name) }">
               <button type="button" class="progress-toggle" :aria-expanded="isOpenRow(box.key, row.name)" @click="toggleRow(box.key, row.name)">
                 <div class="progress-head">
-                  <span><i :class="isOpenRow(box.key, row.name) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" /> {{ row.name }}</span>
+                  <span><PkIcon :class="isOpenRow(box.key, row.name) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" /> {{ row.name }}</span>
                   <strong :class="levelOf(shareOf(row.status.uygun, row.total))">%{{ percentText(shareOf(row.status.uygun, row.total)) }}</strong>
                 </div>
                 <div class="progress-bar"><i :class="levelOf(shareOf(row.status.uygun, row.total))" :style="{ width: `${shareOf(row.status.uygun, row.total)}%` }" /></div>
@@ -263,7 +263,7 @@
                     <strong>{{ [item.type, item.code && `no ${item.code}`, item.variant].filter(Boolean).join(' · ') }}</strong>
                     <small>{{ [locationLabel(item.location_id, item.location_name), item.place].filter(Boolean).join(' · ') }}</small>
                   </span>
-                  <i class="pi pi-angle-right" />
+                  <PkIcon class="pi pi-angle-right" />
                 </NuxtLink>
                 <p v-if="row.nonconforming_total > row.nonconforming.length" class="muted">+{{ row.nonconforming_total - row.nonconforming.length }} ekipman daha: Ekipmanlar'da "Uygun değil" filtresiyle görebilirsiniz.</p>
               </div>
@@ -285,7 +285,7 @@
       <template v-else>
       <div class="grid two">
         <section v-if="!multiUser || data.installations.length" class="card list-card">
-          <header><h3>Tesisatlar</h3><NuxtLink class="link-button" to="/expert/installations">Tesisatlar <i class="pi pi-arrow-right" /></NuxtLink></header>
+          <header><h3>Tesisatlar</h3><NuxtLink class="link-button" to="/expert/installations">Tesisatlar <PkIcon class="pi pi-arrow-right" /></NuxtLink></header>
           <p v-if="!data.installations.length" class="muted pad">Tesisat yok.</p>
           <div v-for="item in data.installations" :key="item.id" class="line">
             <span class="dot" :class="item.status" />

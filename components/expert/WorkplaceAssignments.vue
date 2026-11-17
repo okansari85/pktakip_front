@@ -8,10 +8,10 @@
         <p v-if="kamu">İşyeri başına uzman. Uzman, İşyerlerim'de yalnızca atandığı işyerlerini görür.</p>
         <p v-else>Firma (işyeri) başına uzman. Uzman, Firmalarım'da yalnızca atandığı firmaları görür.</p>
       </div>
-      <span v-if="unassignedCount" class="warn-badge"><i class="pi pi-exclamation-triangle" /> {{ unassignedCount }} firmanın uzmanı yok</span>
+      <span v-if="unassignedCount" class="warn-badge"><PkIcon class="pi pi-exclamation-triangle" /> {{ unassignedCount }} firmanın uzmanı yok</span>
     </div>
     <div class="toolbar">
-      <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Firma, müşteri ya da lokasyon ara" /></div>
+      <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="search" type="text" placeholder="Firma, müşteri ya da lokasyon ara" /></div>
       <label class="check"><input v-model="onlyUnassigned" type="checkbox" /> Sadece uzmanı olmayanlar</label>
     </div>
 
@@ -38,7 +38,7 @@
               <span v-for="person in expertsOf(item)" :key="person.id" class="chip">{{ person.name }}</span>
               <span v-if="!expertsOf(item).length" class="chip empty">Uzman yok</span>
             </td>
-            <td class="actions"><button class="icon-button" type="button" title="Uzman ata" @click="open(item)"><i class="pi pi-user-edit" /></button></td>
+            <td class="actions"><button class="icon-button" type="button" title="Uzman ata" @click="open(item)"><PkIcon class="pi pi-user-edit" /></button></td>
           </tr>
         </tbody>
       </table>
@@ -50,7 +50,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Uzman Ata</h2><p v-if="target">{{ titleOf(target) }} · {{ target.company_name }}<template v-if="titleOf(target) !== target.location_name"> · {{ target.location_name }}</template></p></div>
-          <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
         </div>
         <p v-if="!target" :class="error ? 'form-error' : 'hint'">{{ error || 'Atamalar yükleniyor...' }}</p>
         <p v-else-if="!experts.length" class="hint">Hesapta aktif uzman yok. Uzmanları Kullanıcılar sayfasından eklersiniz.</p>

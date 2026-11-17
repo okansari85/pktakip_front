@@ -19,7 +19,7 @@
         <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
         <Message v-if="success" severity="success" :closable="false">{{ success }}</Message>
 
-        <Button type="submit" label="Şifremi Oluştur" icon="pi pi-check" class="pk-primary" :loading="loading" fluid :disabled="!token || !email || !!success" />
+        <Button type="submit" label="Şifremi Oluştur" class="pk-primary" :loading="loading" fluid :disabled="!token || !email || !!success"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-check" :class="iconClass" /></template></Button>
       </form>
 
       <NuxtLink to="/login" class="login-link">Giriş ekranına dön</NuxtLink>

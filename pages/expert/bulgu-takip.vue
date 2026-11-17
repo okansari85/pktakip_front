@@ -6,9 +6,9 @@
     <div class="page-head">
       <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
       <nav class="crumb" aria-label="Sayfa yolu">
-        <i class="pi pi-home" aria-hidden="true" />
+        <PkIcon class="pi pi-home" aria-hidden="true" />
         <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-        <i class="pi pi-angle-right" aria-hidden="true" />
+        <PkIcon class="pi pi-angle-right" aria-hidden="true" />
         <strong>Bulgu Takibi</strong>
       </nav>
       <h1>Bulgu takibi</h1>
@@ -20,7 +20,7 @@
       <!-- Üst sıra: bulgu özeti, en çok açık bulgusu olan ekipman -->
       <div class="top">
         <section class="card summary">
-          <header class="summary-head"><i class="pi pi-clone" /><h3>Bulgu özeti</h3></header>
+          <header class="summary-head"><PkIcon class="pi pi-clone" /><h3>Bulgu özeti</h3></header>
           <!-- Sayılar: tıklayınca liste o duruma göre süzülür, tekrar tıklayınca kalkar -->
           <div class="summary-counts">
             <button v-for="kpi in SUMMARY" :key="kpi.key" type="button" class="summary-count" :class="{ active: filters.status === kpi.key }" :aria-pressed="filters.status === kpi.key" @click="toggleStatus(kpi.key)">
@@ -29,7 +29,7 @@
           </div>
         </section>
         <div v-if="topSubject" class="card hero-tag">
-          <span class="hero-tag-icon"><i :class="subjectIcon(topSubject.kind)" /></span>
+          <span class="hero-tag-icon"><PkIcon :class="subjectIcon(topSubject.kind)" /></span>
           <span class="hero-tag-text"><strong>{{ topSubject.name }}</strong><small>{{ topSubject.open }} açık bulgu</small></span>
         </div>
       </div>
@@ -37,7 +37,7 @@
       <!-- Süresi geçen / yaklaşan sayı kartları: katalogda yok, gizli; ileride açılabilir (durum süzgecinde seçilebilir) -->
       <div v-if="SHOW_DUE_KPIS" class="kpis">
         <button v-for="kpi in KPIS" :key="kpi.key" type="button" class="kpi" :class="[kpi.tone, { active: filters.status === kpi.key }]" @click="toggleStatus(kpi.key)">
-          <span class="kpi-icon"><i :class="kpi.icon" /></span>
+          <span class="kpi-icon"><PkIcon :class="kpi.icon" /></span>
           <span class="kpi-text"><small>{{ kpi.label }}</small><strong>{{ result?.counts?.[kpi.key] ?? '—' }}</strong></span>
         </button>
       </div>
@@ -50,23 +50,23 @@
             <option value="suresi_gecen">Süresi geçen</option>
             <option value="yaklasan">Yaklaşan (10 gün)</option>
           </select>
-          <i class="pi pi-chevron-down" aria-hidden="true" />
+          <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
         </span>
         <span class="pill-select">
           <select v-model="filters.responsible_user_id" aria-label="Sorumlu">
             <option :value="null">Sorumlu</option>
             <option v-for="person in responsibles" :key="person.id" :value="person.id">{{ person.name }}</option>
           </select>
-          <i class="pi pi-chevron-down" aria-hidden="true" />
+          <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
         </span>
         <span class="pill-date">
           <DatePicker v-model="reportRange" selection-mode="range" date-format="dd.mm.y" placeholder="Rapor tarihi" show-icon icon-display="input" :manual-input="false" show-button-bar aria-label="Rapor tarihi" />
-          <i class="pi pi-chevron-down" aria-hidden="true" />
+          <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
         </span>
-        <button v-if="SHOW_CLEAR_FILTERS" class="secondary-button" type="button" :disabled="!filtered" @click="clearFilters"><i class="pi pi-filter-slash" /> Temizle</button>
+        <button v-if="SHOW_CLEAR_FILTERS" class="secondary-button" type="button" :disabled="!filtered" @click="clearFilters"><PkIcon class="pi pi-filter-slash" /> Temizle</button>
       </div>
 
-      <div v-if="loading && !result" class="card state"><i class="pi pi-spin pi-spinner" /> Bulgular yükleniyor...</div>
+      <div v-if="loading && !result" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Bulgular yükleniyor...</div>
       <div v-else-if="error" class="card state error-text">{{ error }}</div>
       <div v-else-if="!result?.data?.length" class="card state">{{ filtered ? 'Seçimlere uyan bulgu yok.' : 'Bu kapsamda bulgu yok. Rapor kaydedildikçe bulgular burada listelenir.' }}</div>
       <template v-else>
@@ -74,8 +74,8 @@
         <div class="subject-groups">
           <section v-for="group in subjectGroups" :key="group.key" class="card subject" :class="{ open: openGroups.includes(group.key) }">
             <button type="button" class="subject-head" :aria-expanded="openGroups.includes(group.key)" @click="toggleGroup(group.key)">
-              <i class="pi chevron" :class="openGroups.includes(group.key) ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true" />
-              <i :class="subjectIcon(group.kind)" class="subject-icon" aria-hidden="true" />
+              <PkIcon class="pi chevron" :class="openGroups.includes(group.key) ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true" />
+              <PkIcon :class="subjectIcon(group.kind)" class="subject-icon" aria-hidden="true" />
               <strong>{{ group.name }}</strong><span>· {{ group.rows.length }} bulgu</span>
             </button>
             <template v-if="openGroups.includes(group.key)">
@@ -95,16 +95,16 @@
                           <option :value="null">Sorumlu seç</option>
                           <option v-for="person in responsibles" :key="person.id" :value="person.id">{{ person.name }}</option>
                         </select>
-                        <i class="pi pi-chevron-down" aria-hidden="true" />
+                        <PkIcon class="pi pi-chevron-down" aria-hidden="true" />
                       </span>
                     </label>
-                    <label>Termin<span class="field-date"><i class="pi pi-calendar" aria-hidden="true" /><input v-model="assign.due_date" type="date" /></span></label>
-                    <button class="assign-button" type="button" :disabled="assigning" @click="saveAssign(row)"><i class="pi pi-send" /> {{ assigning ? 'Atanıyor...' : 'İşi ata' }}</button>
+                    <label>Termin<span class="field-date"><PkIcon class="pi pi-calendar" aria-hidden="true" /><input v-model="assign.due_date" type="date" /></span></label>
+                    <button class="assign-button" type="button" :disabled="assigning" @click="saveAssign(row)"><PkIcon class="pi pi-send" /> {{ assigning ? 'Atanıyor...' : 'İşi ata' }}</button>
                     <p v-if="assignError" class="assign-error error-text">{{ assignError }}</p>
                   </div>
                 </div>
               </div>
-              <button v-if="group.rows.length > ROW_LIMIT && !allRows.includes(group.key)" type="button" class="more-link" @click="allRows.push(group.key)">Tüm {{ group.rows.length }} bulguyu gör <i class="pi pi-chevron-down" /></button>
+              <button v-if="group.rows.length > ROW_LIMIT && !allRows.includes(group.key)" type="button" class="more-link" @click="allRows.push(group.key)">Tüm {{ group.rows.length }} bulguyu gör <PkIcon class="pi pi-chevron-down" /></button>
             </template>
           </section>
         </div>
@@ -124,9 +124,9 @@
             </thead>
             <tbody>
               <tr v-for="row in result.data" :key="row.id" :class="[FINDING_STATUS[row.status]?.tone, { selected: openId === row.id }]" @click="openId = row.id">
-                <td><strong>{{ row.workplace?.company_name || 'Lokasyon geneli' }}</strong><small><i class="pi pi-map-marker" /> {{ locationLabel(row.location?.id, row.location?.name) }}</small></td>
+                <td><strong>{{ row.workplace?.company_name || 'Lokasyon geneli' }}</strong><small><PkIcon class="pi pi-map-marker" /> {{ locationLabel(row.location?.id, row.location?.name) }}</small></td>
                 <td><strong>{{ row.subject.name || '—' }}</strong><small>{{ [row.subject.code, row.subject.detail, row.component].filter(Boolean).join(' · ') }}</small></td>
-                <td class="text">{{ row.text }}<small v-if="row.close_suggestion && row.status !== 'kapandi'" class="suggested"><i class="pi pi-check-circle" /> Kapatma önerisi</small></td>
+                <td class="text">{{ row.text }}<small v-if="row.close_suggestion && row.status !== 'kapandi'" class="suggested"><PkIcon class="pi pi-check-circle" /> Kapatma önerisi</small></td>
                 <td class="text">{{ row.work || '—' }}</td>
                 <td>{{ row.responsible?.name || '—' }}</td>
                 <td class="due" :class="dueTone(row)">
@@ -134,7 +134,7 @@
                   <small v-if="dueText(row)">{{ dueText(row) }}</small>
                 </td>
                 <td><span class="status-chip" :class="FINDING_STATUS[row.status]?.tone">{{ FINDING_STATUS[row.status]?.label }}</span></td>
-                <td><button class="detail-button" type="button" @click.stop="openId = row.id"><i class="pi pi-eye" /> Detay</button></td>
+                <td><button class="detail-button" type="button" @click.stop="openId = row.id"><PkIcon class="pi pi-eye" /> Detay</button></td>
               </tr>
             </tbody>
           </table>

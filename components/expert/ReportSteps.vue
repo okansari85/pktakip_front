@@ -1,7 +1,7 @@
 <template>
   <ol class="steps" aria-label="Adımlar">
     <li v-for="(label, index) in LABELS" :key="label" :class="{ done: index + 1 < step, active: index + 1 === step }" :aria-current="index + 1 === step ? 'step' : undefined">
-      <span><i v-if="index + 1 < step" class="pi pi-check" /><template v-else>{{ index + 1 }}</template></span>{{ label }}
+      <span><PkIcon v-if="index + 1 < step" class="pi pi-check" /><template v-else>{{ index + 1 }}</template></span>{{ label }}
     </li>
   </ol>
 </template>

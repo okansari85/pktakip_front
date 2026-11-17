@@ -1,14 +1,14 @@
 <template>
   <div ref="rootEl" class="firm-detail" :class="{ embedded }">
     <!-- Kurumsal / kamu hesabında Firmalarım bu sayfanın kendisidir: geri bağlantısı yok. -->
-    <NuxtLink v-if="!corporate && !embedded" to="/expert/workplaces" class="back"><i class="pi pi-arrow-left" /> Firmalarım</NuxtLink>
+    <NuxtLink v-if="!corporate && !embedded" to="/expert/workplaces" class="back"><ArrowLeft :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Firmalarım</NuxtLink>
 
     <!-- OSGB Firmalarım (tek ağaç): müşteri kapalı satır olarak gelir; tıklanınca yapısı yüklenir ve ağaç bu satırın yerine açılır. -->
     <ul v-if="embedded && !firm" class="tree">
       <li class="tree-row r-node" style="--depth: 0">
         <button class="row-main" type="button" :aria-expanded="false" :disabled="loading" @click="load">
-          <i class="chevron" :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-chevron-right'" />
-          <i class="pi pi-building k-root" />
+          <PkIcon class="chevron" :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-chevron-right'" />
+          <PkIcon class="pi pi-building k-root" />
           <span class="row-text"><strong>{{ preview?.name }}</strong><small>{{ preview?.locations_count ?? 0 }} lokasyon · {{ preview?.workplaces_count ?? 0 }} işyeri</small></span>
         </button>
       </li>
@@ -37,16 +37,16 @@
           <!-- Şemanın küçük hâli (solda, simgenin yerinde): bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
           <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /></button>
           <div>
-            <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><i class="pi pi-angle-right" aria-hidden="true" /><span>{{ listNode.name }}</span></nav>
+            <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><span>{{ listNode.name }}</span></nav>
             <h2>{{ listNode.name }}</h2>
             <small>{{ listLocations.length }} lokasyon · {{ listLocations.reduce((sum, l) => sum + workplacesOf(l).length, 0) }} işyeri</small>
           </div>
-          <button class="close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
+          <button class="close-list" type="button" @click="closeList"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Kapat</button>
         </section>
         <!-- Dal lokasyonları: süzgeç ayrı kart, lokasyonlar kart liste -->
         <section v-if="listNode" class="card list-tools-card">
           <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
-          <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
+          <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyon ekle</button>
         </section>
         <section v-if="listNode" class="card loc-cards-card">
           <ul class="loc-rows">
@@ -87,7 +87,7 @@
             <form class="float-card" @submit.prevent="saveEdit">
               <div class="add-row-head">
                 <h3>{{ selected.name }} düzenle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <label class="field">Ad <span class="req">*</span>
                 <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(selected)" />
@@ -109,13 +109,13 @@
             <form class="float-card" @submit.prevent="saveChild">
               <div class="add-row-head">
                 <h3>{{ selected.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <label class="field">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
                 <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
               </label>
               <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
+              <button class="primary-button wide" type="submit" :disabled="!groupName.trim() || saving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Ekle</button>
             </form>
           </section>
 
@@ -123,15 +123,15 @@
             <form class="float-card" @submit.prevent="saveLocation">
               <div class="add-row-head">
                 <h3>{{ selected.name }} altına lokasyon ekle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
               <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
               <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
-                <p><i class="pi pi-info-circle" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
+                <p><Info :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
                 <div v-for="c in candidates" :key="c.id" class="candidate">
                   <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
-                  <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><i class="pi pi-link" /> Bağla</button>
+                  <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><Link :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bağla</button>
                 </div>
               </div>
               <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
@@ -143,10 +143,10 @@
             <form class="float-card" @submit.prevent="saveRow">
               <div class="add-row-head">
                 <h3>{{ selectedLocation.name }} içine işyeri aç</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
-              <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
+              <p v-if="rowNotice" class="row-notice" role="status"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowNotice }}</p>
               <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
                 <select v-model="companyChoice" :disabled="!companyOptions.length">
                   <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
@@ -178,7 +178,7 @@
               </label>
               <div class="nace-line">
                 <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
-                <span v-if="row.naceCode" class="nace-picked"><i class="pi pi-check-circle" /> {{ row.naceCode }} {{ row.activity }}</span>
+                <span v-if="row.naceCode" class="nace-picked"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ row.naceCode }} {{ row.activity }}</span>
               </div>
               <div v-if="naceOpen" class="nace-box">
                 <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
@@ -190,7 +190,7 @@
                 <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
               </label>
               <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
+              <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
               <small class="field-note">Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
             </form>
           </section>
@@ -200,10 +200,10 @@
             <div class="float-card">
               <div class="add-row-head">
                 <h3>{{ selectedLocation.name }} · alt tesisler</h3>
-                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <div class="sub-chips">
-                <span v-for="sub in subsOf(selectedLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(selectedLocation, sub)"><i class="pi pi-times" /></button></span>
+                <span v-for="sub in subsOf(selectedLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(selectedLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
                 <span v-if="!subsOf(selectedLocation).length" class="muted">Henüz alt tesis yok.</span>
               </div>
               <form class="sub-add" @submit.prevent="addSub(selectedLocation)">
@@ -219,7 +219,7 @@
             <form class="float-card" @submit.prevent="confirmMove">
               <div class="add-row-head">
                 <h3>{{ selectedLocation.name }} · {{ firm.type === 'public' ? 'başka birime taşı' : 'başka dala taşı' }}</h3>
-                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><i class="pi pi-times" /></button>
+                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
               </div>
               <label class="field">{{ firm.type === 'public' ? 'Taşınacak birim' : 'Taşınacak dal' }}
                 <select v-model="moveTarget">
@@ -234,15 +234,15 @@
           <!-- Seçili dal / kök: bilgiler ve işlemler -->
           <section v-else-if="focusNode" class="card location-card">
             <header>
-              <span class="location-icon org"><i :class="focusNode.id === nodes[0]?.id ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
+              <span class="location-icon org"><PkIcon :class="focusNode.id === nodes[0]?.id ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
               <div><h2>{{ focusNode.name }}</h2><small>{{ nodeSummary(focusNode) }}</small></div>
             </header>
             <div v-if="canEdit" class="panel-actions">
-              <button v-if="canBranch && !singleCompany" class="secondary-button" type="button" @click="startOrg(focusNode)"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
-              <button class="secondary-button" type="button" @click="startLocation(focusNode)"><i class="pi pi-plus" /> Lokasyon</button>
-              <button class="secondary-button" type="button" @click="startEdit(focusNode)"><i class="pi pi-pencil" /> Düzenle</button>
+              <button v-if="canBranch && !singleCompany" class="secondary-button" type="button" @click="startOrg(focusNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
+              <button class="secondary-button" type="button" @click="startLocation(focusNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyon</button>
+              <button class="secondary-button" type="button" @click="startEdit(focusNode)"><PencilLine :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Düzenle</button>
               <!-- Kurumsal / kamu hesabında kök de bir düğümdür: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
-              <button class="secondary-button danger" type="button" @click="focusNode.id !== nodes[0]?.id || corporate ? openRemove({ name: focusNode.name, node: focusNode }) : openDelete()"><i class="pi pi-trash" /> {{ focusNode.id !== nodes[0]?.id || corporate ? 'Sil' : 'Ana firmayı sil' }}</button>
+              <button class="secondary-button danger" type="button" @click="focusNode.id !== nodes[0]?.id || corporate ? openRemove({ name: focusNode.name, node: focusNode }) : openDelete()"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ focusNode.id !== nodes[0]?.id || corporate ? 'Sil' : 'Ana firmayı sil' }}</button>
             </div>
           </section>
 
@@ -256,11 +256,11 @@
             <div class="location-links">
               <!-- Ekipman / tesisat sayfası: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
               <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
-                <span class="count-icon violet"><i class="pi pi-box" /></span>
+                <span class="count-icon violet"><Package :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
                 <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
               </button>
               <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
-                <span class="count-icon info"><i class="pi pi-sitemap" /></span>
+                <span class="count-icon info"><Network :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
                 <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
               </button>
             </div>
@@ -282,14 +282,14 @@
             <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
             <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
               <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
-              <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
+              <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
             </form>
             <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
             <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
             <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
-              <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
+              <span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
               <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
-              <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
+              <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
             </div>
           </section>
         </aside>
@@ -304,16 +304,16 @@
             <thead><tr><th>Firma</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
             <tbody>
               <tr v-for="entry in workplaceRows" :key="entry.workplace.id" tabindex="0" @click="revealLocation(entry.location)" @keydown.enter="revealLocation(entry.location)">
-                <td><span class="wp-firm"><span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span><span><strong>{{ entry.workplace.company_name }}</strong><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></span></span></td>
+                <td><span class="wp-firm"><span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span><span><strong>{{ entry.workplace.company_name }}</strong><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></span></span></td>
                 <td><strong>{{ entry.location.name }}</strong><small>{{ entry.location.city || '—' }} / {{ entry.location.district || '—' }}</small></td>
                 <td :class="{ muted: !entry.workplace.sub_facility_name }">{{ entry.workplace.sub_facility_name || '—' }}</td>
                 <td><span class="hazard-badge" :class="hazardClassKey(entry.workplace.hazard_class)">{{ entry.workplace.hazard_class }}</span></td>
                 <td class="end" @click.stop>
                   <span class="wp-actions">
                     <!-- OSGB / kurumsal / kamu: işyerinin birimleri ve uzmanı -->
-                    <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} birimleri`" @click="unitTarget = { location: entry.location, workplace: { id: entry.workplace.id, name: workplaceLabel(entry.workplace.id, entry.workplace.company_name) } }"><i class="pi pi-sitemap" /></button>
-                    <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} işyerine uzman ata`" @click="assignId = entry.workplace.id"><i class="pi pi-user-edit" /></button>
-                    <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${entry.workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(entry.workplace.id) || entry.workplace.company_name, workplace: entry.workplace, location: entry.location })"><i class="pi pi-times" /></button>
+                    <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} birimleri`" @click="unitTarget = { location: entry.location, workplace: { id: entry.workplace.id, name: workplaceLabel(entry.workplace.id, entry.workplace.company_name) } }"><Network :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                    <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} işyerine uzman ata`" @click="assignId = entry.workplace.id"><UserCog :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                    <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${entry.workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(entry.workplace.id) || entry.workplace.company_name, workplace: entry.workplace, location: entry.location })"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
                   </span>
                 </td>
               </tr>
@@ -328,8 +328,8 @@
         <details>
           <summary>Diğer işlemler</summary>
           <div class="other-body">
-            <NuxtLink to="/expert/settings/locations" class="other-link"><i class="pi pi-cog" /> Lokasyonları ayrıntılı düzenle</NuxtLink>
-            <NuxtLink to="/expert/settings/customers" class="other-link"><i class="pi pi-pencil" /> Firma adını ya da yapısını düzenle</NuxtLink>
+            <NuxtLink to="/expert/settings/locations" class="other-link"><Settings :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyonları ayrıntılı düzenle</NuxtLink>
+            <NuxtLink to="/expert/settings/customers" class="other-link"><PencilLine :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Firma adını ya da yapısını düzenle</NuxtLink>
           </div>
         </details>
       </section>
@@ -343,13 +343,13 @@
     <div v-if="removing" class="modal-backdrop">
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="remove-title">
         <div class="modal-head">
-          <span class="head-icon danger"><i class="pi pi-trash" /></span>
+          <span class="head-icon danger"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
           <div><h2 id="remove-title">{{ removing.workplace ? 'Firmayı Lokasyondan Çıkar' : removing.location ? 'Lokasyonu Sil' : 'Sil' }}</h2><p>"{{ removing.name }}"<template v-if="removing.workplace"> · {{ removing.location?.name }}</template></p></div>
-          <button class="close-button" type="button" aria-label="Kapat" :disabled="deleting" @click="removing = null"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" aria-label="Kapat" :disabled="deleting" @click="removing = null"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
         </div>
         <p v-if="removeChecking" class="muted">Kayıtlar kontrol ediliyor...</p>
         <template v-else-if="removeWarn">
-          <p class="delete-warn"><i class="pi pi-exclamation-triangle" /> {{ removeWarn }}</p>
+          <p class="delete-warn"><PkIcon class="pi pi-exclamation-triangle" /> {{ removeWarn }}</p>
           <label v-if="!removing.workplace" class="field">Onaylamak için adını yazın<input v-model="removeConfirm" type="text" :placeholder="removing.name" /></label>
         </template>
         <p v-else-if="!formError" class="muted">{{ removing.workplace ? 'Yalnız firma çıkarılır, lokasyon yerinde kalır.' : 'Bu kayıtta ekipman, tesisat ya da rapor yok. Silinince geri alınamaz.' }}</p>
@@ -365,11 +365,11 @@
     <div v-if="deleteOpen" class="modal-backdrop">
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="delete-title">
         <div class="modal-head">
-          <span class="head-icon danger"><i class="pi pi-trash" /></span>
+          <span class="head-icon danger"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
           <div><h2 id="delete-title">Firmayı Sil</h2><p>"{{ firm?.name }}" kalıcı olarak silinir.</p></div>
-          <button class="close-button" type="button" aria-label="Kapat" :disabled="deleting" @click="deleteOpen = false"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" aria-label="Kapat" :disabled="deleting" @click="deleteOpen = false"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
         </div>
-        <p class="delete-warn"><i class="pi pi-exclamation-triangle" /> Bu işlem <strong>geri alınamaz</strong>. Altındaki lokasyonlar, işyerleri, ekipmanlar ve kontrol raporları da silinir.</p>
+        <p class="delete-warn"><PkIcon class="pi pi-exclamation-triangle" /> Bu işlem <strong>geri alınamaz</strong>. Altındaki lokasyonlar, işyerleri, ekipmanlar ve kontrol raporları da silinir.</p>
         <p v-if="!summary && !formError" class="muted">Kayıtlar hesaplanıyor...</p>
         <template v-if="summary">
           <ul v-if="summaryRows.length" class="delete-list"><li v-for="row in summaryRows" :key="row.label"><strong>{{ row.count }}</strong> {{ row.label }}</li></ul>
@@ -389,7 +389,7 @@
 <script setup lang="ts">
 // Bireysel uzmanın firma sayfası: tek pencere, bütün yapı ağaçta; işlemler satırda, formlar satırın altında. Lokasyon herhangi bir düğüme bağlanan boş bir yerdir; firmalar lokasyonda faaliyet gösterir.
 import { customerTypeLabel } from '~/composables/useCustomerTypes'
-import { BriefcaseBusiness, FolderInput, Layers, LayoutDashboard, LayoutGrid, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, BriefcaseBusiness, Building2, ChevronRight, CircleCheck, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
 import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, type NaceItem } from '~/composables/useExpertApi'
 import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress, WorkplaceRowDraft } from '~/composables/useFirmSetup'
 import type { Workplace } from '~/composables/useWorkplaceContext'
@@ -1235,6 +1235,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 /* Firma ve lokasyon detayı üst sırası (tasarım kataloğu 12) */
 .page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
+.lucide-i { flex: none; vertical-align: -3px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
 .overview { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 24px; }
 .side { position: sticky; top: 90px; display: grid; gap: 24px; align-content: start; min-width: 0; max-height: calc(100vh - 110px); overflow-y: auto; }

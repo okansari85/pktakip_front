@@ -50,7 +50,6 @@ export default defineNuxtConfig({
     }
   },
   css: [
-    'primeicons/primeicons.css',
     'primeflex/primeflex.css',
     '~/assets/css/main.css'
   ],

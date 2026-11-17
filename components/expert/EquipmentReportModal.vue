@@ -4,7 +4,7 @@
       <div class="modal-head">
         <div class="title"><h2>Yeni Periyodik Kontrol Raporu Yükle</h2><p>{{ equipment.name || equipment.type?.name }}<template v-if="equipment.code"> · Ekipman no {{ equipment.code }}</template></p></div>
         <ExpertReportSteps :step="saving ? 3 : file && formVisible ? 2 : 1" />
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <!-- Rapor dosyası (her iki yolda da zorunlu: dijital arşiv) -->
@@ -19,12 +19,12 @@
         <section class="rd-card">
           <div class="card-head">
             <h3>{{ mode === 'ai' && analysis ? 'Okunan bilgileri doğrulayın' : 'Rapor bilgileri' }}</h3>
-            <span v-if="mode === 'ai' && analysis" class="done-chip"><i class="pi pi-check-circle" /> Okuma tamamlandı</span>
+            <span v-if="mode === 'ai' && analysis" class="done-chip"><PkIcon class="pi pi-check-circle" /> Okuma tamamlandı</span>
           </div>
 
           <div class="mode">
-            <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><i class="pi pi-pencil" /> Elle doldur</button>
-            <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><i class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
+            <button type="button" :class="{ active: mode === 'manual' }" :disabled="busy" @click="setMode('manual')"><PkIcon class="pi pi-pencil" /> Elle doldur</button>
+            <button type="button" :class="{ active: mode === 'ai' }" :disabled="busy" @click="setMode('ai')"><PkIcon class="pi pi-sparkles" /> Yapay zeka ile analiz et</button>
           </div>
 
           <!-- Yapay zeka: önce analiz, sonra öneri formda gözden geçirilir -->
@@ -34,18 +34,18 @@
               <p v-if="file && !isPdf && !fixtureId" class="hint warn">Yapay zeka analizi yalnızca PDF raporlarda çalışır. Görsel raporu "Elle doldur" ile yükleyin.</p>
               <div v-else class="ai-box">
                 <template v-if="analyzing">
-                  <i class="pi pi-spin pi-spinner" />
+                  <PkIcon class="pi pi-spin pi-spinner" />
                   <span><strong>Rapor okunuyor...</strong><small>Bu işlem 1-3 dakika sürebilir, pencereyi kapatmayın.</small></span>
                 </template>
                 <template v-else>
-                  <i class="pi pi-sparkles" />
+                  <PkIcon class="pi pi-sparkles" />
                   <span><strong>Rapor yapay zeka ile okunacak</strong><small>Sonuç, kontrol tarihi ve geçerlilik tarihi doldurulur; kaydetmeden önce kontrol edersiniz.</small></span>
                   <button class="ai-button" type="button" :disabled="!file && !fixtureId" @click="analyze">Analiz et</button>
                 </template>
               </div>
               <!-- Test: yapay zeka yerine test sayfasında kaydedilmiş analiz -->
               <label v-if="showFixtures && !analyzing && fixtures.length" class="fixture-select">
-                <span><i class="pi pi-database" /> Test verisi</span>
+                <span><PkIcon class="pi pi-database" /> Test verisi</span>
                 <select v-model="fixtureId">
                   <option value="">Kullanma — raporu yapay zeka ile oku</option>
                   <option v-for="fixture in fixtures" :key="fixture.fixture_id" :value="fixture.fixture_id">{{ fixtureLabel(fixture) }}</option>
@@ -55,26 +55,26 @@
 
             <!-- Analizden sonra: eşleşme + öneri -->
             <template v-else>
-              <p v-if="analysis.fixture" class="hint test-note"><i class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
-              <p v-if="analysis.input === 'image'" class="hint warn test-note"><i class="pi pi-image" /> Rapor görüntü olarak kaydedilmiş; yapay zeka sayfa görüntülerinden okudu. Kaydetmeden önce değerleri dikkatle kontrol edin.</p>
-              <p v-if="analysis.input === 'ocr'" class="hint warn test-note"><i class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
+              <p v-if="analysis.fixture" class="hint test-note"><PkIcon class="pi pi-database" /> Test verisi kullanıldı: {{ analysis.fixture.original_file_name }} (yapay zeka çağrılmadı)</p>
+              <p v-if="analysis.input === 'image'" class="hint warn test-note"><PkIcon class="pi pi-image" /> Rapor görüntü olarak kaydedilmiş; yapay zeka sayfa görüntülerinden okudu. Kaydetmeden önce değerleri dikkatle kontrol edin.</p>
+              <p v-if="analysis.input === 'ocr'" class="hint warn test-note"><PkIcon class="pi pi-image" /> Rapor taranmış; metin OCR ile okundu. Kaşe ya da imza altında kalan değerler eksik olabilir, kaydetmeden önce kontrol edin.</p>
 
               <!-- Aynı rapor daha önce yüklendiyse kaydedilemez -->
               <div v-if="analysis.duplicate" class="duplicate">
-                <i class="pi pi-ban" />
+                <PkIcon class="pi pi-ban" />
                 <span>{{ analysis.duplicate.message }} <NuxtLink v-if="analysis.duplicate.equipment_id !== equipment.id" :to="`/expert/equipment/${analysis.duplicate.equipment_id}`" @click="emit('close')">Ekipmana git</NuxtLink></span>
               </div>
 
               <!-- Rapor bu ekipmana ait mi: seri no, marka, model, ekipman no, tür. Eşleşmeyince formun üstünde; eşleşince
                    katalogdaki gibi formun altında yeşil kart. -->
               <div v-if="analysis.match && !analysis.duplicate && matchStatus !== 'match'" class="match" :class="matchStatus">
-                <div class="match-head"><i :class="MATCH_ICONS[matchStatus]" /><strong>{{ matchText }}</strong></div>
+                <div class="match-head"><PkIcon :class="MATCH_ICONS[matchStatus]" /><strong>{{ matchText }}</strong></div>
                 <!-- Eşleşince tablo gerekmez; farkı göstermek için yalnızca eşleşmeyince -->
                 <table v-if="matchStatus !== 'match' && analysis.match.checks?.length">
                   <thead><tr><th /><th>Kayıtlı</th><th>Raporda</th><th /></tr></thead>
                   <tbody>
                     <tr v-for="check in analysis.match.checks" :key="check.field" :class="check.result">
-                      <td>{{ check.label }}</td><td>{{ check.equipment }}</td><td>{{ check.report || '—' }}</td><td><i :class="CHECK_ICONS[check.result]" /></td>
+                      <td>{{ check.label }}</td><td>{{ check.equipment }}</td><td>{{ check.report || '—' }}</td><td><PkIcon :class="CHECK_ICONS[check.result]" /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -109,13 +109,13 @@
               <div class="findings-head">
                 <span>Bulgular <small>(varsa, madde madde)</small></span>
                 <strong>{{ form.findings.length }} bulgu</strong>
-                <button class="link-button" type="button" @click="addFinding"><i class="pi pi-plus" /> Bulgu ekle</button>
+                <button class="link-button" type="button" @click="addFinding"><PkIcon class="pi pi-plus" /> Bulgu ekle</button>
               </div>
               <p v-if="!form.findings.length" class="muted">Bulgu yok.</p>
               <ol v-else>
                 <li v-for="(_, index) in form.findings" :key="index">
                   <textarea v-model="form.findings[index]" rows="2" placeholder="Bulgu / kusur açıklaması" />
-                  <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="form.findings.splice(index, 1)"><i class="pi pi-times" /></button>
+                  <button class="icon-button" type="button" title="Bulguyu sil" aria-label="Bulguyu sil" @click="form.findings.splice(index, 1)"><PkIcon class="pi pi-times" /></button>
                 </li>
               </ol>
             </div>
@@ -123,15 +123,15 @@
 
           <!-- Eşleşti: katalogdaki "Mevcut kayıtla eşleşti" kartı -->
           <div v-if="mode === 'ai' && analysis?.match && !analysis.duplicate && matchStatus === 'match'" class="match match">
-            <div class="match-head"><i :class="MATCH_ICONS[matchStatus]" /><span><strong>{{ matchText }}</strong><small>{{ equipment.name || equipment.type?.name }}<template v-if="equipment.code"> · no {{ equipment.code }}</template></small></span></div>
+            <div class="match-head"><PkIcon :class="MATCH_ICONS[matchStatus]" /><span><strong>{{ matchText }}</strong><small>{{ equipment.name || equipment.type?.name }}<template v-if="equipment.code"> · no {{ equipment.code }}</template></small></span></div>
           </div>
 
           <!-- Yapay zeka önerisi (formun altında, açılır): rapor bilgileri, ekipmana yazılacaklar, teknik özellikler -->
           <div v-if="formVisible && mode === 'ai' && analysis" class="ai-result" :class="{ open: aiOpen }">
             <button class="ai-result-head" type="button" :aria-expanded="aiOpen" @click="aiOpen = !aiOpen">
-              <i class="pi pi-sparkles" />
+              <PkIcon class="pi pi-sparkles" />
               <span>Yapay zeka önerisi — kontrol edip kaydedin<small v-if="aiSummary">{{ aiSummary }}</small></span>
-              <i class="pi pi-chevron-down chevron" />
+              <PkIcon class="pi pi-chevron-down chevron" />
             </button>
             <div v-if="aiOpen" class="ai-body">
               <dl>
@@ -150,12 +150,12 @@
                 <h4>Teknik özellikler <small>— yalnızca onayladıkların kaydedilir; boş değerler (NU, -) mevcutları değiştirmez</small></h4>
                 <!-- Mevcut değerden farklı olanlar: hangisinin doğru olduğunu kullanıcı seçer (otomatik ezme yok) -->
                 <div v-if="propertyChanges.length" class="prop-changes">
-                  <p class="prop-changes-title"><i class="pi pi-exclamation-triangle" /> Değişen özellikler ({{ propertyChanges.length }}) — hangisi doğru?</p>
+                  <p class="prop-changes-title"><PkIcon class="pi pi-exclamation-triangle" /> Değişen özellikler ({{ propertyChanges.length }}) — hangisi doğru?</p>
                   <div v-for="change in propertyChanges" :key="change.key" class="prop-change">
                     <div class="prop-values">
                       <strong>{{ change.field }}</strong>
                       <span>{{ withUnit(change.current_value, change.unit) }}<small v-if="change.current_source === 'manual'"> (elle düzeltildi)</small></span>
-                      <i class="pi pi-arrow-right" />
+                      <PkIcon class="pi pi-arrow-right" />
                       <span class="report-value">{{ withUnit(change.report_value, change.unit) }}</span>
                     </div>
                     <small v-if="change.raw_field" class="raw">Raporda: {{ change.raw_field }}: {{ change.raw_value }}</small>
@@ -185,7 +185,7 @@
                 <!-- Katalogda karşılığı olmayanlar: burada karar yok; talep, kayıttan sonra yapay zeka özetinden -->
                 <div v-if="propertyUnmapped.length" class="prop-group unmapped">
                   <div class="prop-group-head"><span>Katalogda olmayan özellikler ({{ propertyUnmapped.length }})</span></div>
-                  <p class="unmapped-note"><i class="pi pi-info-circle" /> Bu özellikler katalogda yok, ekipmana kaydedilmez. Raporu kaydettikten sonra kontrol geçmişindeki yapay zeka özetinden kataloğa eklenmesini talep edebilirsiniz.</p>
+                  <p class="unmapped-note"><PkIcon class="pi pi-info-circle" /> Bu özellikler katalogda yok, ekipmana kaydedilmez. Raporu kaydettikten sonra kontrol geçmişindeki yapay zeka özetinden kataloğa eklenmesini talep edebilirsiniz.</p>
                   <div v-for="row in propertyUnmapped" :key="row.id" class="prop-row">
                     <span class="prop-field">{{ row.label }}</span><span class="prop-value">{{ row.value }}</span>
                   </div>
@@ -201,10 +201,10 @@
       </div>
 
       <div class="rd-foot">
-        <p class="note-bar"><i class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
+        <p class="note-bar"><PkIcon class="pi pi-info-circle" /> Kaydetmeden önce rapor bilgilerini kontrol edin.</p>
         <div class="modal-actions">
           <button class="secondary-button" type="button" :disabled="busy" @click="close">İptal</button>
-          <button v-if="formVisible" class="primary-button" type="button" :disabled="busy || !canSave" @click="save"><i :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : 'Onayla ve kaydet' }}</button>
+          <button v-if="formVisible" class="primary-button" type="button" :disabled="busy || !canSave" @click="save"><PkIcon :class="saving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" /> {{ saving ? 'Kaydediliyor...' : 'Onayla ve kaydet' }}</button>
         </div>
       </div>
     </section>

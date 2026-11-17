@@ -20,9 +20,9 @@
               <p v-if="editKey === property.key && error" class="error-text">{{ error }}</p>
             </td>
             <td class="row-actions">
-              <button v-if="property.history.length > 1" class="icon-button" :class="{ active: openKey === property.key }" type="button" title="Geçmiş" aria-label="Geçmiş" @click="toggle(property.key)"><i class="pi pi-history" /></button>
-              <button class="icon-button" type="button" title="Düzelt" aria-label="Düzelt" @click="startEdit(property)"><i class="pi pi-pencil" /></button>
-              <button class="icon-button danger" type="button" title="Sil" aria-label="Sil" @click="remove(property)"><i class="pi pi-trash" /></button>
+              <button v-if="property.history.length > 1" class="icon-button" :class="{ active: openKey === property.key }" type="button" title="Geçmiş" aria-label="Geçmiş" @click="toggle(property.key)"><PkIcon class="pi pi-history" /></button>
+              <button class="icon-button" type="button" title="Düzelt" aria-label="Düzelt" @click="startEdit(property)"><PkIcon class="pi pi-pencil" /></button>
+              <button class="icon-button danger" type="button" title="Sil" aria-label="Sil" @click="remove(property)"><PkIcon class="pi pi-trash" /></button>
             </td>
           </tr>
           <tr v-if="openKey === property.key" class="history-row">
@@ -42,7 +42,7 @@
     </table>
     <!-- Katalog dışı olup yetkiliye gönderilen talepler -->
     <div v-if="pendingSpecs?.length" class="pending">
-      <h4><i class="pi pi-clock" /> Kataloğa eklenmesi onay bekleyen ({{ pendingSpecs.length }})</h4>
+      <h4><PkIcon class="pi pi-clock" /> Kataloğa eklenmesi onay bekleyen ({{ pendingSpecs.length }})</h4>
       <div v-for="item in pendingSpecs" :key="item.id" class="pending-row">
         <span>{{ item.name }}<template v-if="item.unit"> ({{ item.unit }})</template></span>
         <strong>{{ item.raw_value || '—' }}</strong>

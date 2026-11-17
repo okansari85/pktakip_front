@@ -7,18 +7,18 @@
           <small>Kontrolü dolan günler renkli. Güne ya da ayın altındaki satıra tıklayınca o günün kontrolleri açılır.</small>
         </div>
         <div class="year-nav">
-          <button type="button" class="nav-button" aria-label="Önceki yıl" @click="year--"><i class="pi pi-chevron-left" /></button>
+          <button type="button" class="nav-button" aria-label="Önceki yıl" @click="year--"><PkIcon class="pi pi-chevron-left" /></button>
           <button type="button" class="year-button" @click="year--">{{ year - 1 }}</button>
           <strong class="year-current">{{ year }}</strong>
           <button type="button" class="year-button" @click="year++">{{ year + 1 }}</button>
-          <button type="button" class="nav-button" aria-label="Sonraki yıl" @click="year++"><i class="pi pi-chevron-right" /></button>
+          <button type="button" class="nav-button" aria-label="Sonraki yıl" @click="year++"><PkIcon class="pi pi-chevron-right" /></button>
           <button v-if="year !== thisYear" type="button" class="link-button" @click="year = thisYear">Bu yıl</button>
         </div>
       </header>
 
       <!-- Seçili yıldan önce dolmuş, hâlâ yapılmamış kontroller (takvimde önceki yıllarda kalır). -->
       <div v-if="earlier.length" class="earlier">
-        <strong><i class="pi pi-exclamation-triangle" /> Önceki yıllardan süresi geçmiş kontroller</strong>
+        <strong><PkIcon class="pi pi-exclamation-triangle" /> Önceki yıllardan süresi geçmiş kontroller</strong>
         <div class="earlier-items">
           <button v-for="day in earlier.slice(0, EARLIER_LIMIT)" :key="day.date" type="button" class="earlier-item" @click="openDay(day.date)">
             {{ day.text }} <small>({{ formatDate(day.date) }}{{ day.place ? ` · ${day.place}` : '' }})</small>

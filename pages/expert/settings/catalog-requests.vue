@@ -3,9 +3,9 @@
     <div class="page-head">
       <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
       <nav class="crumb" aria-label="Sayfa yolu">
-        <i class="pi pi-home" aria-hidden="true" />
+        <PkIcon class="pi pi-home" aria-hidden="true" />
         <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-        <i class="pi pi-angle-right" aria-hidden="true" />
+        <PkIcon class="pi pi-angle-right" aria-hidden="true" />
         <strong>Katalog talepleri</strong>
       </nav>
       <h1>Katalog talepleri</h1>
@@ -16,34 +16,34 @@
     <div class="top">
       <section class="card counts">
         <button type="button" class="count-row" :class="{ active: tab === 'pending' }" @click="tab = 'pending'">
-          <span class="count-icon warn"><i class="pi pi-hourglass" /></span><span class="count-label">Onay bekleyen</span>
-          <strong>{{ allRequests.filter(item => item.status === 'pending').length }}</strong><i class="pi pi-angle-right" />
+          <span class="count-icon warn"><PkIcon class="pi pi-hourglass" /></span><span class="count-label">Onay bekleyen</span>
+          <strong>{{ allRequests.filter(item => item.status === 'pending').length }}</strong><PkIcon class="pi pi-angle-right" />
         </button>
         <button type="button" class="count-row" :class="{ active: tab === 'decided' }" @click="tab = 'decided'">
-          <span class="count-icon ok"><i class="pi pi-check" /></span><span class="count-label">Sonuçlanan</span>
-          <strong>{{ allRequests.filter(item => item.status !== 'pending').length }}</strong><i class="pi pi-angle-right" />
+          <span class="count-icon ok"><PkIcon class="pi pi-check" /></span><span class="count-label">Sonuçlanan</span>
+          <strong>{{ allRequests.filter(item => item.status !== 'pending').length }}</strong><PkIcon class="pi pi-angle-right" />
         </button>
       </section>
       <!-- Seçili talep: satırdaki Detay ile değişir; ilk açılışta en yeni bekleyen talep -->
       <section v-if="featured" class="card featured">
         <header class="featured-head">
-          <span class="featured-icon"><i class="pi pi-verified" /></span>
+          <span class="featured-icon"><PkIcon class="pi pi-verified" /></span>
           <span class="featured-title">
             <strong>{{ featured.name }}<template v-if="featured.unit"> ({{ featured.unit }})</template></strong>
             <small>{{ featured.kind === 'spec' ? 'Teknik özellik talebi' : 'Tesisat sistemi talebi' }}</small>
           </span>
-          <span class="status" :class="featured.status"><i :class="STATUS_ICON[featured.status]" /> {{ STATUS[featured.status] }}</span>
+          <span class="status" :class="featured.status"><PkIcon :class="STATUS_ICON[featured.status]" /> {{ STATUS[featured.status] }}</span>
         </header>
         <dl v-if="featured.kind === 'spec'" class="featured-rows">
-          <div><dt><i class="pi pi-box" /> Ekipman</dt><dd>{{ featured.type?.name || '—' }}</dd></div>
-          <div><dt><i class="pi pi-barcode" /> Ekipman no</dt><dd>{{ featured.equipment ? featured.equipment.code || featured.equipment.id : '—' }}</dd></div>
+          <div><dt><PkIcon class="pi pi-box" /> Ekipman</dt><dd>{{ featured.type?.name || '—' }}</dd></div>
+          <div><dt><PkIcon class="pi pi-barcode" /> Ekipman no</dt><dd>{{ featured.equipment ? featured.equipment.code || featured.equipment.id : '—' }}</dd></div>
         </dl>
         <dl v-else class="featured-rows">
-          <div><dt><i class="pi pi-sitemap" /> Tesisat</dt><dd>{{ featured.report?.installation || featured.type?.name || '—' }}</dd></div>
-          <div><dt><i class="pi pi-file" /> Rapor</dt><dd>{{ featured.report ? [formatDate(featured.report.control_date), featured.report.report_no].filter(Boolean).join(' · ') : 'Rapor silinmiş' }}</dd></div>
+          <div><dt><PkIcon class="pi pi-sitemap" /> Tesisat</dt><dd>{{ featured.report?.installation || featured.type?.name || '—' }}</dd></div>
+          <div><dt><PkIcon class="pi pi-file" /> Rapor</dt><dd>{{ featured.report ? [formatDate(featured.report.control_date), featured.report.report_no].filter(Boolean).join(' · ') : 'Rapor silinmiş' }}</dd></div>
         </dl>
-        <NuxtLink v-if="featured.kind === 'spec' && featured.equipment && featured.own_tenant" :to="`/expert/equipment/${featured.equipment.id}`" class="featured-link">Ekipmana git <i class="pi pi-arrow-right" /></NuxtLink>
-        <NuxtLink v-else-if="featured.kind === 'system' && featured.report && featured.own_tenant" to="/expert/installations" class="featured-link">Tesisatlara git <i class="pi pi-arrow-right" /></NuxtLink>
+        <NuxtLink v-if="featured.kind === 'spec' && featured.equipment && featured.own_tenant" :to="`/expert/equipment/${featured.equipment.id}`" class="featured-link">Ekipmana git <PkIcon class="pi pi-arrow-right" /></NuxtLink>
+        <NuxtLink v-else-if="featured.kind === 'system' && featured.report && featured.own_tenant" to="/expert/installations" class="featured-link">Tesisatlara git <PkIcon class="pi pi-arrow-right" /></NuxtLink>
       </section>
     </div>
 
@@ -55,10 +55,10 @@
 
       <div class="tools">
         <div class="kinds">
-          <button type="button" :class="{ active: kind === 'spec' }" @click="setKind('spec')"><i class="pi pi-cog" /> Teknik özellikler <span v-if="SHOW_KIND_COUNTS" class="count">{{ specRequests.filter(item => item.status === 'pending').length }}</span></button>
-          <button type="button" :class="{ active: kind === 'system' }" @click="setKind('system')"><i class="pi pi-sitemap" /> Tesisat sistemleri <span v-if="SHOW_KIND_COUNTS" class="count">{{ systemRequests.filter(item => item.status === 'pending').length }}</span></button>
+          <button type="button" :class="{ active: kind === 'spec' }" @click="setKind('spec')"><PkIcon class="pi pi-cog" /> Teknik özellikler <span v-if="SHOW_KIND_COUNTS" class="count">{{ specRequests.filter(item => item.status === 'pending').length }}</span></button>
+          <button type="button" :class="{ active: kind === 'system' }" @click="setKind('system')"><PkIcon class="pi pi-sitemap" /> Tesisat sistemleri <span v-if="SHOW_KIND_COUNTS" class="count">{{ systemRequests.filter(item => item.status === 'pending').length }}</span></button>
         </div>
-        <label class="search"><i class="pi pi-search" aria-hidden="true" /><input v-model="search" type="search" placeholder="Talep ara" aria-label="Talep ara" /></label>
+        <label class="search"><PkIcon class="pi pi-search" aria-hidden="true" /><input v-model="search" type="search" placeholder="Talep ara" aria-label="Talep ara" /></label>
       </div>
 
       <div v-if="loading" class="state">Yükleniyor...</div>
@@ -77,13 +77,13 @@
             <template v-for="item in rows" :key="item.id">
               <tr :class="{ selected: featured?.kind === 'spec' && featured.id === item.id }">
                 <td>
-                  <span class="subject"><span class="subject-icon"><i class="pi pi-box" /></span><strong>{{ item.type?.name || '—' }}<template v-if="item.equipment"> · No{{ item.equipment.code || item.equipment.id }}</template></strong></span>
+                  <span class="subject"><span class="subject-icon"><PkIcon class="pi pi-box" /></span><strong>{{ item.type?.name || '—' }}<template v-if="item.equipment"> · No{{ item.equipment.code || item.equipment.id }}</template></strong></span>
                 </td>
                 <td>{{ item.name }}<template v-if="item.unit"> ({{ item.unit }})</template></td>
                 <td><span class="muted">{{ item.raw_label }}:</span> {{ item.raw_value || '—' }}</td>
                 <td v-if="canManage">{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
                 <td>
-                  <span class="status" :class="item.status"><i :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
+                  <span class="status" :class="item.status"><PkIcon :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
                   <small v-if="item.status === 'approved' && item.spec" class="block muted">→ {{ item.spec.name }}<template v-if="item.spec.unit"> ({{ item.spec.unit }})</template></small>
                   <small v-if="item.decision_note" class="block muted">{{ item.decision_note }}</small>
                 </td>
@@ -92,7 +92,7 @@
                     <button class="primary-button" type="button" @click="openDecision(item)">Onayla</button>
                     <button class="secondary-button" type="button" :disabled="busy" @click="reject(item)">Reddet</button>
                   </template>
-                  <button class="detail-link" type="button" @click="showDetail(item, 'spec')">Detay <i class="pi pi-arrow-right" /></button>
+                  <button class="detail-link" type="button" @click="showDetail(item, 'spec')">Detay <PkIcon class="pi pi-arrow-right" /></button>
                 </td>
               </tr>
               <tr v-if="decisionFor === item.id" class="decision-row">
@@ -135,12 +135,12 @@
           <tbody>
             <template v-for="item in rows" :key="item.id">
               <tr :class="{ selected: featured?.kind === 'system' && featured.id === item.id }">
-                <td><span class="subject"><span class="subject-icon"><i class="pi pi-sitemap" /></span><strong>{{ item.type?.name || '—' }}</strong></span></td>
+                <td><span class="subject"><span class="subject-icon"><PkIcon class="pi pi-sitemap" /></span><strong>{{ item.type?.name || '—' }}</strong></span></td>
                 <td>{{ item.name }}</td>
                 <td>
                   <span class="result" :class="item.result.status">{{ RESULT[item.result.status] || 'Belirtilmemiş' }}</span>
                   <button v-if="item.result.findings.length" class="link-button" type="button" @click="toggleFindings(item.id)">
-                    {{ item.result.findings.length }} bulgu <i :class="openFindings === item.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+                    {{ item.result.findings.length }} bulgu <PkIcon :class="openFindings === item.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
                   </button>
                   <ol v-if="openFindings === item.id" class="findings"><li v-for="(finding, index) in item.result.findings" :key="index">{{ finding }}</li></ol>
                 </td>
@@ -153,7 +153,7 @@
                 </td>
                 <td v-if="canManage">{{ item.requested_by || '—' }}<small class="block muted">{{ formatDateTime(item.created_at) }}</small></td>
                 <td>
-                  <span class="status" :class="item.status"><i :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
+                  <span class="status" :class="item.status"><PkIcon :class="STATUS_ICON[item.status]" /> {{ STATUS[item.status] }}</span>
                   <small v-if="item.status === 'approved' && item.system" class="block muted">→ {{ item.system.name }}</small>
                   <small v-if="item.decision_note" class="block muted">{{ item.decision_note }}</small>
                 </td>
@@ -162,7 +162,7 @@
                     <button class="primary-button" type="button" @click="openSystemDecision(item)">Onayla</button>
                     <button class="secondary-button" type="button" :disabled="busy" @click="rejectSystem(item)">Reddet</button>
                   </template>
-                  <button class="detail-link" type="button" @click="showDetail(item, 'system')">Detay <i class="pi pi-arrow-right" /></button>
+                  <button class="detail-link" type="button" @click="showDetail(item, 'system')">Detay <PkIcon class="pi pi-arrow-right" /></button>
                 </td>
               </tr>
               <tr v-if="decisionFor === item.id" class="decision-row">

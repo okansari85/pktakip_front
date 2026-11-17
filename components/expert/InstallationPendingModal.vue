@@ -3,7 +3,7 @@
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Rapor Bekleniyor</h2><p>{{ installation.name }}</p></div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
       <p class="hint">Firma kontrolü yaptı, rapor henüz gelmedi. Tesisatın durumu "Rapor bekleniyor" olur; sistemlerin ve ekipmanların sonuçları önceki kontrolde kalır. Rapor gelince "Kontrol Ekle" ile yükleyin.</p>
       <div class="form-grid">

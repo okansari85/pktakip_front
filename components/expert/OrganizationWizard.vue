@@ -3,28 +3,28 @@
     <section class="modal-card wizard">
       <div class="modal-head">
         <div class="head-title">
-          <span class="head-icon"><i class="pi pi-sitemap" /></span>
+          <span class="head-icon"><PkIcon class="pi pi-sitemap" /></span>
           <div>
             <h2>{{ customerMode ? 'Müşteri Ekle' : 'Ana Firma Ekle' }}</h2>
             <p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu birkaç adımda tanımlayın.</p>
           </div>
         </div>
-        <button class="close-button" type="button" :disabled="saving" @click="emit('close')"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" :disabled="saving" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <div class="layout">
         <!-- Adım listesi -->
         <ol class="stepper" aria-label="Adımlar">
           <li v-for="(n, i) in visibleSteps" :key="n" :class="{ on: step === n, done: step > n }">
-            <span class="dot"><i :class="step > n ? 'pi pi-check' : STEPS[n - 1]!.icon" /></span>
+            <span class="dot"><PkIcon :class="step > n ? 'pi pi-check' : STEPS[n - 1]!.icon" /></span>
             <span class="name">{{ STEPS[n - 1]!.name }}</span>
           </li>
-          <li class="stepper-note"><i class="pi pi-info-circle" /> Lokasyonları ve firmaları {{ customerMode ? 'müşteriyi' : 'ana firmayı' }} oluşturduktan sonra eklersiniz.</li>
+          <li class="stepper-note"><PkIcon class="pi pi-info-circle" /> Lokasyonları ve firmaları {{ customerMode ? 'müşteriyi' : 'ana firmayı' }} oluşturduktan sonra eklersiniz.</li>
         </ol>
 
         <div class="content">
           <div class="step-head">
-            <span class="step-icon"><i :class="STEPS[step - 1]!.icon" /></span>
+            <span class="step-icon"><PkIcon :class="STEPS[step - 1]!.icon" /></span>
             <div>
               <p class="step-count">Adım {{ visibleSteps.indexOf(step) + 1 }} / {{ visibleSteps.length }}</p>
               <h3>{{ stepTitles[step - 1] }}</h3>
@@ -38,13 +38,13 @@
               v-for="k in KINDS" :key="k.id" type="button" class="card" :class="{ on: kind === k.id }"
               :aria-pressed="kind === k.id" @click="kind = k.id"
             >
-              <span class="card-icon"><i :class="k.icon" /></span>
+              <span class="card-icon"><PkIcon :class="k.icon" /></span>
               <span class="card-text">
                 <strong>{{ k.title }}</strong>
                 <small>{{ k.text }}</small>
                 <em>{{ k.effect }}</em>
               </span>
-              <i v-if="kind === k.id" class="pi pi-check-circle card-check" />
+              <PkIcon v-if="kind === k.id" class="pi pi-check-circle card-check" />
             </button>
           </div>
 
@@ -53,53 +53,53 @@
             <label>{{ current.nameLabel }} <span>*</span>
               <input ref="nameInput" v-model="name" type="text" :placeholder="current.namePlaceholder" @keydown.enter.prevent="next" />
             </label>
-            <p class="hint"><i class="pi pi-lightbulb" /> {{ current.nameHint }}</p>
-            <p class="hint"><i class="pi pi-eye" /> Bu ad listelerde, raporlarda ve işyerlerinin üstünde görünür.</p>
+            <p class="hint"><PkIcon class="pi pi-lightbulb" /> {{ current.nameHint }}</p>
+            <p class="hint"><PkIcon class="pi pi-eye" /> Bu ad listelerde, raporlarda ve işyerlerinin üstünde görünür.</p>
             <!-- OSGB: Müşteri Ekle penceresindeki Not alanı (isteğe bağlı) -->
             <template v-if="customerMode">
               <label>Not <small>(isteğe bağlı)</small>
                 <textarea v-model="notes" rows="3" placeholder="Örn. sözleşme dönemi, yetkili kişi..."></textarea>
               </label>
-              <p class="hint"><i class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
+              <p class="hint"><PkIcon class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
             </template>
           </div>
 
           <!-- 3: alt organizasyonlar (isteğe bağlı, iki düzey) -->
           <div v-else-if="step === 3">
-            <p class="hint"><i class="pi pi-lightbulb" /> {{ current.childHint }}</p>
+            <p class="hint"><PkIcon class="pi pi-lightbulb" /> {{ current.childHint }}</p>
             <div class="child-tree">
-              <div class="tree-root"><span class="tree-icon"><i :class="current.icon" /></span> {{ name.trim() }}</div>
+              <div class="tree-root"><span class="tree-icon"><PkIcon :class="current.icon" /></span> {{ name.trim() }}</div>
               <div v-for="(child, i) in children" :key="child.key" class="child">
                 <div class="child-row">
-                  <i class="pi pi-angle-right" />
+                  <PkIcon class="pi pi-angle-right" />
                   <input v-model="child.name" type="text" :placeholder="current.childPlaceholder" />
-                  <button class="icon-button" type="button" title="Altına bir düzey ekle" @click="addGrandchild(child)"><i class="pi pi-plus" /></button>
-                  <button class="icon-button danger" type="button" title="Kaldır" @click="children.splice(i, 1)"><i class="pi pi-trash" /></button>
+                  <button class="icon-button" type="button" title="Altına bir düzey ekle" @click="addGrandchild(child)"><PkIcon class="pi pi-plus" /></button>
+                  <button class="icon-button danger" type="button" title="Kaldır" @click="children.splice(i, 1)"><PkIcon class="pi pi-trash" /></button>
                 </div>
                 <div v-for="(g, j) in child.children" :key="g.key" class="child-row grand">
-                  <i class="pi pi-angle-right" />
+                  <PkIcon class="pi pi-angle-right" />
                   <input v-model="g.name" type="text" :placeholder="current.grandPlaceholder" />
-                  <button class="icon-button danger" type="button" title="Kaldır" @click="child.children.splice(j, 1)"><i class="pi pi-trash" /></button>
+                  <button class="icon-button danger" type="button" title="Kaldır" @click="child.children.splice(j, 1)"><PkIcon class="pi pi-trash" /></button>
                 </div>
               </div>
-              <button class="add-row" type="button" @click="addChild"><i class="pi pi-plus" /> Dal ekle</button>
+              <button class="add-row" type="button" @click="addChild"><PkIcon class="pi pi-plus" /> Dal ekle</button>
             </div>
-            <p class="hint muted"><i class="pi pi-info-circle" /> <span><strong>+</strong> düğmesi satırın altına bir düzey daha açar. Dal şart değildir; sonra "Yapıyı yönet" düğmesinden de ekleyebilirsiniz.</span></p>
+            <p class="hint muted"><PkIcon class="pi pi-info-circle" /> <span><strong>+</strong> düğmesi satırın altına bir düzey daha açar. Dal şart değildir; sonra "Yapıyı yönet" düğmesinden de ekleyebilirsiniz.</span></p>
           </div>
 
           <!-- 4: özet -->
           <div v-else>
             <div class="summary">
-              <div class="sum-kind"><i :class="current.icon" /> {{ current.title }}</div>
-              <div class="tree-root"><span class="tree-icon"><i :class="current.icon" /></span> {{ name.trim() }}</div>
+              <div class="sum-kind"><PkIcon :class="current.icon" /> {{ current.title }}</div>
+              <div class="tree-root"><span class="tree-icon"><PkIcon :class="current.icon" /></span> {{ name.trim() }}</div>
               <template v-for="child in cleanChildren" :key="child.key">
-                <div class="sum-row"><i class="pi pi-angle-right" /> {{ child.name }}</div>
-                <div v-for="g in child.children" :key="g.key" class="sum-row grand"><i class="pi pi-angle-right" /> {{ g.name }}</div>
+                <div class="sum-row"><PkIcon class="pi pi-angle-right" /> {{ child.name }}</div>
+                <div v-for="g in child.children" :key="g.key" class="sum-row grand"><PkIcon class="pi pi-angle-right" /> {{ g.name }}</div>
               </template>
               <p v-if="!cleanChildren.length" class="muted">Dal yok.</p>
             </div>
             <div class="next-steps">
-              <strong><i class="pi pi-directions" /> Sonra ne yapacaksınız?</strong>
+              <strong><PkIcon class="pi pi-directions" /> Sonra ne yapacaksınız?</strong>
               <ol>
                 <!-- OSGB: oluşturulunca müşterinin sayfası (ağaç) açılır; lokasyon ve işyeri oradaki satırlardan eklenir -->
                 <template v-if="customerMode">
@@ -120,11 +120,11 @@
       </div>
 
       <div class="modal-actions">
-        <button v-if="step > 1" class="secondary-button" type="button" :disabled="saving" @click="back"><i class="pi pi-arrow-left" /> Geri</button>
+        <button v-if="step > 1" class="secondary-button" type="button" :disabled="saving" @click="back"><PkIcon class="pi pi-arrow-left" /> Geri</button>
         <button v-else class="secondary-button" type="button" @click="emit('close')">İptal</button>
         <button v-if="step === 3 && !cleanChildren.length" class="secondary-button" type="button" @click="step = 4">Atla</button>
-        <button v-if="step < 4" class="primary-button" type="button" :disabled="!canNext" @click="next">İleri <i class="pi pi-arrow-right" /></button>
-        <button v-else class="primary-button" type="button" :disabled="saving" @click="create"><i class="pi pi-check" /> {{ saving ? 'Oluşturuluyor...' : 'Oluştur' }}</button>
+        <button v-if="step < 4" class="primary-button" type="button" :disabled="!canNext" @click="next">İleri <PkIcon class="pi pi-arrow-right" /></button>
+        <button v-else class="primary-button" type="button" :disabled="saving" @click="create"><PkIcon class="pi pi-check" /> {{ saving ? 'Oluşturuluyor...' : 'Oluştur' }}</button>
       </div>
     </section>
   </div>

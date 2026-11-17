@@ -13,7 +13,7 @@
       <option value="">{{ locationId ? 'Tüm işyerleri' : 'İşyeri (önce lokasyon)' }}</option>
       <option v-for="item in workplaces" :key="item.id" :value="item.id">{{ item.company_name }}</option>
     </select>
-    <button v-if="customer || locationId" class="reset" type="button" title="Tüm lokasyonlara dön" @click="reset"><i class="pi pi-filter-slash" /> Temizle</button>
+    <button v-if="customer || locationId" class="reset" type="button" title="Tüm lokasyonlara dön" @click="reset"><PkIcon class="pi pi-filter-slash" /> Temizle</button>
   </div>
 </template>
 

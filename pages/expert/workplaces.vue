@@ -6,7 +6,7 @@
     <div class="page-head">
       <div>
         <!-- Sayfa yolu tasarım kataloğu 11'deki gibi (bireyselde Ana Sayfa, diğerlerinde Genel Bakış) -->
-        <nav class="breadcrumb" aria-label="Sayfa yolu"><i class="pi pi-home" aria-hidden="true" /><NuxtLink :to="multiUser ? '/expert' : '/expert/anasayfa'">{{ multiUser ? 'Genel Bakış' : 'Ana Sayfa' }}</NuxtLink><i class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></nav>
+        <nav class="breadcrumb" aria-label="Sayfa yolu"><PkIcon class="pi pi-home" aria-hidden="true" /><NuxtLink :to="multiUser ? '/expert' : '/expert/anasayfa'">{{ multiUser ? 'Genel Bakış' : 'Ana Sayfa' }}</NuxtLink><PkIcon class="pi pi-angle-right" /><strong>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</strong></nav>
         <h1>{{ kamu ? 'İşyerlerim' : 'Firmalarım' }}</h1>
         <p v-if="loaded && workplaces.length">
           <strong>{{ workplaces.length }}</strong> işyeri · <strong>{{ locationCount }}</strong> lokasyon<template v-if="!corporate"> · <strong>{{ customerCount }}</strong> müşteri</template>
@@ -21,7 +21,7 @@
           <span v-if="multiUser && !isManager">Size atanmış işyeri yok. Yönetici atadığında burada görünür.</span>
           <span v-else-if="kamu">Lokasyon ve işyeri tanımlarını Ayarlar → Lokasyonlar'dan yapabilirsiniz.</span>
           <span v-else>Müşteri, lokasyon ve firma tanımlarını Ayarlar'dan yapabilirsiniz.</span>
-          <NuxtLink v-if="!multiUser || isManager" :to="kamu ? '/expert/settings/locations' : '/expert/settings/companies'" class="secondary-link"><i class="pi pi-cog" /> Ayarlar'a git</NuxtLink>
+          <NuxtLink v-if="!multiUser || isManager" :to="kamu ? '/expert/settings/locations' : '/expert/settings/companies'" class="secondary-link"><PkIcon class="pi pi-cog" /> Ayarlar'a git</NuxtLink>
         </template>
         <span v-else>Aramanızla eşleşen işyeri yok.</span>
       </template>

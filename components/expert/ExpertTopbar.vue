@@ -1,18 +1,18 @@
 <template>
   <header class="expert-topbar">
     <!-- Sol menü: geniş → dar → kapalı → geniş -->
-    <button v-tooltip.bottom="menuLabel" class="menu-toggle" type="button" :aria-label="menuLabel" @click="nextMenu"><i class="pi pi-bars" /></button>
+    <button v-tooltip.bottom="menuLabel" class="menu-toggle" type="button" :aria-label="menuLabel" @click="nextMenu"><PkIcon class="pi pi-bars" /></button>
     <ExpertWorkplaceSwitcher v-if="!title.startsWith('Ayarlar') && !route.meta.hideWorkplaceSwitcher" />
 
     <div class="topbar-actions">
       <!-- Süper admin bir hesaba girdiyse: kendi oturumuna (Müşteriler) döner -->
-      <button v-if="impersonating" class="return-button" type="button" @click="stopImpersonation"><i class="pi pi-arrow-left" /> Süper admine dön</button>
+      <button v-if="impersonating" class="return-button" type="button" @click="stopImpersonation"><PkIcon class="pi pi-arrow-left" /> Süper admine dön</button>
       <button class="theme-toggle" type="button" :aria-label="isDark ? 'Açık temaya geç' : 'Koyu temaya geç'" @click="toggleTheme">
-        <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" />
+        <PkIcon :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" />
       </button>
       <!-- Bildirim zili (tasarım kataloğu): okunmamış sayısı; tıklayınca son bildirimler -->
       <button class="theme-toggle bell" type="button" :aria-label="unread ? `Bildirimler, ${unread} okunmamış` : 'Bildirimler'" @click="notificationPanel?.toggle($event)">
-        <i class="pi pi-bell" />
+        <PkIcon class="pi pi-bell" />
         <span v-if="unread" class="bell-count">{{ unread > 99 ? '99+' : unread }}</span>
       </button>
       <Popover ref="notificationPanel" :pt="{ root: { style: POPOVER_VARS } }" @show="loadNotifications">
@@ -21,13 +21,13 @@
             <strong>Bildirimler</strong>
             <button v-if="unread" class="notif-link" type="button" @click="readAll">Tümünü okundu yap</button>
           </header>
-          <p v-if="notifLoading && !notifications.length" class="notif-state"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p v-if="notifLoading && !notifications.length" class="notif-state"><PkIcon class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
           <p v-else-if="notifError" class="notif-state error">{{ notifError }}</p>
           <p v-else-if="!notifications.length" class="notif-state">Bildirim yok</p>
           <ul v-else class="notif-list">
             <li v-for="item in notifications" :key="item.id">
               <button type="button" class="notif-item" :class="[NOTIFICATION_TONE[item.type], { unread: !item.read_at }]" @click="openNotification(item)">
-                <i :class="NOTIFICATION_ICON[item.type] || 'pi pi-bell'" />
+                <PkIcon :class="NOTIFICATION_ICON[item.type] || 'pi pi-bell'" />
                 <span><strong>{{ item.title }}</strong><small v-if="item.body">{{ item.body }}</small><time :datetime="item.created_at">{{ ago(item.created_at) }}</time></span>
               </button>
             </li>

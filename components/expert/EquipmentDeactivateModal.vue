@@ -3,7 +3,7 @@
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Pasife Al</h2><p>{{ title }}</p></div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
       <p class="hint">Ekipman silinmez; kontrol geçmişi ve raporları kalır. Pasif ekipmana kontrol eklenmez, kalan gün hesabına ve tesisat listesine girmez. İstediğiniz zaman aktife alabilirsiniz.</p>
       <div class="form-grid">

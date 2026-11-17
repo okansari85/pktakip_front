@@ -7,7 +7,7 @@
           <p v-if="location">{{ location.name }} lokasyonuna firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
           <p v-else>{{ corporate ? 'Lokasyon' : multiUser ? 'Müşteri ve lokasyon' : 'Ana firma ve lokasyon' }} seçip firma ekleyin. Firmaya siz uzman olarak atanırsınız.</p>
         </div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
 
       <template v-if="!location">

@@ -2,12 +2,12 @@
   <div class="locations-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
+        <div class="breadcrumb"><span>Ayarlar</span><PkIcon class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
         <h1>Lokasyonlar</h1>
         <p>{{ kamu ? 'Birim' : corporate ? 'Dal' : multiUser ? 'Müşteri ve dal' : 'Ana firma ve dal' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
       </div>
       <button v-if="canEditStructure" class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
-        <i class="pi pi-plus" />
+        <PkIcon class="pi pi-plus" />
         <span>Lokasyon Ekle</span>
       </button>
     </div>
@@ -34,7 +34,7 @@
         <label class="field">
           <span>Ara</span>
           <div class="search-box">
-            <i class="pi pi-search" />
+            <PkIcon class="pi pi-search" />
             <input v-model="search" type="text" placeholder="Lokasyon ara" />
           </div>
         </label>
@@ -43,13 +43,13 @@
       <div v-if="customersLoading" class="state-row">{{ multiUser ? 'Müşteriler' : 'Ana firmalar' }} yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="!selectedCustomerId" class="state-row empty-state">
-        <i class="pi pi-building" />
+        <PkIcon class="pi pi-building" />
         <strong>{{ multiUser ? 'Müşteri seçin' : 'Ana firma seçin' }}</strong>
         <span>Lokasyonları görmek için önce bir {{ multiUser ? 'müşteri' : 'ana firma' }} seçin.</span>
       </div>
       <div v-else-if="locationsLoading" class="state-row">Lokasyonlar yükleniyor...</div>
       <div v-else-if="filteredLocations.length === 0" class="state-row empty-state">
-        <i class="pi pi-map-marker" />
+        <PkIcon class="pi pi-map-marker" />
         <strong>Lokasyon bulunmuyor</strong>
         <span v-if="organizationOptions.length === 0 && corporate">{{ kamu ? 'Henüz birim yok. Önce Organizasyon sayfasından birim ekleyin.' : 'Henüz dal yok. Önce Dallar sayfasından dal ekleyin.' }}</span>
         <span v-else-if="organizationOptions.length === 0 && !multiUser">Bu ana firmanın yapısı boş. Önce Ana Firmalar sayfasından ekleyin.</span>
@@ -70,15 +70,15 @@
           </thead>
           <tbody>
             <tr v-for="location in pagedLocations" :key="location.id">
-              <td><div class="location-name"><span class="location-icon"><i class="pi pi-map-marker" /></span><strong>{{ location.name }}</strong></div></td>
+              <td><div class="location-name"><span class="location-icon"><PkIcon class="pi pi-map-marker" /></span><strong>{{ location.name }}</strong></div></td>
               <td>{{ location.organization_name || '—' }}</td>
               <td>{{ [location.city, location.district].filter(Boolean).join(' / ') || '—' }}</td>
               <td class="address-cell">{{ location.address || '—' }}</td>
               <td>{{ formatDate(location.created_at) }}</td>
               <td class="actions">
-                <button class="row-button" type="button" @click="openCompanies(location)"><i class="pi pi-briefcase" /> {{ isyeri ? (multiUser ? 'İşyerleri' : 'Lokasyona İşyeri Tanımla') : multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
+                <button class="row-button" type="button" @click="openCompanies(location)"><PkIcon class="pi pi-briefcase" /> {{ isyeri ? (multiUser ? 'İşyerleri' : 'Lokasyona İşyeri Tanımla') : multiUser ? 'Firmalar' : 'Lokasyona Firma Tanımla' }}</button>
                 <!-- Alanlar (isteğe bağlı): operasyonel alanlar firmasıyla, ortak alanlar firmasız -->
-                <button class="row-button" type="button" @click="areaLocation = location"><i class="pi pi-th-large" /> Alanlar</button>
+                <button class="row-button" type="button" @click="areaLocation = location"><PkIcon class="pi pi-th-large" /> Alanlar</button>
               </td>
             </tr>
           </tbody>
@@ -86,9 +86,9 @@
         <div class="table-footer">
           <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filteredLocations.length) }} / toplam {{ filteredLocations.length }} lokasyon · sayfada {{ PAGE_SIZE }}</span>
           <div class="pager">
-            <button type="button" :disabled="page === 1" @click="page--"><i class="pi pi-angle-left" /> Önceki</button>
+            <button type="button" :disabled="page === 1" @click="page--"><PkIcon class="pi pi-angle-left" /> Önceki</button>
             <span>Sayfa {{ page }} / {{ pageCount }}</span>
-            <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <i class="pi pi-angle-right" /></button>
+            <button type="button" :disabled="page === pageCount" @click="page++">Sonraki <PkIcon class="pi pi-angle-right" /></button>
           </div>
         </div>
       </div>
@@ -99,13 +99,13 @@
         <div class="drawer-head">
           <div>
             <h2>{{ isyeri ? (multiUser ? 'Lokasyon İşyerleri' : 'Lokasyona İşyeri Tanımla') : multiUser ? 'Lokasyon Firmaları' : 'Lokasyona Firma Tanımla' }}</h2>
-            <div class="drawer-subtitle"><i class="pi pi-map-marker" /><div><strong>{{ companyLocation.name }}</strong><span>{{ selectedCustomer?.name }}</span></div></div>
+            <div class="drawer-subtitle"><PkIcon class="pi pi-map-marker" /><div><strong>{{ companyLocation.name }}</strong><span>{{ selectedCustomer?.name }}</span></div></div>
           </div>
-          <button class="close-button" type="button" @click="closeCompanies"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeCompanies"><PkIcon class="pi pi-times" /></button>
         </div>
 
         <div v-if="canEditStructure" class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openCompanyForm"><i class="pi pi-plus" /> {{ isyeri ? (multiUser ? 'İşyeri Ekle' : 'İşyeri Tanımla') : multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
+          <button class="primary-button small" type="button" @click="openCompanyForm"><PkIcon class="pi pi-plus" /> {{ isyeri ? (multiUser ? 'İşyeri Ekle' : 'İşyeri Tanımla') : multiUser ? 'Firma Ekle' : 'Firma Tanımla' }}</button>
         </div>
 
         <div v-if="companiesLoading" class="drawer-state">{{ isyeri ? 'İşyerleri' : 'Firmalar' }} yükleniyor...</div>
@@ -119,17 +119,17 @@
                 <template v-if="nameEdit?.id === item.id">
                   <div class="name-edit">
                     <input v-model="nameEdit.value" type="text" :placeholder="isyeri ? 'İşyeri adı (ör. B Blok Arşiv)' : 'İşletme adı (ör. B Blok Depo) — boşsa firma adı'" @keyup.enter="saveName" />
-                    <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><i class="pi pi-check" /></button>
-                    <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><i class="pi pi-times" /></button>
+                    <button class="icon-button" type="button" title="Kaydet" :disabled="nameSaving" @click="saveName"><PkIcon class="pi pi-check" /></button>
+                    <button class="icon-button" type="button" title="Vazgeç" :disabled="nameSaving" @click="nameEdit = null"><PkIcon class="pi pi-times" /></button>
                   </div>
                   <small v-if="nameError" class="name-error">{{ nameError }}</small>
                 </template>
                 <template v-else>
-                  <strong>{{ workplaceTitle(item.id, item.name) }}<button v-if="canEditStructure" class="inline-edit" type="button" title="İşletme adını düzenle" @click="nameEdit = { id: item.id, value: nameOf(item.id) }; nameError = ''"><i class="pi pi-pencil" /></button></strong>
+                  <strong>{{ workplaceTitle(item.id, item.name) }}<button v-if="canEditStructure" class="inline-edit" type="button" title="İşletme adını düzenle" @click="nameEdit = { id: item.id, value: nameOf(item.id) }; nameError = ''"><PkIcon class="pi pi-pencil" /></button></strong>
                   <small v-if="!publicCustomer && (workplaceFirm(item.id, item.name) || titleOf[item.business_entity_id])">{{ [workplaceFirm(item.id, item.name), titleOf[item.business_entity_id]].filter(Boolean).join(' · ') }}</small>
                 </template>
               </div>
-              <button v-if="canEditStructure" class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><i class="pi pi-trash" /></button>
+              <button v-if="canEditStructure" class="icon-button danger" type="button" title="Lokasyondan kaldır" @click="removeCompany(item)"><PkIcon class="pi pi-trash" /></button>
             </div>
             <div class="company-meta">
               <span class="hazard-badge" :class="hazardClassKey(item.hazard_class)">{{ item.hazard_class }}</span>
@@ -137,11 +137,11 @@
               <span v-if="item.sgk_workplace_number">SGK {{ item.sgk_workplace_number }}</span>
             </div>
             <p v-if="item.activity" class="company-activity">{{ item.activity }}</p>
-            <p v-if="item.experts?.length" class="company-experts"><i class="pi pi-user" /> {{ item.experts.join(', ') }}</p>
+            <p v-if="item.experts?.length" class="company-experts"><PkIcon class="pi pi-user" /> {{ item.experts.join(', ') }}</p>
             <!-- Operasyonel birimler (isteğe bağlı): işyerinin içinde ayrı yönetilen birimler -->
             <div v-if="workplaceUnits(item.id).length || canEditStructure" class="company-areas">
               <span v-for="unit in workplaceUnits(item.id)" :key="unit.id" class="area-chip">{{ unit.name }}</span>
-              <button class="link-button" type="button" @click="unitWorkplace = { id: item.id, name: workplaceLabel(item.id, item.name) }"><i class="pi pi-sitemap" /> Birimler</button>
+              <button class="link-button" type="button" @click="unitWorkplace = { id: item.id, name: workplaceLabel(item.id, item.name) }"><PkIcon class="pi pi-sitemap" /> Birimler</button>
             </div>
           </li>
         </ul>
@@ -166,7 +166,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>Lokasyon Ekle</h2><p>{{ selectedCustomer?.name }} için yeni lokasyon oluşturun.</p></div>
-          <button class="close-button" type="button" @click="closeLocationForm"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeLocationForm"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>{{ kamu ? 'Birim' : 'Dal' }} <span>*</span>
           <select v-model="form.organization_id">

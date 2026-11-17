@@ -7,16 +7,16 @@
           v-for="key in CONTROL_BUCKET_KEYS" :key="key" :to="`/expert/kontroller/${key}`" class="bucket" :class="[CONTROL_BUCKETS[key].tone, { active: active === key }]"
           :aria-expanded="active === key" @mousemove="follow($event, key)" @mouseleave="active = null" @focus="onFocus($event, key)"
         >
-          <span class="bucket-icon"><i :class="CONTROL_BUCKETS[key].icon" /></span>
+          <span class="bucket-icon"><PkIcon :class="CONTROL_BUCKETS[key].icon" /></span>
           <span class="bucket-text"><small>{{ CONTROL_BUCKETS[key].label }}</small><strong>{{ counts[key] }} <em>kontrol</em></strong></span>
-          <i class="pi pi-angle-right" />
+          <PkIcon class="pi pi-angle-right" />
         </NuxtLink>
       </div>
 
       <section v-if="active" ref="popover" class="popover" :class="[popoverSide, { following: pos }]" :style="pos || undefined" role="group" :aria-label="CONTROL_BUCKETS[active].title">
-        <header><h3>{{ CONTROL_BUCKETS[active].title }} ({{ counts[active] }})</h3><NuxtLink v-if="!pos" :to="`/expert/kontroller/${active}`">Tümünü Gör <i class="pi pi-arrow-right" /></NuxtLink></header>
+        <header><h3>{{ CONTROL_BUCKETS[active].title }} ({{ counts[active] }})</h3><NuxtLink v-if="!pos" :to="`/expert/kontroller/${active}`">Tümünü Gör <PkIcon class="pi pi-arrow-right" /></NuxtLink></header>
         <ExpertControlRowsTable :rows="previewRows" empty="Bu aralıkta kontrol yok." @select="date = $event" />
-        <p v-if="counts[active] > previewRows.length" class="popover-note"><i class="pi pi-info-circle" /> Bu listede en fazla 3 kayıt gösterilir. Tüm kayıtlar için {{ pos ? 'karta' : '"Tümünü Gör"e' }} tıklayın.</p>
+        <p v-if="counts[active] > previewRows.length" class="popover-note"><PkIcon class="pi pi-info-circle" /> Bu listede en fazla 3 kayıt gösterilir. Tüm kayıtlar için {{ pos ? 'karta' : '"Tümünü Gör"e' }} tıklayın.</p>
       </section>
     </div>
 
@@ -32,7 +32,7 @@
                 <td>{{ row.place }}</td>
                 <td>{{ row.name }}</td>
                 <td><span class="tag new">Yeni kayıt</span></td>
-                <td class="go"><i class="pi pi-angle-right" /></td>
+                <td class="go"><PkIcon class="pi pi-angle-right" /></td>
               </tr>
               <tr v-if="!recentRows.length"><td :colspan="hasDates ? 5 : 4" class="empty">{{ recentLoading ? 'Yükleniyor...' : 'Henüz kayıt yok.' }}</td></tr>
             </tbody>

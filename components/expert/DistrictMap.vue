@@ -1,6 +1,6 @@
 <template>
   <div ref="root" class="district-map" @mouseleave="hover = null">
-    <div v-if="!districts.length" class="map-loading"><i class="pi pi-spin pi-spinner" /> Harita yükleniyor...</div>
+    <div v-if="!districts.length" class="map-loading"><PkIcon class="pi pi-spin pi-spinner" /> Harita yükleniyor...</div>
     <svg v-else :viewBox="viewBox" role="img" :aria-label="`${cityName} ilçe haritası`">
       <g ref="layer">
         <path

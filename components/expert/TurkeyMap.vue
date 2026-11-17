@@ -1,6 +1,6 @@
 <template>
   <div ref="root" class="turkey-map" @mouseleave="hover = null">
-    <div v-if="!provinces.length" class="map-loading"><i class="pi pi-spin pi-spinner" /> Harita yükleniyor...</div>
+    <div v-if="!provinces.length" class="map-loading"><PkIcon class="pi pi-spin pi-spinner" /> Harita yükleniyor...</div>
     <svg v-else :viewBox="viewBox" role="img" aria-label="Türkiye lokasyon haritası">
       <g ref="layer">
         <g

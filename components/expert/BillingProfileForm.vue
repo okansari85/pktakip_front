@@ -14,15 +14,15 @@
         <div><dt>Adres</dt><dd>{{ profile.address }}</dd></div>
         <div><dt>Fatura adresi</dt><dd>{{ profile.billing_address === profile.address ? 'Adresle aynı' : profile.billing_address }}</dd></div>
       </dl>
-      <button class="secondary-button" type="button" @click="startEdit"><i class="pi pi-pencil" /> Değiştir</button>
+      <button class="secondary-button" type="button" @click="startEdit"><PkIcon class="pi pi-pencil" /> Değiştir</button>
     </div>
 
     <!-- Tasarım kataloğu 18: Bireysel / Kurumsal seçimi, iki sütunlu alanlar, adres tam genişlik -->
     <form v-else class="form" novalidate @submit.prevent="save">
       <p v-if="!inline" class="hint">Faturanız bu bilgilerle kesilir. Bireysel faturada TC kimlik numaranız, kurumsal faturada şirketinizin vergi bilgileri gerekir.</p>
       <div class="segments" role="radiogroup" aria-label="Fatura türü">
-        <label :class="{ on: form.invoice_type === 'bireysel' }" title="Bireysel (şahıs)"><input v-model="form.invoice_type" type="radio" value="bireysel" class="sr-only" /><i class="pi pi-user" /> Bireysel</label>
-        <label :class="{ on: form.invoice_type === 'kurumsal' }" title="Kurumsal (şirket)"><input v-model="form.invoice_type" type="radio" value="kurumsal" class="sr-only" /><i class="pi pi-building" /> Kurumsal</label>
+        <label :class="{ on: form.invoice_type === 'bireysel' }" title="Bireysel (şahıs)"><input v-model="form.invoice_type" type="radio" value="bireysel" class="sr-only" /><PkIcon class="pi pi-user" /> Bireysel</label>
+        <label :class="{ on: form.invoice_type === 'kurumsal' }" title="Kurumsal (şirket)"><input v-model="form.invoice_type" type="radio" value="kurumsal" class="sr-only" /><PkIcon class="pi pi-building" /> Kurumsal</label>
       </div>
 
       <div class="grid">
@@ -67,10 +67,10 @@
       </div>
 
       <div class="actions">
-        <button class="primary-button" type="submit" :disabled="saving"><i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Bilgileri kaydet' }}</button>
+        <button class="primary-button" type="submit" :disabled="saving"><PkIcon class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Bilgileri kaydet' }}</button>
         <button v-if="profile" class="secondary-button" type="button" :disabled="saving" @click="cancel">Vazgeç</button>
         <span v-if="saveError" class="error" role="alert">{{ saveError }}</span>
-        <span v-else-if="savedOk" class="ok" role="status"><i class="pi pi-check" /> Fatura bilgileri kaydedildi.</span>
+        <span v-else-if="savedOk" class="ok" role="status"><PkIcon class="pi pi-check" /> Fatura bilgileri kaydedildi.</span>
       </div>
     </form>
   </div>

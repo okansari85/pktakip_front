@@ -3,7 +3,7 @@
     <section class="modal-card">
       <div class="modal-head">
         <div><h2>Rapor Bekleniyor</h2><p>{{ equipment.name || equipment.type?.name }}<template v-if="equipment.code"> · Ekipman no {{ equipment.code }}</template></p></div>
-        <button class="close-button" type="button" @click="close"><i class="pi pi-times" /></button>
+        <button class="close-button" type="button" @click="close"><PkIcon class="pi pi-times" /></button>
       </div>
       <p class="hint">Firma kontrolü yaptı, rapor sonucu henüz gelmedi. Rapor gelince "Yeni Periyodik Kontrol Raporu Yükle" ile sonucu girin.</p>
       <div class="form-grid">

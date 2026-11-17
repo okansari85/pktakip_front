@@ -6,9 +6,9 @@
         <div class="page-head">
           <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
           <nav class="crumb" aria-label="Sayfa yolu">
-            <i class="pi pi-home" aria-hidden="true" />
+            <PkIcon class="pi pi-home" aria-hidden="true" />
             <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-            <i class="pi pi-angle-right" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right" aria-hidden="true" />
             <strong>Hesabım</strong>
           </nav>
           <h1>Hesabım</h1>
@@ -17,7 +17,7 @@
 
         <div class="tabs" role="tablist" aria-label="Hesabım bölümleri">
           <button v-for="item in tabs" :key="item.value" type="button" role="tab" :aria-selected="tab === item.value" :class="{ active: tab === item.value }" @click="tab = item.value">
-            <i :class="item.icon" /> {{ item.label }}
+            <PkIcon :class="item.icon" /> {{ item.label }}
           </button>
         </div>
 
@@ -37,11 +37,11 @@
           </header>
           <dl class="package-rows">
             <div>
-              <dt><span class="row-icon"><i class="pi pi-database" /></span> Kalan kredi</dt>
+              <dt><span class="row-icon"><PkIcon class="pi pi-database" /></span> Kalan kredi</dt>
               <dd><strong>{{ billing ? billing.unlimited ? 'Sınırsız' : billing.credits ?? 0 : '—' }}</strong><small v-if="billing && !billing.unlimited"> kredi</small></dd>
             </div>
             <div>
-              <dt><span class="row-icon"><i class="pi pi-building" /></span> Aktif işyeri</dt>
+              <dt><span class="row-icon"><PkIcon class="pi pi-building" /></span> Aktif işyeri</dt>
               <dd class="usage-cell">
                 <strong>{{ billing?.active_workplaces ?? '—' }}<small v-if="billing?.workplace_limit != null">/{{ billing.workplace_limit }}</small></strong>
                 <template v-if="billing?.workplace_limit">
@@ -51,13 +51,13 @@
               </dd>
             </div>
             <div>
-              <dt><span class="row-icon"><i class="pi pi-calendar" /></span> Yenileme tarihi</dt>
+              <dt><span class="row-icon"><PkIcon class="pi pi-calendar" /></span> Yenileme tarihi</dt>
               <dd><strong>{{ billing?.paid_until ? formatDay(billing.paid_until) : '—' }}</strong></dd>
             </div>
           </dl>
           <div class="package-actions">
-            <button class="primary-button" type="button" @click="scrollToPackages"><i class="pi pi-box" /> Paketi yönet <i class="pi pi-arrow-right" /></button>
-            <NuxtLink to="/expert/settings/analyses?tab=credits" class="credit-link"><i class="pi pi-file" /> Kredi hareketleri</NuxtLink>
+            <button class="primary-button" type="button" @click="scrollToPackages"><PkIcon class="pi pi-box" /> Paketi yönet <PkIcon class="pi pi-arrow-right" /></button>
+            <NuxtLink to="/expert/settings/analyses?tab=credits" class="credit-link"><PkIcon class="pi pi-file" /> Kredi hareketleri</NuxtLink>
           </div>
         </section>
 
@@ -65,14 +65,14 @@
         <section v-else-if="tab === 'orders'" class="card orders-card">
           <h2 class="card-title">Ödeme özeti</h2>
           <dl class="info-rows">
-            <div><dt><i class="pi pi-clone" /> Mevcut paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
-            <div><dt><i class="pi pi-calendar" /> Son ödeme</dt><dd>{{ lastPaid ? formatDay(lastPaid.paid_at || lastPaid.created_at) : '—' }}</dd></div>
+            <div><dt><PkIcon class="pi pi-clone" /> Mevcut paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
+            <div><dt><PkIcon class="pi pi-calendar" /> Son ödeme</dt><dd>{{ lastPaid ? formatDay(lastPaid.paid_at || lastPaid.created_at) : '—' }}</dd></div>
             <div>
-              <dt><i class="pi pi-check-circle" /> Ödeme durumu</dt>
+              <dt><PkIcon class="pi pi-check-circle" /> Ödeme durumu</dt>
               <dd><span v-if="orderRows[0]" class="order-chip" :class="orderRows[0].status">{{ ORDER_STATUS[orderRows[0].status]?.label || orderRows[0].status }}</span><template v-else>—</template></dd>
             </div>
           </dl>
-          <button class="outline-button blue" type="button" @click="tab = 'billing'"><i class="pi pi-file" /> Fatura bilgileri</button>
+          <button class="outline-button blue" type="button" @click="tab = 'billing'"><PkIcon class="pi pi-file" /> Fatura bilgileri</button>
           <!-- Bekliyor / İnceleniyor açıklaması: katalogda yok, gizli (aynı açıklama durum etiketinin ipucunda) -->
           <p v-if="SHOW_ORDER_HINT" class="muted">Uygulamadan yaptığınız paket ödemeleri. "Bekliyor": ödeme ekranı açıldı, sonuç gelmedi. "İnceleniyor": ödeme alındı ama ekibimizin kontrolü gerekiyor; gerekirse sizinle iletişime geçeriz.</p>
         </section>
@@ -87,13 +87,13 @@
             <div class="profile-body">
               <div class="avatar-col">
                 <span class="initials-avatar" aria-hidden="true">{{ initials }}</span>
-                <button class="soft-button" type="button" :aria-expanded="avatarOpen" @click="avatarOpen = !avatarOpen"><i class="pi pi-image" /> Avatarı değiştir</button>
+                <button class="soft-button" type="button" :aria-expanded="avatarOpen" @click="avatarOpen = !avatarOpen"><PkIcon class="pi pi-image" /> Avatarı değiştir</button>
               </div>
               <div class="fields">
                 <div class="field"><label for="p-name">Ad ve soyad</label><input id="p-name" :value="profile.name" readonly /></div>
                 <div class="field"><label for="p-email">E-posta</label><input id="p-email" :value="profile.email" readonly /></div>
                 <div class="field"><label for="p-phone">Telefon</label><input id="p-phone" v-model="form.phone" maxlength="30" placeholder="İsteğe bağlı" inputmode="tel" /></div>
-                <p class="info"><i class="pi pi-info-circle" /> E-posta adresiniz hesap bilgilerinizde kayıtlıdır.</p>
+                <p class="info"><PkIcon class="pi pi-info-circle" /> E-posta adresiniz hesap bilgilerinizde kayıtlıdır.</p>
               </div>
             </div>
             <!-- Avatar seçimi (Avatarı değiştir ile açılır): gerçek fotoğraf yerine bir ikon -->
@@ -116,9 +116,9 @@
             </div>
             <div class="actions">
               <span v-if="saveError" class="message error" role="alert">{{ saveError }}</span>
-              <span v-else-if="saved" class="message ok" role="status"><i class="pi pi-check" /> Profil kaydedildi.</span>
+              <span v-else-if="saved" class="message ok" role="status"><PkIcon class="pi pi-check" /> Profil kaydedildi.</span>
               <button class="primary-button" type="submit" :disabled="saving || (form.profession === 'isg_uzmani' && !form.expert_class)">
-                <i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}
+                <PkIcon class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}
               </button>
               <button class="outline-button" type="button" :disabled="saving" @click="fill(profile)">Vazgeç</button>
             </div>
@@ -127,7 +127,7 @@
           <!-- Mesleki bilgiler yalnız bireysel uzman hesabında; katalogda yok, gizli (ileride açılabilir) -->
           <section v-if="SHOW_PROFESSION_CARD && !multiUser" class="card">
             <div class="card-head">
-              <span class="card-icon"><i class="pi pi-briefcase" /></span>
+              <span class="card-icon"><PkIcon class="pi pi-briefcase" /></span>
               <div><h2>Mesleki Bilgiler</h2><p>Mesleğinizi ve çalışma alanınızı seçin.</p></div>
             </div>
             <div class="field">
@@ -151,7 +151,7 @@
           <!-- Eski Hesap Bilgileri kartı (kullanıcı adı, kayıt tarihi): katalogda yok, gizli; ileride açılabilir -->
           <section v-if="SHOW_LEGACY_ACCOUNT_CARD" class="card">
             <div class="card-head">
-              <span class="card-icon"><i class="pi pi-shield" /></span>
+              <span class="card-icon"><PkIcon class="pi pi-shield" /></span>
               <div><h2>Hesap Bilgileri</h2><p>Hesap oluşturulurken kaydedilen bilgiler</p></div>
             </div>
             <div class="field"><label for="p-user">Kullanıcı Adı</label><input id="p-user" :value="profile.email" readonly /></div>
@@ -165,16 +165,16 @@
           <section class="card side-card">
             <h2 class="card-title">Hesap bilgileri</h2>
             <dl class="info-rows">
-              <div><dt><i class="pi pi-check-circle" /> Hesap durumu</dt><dd><span class="status-pill ok">Aktif</span></dd></div>
-              <div><dt><i class="pi pi-user" /> Rol</dt><dd>{{ roleLabel }}</dd></div>
-              <div><dt><i class="pi pi-clone" /> Paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
-              <div><dt><i class="pi pi-box" /> Kredi</dt><dd>{{ billing ? billing.unlimited ? 'Sınırsız' : `${billing.credits ?? 0} kredi` : '—' }}</dd></div>
+              <div><dt><PkIcon class="pi pi-check-circle" /> Hesap durumu</dt><dd><span class="status-pill ok">Aktif</span></dd></div>
+              <div><dt><PkIcon class="pi pi-user" /> Rol</dt><dd>{{ roleLabel }}</dd></div>
+              <div><dt><PkIcon class="pi pi-clone" /> Paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
+              <div><dt><PkIcon class="pi pi-box" /> Kredi</dt><dd>{{ billing ? billing.unlimited ? 'Sınırsız' : `${billing.credits ?? 0} kredi` : '—' }}</dd></div>
             </dl>
           </section>
         </template>
 
         <section v-else class="card side-card note-card">
-          <span class="note-icon"><i class="pi pi-file" /></span>
+          <span class="note-icon"><PkIcon class="pi pi-file" /></span>
           <div><h2>Faturalandırma</h2><p>Paket ödemelerinizde bu bilgiler kullanılır.</p></div>
         </section>
       </aside>

@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model:visible="visible" modal header="Hesabı Kalıcı Olarak Sil" :style="{ width: '560px' }" :closable="!deleting" :dismissable-mask="false">
-    <div v-if="loading" class="state"><i class="pi pi-spin pi-spinner" /> Silinecek kayıtlar hesaplanıyor...</div>
+    <div v-if="loading" class="state"><PkIcon class="pi pi-spin pi-spinner" /> Silinecek kayıtlar hesaplanıyor...</div>
     <template v-else-if="summary">
       <Message severity="error" :closable="false">Bu işlem geri alınamaz. Hesap, aşağıdaki bütün kayıtları ve dosyalarıyla birlikte silinir.</Message>
       <dl class="summary">
@@ -22,7 +22,7 @@
 
     <template #footer>
       <Button label="İptal" text :disabled="deleting" @click="visible = false" />
-      <Button label="Kalıcı olarak sil" icon="pi pi-trash" severity="danger" :loading="deleting" :disabled="!summary || confirmName.trim() !== summary.name.trim()" @click="remove" />
+      <Button label="Kalıcı olarak sil" severity="danger" :loading="deleting" :disabled="!summary || confirmName.trim() !== summary.name.trim()" @click="remove"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-trash" :class="iconClass" /></template></Button>
     </template>
   </Dialog>
 </template>

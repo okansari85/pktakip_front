@@ -4,59 +4,59 @@
       <div>
         <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
         <nav class="crumb" aria-label="Sayfa yolu">
-          <i class="pi pi-home" aria-hidden="true" />
+          <PkIcon class="pi pi-home" aria-hidden="true" />
           <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-          <i class="pi pi-angle-right" aria-hidden="true" />
+          <PkIcon class="pi pi-angle-right" aria-hidden="true" />
           <strong>Kontrol takvimi</strong>
         </nav>
         <h1>Kontrol takvimi</h1>
         <p>Yaklaşan kontroller ve geciken kayıtlar</p>
         <div v-if="data && groups.length" class="view-switch" role="group" aria-label="Görünüm">
-          <button type="button" :class="{ on: view === 'ajanda' }" :aria-pressed="view === 'ajanda'" @click="view = 'ajanda'"><i class="pi pi-calendar" /> Ajanda</button>
-          <button type="button" :class="{ on: view === 'yillik' }" :aria-pressed="view === 'yillik'" @click="view = 'yillik'"><i class="pi pi-calendar" /> Yıllık plan</button>
+          <button type="button" :class="{ on: view === 'ajanda' }" :aria-pressed="view === 'ajanda'" @click="view = 'ajanda'"><PkIcon class="pi pi-calendar" /> Ajanda</button>
+          <button type="button" :class="{ on: view === 'yillik' }" :aria-pressed="view === 'yillik'" @click="view = 'yillik'"><PkIcon class="pi pi-calendar" /> Yıllık plan</button>
         </div>
       </div>
-      <button v-if="data && groups.length" class="plan-button" type="button" @click="openNewPlan"><i class="pi pi-calendar" /> Kontrol planla <i class="pi pi-arrow-right" /></button>
+      <button v-if="data && groups.length" class="plan-button" type="button" @click="openNewPlan"><PkIcon class="pi pi-calendar" /> Kontrol planla <PkIcon class="pi pi-arrow-right" /></button>
     </div>
 
-    <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Takvim hazırlanıyor...</div>
+    <div v-if="loading && !data" class="card state"><PkIcon class="pi pi-spin pi-spinner" /> Takvim hazırlanıyor...</div>
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
     <template v-else-if="data">
-      <p v-if="plansError" class="plans-error"><i class="pi pi-exclamation-circle" /> {{ plansError }}</p>
+      <p v-if="plansError" class="plans-error"><PkIcon class="pi pi-exclamation-circle" /> {{ plansError }}</p>
 
       <!-- Ajanda: solda 7 günlük özet ve en yakın kontrol, sağda seçili gün; altta hafta ve gecikenler. -->
       <template v-if="view === 'ajanda'">
         <div class="cal-top">
           <section class="card cal-summary">
             <NuxtLink to="/expert/kontroller/7-gun" class="cal-sum-row">
-              <span class="cal-sum-icon"><i class="pi pi-clone" /></span>
+              <span class="cal-sum-icon"><PkIcon class="pi pi-clone" /></span>
               <span class="cal-sum-text"><strong>{{ number(soonGroups) }}</strong><small>Yaklaşan kontrol grubu</small></span>
-              <i class="pi pi-chevron-right" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-right" aria-hidden="true" />
             </NuxtLink>
             <NuxtLink to="/expert/kontroller/7-gun" class="cal-sum-row">
-              <span class="cal-sum-icon equipment"><i class="pi pi-box" /></span>
+              <span class="cal-sum-icon equipment"><PkIcon class="pi pi-box" /></span>
               <span class="cal-sum-text"><strong>{{ number(soonEquipment) }}</strong><small>{{ soonGroups > 1 ? 'Bu gruplardaki ekipman' : 'Bu gruptaki ekipman' }}</small></span>
-              <i class="pi pi-chevron-right" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-right" aria-hidden="true" />
             </NuxtLink>
-            <p class="cal-sum-note"><i class="pi pi-calendar" /> Önümüzdeki 7 gün</p>
-            <p v-if="nextDay" class="cal-sum-next"><i class="pi pi-box" /> {{ agendaGroupsText(nextDay.entries) }} · {{ longDate(nextDay.date) }}</p>
-            <NuxtLink v-if="overdueGroups" to="/expert/kontroller/suresi-gecen" class="cal-sum-alert"><i class="pi pi-exclamation-triangle" /> {{ number(overdueGroups) }} kontrol grubu gecikmiş</NuxtLink>
+            <p class="cal-sum-note"><PkIcon class="pi pi-calendar" /> Önümüzdeki 7 gün</p>
+            <p v-if="nextDay" class="cal-sum-next"><PkIcon class="pi pi-box" /> {{ agendaGroupsText(nextDay.entries) }} · {{ longDate(nextDay.date) }}</p>
+            <NuxtLink v-if="overdueGroups" to="/expert/kontroller/suresi-gecen" class="cal-sum-alert"><PkIcon class="pi pi-exclamation-triangle" /> {{ number(overdueGroups) }} kontrol grubu gecikmiş</NuxtLink>
           </section>
 
           <section class="card cal-day">
-            <header class="cal-day-head"><i class="pi pi-calendar" /><h3>{{ selected.title }}</h3></header>
-            <span class="cal-pill" :class="selected.daysLeft < 0 ? 'bad' : 'warn'"><i class="pi pi-clock" /> {{ selected.daysText }}</span>
-            <div v-if="selected.place" class="cal-line"><i class="pi pi-map-marker" /> {{ selected.place }}</div>
-            <div v-if="selected.groupsText" class="cal-line"><i class="pi pi-clone" /> {{ selected.groupsText }}</div>
-            <div v-if="selected.rechecks.length" class="cal-line"><i class="pi pi-list-check" /> {{ selected.rechecks.length }} bulgu tekrar kontrolü</div>
+            <header class="cal-day-head"><PkIcon class="pi pi-calendar" /><h3>{{ selected.title }}</h3></header>
+            <span class="cal-pill" :class="selected.daysLeft < 0 ? 'bad' : 'warn'"><PkIcon class="pi pi-clock" /> {{ selected.daysText }}</span>
+            <div v-if="selected.place" class="cal-line"><PkIcon class="pi pi-map-marker" /> {{ selected.place }}</div>
+            <div v-if="selected.groupsText" class="cal-line"><PkIcon class="pi pi-clone" /> {{ selected.groupsText }}</div>
+            <div v-if="selected.rechecks.length" class="cal-line"><PkIcon class="pi pi-list-check" /> {{ selected.rechecks.length }} bulgu tekrar kontrolü</div>
             <button v-for="plan in selected.plans" :key="plan.id" type="button" class="cal-line cal-plan-line" :title="'Planı düzenle'" @click="openPlan(plan)">
-              <i class="pi pi-calendar-plus" /><span>{{ controlPlanText(plan) }}</span><i class="pi pi-pencil" />
+              <PkIcon class="pi pi-calendar-plus" /><span>{{ controlPlanText(plan) }}</span><PkIcon class="pi pi-pencil" />
             </button>
             <p v-if="selected.empty" class="muted">Bu gün kontrol yok.</p>
             <div class="cal-day-actions">
-              <button v-if="selected.entries.length || selected.rechecks.length" class="cal-secondary" type="button" @click="dayModal = selectedDay"><i class="pi pi-eye" /> Ekipmanları gör</button>
-              <button class="plan-button" type="button" @click="openDayPlan"><i class="pi pi-calendar" /> Plan oluştur</button>
+              <button v-if="selected.entries.length || selected.rechecks.length" class="cal-secondary" type="button" @click="dayModal = selectedDay"><PkIcon class="pi pi-eye" /> Ekipmanları gör</button>
+              <button class="plan-button" type="button" @click="openDayPlan"><PkIcon class="pi pi-calendar" /> Plan oluştur</button>
             </div>
           </section>
         </div>
@@ -64,9 +64,9 @@
         <div class="cal-bottom">
           <section class="card cal-week">
             <header class="cal-week-head">
-              <button class="cal-nav" type="button" aria-label="Önceki hafta" @click="shiftWeek(-1)"><i class="pi pi-chevron-left" /></button>
+              <button class="cal-nav" type="button" aria-label="Önceki hafta" @click="shiftWeek(-1)"><PkIcon class="pi pi-chevron-left" /></button>
               <h3>{{ weekLabel }}</h3>
-              <button class="cal-nav" type="button" aria-label="Sonraki hafta" @click="shiftWeek(1)"><i class="pi pi-chevron-right" /></button>
+              <button class="cal-nav" type="button" aria-label="Sonraki hafta" @click="shiftWeek(1)"><PkIcon class="pi pi-chevron-right" /></button>
             </header>
             <div class="cal-grid">
               <div v-for="day in week" :key="day.date" class="cal-col" :class="{ selected: day.date === selectedDay }" @click="selectedDay = day.date">
@@ -74,28 +74,28 @@
                 <div class="cal-cell">
                   <template v-for="chip in day.chips.slice(0, CHIP_LIMIT)" :key="chip.key">
                     <button v-if="chip.plan" type="button" class="cal-chip plan" title="Planı düzenle" @click.stop="openPlan(chip.plan)">
-                      <i :class="chip.icon" /><span><strong>{{ chip.title }}</strong><small>{{ chip.sub }}</small></span>
+                      <PkIcon :class="chip.icon" /><span><strong>{{ chip.title }}</strong><small>{{ chip.sub }}</small></span>
                     </button>
-                    <span v-else class="cal-chip" :class="chip.tone"><i :class="chip.icon" /><span><strong>{{ chip.title }}</strong><small>{{ chip.sub }}</small></span></span>
+                    <span v-else class="cal-chip" :class="chip.tone"><PkIcon :class="chip.icon" /><span><strong>{{ chip.title }}</strong><small>{{ chip.sub }}</small></span></span>
                   </template>
                   <span v-if="day.chips.length > CHIP_LIMIT" class="cal-more">+{{ day.chips.length - CHIP_LIMIT }} daha</span>
                   <span v-if="!day.chips.length" class="cal-empty">–</span>
                 </div>
               </div>
             </div>
-            <footer class="cal-scope"><i class="pi pi-map-marker" /><strong>Kapsam:</strong> {{ scopeText }}</footer>
+            <footer class="cal-scope"><PkIcon class="pi pi-map-marker" /><strong>Kapsam:</strong> {{ scopeText }}</footer>
           </section>
 
           <section class="card cal-late">
-            <header class="cal-late-head"><i class="pi pi-clock" /><h3>Geciken kontrol grupları</h3></header>
+            <header class="cal-late-head"><PkIcon class="pi pi-clock" /><h3>Geciken kontrol grupları</h3></header>
             <p v-if="!lateRows.length" class="muted">Geciken kontrol yok.</p>
             <button v-for="row in lateRows" :key="row.key" type="button" class="cal-late-row" @click="dayModal = row.date">
-              <span class="cal-late-icon"><i :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
+              <span class="cal-late-icon"><PkIcon :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
               <span class="cal-late-name"><strong>{{ row.name }}</strong><small v-if="row.meta">{{ row.meta }}</small></span>
               <span class="cal-late-days">{{ number(row.days) }} gün</span>
-              <i class="pi pi-chevron-right" aria-hidden="true" />
+              <PkIcon class="pi pi-chevron-right" aria-hidden="true" />
             </button>
-            <NuxtLink v-if="lateRows.length" to="/expert/kontroller/suresi-gecen" class="cal-link">Kayıtları aç <i class="pi pi-arrow-right" /></NuxtLink>
+            <NuxtLink v-if="lateRows.length" to="/expert/kontroller/suresi-gecen" class="cal-link">Kayıtları aç <PkIcon class="pi pi-arrow-right" /></NuxtLink>
           </section>
         </div>
       </template>
@@ -103,7 +103,7 @@
       <!-- Yıllık plan: 12 ay (kontrol olmayan yılda da), planlar kesikli çizgiyle -->
       <template v-else>
         <ExpertControlCalendar :agenda="data.agenda || []" :undated="data.undated" :query="query" :rechecks="rechecks" :plans="scopedPlans" @edit-plan="openPlan" />
-        <p class="cal-scope"><i class="pi pi-map-marker" /><strong>Kapsam:</strong> {{ scopeText }}</p>
+        <p class="cal-scope"><PkIcon class="pi pi-map-marker" /><strong>Kapsam:</strong> {{ scopeText }}</p>
       </template>
     </template>
 

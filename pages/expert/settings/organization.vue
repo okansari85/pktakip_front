@@ -2,20 +2,20 @@
   <div class="organization-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'Organizasyon' : 'Dallar' }}</strong></div>
+        <div class="breadcrumb"><span>Ayarlar</span><PkIcon class="pi pi-angle-right" /><strong>{{ kamu ? 'Organizasyon' : 'Dallar' }}</strong></div>
         <h1>{{ kamu ? 'Organizasyon' : 'Dallar' }}</h1>
         <p v-if="kamu">Kurumunuzun organizasyon yapısını (daire başkanlıkları, şube müdürlükleri) hiyerarşik olarak oluşturun. Binaları lokasyon olarak Lokasyonlar sayfasından eklersiniz.</p>
         <p v-else>Ana firmanızın dallarını hiyerarşik olarak oluşturun. Lokasyonları dallara Lokasyonlar sayfasından eklersiniz.</p>
       </div>
       <button v-if="customer" class="primary-button" type="button" @click="openForm(null)">
-        <i class="pi pi-plus" /><span>{{ kamu ? 'Birim Ekle' : 'Dal Ekle' }}</span>
+        <PkIcon class="pi pi-plus" /><span>{{ kamu ? 'Birim Ekle' : 'Dal Ekle' }}</span>
       </button>
     </div>
 
     <section class="table-card">
       <div class="toolbar">
-        <div v-if="customer" class="customer"><span class="row-icon"><i class="pi pi-building" /></span><div><strong>{{ customer.name }}</strong><small>{{ nodeCount }} {{ kamu ? 'birim' : 'dal' }}</small></div></div>
-        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'Birim ara...' : 'Dal ara...'" /></div>
+        <div v-if="customer" class="customer"><span class="row-icon"><PkIcon class="pi pi-building" /></span><div><strong>{{ customer.name }}</strong><small>{{ nodeCount }} {{ kamu ? 'birim' : 'dal' }}</small></div></div>
+        <div class="search-box"><PkIcon class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'Birim ara...' : 'Dal ara...'" /></div>
       </div>
 
       <div v-if="!corporate && account" class="state-row">Bu sayfa kurumsal hesaplar içindir. Müşterilerin yapısını <NuxtLink to="/expert/settings/customers">Müşteriler</NuxtLink> sayfasından yönetirsiniz.</div>
@@ -23,7 +23,7 @@
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="!customer" class="state-row">{{ kamu ? 'Kurum' : 'Ana firma' }} kaydı bulunamadı.</div>
       <div v-else-if="filteredTree.length === 0" class="state-row empty-state">
-        <i class="pi pi-sitemap" />
+        <PkIcon class="pi pi-sitemap" />
         <strong>{{ search ? `Aramaya uyan ${kamu ? 'birim' : 'dal'} yok` : `Henüz ${kamu ? 'birim' : 'dal'} yok` }}</strong>
         <span v-if="!search">Şirketleri, bölgeleri ya da tesisleri "{{ kamu ? 'Birim Ekle' : 'Dal Ekle' }}" ile oluşturun (ör. Holding → Şirket → Fabrika).</span>
       </div>
@@ -36,7 +36,7 @@
       <section class="modal-card">
         <div class="modal-head">
           <div><h2>{{ editing ? (kamu ? 'Birimi Düzenle' : 'Dalı Düzenle') : (kamu ? 'Birim Ekle' : 'Dal Ekle') }}</h2><p v-if="editing">"{{ editing.name }}" {{ kamu ? 'biriminin' : 'dalının' }} adını değiştirin.</p><p v-else>{{ parent ? `${parent.name} altına` : 'En üste' }} yeni {{ kamu ? 'birim' : 'dal' }} ekleyin.</p></div>
-          <button class="close-button" type="button" @click="closeForm"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" @click="closeForm"><PkIcon class="pi pi-times" /></button>
         </div>
         <label>{{ kamu ? 'Birim Adı' : 'Dal Adı' }} <span>*</span><input v-model="name" type="text" placeholder="Örn. Dayanıklı Tüketim" /></label>
         <p v-if="formError" class="form-error">{{ formError }}</p>

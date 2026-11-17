@@ -38,7 +38,7 @@
           <button type="button" @click="selectNace(item)"><strong>{{ item.nace_code }}</strong> <span>{{ item.activity_name }}</span> <em :class="hazardClassKey(item.hazard_class)">{{ item.hazard_class }}</em></button>
         </li>
       </ul>
-      <p v-if="draft.naceCode" class="selected"><i class="pi pi-check-circle" /> <span><strong>{{ draft.naceCode }}</strong> {{ draft.activity }}</span> <button type="button" class="clear" @click="clearNace">Kaldır</button></p>
+      <p v-if="draft.naceCode" class="selected"><PkIcon class="pi pi-check-circle" /> <span><strong>{{ draft.naceCode }}</strong> {{ draft.activity }}</span> <button type="button" class="clear" @click="clearNace">Kaldır</button></p>
     </div>
 
     <div class="hazard">

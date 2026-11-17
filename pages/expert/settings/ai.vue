@@ -3,9 +3,9 @@
     <div class="page-head">
       <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
       <nav class="crumb" aria-label="Sayfa yolu">
-        <i class="pi pi-home" aria-hidden="true" />
+        <PkIcon class="pi pi-home" aria-hidden="true" />
         <NuxtLink :to="individual ? '/expert/anasayfa' : '/expert'">{{ individual ? 'Ana Sayfa' : 'Genel Bakış' }}</NuxtLink>
-        <i class="pi pi-angle-right" aria-hidden="true" />
+        <PkIcon class="pi pi-angle-right" aria-hidden="true" />
         <strong>Yapay zekâ ayarları</strong>
       </nav>
       <h1>Yapay zekâ ayarları</h1>
@@ -17,15 +17,15 @@
     <template v-else>
       <!-- Sağlayıcı, model, okuma yöntemi ve bağlantı -->
         <section class="card main">
-          <h2><i class="pi pi-microchip-ai" /> Rapor okuma sağlayıcısı</h2>
+          <h2><PkIcon class="pi pi-microchip-ai" /> Rapor okuma sağlayıcısı</h2>
           <!-- Varsayılan istemci -->
           <div class="providers">
             <label v-for="item in providers" :key="item.key" class="provider" :class="{ active: form.provider === item.key }" :title="item.note">
               <input v-model="form.provider" type="radio" :value="item.key" class="sr-only" />
-              <i :class="PROVIDER_ICON[item.key] || 'pi pi-microchip-ai'" class="provider-icon" />
+              <PkIcon :class="PROVIDER_ICON[item.key] || 'pi pi-microchip-ai'" class="provider-icon" />
               <strong>{{ item.label }}</strong>
               <span v-if="form.provider === item.key" class="key-state" :class="keyState(item).tone" :title="keyState(item).text">{{ keyState(item).tone === 'ok' ? 'Bağlı' : keyState(item).text }}</span>
-              <span class="radio-mark"><i v-if="form.provider === item.key" class="pi pi-check" /></span>
+              <span class="radio-mark"><PkIcon v-if="form.provider === item.key" class="pi pi-check" /></span>
             </label>
           </div>
 
@@ -56,19 +56,19 @@
 
           <!-- Seçili istemcinin bağlantısı; Bağlantıyı yönet: her istemcinin modeli ve API anahtarı (aşağıdaki kartlar) -->
           <div v-if="current" class="connection" :class="keyState(current).tone">
-            <i :class="PROVIDER_ICON[current.key] || 'pi pi-microchip-ai'" class="provider-icon" />
+            <PkIcon :class="PROVIDER_ICON[current.key] || 'pi pi-microchip-ai'" class="provider-icon" />
             <span class="connection-text">
               <strong>{{ current.label }} bağlantısı</strong>
               <span class="key-state" :class="keyState(current).tone" :title="keyState(current).text">{{ keyState(current).tone === 'ok' ? 'Bağlantı hazır' : keyState(current).text }}</span>
             </span>
-            <button class="text-link" type="button" :aria-expanded="showConnections" @click="showConnections = !showConnections">Bağlantıyı yönet <i :class="showConnections ? 'pi pi-chevron-up' : 'pi pi-external-link'" /></button>
+            <button class="text-link" type="button" :aria-expanded="showConnections" @click="showConnections = !showConnections">Bağlantıyı yönet <PkIcon :class="showConnections ? 'pi pi-chevron-up' : 'pi pi-external-link'" /></button>
           </div>
 
           <p v-if="error" class="error-text">{{ error }}</p>
-          <p v-if="saved" class="saved-text"><i class="pi pi-check" /> Kaydedildi.</p>
+          <p v-if="saved" class="saved-text"><PkIcon class="pi pi-check" /> Kaydedildi.</p>
           <div class="actions">
-            <button class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
-            <NuxtLink to="/expert/test" class="secondary-button"><i class="pi pi-play" /> Örnek raporla dene</NuxtLink>
+            <button class="primary-button" type="button" :disabled="saving" @click="save"><PkIcon class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
+            <NuxtLink to="/expert/test" class="secondary-button"><PkIcon class="pi pi-play" /> Örnek raporla dene</NuxtLink>
           </div>
           <!-- Son değişikliği yapan: katalogda yok, gizli; ileride açılabilir -->
           <span v-if="SHOW_UPDATED_BY && updatedBy" class="muted">Son değişiklik: {{ updatedBy }}<template v-if="updatedAt"> · {{ formatDateTime(updatedAt) }}</template></span>
@@ -104,9 +104,9 @@
         </div>
       </section>
       <p v-if="error" class="error-text">{{ error }}</p>
-      <p v-if="saved" class="saved-text"><i class="pi pi-check" /> Kaydedildi.</p>
+      <p v-if="saved" class="saved-text"><PkIcon class="pi pi-check" /> Kaydedildi.</p>
       <div class="actions end">
-        <button class="primary-button" type="button" :disabled="saving" @click="save"><i class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
+        <button class="primary-button" type="button" :disabled="saving" @click="save"><PkIcon class="pi pi-save" /> {{ saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet' }}</button>
       </div>
       </template>
     </template>

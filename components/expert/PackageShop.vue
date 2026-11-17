@@ -7,17 +7,17 @@
       <!-- Mevcut durum: katalogda Hesabım'daki "Mevcut paketiniz" kartında; bu kart gizli, ileride açılabilir -->
       <section v-if="SHOW_STATUS_CARD" class="card status-card">
         <div class="card-head">
-          <span class="card-icon"><i class="pi pi-wallet" /></span>
+          <span class="card-icon"><PkIcon class="pi pi-wallet" /></span>
           <div><h2>Mevcut durum</h2><p>Kredi yalnız rapor okumada düşer; aktif işyeri sayısı paketin limitiyle sınırlıdır.</p></div>
         </div>
         <ExpertCreditSummary class="summary" />
-        <NuxtLink to="/expert/settings/analyses?tab=credits" class="text-link"><i class="pi pi-history" /> Kredi hareketleri</NuxtLink>
+        <NuxtLink to="/expert/settings/analyses?tab=credits" class="text-link"><PkIcon class="pi pi-history" /> Kredi hareketleri</NuxtLink>
       </section>
 
       <!-- Satın alma akışı (adımlı) -->
       <section v-if="chosen" class="card flow">
         <div class="flow-head">
-          <button class="text-button" type="button" @click="closeFlow"><i class="pi pi-arrow-left" /> Paketlere dön</button>
+          <button class="text-button" type="button" @click="closeFlow"><PkIcon class="pi pi-arrow-left" /> Paketlere dön</button>
           <ol class="steps">
             <li v-for="(label, index) in STEPS" :key="label" :class="{ active: step === index + 1, done: step > index + 1 }"><span>{{ index + 1 }}</span>{{ label }}</li>
           </ol>
@@ -35,7 +35,7 @@
           <p v-if="billingForbidden" class="error">Fatura bilgilerine erişiminiz yok. Paket satın alma yalnız hesap yöneticisindedir.</p>
           <p v-if="flowError" class="error" role="alert">{{ flowError }}</p>
           <div class="step-actions">
-            <button class="primary-button" type="button" :disabled="!billingProfile || billingEditing" @click="goSummary">Devam <i class="pi pi-arrow-right" /></button>
+            <button class="primary-button" type="button" :disabled="!billingProfile || billingEditing" @click="goSummary">Devam <PkIcon class="pi pi-arrow-right" /></button>
           </div>
         </div>
 
@@ -62,7 +62,7 @@
           <div class="step-actions">
             <button class="secondary-button" type="button" :disabled="starting" @click="step = 1">Fatura bilgilerine dön</button>
             <button class="primary-button" type="button" :disabled="!agreements || starting" @click="startPayment">
-              <i :class="starting ? 'pi pi-spin pi-spinner' : 'pi pi-lock'" /> {{ starting ? 'Ödeme ekranı hazırlanıyor...' : 'Ödemeye geç' }}
+              <PkIcon :class="starting ? 'pi pi-spin pi-spinner' : 'pi pi-lock'" /> {{ starting ? 'Ödeme ekranı hazırlanıyor...' : 'Ödemeye geç' }}
             </button>
           </div>
         </div>
@@ -74,7 +74,7 @@
         <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pay-title">
           <div class="modal-head">
             <div><h2 id="pay-title">Kart ile ödeme</h2><p>{{ chosen.pkg.name }} paketi ({{ PERIOD_LABELS[period].toLocaleLowerCase('tr-TR') }}) · Sipariş no: {{ paytr.merchant_oid }}</p></div>
-            <button class="close-button" type="button" aria-label="Kapat" @click="closePayment"><i class="pi pi-times" /></button>
+            <button class="close-button" type="button" aria-label="Kapat" @click="closePayment"><PkIcon class="pi pi-times" /></button>
           </div>
           <dl class="sum">
             <div><dt>Paket bedeli (KDV hariç)</dt><dd>{{ formatTl(paytr.amounts.net) }}</dd></div>
@@ -89,7 +89,7 @@
       <section v-else class="card options">
         <!-- Kurallar: katalogda yok, gizli; ileride açılabilir (yenileme / yükseltme açıklaması ve cayma özet adımında da yazar) -->
         <section v-if="SHOW_RULES" class="rules">
-          <i class="pi pi-info-circle" />
+          <PkIcon class="pi pi-info-circle" />
           <ul>
             <li><strong>Yenileme:</strong> yeni dönem, mevcut döneminizin sonuna eklenir; bir aylık kredi hemen yüklenir.</li>
             <li><strong>Yükseltme:</strong> yeni paket bugün başlar; kalan krediniz silinmez.</li>
@@ -107,24 +107,24 @@
           </div>
         </header>
 
-        <p v-if="reason" class="reason"><i class="pi pi-lock" /> {{ reason }}</p>
+        <p v-if="reason" class="reason"><PkIcon class="pi pi-lock" /> {{ reason }}</p>
 
         <div v-if="!data.packages.length" class="state">Şu anda satın alınabilecek paket yok.</div>
         <div class="packages">
           <article v-for="pkg in data.packages" :key="pkg.id" class="package" :class="{ current: pkg.id === status?.package?.id, highlight: pkg.id === highlightId }">
             <header class="package-head">
-              <span class="package-icon"><i class="pi pi-box" /></span>
+              <span class="package-icon"><PkIcon class="pi pi-box" /></span>
               <span class="package-title"><h3>{{ pkg.name }}</h3><small>{{ formatTl(price(pkg)) }} + KDV / {{ period === 'yearly' ? 'yıl' : 'ay' }}</small></span>
               <span v-if="pkg.id === status?.package?.id" class="current-tag">Mevcut paket</span>
             </header>
             <ul>
-              <li><i class="pi pi-check" /> Ayda {{ pkg.monthly_credits }} kredi</li>
-              <li><i class="pi pi-check" /> {{ pkg.workplace_limit == null ? 'Sınırsız aktif işyeri' : `${pkg.workplace_limit} aktif işyeri` }}</li>
-              <li><i class="pi pi-check" /> Sınırsız kullanıcı</li>
+              <li><PkIcon class="pi pi-check" /> Ayda {{ pkg.monthly_credits }} kredi</li>
+              <li><PkIcon class="pi pi-check" /> {{ pkg.workplace_limit == null ? 'Sınırsız aktif işyeri' : `${pkg.workplace_limit} aktif işyeri` }}</li>
+              <li><PkIcon class="pi pi-check" /> Sınırsız kullanıcı</li>
             </ul>
             <template v-if="canBuy">
               <p v-if="actionOf(pkg) === 'locked'" class="locked">Mevcut döneminiz {{ formatDay(status!.paid_until!) }} tarihinde bitince geçebilirsiniz.</p>
-              <button v-else class="choose-button" type="button" @click="choose(pkg)">{{ ACTION_LABELS[actionOf(pkg) as Action] }} <i class="pi pi-angle-right" /></button>
+              <button v-else class="choose-button" type="button" @click="choose(pkg)">{{ ACTION_LABELS[actionOf(pkg) as Action] }} <PkIcon class="pi pi-angle-right" /></button>
             </template>
           </article>
         </div>

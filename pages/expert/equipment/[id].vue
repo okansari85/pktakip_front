@@ -8,33 +8,33 @@
       <div class="top">
         <div class="top-left">
           <nav class="crumb" aria-label="Sayfa yolu">
-            <i class="pi pi-home" aria-hidden="true" />
+            <PkIcon class="pi pi-home" aria-hidden="true" />
             <a href="/expert/equipment" @click.prevent="goBack">{{ backLabel }}</a>
-            <i class="pi pi-angle-right" aria-hidden="true" />
+            <PkIcon class="pi pi-angle-right" aria-hidden="true" />
             <strong>{{ title }}</strong>
           </nav>
           <h1>Ekipman detayı</h1>
           <p class="lead">Ekipman bilgilerini görüntüleyin, kontrolleri ve bulguları yönetin.</p>
 
           <section class="card info-card">
-            <a href="/expert/equipment" class="back-link" @click.prevent="goBack"><i class="pi pi-arrow-left" /> {{ backText }}</a>
+            <a href="/expert/equipment" class="back-link" @click.prevent="goBack"><PkIcon class="pi pi-arrow-left" /> {{ backText }}</a>
             <div class="title-row">
               <h2>{{ title }}</h2>
               <div class="title-chips">
-                <span class="status-chip" :class="equipment.status"><i :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
+                <span class="status-chip" :class="equipment.status"><PkIcon :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
                 <span class="active-pill" :class="{ passive: !equipment.is_active }"><span class="dot" /> {{ equipment.is_active ? 'Aktif' : 'Pasif' }}</span>
               </div>
             </div>
             <p v-if="modelText || equipment.variant" class="model">{{ modelText }}<span v-if="equipment.variant" class="tag" :title="equipment.type?.variant_label || 'Etiket'">{{ equipment.variant }}</span></p>
             <dl class="facts">
-              <div><dt><i class="pi pi-hashtag" /> Ekipman no</dt><dd>{{ equipment.code || '—' }}</dd></div>
+              <div><dt><PkIcon class="pi pi-hashtag" /> Ekipman no</dt><dd>{{ equipment.code || '—' }}</dd></div>
               <!-- Konum: firma (işyeri adı varsa "Ad · Firma"); altında varsa birim, alan ve bulunduğu yer -->
-              <div><dt><i class="pi pi-map-marker" /> Konum</dt><dd>{{ workplaceText }}<small v-if="placeText">{{ placeText }}</small></dd></div>
-              <div><dt><i class="pi pi-exclamation-triangle" /> Son kontrol</dt><dd>{{ formatDate(equipment.last_control_date) }}</dd></div>
-              <div><dt><i class="pi pi-calendar" /> Gelecek kontrol</dt><dd>{{ formatDate(equipment.next_control_date) }}</dd></div>
+              <div><dt><PkIcon class="pi pi-map-marker" /> Konum</dt><dd>{{ workplaceText }}<small v-if="placeText">{{ placeText }}</small></dd></div>
+              <div><dt><PkIcon class="pi pi-exclamation-triangle" /> Son kontrol</dt><dd>{{ formatDate(equipment.last_control_date) }}</dd></div>
+              <div><dt><PkIcon class="pi pi-calendar" /> Gelecek kontrol</dt><dd>{{ formatDate(equipment.next_control_date) }}</dd></div>
             </dl>
-            <span v-if="equipment.is_active && equipment.days_left !== null && equipment.days_left !== undefined" class="due-pill" :class="daysKey(equipment.days_left)"><i class="pi pi-calendar" /> {{ dueText(equipment.days_left) }}</span>
-            <button class="primary-button" type="button" @click="startEdit"><i class="pi pi-pencil" /> Bilgileri düzenle</button>
+            <span v-if="equipment.is_active && equipment.days_left !== null && equipment.days_left !== undefined" class="due-pill" :class="daysKey(equipment.days_left)"><PkIcon class="pi pi-calendar" /> {{ dueText(equipment.days_left) }}</span>
+            <button class="primary-button" type="button" @click="startEdit"><PkIcon class="pi pi-pencil" /> Bilgileri düzenle</button>
           </section>
         </div>
 
@@ -42,7 +42,7 @@
           <!-- Son raporun bulguları (listedeki "N bulgu" ile aynı); tümü aşağıdaki Bulgular sekmesinde -->
           <section class="card side-card">
             <header>
-              <i class="pi pi-exclamation-triangle warn-icon" />
+              <PkIcon class="pi pi-exclamation-triangle warn-icon" />
               <h3>Açık bulgular</h3>
               <span class="count-badge" :class="{ none: !findings.length }">{{ findings.length }}</span>
             </header>
@@ -50,11 +50,11 @@
               <li v-for="(finding, index) in findings.slice(0, 2)" :key="index"><span class="dot" /> <span class="clamp">{{ finding }}</span></li>
             </ul>
             <p v-else class="muted">Açık bulgu yok.</p>
-            <button v-if="findings.length" class="link-button" type="button" @click="showTab('findings')">Tüm bulgular <i class="pi pi-angle-right" /></button>
+            <button v-if="findings.length" class="link-button" type="button" @click="showTab('findings')">Tüm bulgular <PkIcon class="pi pi-angle-right" /></button>
           </section>
 
           <section class="card side-card">
-            <header><i class="pi pi-history accent-icon" /><h3>Kontrol geçmişi</h3></header>
+            <header><PkIcon class="pi pi-history accent-icon" /><h3>Kontrol geçmişi</h3></header>
             <ol v-if="equipment.inspections?.length" class="timeline">
               <li v-for="inspection in equipment.inspections.slice(0, 3)" :key="inspection.id">
                 <strong>{{ formatDate(inspection.control_date) }}</strong>
@@ -67,12 +67,12 @@
 
           <!-- Karekod hep hazır (ekipman sayfasının adresi); yazdırma / PNG için etiket penceresi -->
           <section class="card side-card qr-card">
-            <header><i class="pi pi-qrcode accent-icon" /><h3>Karekod</h3></header>
+            <header><PkIcon class="pi pi-qrcode accent-icon" /><h3>Karekod</h3></header>
             <div class="qr-body">
               <button class="qr-image" type="button" title="Etiketi yazdır / indir" aria-label="Etiketi yazdır / indir" @click="qrOpen = true">
                 <QrcodeVue :value="qrUrl" :size="96" level="M" render-as="svg" :margin="1" />
               </button>
-              <button class="soft-button" type="button" @click="qrOpen = true"><i class="pi pi-print" /> Etiketi yazdır</button>
+              <button class="soft-button" type="button" @click="qrOpen = true"><PkIcon class="pi pi-print" /> Etiketi yazdır</button>
             </div>
           </section>
         </div>
@@ -80,7 +80,7 @@
 
       <!-- Pasif ekipman: geçmişi kalır, kontrol eklenmez -->
       <p v-if="!equipment.is_active" class="passive-note">
-        <i class="pi pi-ban" />
+        <PkIcon class="pi pi-ban" />
         <span>
           <strong>Pasif</strong> · {{ formatDate(equipment.deactivated_at) }} tarihinde pasife alındı<template v-if="equipment.deactivation_reason">: {{ reasons[equipment.deactivation_reason] || equipment.deactivation_reason }}</template>.
           <template v-if="equipment.deactivation_note"> {{ equipment.deactivation_note }}</template>
@@ -92,24 +92,24 @@
       <section ref="tabsCard" class="card tabs-card">
         <div class="tabs-row">
           <div class="tabs" role="tablist">
-            <button type="button" role="tab" :aria-selected="listTab === 'checks'" :class="{ active: listTab === 'checks' }" @click="listTab = 'checks'"><i class="pi pi-clipboard" /> Kontroller</button>
-            <button type="button" role="tab" :aria-selected="listTab === 'findings'" :class="{ active: listTab === 'findings' }" @click="listTab = 'findings'"><i class="pi pi-exclamation-triangle" /> Bulgular</button>
-            <button type="button" role="tab" :aria-selected="listTab === 'docs'" :class="{ active: listTab === 'docs' }" @click="listTab = 'docs'"><i class="pi pi-file" /> Belgeler</button>
+            <button type="button" role="tab" :aria-selected="listTab === 'checks'" :class="{ active: listTab === 'checks' }" @click="listTab = 'checks'"><PkIcon class="pi pi-clipboard" /> Kontroller</button>
+            <button type="button" role="tab" :aria-selected="listTab === 'findings'" :class="{ active: listTab === 'findings' }" @click="listTab = 'findings'"><PkIcon class="pi pi-exclamation-triangle" /> Bulgular</button>
+            <button type="button" role="tab" :aria-selected="listTab === 'docs'" :class="{ active: listTab === 'docs' }" @click="listTab = 'docs'"><PkIcon class="pi pi-file" /> Belgeler</button>
           </div>
           <div v-if="!equipment.is_active" class="history-actions">
-            <span class="bound-note"><i class="pi pi-info-circle" /> Pasif ekipmana kontrol eklenmez; önce aktife alın.</span>
+            <span class="bound-note"><PkIcon class="pi pi-info-circle" /> Pasif ekipmana kontrol eklenmez; önce aktife alın.</span>
           </div>
           <!-- Tesisata bağlı ekipman: kontrolü tesisat raporundan gelir, rapor ve rapor bekleniyor tesisatta girilir -->
           <div v-else-if="equipment.installation" class="history-actions">
-            <span class="bound-note"><i class="pi pi-info-circle" /> Kontrolü {{ equipment.installation.name }} raporundan gelir.</span>
-            <NuxtLink class="outline-button" to="/expert/installations">{{ equipment.installation.name }} <i class="pi pi-arrow-right" /></NuxtLink>
-            <button class="primary-button" type="button" @click="planOpen = true"><i class="pi pi-plus" /> Kontrol planla</button>
+            <span class="bound-note"><PkIcon class="pi pi-info-circle" /> Kontrolü {{ equipment.installation.name }} raporundan gelir.</span>
+            <NuxtLink class="outline-button" to="/expert/installations">{{ equipment.installation.name }} <PkIcon class="pi pi-arrow-right" /></NuxtLink>
+            <button class="primary-button" type="button" @click="planOpen = true"><PkIcon class="pi pi-plus" /> Kontrol planla</button>
           </div>
           <div v-else class="history-actions">
             <!-- Rapor bekleniyor: katalogda yok, gizli (SHOW_PENDING_BUTTON); listede satırın "Diğer işlemler" menüsünde -->
-            <button v-if="SHOW_PENDING_BUTTON" class="outline-button" type="button" @click="pendingOpen = true"><i class="pi pi-hourglass" /> Rapor bekleniyor</button>
-            <button v-tooltip.bottom="'Yeni periyodik kontrol raporu yükleyin.'" class="outline-button" type="button" @click="reportOpen = true"><i class="pi pi-upload" /> Rapor yükle</button>
-            <button class="primary-button" type="button" @click="planOpen = true"><i class="pi pi-plus" /> Kontrol planla</button>
+            <button v-if="SHOW_PENDING_BUTTON" class="outline-button" type="button" @click="pendingOpen = true"><PkIcon class="pi pi-hourglass" /> Rapor bekleniyor</button>
+            <button v-tooltip.bottom="'Yeni periyodik kontrol raporu yükleyin.'" class="outline-button" type="button" @click="reportOpen = true"><PkIcon class="pi pi-upload" /> Rapor yükle</button>
+            <button class="primary-button" type="button" @click="planOpen = true"><PkIcon class="pi pi-plus" /> Kontrol planla</button>
           </div>
         </div>
 
@@ -136,9 +136,9 @@
                   <td><strong class="date">{{ formatDate(inspection.control_date) }}</strong><small v-if="index === 0" class="current-tag">Geçerli</small></td>
                   <td>
                     <span class="report-no">{{ inspection.report_no || '—' }}</span>
-                    <small v-if="inspection.source === 'ai'" class="ai-note"><i class="pi pi-sparkles" /> Yapay zekâ ile okundu</small>
+                    <small v-if="inspection.source === 'ai'" class="ai-note"><PkIcon class="pi pi-sparkles" /> Yapay zekâ ile okundu</small>
                   </td>
-                  <td><span class="status-badge big" :class="inspection.status"><i :class="STATUS_ICONS[inspection.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[inspection.status] }}</span></td>
+                  <td><span class="status-badge big" :class="inspection.status"><PkIcon :class="STATUS_ICONS[inspection.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[inspection.status] }}</span></td>
                   <td>
                     <button v-if="inspection.findings?.length" class="link-button count-link" type="button" :aria-expanded="openAnalysis === inspection.id" @click="toggleAnalysis(inspection.id)">{{ inspection.findings.length }}</button>
                     <span v-else>0</span>
@@ -151,11 +151,11 @@
                     <td>{{ inspection.created_by || '—' }}<small class="muted-cell block">{{ formatDateTime(inspection.created_at) }}</small></td>
                   </template>
                   <td>
-                    <button v-if="inspection.has_report" v-tooltip.top="inspection.report_file_name || 'Raporu aç'" class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(inspection)"><i class="pi pi-file-pdf" /></button>
+                    <button v-if="inspection.has_report" v-tooltip.top="inspection.report_file_name || 'Raporu aç'" class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(inspection)"><PkIcon class="pi pi-file-pdf" /></button>
                     <span v-else class="muted">—</span>
                   </td>
                   <td class="actions-col">
-                    <button v-tooltip.top="'Diğer işlemler'" class="icon-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openInspectionMenu($event, inspection)"><i class="pi pi-ellipsis-h" /></button>
+                    <button v-tooltip.top="'Diğer işlemler'" class="icon-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="openInspectionMenu($event, inspection)"><PkIcon class="pi pi-ellipsis-h" /></button>
                   </td>
                 </tr>
                 <tr v-if="openAnalysis === inspection.id" class="analysis-row">
@@ -175,7 +175,7 @@
                       </div>
                     </div>
                     <template v-if="inspection.analysis">
-                      <h4 class="analysis-title"><i class="pi pi-sparkles" /> Yapay zeka analizi</h4>
+                      <h4 class="analysis-title"><PkIcon class="pi pi-sparkles" /> Yapay zeka analizi</h4>
                       <ExpertEquipmentAnalysisDetail :analysis="inspection.analysis" :equipment-id="equipment.id" :inspection-id="inspection.id" @updated="equipment = $event" />
                     </template>
                   </td>
@@ -201,9 +201,9 @@
         <div v-else class="tab-body">
           <ul v-if="reportFiles.length" class="doc-list">
             <li v-for="inspection in reportFiles" :key="inspection.id">
-              <button class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(inspection)"><i class="pi pi-file-pdf" /></button>
+              <button class="pdf-button" type="button" aria-label="Raporu aç" @click="openReport(inspection)"><PkIcon class="pi pi-file-pdf" /></button>
               <span class="doc-text"><strong>{{ inspection.report_no || inspection.report_file_name || 'Periyodik kontrol raporu' }}</strong><small>{{ formatDate(inspection.control_date) }} kontrolü<template v-if="inspection.report_file_name && inspection.report_no"> · {{ inspection.report_file_name }}</template></small></span>
-              <button class="link-button" type="button" @click="openReport(inspection)">Aç <i class="pi pi-external-link" /></button>
+              <button class="link-button" type="button" @click="openReport(inspection)">Aç <PkIcon class="pi pi-external-link" /></button>
             </li>
           </ul>
           <p v-else class="state">Henüz rapor dosyası yok. Rapor yüklenince burada listelenir.</p>
@@ -217,7 +217,7 @@
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-title">
         <div class="modal-head">
           <div><h2 id="edit-title">Bilgileri düzenle</h2><p>{{ title }}</p></div>
-          <button class="close-button" type="button" aria-label="Kapat" :disabled="savingEdit" @click="editing = false"><i class="pi pi-times" /></button>
+          <button class="close-button" type="button" aria-label="Kapat" :disabled="savingEdit" @click="editing = false"><PkIcon class="pi pi-times" /></button>
         </div>
         <div class="tabs modal-tabs">
           <button type="button" :class="{ active: tab === 'info' }" @click="tab = 'info'">Bilgiler</button>
@@ -267,20 +267,20 @@
             <label>Bulunduğu yer<input v-model="editForm.place" type="text" /></label>
             <label class="wide">Not<textarea v-model="editForm.notes" rows="2" /></label>
           </div>
-          <p v-if="locationMoved" class="hint-text"><i class="pi pi-info-circle" /> Ekipman kontrol kayıtları ve raporlarıyla birlikte {{ editLocationName }} lokasyonuna taşınacak. Birim ve alan yeni lokasyonda yeniden seçilir.</p>
+          <p v-if="locationMoved" class="hint-text"><PkIcon class="pi pi-info-circle" /> Ekipman kontrol kayıtları ve raporlarıyla birlikte {{ editLocationName }} lokasyonuna taşınacak. Birim ve alan yeni lokasyonda yeniden seçilir.</p>
 
           <!-- Fotoğraf (hemen kaydedilir) -->
           <div class="photo-row">
             <div class="photo" :class="{ empty: !equipment.photo_url }">
               <img v-if="equipment.photo_url" :src="equipment.photo_url" :alt="equipment.type?.name" />
-              <i v-else class="pi pi-image" />
+              <PkIcon v-else class="pi pi-image" />
             </div>
             <input ref="photoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="uploadPhoto" />
             <div class="photo-actions">
               <strong>Fotoğraf</strong>
               <div>
                 <button class="secondary-button" type="button" :disabled="photoBusy" @click="photoInput?.click()">
-                  <i :class="photoBusy ? 'pi pi-spin pi-spinner' : 'pi pi-upload'" /> {{ equipment.photo_url ? 'Değiştir' : 'Fotoğraf yükle' }}
+                  <PkIcon :class="photoBusy ? 'pi pi-spin pi-spinner' : 'pi pi-upload'" /> {{ equipment.photo_url ? 'Değiştir' : 'Fotoğraf yükle' }}
                 </button>
                 <button v-if="equipment.photo_url" class="link-button danger" type="button" :disabled="photoBusy" @click="removePhoto">Kaldır</button>
               </div>
@@ -292,9 +292,9 @@
 
         <div class="modal-actions">
           <div class="modal-actions-left">
-            <button v-if="equipment.is_active" class="secondary-button" type="button" @click="editing = false; deactivateOpen = true"><i class="pi pi-ban" /> Pasife al</button>
-            <button v-else class="secondary-button" type="button" :disabled="activating" @click="activate"><i class="pi pi-check-circle" /> Aktife al</button>
-            <button class="link-button danger" type="button" @click="removeEquipment"><i class="pi pi-trash" /> Ekipmanı sil</button>
+            <button v-if="equipment.is_active" class="secondary-button" type="button" @click="editing = false; deactivateOpen = true"><PkIcon class="pi pi-ban" /> Pasife al</button>
+            <button v-else class="secondary-button" type="button" :disabled="activating" @click="activate"><PkIcon class="pi pi-check-circle" /> Aktife al</button>
+            <button class="link-button danger" type="button" @click="removeEquipment"><PkIcon class="pi pi-trash" /> Ekipmanı sil</button>
           </div>
           <button class="secondary-button" type="button" :disabled="savingEdit" @click="editing = false">{{ tab === 'info' ? 'İptal' : 'Kapat' }}</button>
           <button v-if="tab === 'info'" class="primary-button" type="button" :disabled="savingEdit" @click="saveEdit">{{ savingEdit ? 'Kaydediliyor...' : 'Kaydet' }}</button>
@@ -302,7 +302,7 @@
       </section>
     </div>
 
-    <Menu ref="inspectionMenu" :model="inspectionMenuItems" popup :pt="{ root: { style: MENU_VARS } }" />
+    <Menu ref="inspectionMenu" :model="inspectionMenuItems" popup :pt="{ root: { style: MENU_VARS } }"><template #itemicon="{ item }"><PkIcon :class="item.icon" class="p-menu-item-icon" /></template></Menu>
     <ExpertEquipmentReportModal v-if="reportOpen && equipment" :equipment="equipment" @close="reportOpen = false" @saved="onInspectionSaved" />
     <ExpertEquipmentPendingModal v-if="pendingOpen && equipment" :equipment="equipment" @close="pendingOpen = false" @saved="onInspectionSaved" />
     <ExpertEquipmentInspectionEditModal v-if="editingInspection && equipment" :equipment="equipment" :inspection="editingInspection" @close="editingInspection = null" @saved="onInspectionSaved" />

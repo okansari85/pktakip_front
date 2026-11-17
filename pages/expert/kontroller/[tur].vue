@@ -1,11 +1,11 @@
 <template>
   <div class="control-page">
     <nav class="crumbs" aria-label="Sayfa yolu">
-      <NuxtLink to="/expert"><i class="pi pi-home" /> Genel Bakış</NuxtLink><i class="pi pi-angle-right" /><span>{{ bucket.title }}</span>
+      <NuxtLink to="/expert"><PkIcon class="pi pi-home" /> Genel Bakış</NuxtLink><PkIcon class="pi pi-angle-right" /><span>{{ bucket.title }}</span>
     </nav>
     <h1>{{ bucket.title }} <template v-if="!loading">({{ filtered.length }})</template></h1>
 
-    <div v-if="rows.length" class="notice" :class="bucket.tone"><i :class="bucket.icon" /><span>{{ bucket.message }}</span></div>
+    <div v-if="rows.length" class="notice" :class="bucket.tone"><PkIcon :class="bucket.icon" /><span>{{ bucket.message }}</span></div>
 
     <div class="filters">
       <label>Firma
@@ -17,20 +17,20 @@
       <label>Tür
         <select v-model="kind"><option value="">Tümü</option><option value="Ekipman">Ekipman</option><option value="Tesisat">Tesisat</option></select>
       </label>
-      <label class="search"><span class="sr-only">Ara</span><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Ekipman veya tesisat adı ile ara..." /></label>
+      <label class="search"><span class="sr-only">Ara</span><PkIcon class="pi pi-search" /><input v-model="search" type="text" placeholder="Ekipman veya tesisat adı ile ara..." /></label>
     </div>
 
     <section class="card">
-      <div v-if="loading" class="state"><i class="pi pi-spin pi-spinner" /> Yükleniyor...</div>
+      <div v-if="loading" class="state"><PkIcon class="pi pi-spin pi-spinner" /> Yükleniyor...</div>
       <div v-else-if="error" class="state error">{{ error }}<button class="retry" type="button" @click="loadData">Tekrar Dene</button></div>
       <template v-else>
         <ExpertControlRowsTable :rows="paged" :empty="rows.length ? 'Seçiminizle eşleşen kontrol yok.' : 'Bu aralıkta kontrol yok.'" @select="date = $event" />
         <footer v-if="filtered.length">
           <span>Toplam {{ filtered.length }} kayıt</span>
           <div v-if="pageCount > 1" class="pager">
-            <button type="button" aria-label="Önceki sayfa" :disabled="page <= 1" @click="page--"><i class="pi pi-angle-left" /></button>
+            <button type="button" aria-label="Önceki sayfa" :disabled="page <= 1" @click="page--"><PkIcon class="pi pi-angle-left" /></button>
             <span>{{ page }} / {{ pageCount }}</span>
-            <button type="button" aria-label="Sonraki sayfa" :disabled="page >= pageCount" @click="page++"><i class="pi pi-angle-right" /></button>
+            <button type="button" aria-label="Sonraki sayfa" :disabled="page >= pageCount" @click="page++"><PkIcon class="pi pi-angle-right" /></button>
           </div>
         </footer>
       </template>
