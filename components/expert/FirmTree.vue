@@ -1348,8 +1348,11 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text small { color: var(--admin-muted); font-size: 12px; }
 /* Dalın lokasyon listesi (şemanın yerinde) + üstte ayrı başlık kartı */
 .main-col { display: grid; gap: 16px; min-width: 0; }
-/* Başlık kartı dalın renginde hafif zemin (ör. Müdahale turuncu-sarı), çerçeve yok */
-.list-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; border-radius: var(--pk-radius); background: color-mix(in srgb, var(--dal) 10%, var(--admin-card)); box-shadow: var(--pk-card-shadow); }
+/* Başlık kartı: dalın renginde sol üstten ışık, sağa doğru beyaza eriyen geçiş (ör. Müdahale turuncu-sarı); çerçeve yok */
+.list-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; border-radius: var(--pk-radius); background:
+    radial-gradient(90% 160% at 0% 0%, color-mix(in srgb, var(--dal) 26%, transparent) 0%, transparent 60%),
+    linear-gradient(100deg, color-mix(in srgb, var(--dal) 14%, var(--admin-card)) 0%, color-mix(in srgb, var(--dal) 4%, var(--admin-card)) 45%, var(--admin-card) 75%);
+  box-shadow: var(--pk-card-shadow); }
 .list-banner-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-card); color: var(--pk-violet-dark); font-size: 18px; }
 .list-banner > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .list-banner h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 700; }
