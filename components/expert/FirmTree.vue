@@ -50,7 +50,7 @@
         </section>
         <section v-if="listNode" class="card loc-cards-card">
           <ul class="loc-rows">
-            <li v-for="location in filteredList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
+            <li v-for="location in pagedList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
               <span class="loc-row-main">
                 <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
                 <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ location.address || 'Adres girilmemiş' }}</small></span>
@@ -73,6 +73,18 @@
             </li>
             <li v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</li>
           </ul>
+          <!-- Sayfalama: sayfa başına 5 lokasyon -->
+          <nav v-if="pageCount > 1" class="loc-pager" aria-label="Lokasyon sayfaları">
+            <span class="loc-pager-info">{{ (listPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(listPage * PAGE_SIZE, filteredList.length) }} / {{ filteredList.length }}</span>
+            <span class="loc-pager-pages">
+              <button type="button" :disabled="listPage === 1" aria-label="Önceki sayfa" @click="listPage--"><ChevronLeft :size="16" :stroke-width="1.9" /></button>
+              <template v-for="n in pageButtons" :key="String(n)">
+                <span v-if="n === '…'" class="loc-pager-gap">…</span>
+                <button v-else type="button" :class="{ on: n === listPage }" :aria-current="n === listPage ? 'page' : undefined" @click="listPage = n as number">{{ n }}</button>
+              </template>
+              <button type="button" :disabled="listPage === pageCount" aria-label="Sonraki sayfa" @click="listPage++"><ChevronRight :size="16" :stroke-width="1.9" /></button>
+            </span>
+          </nav>
         </section>
         <section v-else class="card schema-card">
           <header class="schema-head">
@@ -396,7 +408,7 @@
 <script setup lang="ts">
 // Bireysel uzmanın firma sayfası: tek pencere, bütün yapı ağaçta; işlemler satırda, formlar satırın altında. Lokasyon herhangi bir düğüme bağlanan boş bir yerdir; firmalar lokasyonda faaliyet gösterir.
 import { customerTypeLabel } from '~/composables/useCustomerTypes'
-import { ArrowLeft, BriefcaseBusiness, Building2, ChevronRight, CircleCheck, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
+import { ArrowLeft, BriefcaseBusiness, Building2, ChevronLeft, ChevronRight, CircleCheck, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
 import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, type NaceItem } from '~/composables/useExpertApi'
 import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress, WorkplaceRowDraft } from '~/composables/useFirmSetup'
 import type { Workplace } from '~/composables/useWorkplaceContext'
@@ -705,6 +717,21 @@ function closeList() {
   listNodeId.value = null
   listQuery.value = ''
 }
+// Sayfalama (sayfa başına 5); arama ya da başka dalın listesi açılınca ilk sayfa
+const PAGE_SIZE = 5
+const listPage = ref(1)
+const pageCount = computed(() => Math.max(1, Math.ceil(filteredList.value.length / PAGE_SIZE)))
+const pagedList = computed(() => filteredList.value.slice((listPage.value - 1) * PAGE_SIZE, listPage.value * PAGE_SIZE))
+const pageButtons = computed<(number | '…')[]>(() => {
+  const n = pageCount.value, p = listPage.value
+  if (n <= 7) return Array.from({ length: n }, (_, i) => i + 1)
+  const set = [1, p - 1, p, p + 1, n].filter(x => x >= 1 && x <= n)
+  const out: (number | '…')[] = []
+  ;[...new Set(set)].sort((a, b) => a - b).forEach((x, i, arr) => { if (i && x - arr[i - 1] > 1) out.push('…'); out.push(x) })
+  return out
+})
+watch([listQuery, listNodeId], () => { listPage.value = 1 })
+watch(pageCount, (n) => { if (listPage.value > n) listPage.value = n })
 const moveTargets = computed(() => focusLocation.value ? flatten(nodes.value).filter(n => String(n.id) !== String(focusLocation.value!.organization_id)) : [])
 async function onMoveSelect(location: FirmLocation, nodeId: string) {
   const target = nodeId ? nodeById(nodeId) : null
@@ -1371,6 +1398,14 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-row:hover, .loc-row:focus-visible { outline: 0; background: rgba(145, 158, 171, .05); }
 .loc-row.selected { background: var(--admin-accent-soft); }
 .loc-rows > .location-empty { padding: 24px; text-align: center; }
+.loc-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 22px; border-top: 1px solid rgba(145, 158, 171, .2); }
+.loc-pager-info { color: var(--admin-muted); font-size: 13px; }
+.loc-pager-pages { display: flex; align-items: center; gap: 4px; }
+.loc-pager-pages button { min-width: 32px; height: 32px; display: grid; place-items: center; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.loc-pager-pages button:hover:not(:disabled) { background: rgba(145, 158, 171, .12); }
+.loc-pager-pages button.on { background: var(--pk-accent); color: var(--pk-on-accent); }
+.loc-pager-pages button:disabled { opacity: .35; cursor: default; }
+.loc-pager-gap { padding: 0 4px; color: var(--admin-muted); }
 .loc-row-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .loc-row-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px dashed rgba(145, 158, 171, .24); }
 .loc-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
