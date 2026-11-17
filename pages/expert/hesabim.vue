@@ -1,7 +1,7 @@
 <template>
   <div class="profile-page">
-    <!-- Tasarım kataloğu 17-20: solda başlık, sekmeler ve bölümün ana kartı; sağda bölümün çizimi -->
-    <div class="top">
+    <!-- Solda başlık, sekmeler ve bölümün ana kartı; sağda (Profil, Fatura bilgileri) yan kart -->
+    <div class="top" :class="{ single: tab === 'package' || tab === 'orders' }">
       <div class="main-col">
         <div class="page-head">
           <!-- Ana Sayfa yalnız bireysel uzmanda var; diğer hesaplarda sayfa yolu Genel Bakış'ta başlar -->
@@ -33,6 +33,7 @@
           <header class="package-head">
             <h2 class="card-title">Mevcut paketiniz</h2>
             <span v-if="billing" class="package-tag">{{ billing.package?.name || MODE_LABELS[billing.mode] }}</span>
+            <span v-if="billing && billing.mode !== 'none'" class="status-pill ok">Aktif</span>
           </header>
           <dl class="package-rows">
             <div>
@@ -159,21 +160,12 @@
         </form>
       </div>
 
-      <aside class="side-col">
-        <!-- Profil: katalogdaki yaka kartı (katalog 17'den kırpıldı; karttaki kişi adı silindi, kullanıcının adı yazılır) -->
+      <aside v-if="tab === 'profile' || tab === 'billing'" class="side-col">
         <template v-if="tab === 'profile'">
-          <figure class="hero">
-            <div class="hero-art badge-art">
-              <img src="/katalog/profil-katalog.webp" alt="" />
-              <span class="hero-pill"><i class="pi pi-check" /><span><small>Hesap durumu</small><strong>Aktif</strong></span></span>
-              <span class="badge-initials" aria-hidden="true">{{ initials }}</span>
-              <span class="badge-name" aria-hidden="true">{{ profile.name || user?.name }}</span>
-              <span class="badge-role" aria-hidden="true">{{ roleLabel }}</span>
-            </div>
-          </figure>
           <section class="card side-card">
             <h2 class="card-title">Hesap bilgileri</h2>
             <dl class="info-rows">
+              <div><dt><i class="pi pi-check-circle" /> Hesap durumu</dt><dd><span class="status-pill ok">Aktif</span></dd></div>
               <div><dt><i class="pi pi-user" /> Rol</dt><dd>{{ roleLabel }}</dd></div>
               <div><dt><i class="pi pi-clone" /> Paket</dt><dd>{{ billing ? billing.package?.name || MODE_LABELS[billing.mode] : '—' }}</dd></div>
               <div><dt><i class="pi pi-box" /> Kredi</dt><dd>{{ billing ? billing.unlimited ? 'Sınırsız' : `${billing.credits ?? 0} kredi` : '—' }}</dd></div>
@@ -181,32 +173,10 @@
           </section>
         </template>
 
-        <!-- Fatura bilgileri: katalogdaki bina ve fatura (katalog 18'den kırpıldı) -->
-        <template v-else-if="tab === 'billing'">
-          <figure class="hero">
-            <div class="hero-art">
-              <img src="/katalog/fatura-katalog.webp" alt="" />
-              <span class="hero-pill doc"><i class="pi pi-file" /><strong>Fatura profili</strong></span>
-            </div>
-          </figure>
-          <section class="card side-card note-card">
-            <span class="note-icon"><i class="pi pi-file" /></span>
-            <div><h2>Faturalandırma</h2><p>Paket ödemelerinizde bu bilgiler kullanılır.</p></div>
-          </section>
-        </template>
-
-        <!-- Paketim: katalogdaki küpler ve jetonlar (katalog 19'dan kırpıldı) -->
-        <figure v-else-if="tab === 'package'" class="hero">
-          <div class="hero-art">
-            <img src="/katalog/paketim-katalog.webp" alt="" />
-            <span v-if="billing" class="hero-pill package-pill"><i class="pi pi-check" /><span><strong class="plain">{{ billing.package?.name || MODE_LABELS[billing.mode] }}</strong><strong v-if="billing.mode !== 'none'">Aktif</strong></span></span>
-          </div>
-        </figure>
-
-        <!-- Ödemelerim: katalogdaki fatura kutusu (katalog 20'den kırpıldı) -->
-        <figure v-else-if="tab === 'orders'" class="hero">
-          <div class="hero-art"><img src="/katalog/odemelerim-katalog.webp" alt="" /></div>
-        </figure>
+        <section v-else class="card side-card note-card">
+          <span class="note-icon"><i class="pi pi-file" /></span>
+          <div><h2>Faturalandırma</h2><p>Paket ödemelerinizde bu bilgiler kullanılır.</p></div>
+        </section>
       </aside>
     </div>
 
@@ -329,23 +299,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-page { margin: 0 auto; display: grid; gap: 20px; }
-.page-head h1 { margin: 0; color: var(--admin-heading); font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
+.profile-page { margin: 0 auto; display: grid; gap: 24px; }
+.page-head h1 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head p { margin: 7px 0 0; color: var(--admin-muted); font-size: 15px; }
 .crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--admin-muted); font-size: 13px; }
 .crumb a { color: var(--admin-muted); } .crumb a:hover { color: var(--admin-heading); }
 .crumb strong { color: var(--admin-heading); font-weight: 600; } .crumb .pi-angle-right { font-size: 11px; }
-/* Üst: solda başlık, sekmeler, ana kart; sağda çizim */
-.top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; }
-.main-col, .side-col { display: grid; gap: 20px; min-width: 0; }
+/* Üst: solda başlık, sekmeler, ana kart; sağda yan kart (Paketim / Ödemelerim'de yok, tek sütun) */
+.top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.top.single { grid-template-columns: minmax(0, 1fr); }
+.main-col, .side-col { display: grid; gap: 24px; min-width: 0; }
 /* Sekmeler: hap görünümlü, seçili mavi */
-.tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 6px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); box-shadow: 0 8px 22px rgba(var(--pk-shadow-rgb), .05); }
-.tabs button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 22px; border: 0; border-radius: 10px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 15.5px; font-weight: 500; cursor: pointer; }
-.tabs button:hover { background: var(--admin-hover); }
-.tabs button.active { background: var(--pk-accent); color: var(--pk-on-accent); font-weight: 600; }
-.card { padding: 22px 24px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .05); }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 10px; background: var(--admin-card); }
+.tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tabs button:hover { background: rgba(145, 158, 171, .08); color: var(--admin-heading); }
+.tabs button.active { background: var(--pk-accent); color: var(--pk-on-accent); font-weight: 700; }
+.card { padding: 24px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
 .card.wide { max-width: none; }
-.card-title { margin: 0 0 18px; color: var(--admin-heading); font-size: 24px; font-weight: 800; }
+.card-title { margin: 0 0 18px; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
 .card-head { display: flex; gap: 14px; margin-bottom: 18px; }
 .card-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--admin-soft); color: var(--admin-link); }
 .card-head h2 { margin: 0; color: var(--admin-heading); font-size: 17px; }
@@ -354,20 +325,20 @@ onMounted(() => {
 /* Profil bilgileri */
 .profile-form { display: grid; gap: 20px; }
 .profile-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; }
-.avatar-col { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-right: 28px; border-right: 1px solid var(--admin-border); }
+.avatar-col { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-right: 28px; border-right: 1px dashed rgba(145, 158, 171, .24); }
 .initials-avatar { width: 140px; height: 140px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-text); color: var(--pk-surface); font-size: 46px; font-weight: 800; letter-spacing: 1px; }
-.soft-button { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-link); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
-.soft-button:hover { border-color: var(--pk-accent); }
+.soft-button { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.soft-button:hover { background: rgba(145, 158, 171, .08); }
 .fields { display: grid; gap: 14px; }
 .field { display: grid; gap: 6px; }
 .field label { color: var(--admin-heading); font-size: 14px; font-weight: 700; }
-.field input, .field select { height: 44px; padding: 0 16px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 15.5px; }
+.field input, .field select { height: 44px; padding: 0 16px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 .field input[readonly] { font-weight: 600; }
 .field input:focus, .field select:focus { outline: 0; border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--pk-focus-ring); }
 .info { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--admin-muted); font-size: 13px; }
 .req { color: var(--admin-danger-text); }
 .avatars { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
-.avatar-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 12px; border: 1px solid var(--admin-border); border-radius: 12px; cursor: pointer; color: var(--admin-heading); font-size: 13px; }
+.avatar-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 12px; cursor: pointer; color: var(--admin-heading); font-size: 13px; }
 .avatar-option.selected { border-color: var(--admin-link); background: var(--admin-accent-soft); }
 .avatar-option input { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; accent-color: var(--admin-link); }
 .avatar-option:focus-within { outline: 2px solid var(--admin-link); outline-offset: 2px; }
@@ -376,76 +347,59 @@ onMounted(() => {
 .message { margin-right: auto; font-size: 13.5px; }
 .message.error { color: var(--admin-danger-text); }
 .message.ok { color: var(--admin-success-text); }
-.primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; min-width: 260px; padding: 0 24px; border: 0; border-radius: 12px; background: var(--pk-accent); color: var(--pk-on-accent); font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; }
+.primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 44px; min-width: 260px; padding: 0 22px; border: 0; border-radius: 8px; background: var(--pk-accent); color: var(--pk-on-accent); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .primary-button:hover { background: var(--pk-accent-hover); }
 .primary-button:disabled { opacity: .55; cursor: not-allowed; }
-.outline-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; min-width: 110px; padding: 0 22px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
-.outline-button:hover { background: var(--admin-hover); }
-.secondary-button { margin-left: 12px; height: 36px; padding: 0 14px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--admin-card); color: var(--admin-text); cursor: pointer; }
-.state { padding: 30px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-muted); }
+.outline-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; min-width: 110px; padding: 0 20px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.outline-button:hover { background: rgba(145, 158, 171, .08); }
+.secondary-button { margin-left: 12px; height: 36px; padding: 0 14px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-text); cursor: pointer; }
+.state { padding: 30px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); color: var(--admin-muted); box-shadow: var(--pk-card-shadow); }
 .state.error { color: var(--admin-danger-text); }
-/* Sağ sütun: çizim ve yan kart */
-.hero { min-width: 0; margin: 0; display: flex; justify-content: center; }
-.hero-art { position: relative; width: min(100%, 560px); container-type: inline-size; }
-.hero-art img { display: block; width: 100%; }
-.hero-pill { position: absolute; top: 2%; left: 2%; display: inline-flex; align-items: center; gap: 12px; padding: 12px 22px 12px 14px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 10px 26px rgba(var(--pk-shadow-rgb), .1); }
-.hero-pill > i { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-success-text); color: var(--pk-on-accent); font-size: 14px; }
-.hero-pill > span { display: grid; }
-.hero-pill small { color: var(--admin-heading); font-size: 14px; font-weight: 600; }
-.hero-pill strong { color: var(--admin-success-text); font-size: 19px; font-weight: 800; }
-/* Yaka kartının üstüne kullanıcının baş harfleri, adı ve rolü (görselle birlikte büyür, kartın eğimiyle) */
-.badge-initials, .badge-name, .badge-role { position: absolute; transform: translate(-50%, -50%) rotate(7deg); white-space: nowrap; pointer-events: none; }
-.badge-initials { left: 43.2%; top: 54.3%; color: var(--pk-surface); font-size: 6.2cqw; font-weight: 800; }
-.badge-name { left: 41.6%; top: 66.6%; max-width: 46%; overflow: hidden; text-overflow: ellipsis; color: var(--pk-text); font-size: 3.7cqw; font-weight: 800; }
-.badge-role { left: 39.8%; top: 72%; color: var(--pk-muted); font-size: 2.8cqw; font-weight: 500; }
-.hero-pill.doc { top: 19%; gap: 14px; padding: 14px 26px 14px 18px; }
-.hero-pill.doc > i { width: auto; height: auto; background: none; color: var(--admin-link); font-size: 24px; }
-.hero-pill.doc strong { color: var(--admin-heading); font-size: 18px; font-weight: 600; }
-.package-pill { top: 6%; left: auto; right: 4%; }
-.package-pill strong.plain { color: var(--admin-heading); font-size: 17px; }
+/* Durum hapı (Aktif) */
+.status-pill { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.status-pill.ok { background: var(--admin-success-bg); color: var(--admin-success-text); }
 /* Mevcut paketiniz */
-.package-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
-.package-head .card-title { margin: 0; }
-.package-tag { padding: 4px 14px; border: 1px solid var(--pk-accent); border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 16px; font-weight: 700; }
+.package-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.package-head .card-title { margin: 0 4px 0 0; }
+.package-tag { padding: 2px 8px; border-radius: 6px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 12px; font-weight: 700; }
 .package-rows { display: grid; margin: 0; }
 .package-rows div { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: center; gap: 16px; padding: 12px 0; }
-.package-rows div + div { border-top: 1px solid var(--admin-border); }
-.package-rows dt { display: flex; align-items: center; gap: 14px; padding-right: 16px; border-right: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 16px; font-weight: 600; }
-.row-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 17px; }
-.package-rows dd { margin: 0; color: var(--admin-text); font-size: 18px; }
-.package-rows dd strong { color: var(--admin-heading); font-size: 30px; font-weight: 800; }
-.package-rows dd strong small { color: var(--admin-heading); font-size: 28px; font-weight: 700; }
+.package-rows div + div { border-top: 1px dashed rgba(145, 158, 171, .24); }
+.package-rows dt { display: flex; align-items: center; gap: 14px; padding-right: 16px; color: var(--admin-heading); font-size: 14px; font-weight: 600; }
+.row-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); font-size: 16px; }
+.package-rows dd { margin: 0; color: var(--admin-text); font-size: 15px; }
+.package-rows dd strong { color: var(--admin-heading); font-size: 24px; font-weight: 700; }
+.package-rows dd strong small { color: var(--admin-heading); font-size: 22px; font-weight: 700; }
 .usage-cell { display: flex; align-items: center; gap: 16px; }
 .usage-cell > small { color: var(--admin-muted); font-size: 15px; }
 .usage { flex: 1; height: 10px; }
 .package-actions { display: flex; align-items: center; gap: 36px; flex-wrap: wrap; margin-top: 16px; }
 .package-actions .primary-button { min-width: 0; }
-.credit-link { display: inline-flex; align-items: center; gap: 10px; color: var(--admin-link); font-size: 17px; font-weight: 700; text-decoration: underline; }
+.credit-link { display: inline-flex; align-items: center; gap: 10px; color: var(--admin-link); font-size: 14px; font-weight: 700; text-decoration: underline; }
 /* Ödeme özeti */
 .orders-card .card-title { margin-bottom: 6px; }
 .orders-card .info-rows { margin-bottom: 18px; }
-.order-chip { display: inline-block; padding: 4px 16px; border-radius: 999px; font-size: 16px; font-weight: 700; }
+.order-chip { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
 .order-chip.paid { background: var(--admin-success-bg); color: var(--admin-success-text); }
 .order-chip.failed { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
 .order-chip.pending { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
 .order-chip.attention { background: var(--admin-accent-soft); color: var(--admin-link); }
-.outline-button.blue { border: 1.5px solid var(--pk-accent); color: var(--admin-link); }
+.outline-button.blue { color: var(--admin-link); }
 .outline-button.blue:hover { background: var(--admin-accent-soft); }
 .side-card .card-title { margin-bottom: 8px; }
 .note-card { display: flex; align-items: center; gap: 20px; }
-.note-icon { flex: none; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 16px; background: var(--admin-soft); color: var(--admin-heading); font-size: 30px; box-shadow: 0 6px 16px rgba(var(--pk-shadow-rgb), .08); }
-.note-card h2 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 800; }
-.note-card p { margin: 6px 0 0; color: var(--admin-text); font-size: 16px; }
+.note-icon { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 14px; background: var(--pk-info-lighter); color: var(--pk-info-dark); font-size: 22px; }
+.note-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+.note-card p { margin: 6px 0 0; color: var(--admin-muted); font-size: 14px; }
 .info-rows { display: grid; margin: 0; }
-.info-rows div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; }
-.info-rows div + div { border-top: 1px solid var(--admin-border); }
-.info-rows dt { display: flex; align-items: center; gap: 14px; color: var(--admin-heading); font-size: 16px; }
-.info-rows dt i { color: var(--admin-muted); font-size: 18px; }
-.info-rows dd { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 800; }
-@media (max-width: 1200px) { .top { grid-template-columns: 1fr; } .side-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.info-rows div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.info-rows div + div { border-top: 1px dashed rgba(145, 158, 171, .24); }
+.info-rows dt { display: flex; align-items: center; gap: 12px; color: var(--admin-text); font-size: 14px; }
+.info-rows dt i { color: var(--admin-muted); font-size: 16px; }
+.info-rows dd { margin: 0; color: var(--admin-heading); font-size: 14px; font-weight: 700; }
+@media (max-width: 1200px) { .top { grid-template-columns: 1fr; } }
 @media (max-width: 800px) {
-  .page-head h1 { font-size: 30px; }
-  .side-col { grid-template-columns: 1fr; }
+  .page-head h1 { font-size: 22px; }
   .profile-body { grid-template-columns: 1fr; }
   .avatar-col { padding: 0 0 18px; border-right: 0; border-bottom: 1px solid var(--admin-border); }
   .avatars { grid-template-columns: 1fr; }

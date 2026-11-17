@@ -187,14 +187,14 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 
 <style scoped>
 /* Sayfa uzasa da menü ekran boyunda sabit kalır (yapışık); menü ekrana sığmazsa kendi içinde kayar.
-   Tasarım kataloğu: zeminin üstünde yüzen açık panel, seçili satır mavi. Renkler yalnız bu menüde (süper admin paneli aynı kalır). */
+   Behance CRM tasarımı: ekranın soluna yaslı düz beyaz panel, sağda ince çizgi; seçili satır açık mavi zemin + mavi yazı. */
 .expert-sidebar {
-  --admin-sidebar: rgba(255, 255, 255, .9); --admin-sidebar-text: #344054; --admin-sidebar-muted: #667085;
-  --admin-sidebar-hover: var(--admin-accent-soft); --admin-sidebar-border: rgba(15, 23, 42, .07); --admin-sidebar-strong: #0f172a;
-  position: sticky; top: 14px; align-self: flex-start; width: 250px; height: calc(100vh - 28px); margin: 14px 0 14px 14px; overflow-y: auto; padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0;
-  background: var(--admin-sidebar); color: var(--admin-sidebar-text); border: 1px solid var(--admin-sidebar-border); border-radius: 22px; box-shadow: 0 14px 36px rgba(var(--pk-shadow-rgb), .08); transition: width .2s ease, padding .2s ease;
+  --admin-sidebar: var(--admin-surface); --admin-sidebar-text: #637381; --admin-sidebar-muted: #919eab;
+  --admin-sidebar-hover: rgba(145, 158, 171, .08); --admin-sidebar-border: rgba(145, 158, 171, .2); --admin-sidebar-strong: #212b36;
+  position: sticky; top: 0; align-self: flex-start; width: 264px; height: 100vh; margin: 0; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; flex-shrink: 0;
+  background: var(--admin-sidebar); color: var(--admin-sidebar-text); border-right: 1px solid var(--admin-sidebar-border); transition: width .2s ease, padding .2s ease;
 }
-:global(.dark-theme) .expert-sidebar { --admin-sidebar: rgba(15, 23, 42, .9); --admin-sidebar-text: #cbd5e1; --admin-sidebar-muted: #94a3b8; --admin-sidebar-hover: var(--admin-accent-soft); --admin-sidebar-border: #1e293b; --admin-sidebar-strong: #fff; box-shadow: 0 14px 36px rgba(0, 0, 0, .35); }
+:global(.dark-theme) .expert-sidebar { --admin-sidebar-text: #cbd5e1; --admin-sidebar-muted: #94a3b8; --admin-sidebar-hover: rgba(148, 163, 184, .1); --admin-sidebar-border: #1e293b; --admin-sidebar-strong: #fff; }
 .expert-sidebar.collapsed { width: 84px; padding-left: 12px; padding-right: 12px; }
 .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 4px 10px 20px; }
 .brand-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: var(--pk-logo); mask: var(--pk-logo-shape) center / contain no-repeat; color: var(--pk-on-accent); font-size: 22px; font-weight: 800; }
@@ -202,18 +202,19 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .collapsed .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
 .sidebar-brand strong span { color: inherit; }
 .sidebar-brand small { display: block; margin-top: 2px; color: var(--admin-sidebar-muted); font-size: 10px; }
-.sidebar-label { padding: 0 12px 8px; color: var(--admin-sidebar-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.sidebar-label { padding: 0 14px 8px; color: var(--admin-sidebar-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
 .sidebar-nav { display: grid; gap: 5px; }
-.sidebar-link { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 0 13px; border-radius: 12px; color: var(--admin-sidebar-text); transition: .15s ease; }
+.sidebar-link { display: flex; align-items: center; gap: 14px; min-height: 46px; padding: 0 14px; border-radius: 8px; color: var(--admin-sidebar-text); font-size: 14px; font-weight: 500; transition: background .15s ease, color .15s ease; }
 .collapsed .sidebar-link { justify-content: center; padding: 0; }
 .sidebar-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
-.sidebar-link.router-link-active { background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 700; box-shadow: 0 6px 16px rgba(var(--pk-accent-rgb), .3); }
+.sidebar-link.router-link-active { background: rgba(var(--pk-accent-rgb), .08); color: var(--pk-accent); font-weight: 600; }
+.sidebar-link.router-link-active:hover { background: rgba(var(--pk-accent-rgb), .16); }
+.sidebar-link > i { font-size: 17px; }
 .collapsed .sidebar-link { min-height: 48px; }
 /* Uzun adlar (ör. Organizasyon Yönetimi) kalınken de tek satır kalsın. */
 .sidebar-link > span { white-space: nowrap; }
 .count-badge { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; }
 .count-badge.dot { position: absolute; margin: -18px 0 0 18px; min-width: 9px; width: 9px; height: 9px; padding: 0; }
-.sidebar-link.router-link-active > span { letter-spacing: -.3px; }
 .group-toggle { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
 .group-toggle .chevron { margin-left: auto; font-size: 11px; transition: transform .15s ease; }
 .sidebar-group:not(.open) .chevron { transform: rotate(-90deg); }
@@ -224,7 +225,7 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .collapsed .back-link { justify-content: center; padding: 0; }
 .back-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
 .sidebar-spacer { flex: 1; }
-.sidebar-section { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--admin-sidebar-border); }
+.sidebar-section { margin-top: auto; padding-top: 14px; }
 .credit-link { display: block; text-decoration: none; }
 .credit-link:hover :deep(.credit-summary) { border-color: var(--pk-yellow); }
 .sidebar-bottom { margin-top: 14px; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
@@ -232,5 +233,5 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
 .collapsed .logout-link { justify-content: center; padding: 0; }
 .logout-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
-@media (max-width: 800px) { .expert-sidebar { position: static; width: auto; height: auto; margin: 12px 12px 0; overflow: visible; } .expert-sidebar.collapsed { width: auto; } }
+@media (max-width: 800px) { .expert-sidebar { position: static; width: auto; height: auto; overflow: visible; border-right: 0; border-bottom: 1px solid var(--admin-sidebar-border); } .expert-sidebar.collapsed { width: auto; } }
 </style>

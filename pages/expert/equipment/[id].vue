@@ -4,7 +4,7 @@
     <div v-else-if="loadError" class="card state error-text">{{ loadError }}</div>
 
     <template v-else-if="equipment">
-      <!-- Üst sıra (tasarım kataloğu 06): başlık ve ekipman kartı, izometrik çizim, açık bulgular / kontrol geçmişi / karekod -->
+      <!-- Üst sıra: başlık ve ekipman kartı, açık bulgular / kontrol geçmişi / karekod -->
       <div class="top">
         <div class="top-left">
           <nav class="crumb" aria-label="Sayfa yolu">
@@ -20,7 +20,10 @@
             <a href="/expert/equipment" class="back-link" @click.prevent="goBack"><i class="pi pi-arrow-left" /> {{ backText }}</a>
             <div class="title-row">
               <h2>{{ title }}</h2>
-              <span class="active-pill" :class="{ passive: !equipment.is_active }"><span class="dot" /> {{ equipment.is_active ? 'Aktif' : 'Pasif' }}</span>
+              <div class="title-chips">
+                <span class="status-chip" :class="equipment.status"><i :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
+                <span class="active-pill" :class="{ passive: !equipment.is_active }"><span class="dot" /> {{ equipment.is_active ? 'Aktif' : 'Pasif' }}</span>
+              </div>
             </div>
             <p v-if="modelText || equipment.variant" class="model">{{ modelText }}<span v-if="equipment.variant" class="tag" :title="equipment.type?.variant_label || 'Etiket'">{{ equipment.variant }}</span></p>
             <dl class="facts">
@@ -34,19 +37,6 @@
             <button class="primary-button" type="button" @click="startEdit"><i class="pi pi-pencil" /> Bilgileri düzenle</button>
           </section>
         </div>
-
-        <figure class="hero">
-          <span class="status-float" :class="equipment.status"><i :class="STATUS_ICONS[equipment.status] || 'pi pi-info-circle'" /> {{ STATUS_LABELS[equipment.status] }}</span>
-          <div class="hero-art">
-            <!-- Katalogdaki görsel (tasarım kataloğu 05'ten kırpıldı, marka yazıları silindi) -->
-            <img src="/katalog/forklift-katalog.webp" alt="" />
-            <!-- Kaldırma ve iletme ekipmanında son raporun bulguları resimdeki parçasında (zincir, teker, lamba …); tıklayınca Bulgular sekmesi -->
-            <button v-for="pin in findingPins" :key="pin.key" v-tooltip.top="pin.texts.join(' • ')" class="pin" :class="{ flip: pin.x > 75 }" type="button" :style="{ left: `${pin.x}%`, top: `${pin.y}%` }" :aria-label="`${pin.label}: ${pin.texts.join('; ')}`" @click="showTab('findings')">
-              <span class="pin-dot">{{ pin.texts.length > 1 ? pin.texts.length : '' }}</span>
-              <span class="pin-label">{{ pin.label }}</span>
-            </button>
-          </div>
-        </figure>
 
         <div class="top-right">
           <!-- Son raporun bulguları (listedeki "N bulgu" ile aynı); tümü aşağıdaki Bulgular sekmesinde -->
@@ -382,52 +372,6 @@ const placeText = computed(() => [currentUnit.value?.name, currentArea.value?.la
 // Son raporun bulguları (Açık bulgular kartı ve Bulgular sekmesi); Belgeler: kontrollerin rapor dosyaları.
 const findings = computed<string[]>(() => equipment.value?.findings || [])
 
-// --- Bulguların forklift resmindeki yeri (kaldırma ve iletme ekipmanı) ---
-// shortcut: bulgunun parçası rapordan etiket olarak gelmiyor; metinde parça adının kelime başı olarak geçmesine bakılır (ilk eşleşen
-// parça). Rapor okuma bulguya parça etiketi koyunca (ör. findings[].part) bu tablo yerine o kullanılmalı.
-// x / y: resmin genişliği / yüksekliği içinde yüzde. Sıra önemli: özel olan önce (tepe lambası > lamba, direksiyon > direk).
-const FORKLIFT_PARTS = [
-  { key: 'zincir', label: 'Zincir', words: ['zincir'], x: 31.2, y: 29.6 },
-  { key: 'catal', label: 'Çatal', words: ['çatal'], x: 10.5, y: 84 },
-  { key: 'tepe', label: 'Tepe lambası', words: ['tepe lamba', 'tepe ışı', 'döner lamba', 'flaşör'], x: 83.3, y: 15.4 },
-  { key: 'lamba', label: 'Lamba', words: ['lamba', 'ışık', 'ışığ', 'aydınlatma', 'sinyal'], x: 55.4, y: 20.4 },
-  { key: 'arka-teker', label: 'Arka teker', words: ['arka teker', 'arka lastik'], x: 88.6, y: 77.2 },
-  { key: 'teker', label: 'Teker', words: ['teker', 'lastik', 'jant', 'bijon'], x: 51, y: 77.2 },
-  { key: 'fren', label: 'Fren', words: ['fren'], x: 47, y: 70 },
-  { key: 'hidrolik', label: 'Hidrolik', words: ['hidrolik', 'silindir', 'hortum', 'kaçak', 'kaçağ', 'sızıntı'], x: 42.6, y: 55 },
-  { key: 'direksiyon', label: 'Direksiyon', words: ['direksiyon', 'korna'], x: 54.5, y: 35.4 },
-  { key: 'koltuk', label: 'Koltuk', words: ['koltuk', 'koltuğ', 'kemer'], x: 71.6, y: 39 },
-  { key: 'tavan', label: 'Üst koruma', words: ['tavan', 'üst koruma', 'koruma çerçeve'], x: 66, y: 16 },
-  { key: 'agirlik', label: 'Karşı ağırlık', words: ['karşı ağırlık'], x: 88, y: 60 },
-  { key: 'direk', label: 'Direk', words: ['direk', 'direğ', 'mast', 'asansör'], x: 39.4, y: 14 }
-]
-// Harf olmayan karakterler boşluk; tek kelimelik anahtar kelime başında, çok kelimeli olan metnin içinde aranır.
-const wordsOf = (text: string) => [...text.toLocaleLowerCase('tr-TR')].map(char => char.toLocaleUpperCase('tr-TR') !== char.toLocaleLowerCase('tr-TR') ? char : ' ').join('')
-const partOf = (text: string) => {
-  const plain = wordsOf(text)
-  const tokens = plain.split(' ').filter(Boolean)
-  return FORKLIFT_PARTS.find(part => part.words.some(word => word.includes(' ') ? plain.includes(word) : tokens.some(token => token.startsWith(word)))) || null
-}
-const findingPins = computed(() => {
-  if (equipment.value?.category?.slug !== 'kaldirma-iletme') return []
-  const pins = new Map<string, { key: string; label: string; x: number; y: number; texts: string[] }>()
-  for (const text of findings.value) {
-    const part = partOf(text)
-    if (!part) continue
-    const pin = pins.get(part.key) || { key: part.key, label: part.label, x: part.x, y: part.y, texts: [] }
-    pin.texts.push(text)
-    pins.set(part.key, pin)
-  }
-  return [...pins.values()]
-})
-if (import.meta.dev) {
-  // Küçük kendini sınama: parça eşleşmesi (örnek bulgular)
-  console.assert(partOf('Asansör orta zincir uzamış')?.key === 'zincir', 'zincir')
-  console.assert(partOf('Ön mavi lamba yanmıyor')?.key === 'lamba', 'lamba')
-  console.assert(partOf('Direksiyon boşluğu fazla')?.key === 'direksiyon', 'direksiyon')
-  console.assert(partOf('Direği eğilmiş')?.key === 'direk', 'direk')
-  console.assert(partOf('Farklı bir konu') === null, 'eşleşmeme')
-}
 const reportFiles = computed(() => (equipment.value?.inspections || []).filter((inspection: any) => inspection.has_report))
 
 // --- Kontroller / Bulgular / Belgeler sekmeleri ---
@@ -651,55 +595,47 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-page { margin: 0 auto; display: grid; gap: 18px; }
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;min-width:0;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.profile-page { margin: 0 auto; display: grid; gap: 24px; }
+.card{background:var(--admin-card);border:0;border-radius:var(--pk-radius);min-width:0;box-shadow:var(--pk-card-shadow)}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:14px}
-/* Üst sıra: başlık + ekipman kartı, çizim, yan kartlar */
-.top{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr) minmax(320px,430px);gap:16px;align-items:start}
+/* Üst sıra: başlık + ekipman kartı, yan kartlar */
+.top{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:24px;align-items:start}
 .crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
 .crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
 .crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
-h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.lead{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
+h1{margin:0;color:var(--admin-heading);font-size: 24px;font-weight: 700;line-height:1.15;letter-spacing: 0}.lead{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
 h2{margin:0;color:var(--admin-heading);font-size:18px}
-h3{margin:0;color:var(--admin-heading);font-size:18px;font-weight:800}
-.info-card{display:flex;flex-direction:column;gap:12px;margin-top:20px;padding:20px}
+h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
+.info-card{display:flex;flex-direction:column;gap:12px;margin-top:20px;padding:24px}
 .back-link{display:inline-flex;align-items:center;gap:9px;width:max-content;color:var(--admin-heading);font-size:15px;font-weight:600;text-decoration:none}.back-link:hover{color:var(--admin-accent-text)}
-.title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
-.title-row h2{font-size:30px;font-weight:800;letter-spacing:-.5px;overflow-wrap:anywhere}
-.active-pill{flex:none;display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:999px;background:var(--admin-success-bg);color:var(--admin-success-text);font-size:14px;font-weight:700}
+.title-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:6px}
+.title-row h2{font-size:24px;font-weight:700;overflow-wrap:anywhere}
+.title-chips{display:flex;flex-wrap:wrap;gap:8px}
+.status-chip{flex:none;display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;background:var(--admin-chip);color:var(--admin-muted);font-size:12px;font-weight:700;white-space:nowrap}
+.status-chip.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-chip.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
+.status-chip.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
+.active-pill{flex:none;display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;background:var(--admin-success-bg);color:var(--admin-success-text);font-size:12px;font-weight:700}
 .active-pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
 .active-pill.passive{background:var(--admin-chip);color:var(--admin-muted)}
 .model{margin:-6px 0 0;color:var(--admin-heading);font-size:18px;font-weight:700}
-.tag{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--admin-border);background:var(--admin-soft);color:var(--admin-text);font-size:12px;font-weight:700;vertical-align:middle}
-.facts{display:grid;margin:0;border-top:1px solid var(--admin-border)}
-.facts > div{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--admin-row-border)}
+.tag{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:6px;border:1px solid var(--admin-border);background:var(--admin-soft);color:var(--admin-text);font-size:12px;font-weight:700;vertical-align:middle}
+.facts{display:grid;margin:0;border-top:1px dashed rgba(145,158,171,.24)}
+.facts > div{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px dashed rgba(145,158,171,.24)}
 .facts > div:last-child{border-bottom:0}
 .facts dt{display:flex;align-items:center;gap:12px;color:var(--admin-text);font-size:14px;white-space:nowrap}
 .facts dt i{width:18px;color:var(--admin-heading);font-size:16px;text-align:center}
 .facts div:nth-child(3) dt i{color:var(--admin-warning-text)}
 .facts dd{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin:0;color:var(--admin-heading);font-size:15px;font-weight:700;text-align:right;overflow-wrap:anywhere}
 .facts dd small{color:var(--admin-muted);font-size:12px;font-weight:500}
-.due-pill{align-self:center;display:inline-flex;align-items:center;gap:9px;padding:7px 18px;border-radius:12px;background:var(--admin-chip);color:var(--admin-text);font-size:16px;font-weight:700}
+.due-pill{align-self:center;display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:8px;background:var(--admin-chip);color:var(--admin-text);font-size:16px;font-weight:700}
 .due-pill.soon,.due-pill.ok{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.due-pill.overdue{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .info-card .primary-button{width:100%;min-height:46px;font-size:15px}
-.hero{position:relative;min-width:0;margin:-10px 0 0;display:flex;justify-content:center}
-.hero-art{position:relative;width:min(100%,600px);margin-top:40px}
-.hero-art img{display:block;width:100%}
-/* Bulgu işareti: parçanın üstünde nokta, yanında parça adı */
-.pin{position:absolute;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;transform:translate(-11px,-11px);cursor:pointer}
-.pin-dot{width:22px;height:22px;display:grid;place-items:center;border:3px solid #fff;border-radius:50%;background:var(--pk-danger);color:#fff;font-size:11px;font-weight:800;box-shadow:0 0 0 6px rgba(239,68,68,.25)}
-.pin-label{padding:3px 9px;border-radius:999px;background:var(--admin-surface);color:var(--admin-heading);font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(var(--pk-shadow-rgb),.18)}
-.pin.flip{flex-direction:row-reverse;transform:translate(calc(-100% + 11px),-11px)}
-.pin:hover .pin-label,.pin:focus-visible .pin-label{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.status-float{position:absolute;top:0;right:8%;z-index:1;display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:19px;font-weight:700;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.12)}
-.status-float i{font-size:20px}
-.status-float.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-float.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.status-float.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
-.top-right{display:grid;gap:14px;margin-top:30px}
-.side-card{display:grid;gap:12px;padding:18px 20px}
+/* Yan kartlar: geniş ekranda üç kart yan yana */
+.top-right{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start;margin-top:30px}
+.side-card{display:grid;gap:12px;padding:24px}
 .side-card header{display:flex;align-items:center;gap:12px}
 .side-card header i{font-size:20px}.warn-icon{color:var(--admin-warning-text)}.accent-icon{color:var(--admin-accent-text)}
-.count-badge{margin-left:auto;min-width:34px;padding:3px 10px;border-radius:999px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:15px;font-weight:800;text-align:center}
+.count-badge{margin-left:auto;min-width:28px;padding:2px 8px;border-radius:6px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:12px;font-weight:700;text-align:center}
 .count-badge.none{background:var(--admin-chip);color:var(--admin-muted)}
 .finding-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .finding-list li{display:flex;align-items:flex-start;gap:12px;color:var(--admin-heading);font-size:15px;line-height:1.4}
@@ -709,39 +645,39 @@ h3{margin:0;color:var(--admin-heading);font-size:18px;font-weight:800}
 .timeline li::before{content:'';position:absolute;left:-25px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--pk-accent)}
 .timeline strong{color:var(--admin-heading);font-size:15px}.timeline .status-badge{margin-left:auto}
 .qr-body{display:flex;align-items:center;gap:18px}
-.qr-image{flex:none;padding:6px;border:1px solid var(--admin-border);border-radius:10px;background:#fff;cursor:pointer;line-height:0}
+.qr-image{flex:none;padding:6px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:#fff;cursor:pointer;line-height:0}
 .qr-image:hover{border-color:var(--pk-accent)}
-.soft-button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:0 16px;border:0;border-left:1px solid var(--admin-border);border-radius:10px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.soft-button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:0 16px;border:0;border-radius:8px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
 .soft-button:hover{box-shadow:inset 0 0 0 1px var(--pk-accent)}
 .passive-note{display:flex;align-items:flex-start;gap:8px;margin:0;padding:12px 14px;border-radius:10px;background:var(--admin-chip);color:var(--admin-text);font-size:13px;line-height:1.5}.passive-note i{margin-top:2px;color:var(--admin-muted)}.passive-note strong{color:var(--admin-heading)}
 /* Kontroller / Bulgular / Belgeler */
 .tabs-card{overflow:hidden;scroll-margin-top:90px}
-.tabs-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:6px 18px 0;border-bottom:1px solid var(--admin-border)}
+.tabs-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:6px 24px 0;border-bottom:1px solid rgba(145,158,171,.2)}
 .tabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .tabs button{display:inline-flex;align-items:center;gap:9px;padding:14px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--admin-heading);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
 .tabs button i{color:var(--admin-muted);font-size:16px}
 .tabs button:hover{color:var(--admin-accent-text)}.tabs button.active{color:var(--admin-accent-text);border-bottom-color:var(--pk-yellow);font-weight:700}.tabs button.active i{color:var(--admin-accent-text)}
 .history-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 0}
 .bound-note{display:inline-flex;align-items:center;gap:6px;color:var(--admin-muted);font-size:13px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 18px;border:0;border-radius:10px;background:var(--pk-yellow);color:var(--pk-on-accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(var(--pk-accent-rgb),.22)}.primary-button:hover{background:var(--pk-yellow-dark)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.outline-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 16px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none}
-.outline-button i{color:var(--admin-accent-text)}.outline-button:hover{border-color:var(--admin-muted)}
-.secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.secondary-button:disabled{opacity:.6}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 18px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover{background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.outline-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 16px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none}
+.outline-button i{color:var(--admin-accent-text)}.outline-button:hover{background:rgba(145,158,171,.08)}
+.secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.secondary-button:disabled{opacity:.6}
 .link-button{display:inline-flex;align-items:center;gap:6px;width:max-content;padding:0;border:0;background:none;color:var(--admin-link);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.link-button.danger{color:var(--admin-danger-text);font-size:13px}
-.table-wrap{overflow:auto;padding:12px 18px 6px}
-table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:14px;color:var(--admin-text);vertical-align:middle}
-th{font-size:15px;font-weight:700;color:var(--admin-heading);background:var(--admin-soft);white-space:nowrap;border-bottom:0}
-thead th:first-child{border-radius:12px 0 0 12px}thead th:last-child{border-radius:0 12px 12px 0}
+.table-wrap{overflow:auto;padding:0 0 6px}
+table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid rgba(145,158,171,.2);font-size:14px;color:var(--admin-text);vertical-align:middle}
+th{font-size:13px;font-weight:600;color:var(--admin-muted);background:rgba(145,158,171,.08);white-space:nowrap;border-bottom:0}
+th:first-child,td:first-child{padding-left:24px}th:last-child,td:last-child{padding-right:24px}
 tbody tr:last-child td{border-bottom:0}td strong{color:var(--admin-heading)}
 .date{font-size:16px}
 .report-no{display:block;color:var(--admin-heading);font-size:15px;font-weight:700}
 .ai-note{display:inline-flex;align-items:center;gap:6px;margin-top:3px;color:var(--admin-muted);font-size:12px;font-style:italic}.ai-note i{color:var(--admin-accent-text);font-style:normal}
 .count-link{font-size:16px;color:var(--admin-heading)}.count-link:hover{color:var(--admin-link)}
-.pdf-button{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);color:var(--admin-accent-text);cursor:pointer}.pdf-button i{font-size:18px}.pdf-button:hover{border-color:var(--pk-accent)}
+.pdf-button{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:var(--admin-card);color:var(--admin-accent-text);cursor:pointer}.pdf-button i{font-size:18px}.pdf-button:hover{border-color:var(--pk-accent)}
 .actions-col{width:1%}
 .icon-button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--admin-accent-text);cursor:pointer}.icon-button:hover{background:var(--admin-accent-soft)}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.status-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.status-badge.big{padding:6px 14px;font-size:14px}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}.status-badge.big{padding:4px 10px;font-size:13px}
 .status-badge.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-badge.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.status-badge.rapor_yok,.status-badge.belirtilmemis{background:var(--admin-chip);color:var(--admin-muted)}
 .current-tag{margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:10px;font-weight:700}
@@ -753,20 +689,20 @@ tbody tr:last-child td{border-bottom:0}td strong{color:var(--admin-heading)}
 .inspection-detail p{margin:0;color:var(--admin-text);font-size:13px;line-height:1.5;white-space:pre-line}
 .inspection-detail ol{margin:0;padding-left:20px;display:grid;gap:4px;color:var(--admin-text);font-size:13px;line-height:1.45}
 .analysis-title{padding-top:12px;border-top:1px solid var(--admin-border)}
-.tab-body{padding:16px 18px 18px}
+.tab-body{padding:20px 24px 24px}
 .tab-hint{margin:0 0 10px;color:var(--admin-muted);font-size:13px}
-.finding-rows{display:grid;gap:0;margin:0;padding:0;list-style:none;border:1px solid var(--admin-row-border);border-radius:12px}
-.finding-rows li{display:flex;align-items:center;gap:14px;padding:12px 16px;color:var(--admin-heading);font-size:15px;line-height:1.45}
-.finding-rows li + li{border-top:1px solid var(--admin-row-border)}
+.finding-rows{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.finding-rows li{display:flex;align-items:center;gap:14px;padding:12px 0;color:var(--admin-heading);font-size:15px;line-height:1.45}
+.finding-rows li + li{border-top:1px solid rgba(145,158,171,.2)}
 .finding-rows .bar{flex:none;width:4px;height:20px;border-radius:4px;background:var(--admin-danger-text)}
-.doc-list{display:grid;margin:0;padding:0;list-style:none;border:1px solid var(--admin-row-border);border-radius:12px}
-.doc-list li{display:flex;align-items:center;gap:14px;padding:10px 16px}.doc-list li + li{border-top:1px solid var(--admin-row-border)}
+.doc-list{display:grid;margin:0;padding:0;list-style:none}
+.doc-list li{display:flex;align-items:center;gap:14px;padding:10px 0}.doc-list li + li{border-top:1px solid rgba(145,158,171,.2)}
 .doc-text{flex:1;display:grid;gap:2px;min-width:0}.doc-text strong{color:var(--admin-heading);font-size:15px;overflow-wrap:anywhere}.doc-text small{color:var(--admin-muted);font-size:12px}
 .muted{margin:0;color:var(--admin-muted);font-size:14px}
 .error-text{margin:8px 0 0;color:var(--admin-danger-text);font-size:12px}
 /* Bilgileri düzenle penceresi */
 .modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--admin-overlay)}
-.modal-card{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-surface);border-radius:14px;box-shadow:0 20px 60px var(--admin-shadow)}
+.modal-card{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px;background:var(--admin-surface);border-radius:var(--pk-radius);box-shadow:0 20px 60px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:10px}.modal-head h2{font-size:20px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:13px}
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .modal-tabs{margin-bottom:14px;border-bottom:1px solid var(--admin-border)}.modal-tabs button{padding:10px 12px;font-size:14px}
@@ -783,7 +719,8 @@ tbody tr:last-child td{border-bottom:0}td strong{color:var(--admin-heading)}
 .photo-actions{display:grid;gap:6px}.photo-actions strong{color:var(--admin-heading);font-size:12px}.photo-actions > div{display:flex;align-items:center;gap:12px}
 .modal-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--admin-border)}
 .modal-actions-left{display:flex;align-items:center;gap:14px;margin-right:auto}
-@media(max-width:1300px){.top{grid-template-columns:minmax(280px,360px) minmax(0,1fr)}.top-right{grid-column:1 / -1;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0}}
-@media(max-width:1000px){.top-right{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:800px){.top{grid-template-columns:minmax(0,1fr)}.hero{display:none}.info-card{margin-top:6px}h1{font-size:32px}.form-grid{grid-template-columns:1fr}.tabs-row{padding-bottom:8px}}
+/* Dar ekranda yan kartlar alt alta, sonra ekipman kartının altına iner */
+@media(max-width:1400px){.top-right{grid-template-columns:minmax(0,1fr);gap:16px}}
+@media(max-width:1000px){.top{grid-template-columns:minmax(0,1fr)}.top-right{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0}}
+@media(max-width:800px){.top-right{grid-template-columns:minmax(0,1fr)}.info-card{margin-top:6px}h1{font-size: 22px}.form-grid{grid-template-columns:1fr}.tabs-row{padding-bottom:8px}}
 </style>

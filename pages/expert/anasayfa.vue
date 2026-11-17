@@ -26,17 +26,11 @@
           <div v-if="openFindings !== null" class="plan-findings"><i class="pi pi-clipboard" /><strong>{{ number(openFindings) }} açık bulgu</strong></div>
         </section>
       </div>
-
-      <figure class="home-hero">
-        <!-- Katalogdaki görsel (tasarım kataloğu 01'den kırpıldı, tabeladaki kurum adı ve marka yazıları silindi); elle çizilmiş karşılığı public/katalog/yerlesim.svg -->
-        <img src="/katalog/anasayfa-katalog.webp" alt="" />
-        <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
-      </figure>
     </div>
 
     <nav class="home-cards" aria-label="Ana sayfa bağlantıları">
       <NuxtLink v-for="card in cards" :key="card.to" :to="card.to" class="home-card">
-        <img :src="card.image" alt="" class="home-card-image" />
+        <span class="home-card-icon" :class="card.tone" aria-hidden="true"><i :class="card.icon" /></span>
         <span class="home-card-text"><strong>{{ card.title }}</strong><span>{{ card.text }}</span></span>
         <i class="pi pi-chevron-right" aria-hidden="true" />
       </NuxtLink>
@@ -47,7 +41,7 @@
 <script setup lang="ts">
 import { agendaGroupsText, agendaNextDay } from '~/composables/controlAgenda'
 
-// Bireysel uzmanın giriş sonrası ilk sayfası (tasarım kataloğu 01): bugünkü iş planı, örnek yerleşim çizimi ve sayfa kartları.
+// Bireysel uzmanın giriş sonrası ilk sayfası: bugünkü iş planı ve sayfa kartları.
 // Lokasyon seçici burada gizli; sayılar uzmanın bütün lokasyonlarından.
 definePageMeta({ layout: 'expert', middleware: 'expert', hideWorkplaceSwitcher: true })
 
@@ -72,13 +66,13 @@ const overdueGroups = computed(() => (data.value?.agenda || []).filter((entry: a
 const nextDay = computed(() => agendaNextDay(data.value?.agenda))
 
 const cards = computed(() => [
-  { to: '/expert', title: 'Genel bakış', text: 'Portföy özeti', image: '/katalog/kart-genel-bakis-katalog.webp' },
-  { to: '/expert/calendar', title: 'Kontrol takvimi', text: 'Yaklaşan kontroller', image: '/katalog/kart-takvim-katalog.webp' },
-  { to: '/expert/bulgu-takip', title: 'Bulgu takibi', text: openFindings.value === null ? 'Bulgular' : `${number(openFindings.value)} açık bulgu`, image: '/katalog/kart-bulgu-katalog.webp' },
-  { to: '/expert/equipment', title: 'Ekipmanlar', text: data.value ? `${number(data.value.totals?.equipment || 0)} ekipman` : 'Ekipman kayıtları', image: '/katalog/kart-ekipman-katalog.webp' },
-  { to: '/expert/installations', title: 'Tesisatlar', text: data.value ? `${number(data.value.installations?.length || 0)} tesisat` : 'Tesisat kayıtları', image: '/katalog/kart-tesisat-katalog.webp' },
-  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', image: '/katalog/kart-firmalar-katalog.webp' },
-  ...(SHOW_REPORT_CARD ? [{ to: '/expert/reports', title: 'Durum Raporu', text: 'Kontrol raporları', image: '/anasayfa/durum-raporu.png' }] : [])
+  { to: '/expert', title: 'Genel bakış', text: 'Portföy özeti', icon: 'pi pi-chart-pie', tone: 'violet' },
+  { to: '/expert/calendar', title: 'Kontrol takvimi', text: 'Yaklaşan kontroller', icon: 'pi pi-calendar', tone: 'primary' },
+  { to: '/expert/bulgu-takip', title: 'Bulgu takibi', text: openFindings.value === null ? 'Bulgular' : `${number(openFindings.value)} açık bulgu`, icon: 'pi pi-clipboard', tone: 'error' },
+  { to: '/expert/equipment', title: 'Ekipmanlar', text: data.value ? `${number(data.value.totals?.equipment || 0)} ekipman` : 'Ekipman kayıtları', icon: 'pi pi-wrench', tone: 'warning' },
+  { to: '/expert/installations', title: 'Tesisatlar', text: data.value ? `${number(data.value.installations?.length || 0)} tesisat` : 'Tesisat kayıtları', icon: 'pi pi-bolt', tone: 'info' },
+  { to: '/expert/workplaces', title: 'Firmalarım', text: 'Firma ve lokasyonlar', icon: 'pi pi-building', tone: 'success' },
+  ...(SHOW_REPORT_CARD ? [{ to: '/expert/reports', title: 'Durum Raporu', text: 'Kontrol raporları', icon: 'pi pi-file', tone: 'primary' }] : [])
 ])
 
 // İşyerleri gelince (başka bir yer yüklüyor olabilir) bir kez: Genel bakış'ın verisi, bütün lokasyonlarla.
@@ -103,58 +97,50 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.home-page { display: grid; gap: 22px; }
-.home-top { display: grid; grid-template-columns: minmax(360px, 470px) minmax(0, 1fr); gap: 24px; align-items: stretch; }
+.home-page { display: grid; gap: 24px; }
+.home-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .home-left { min-width: 0; }
-.crumb { display: flex; align-items: center; gap: 8px; color: var(--admin-muted); font-size: 14px; }
-.home-left h1 { margin: 10px 0 6px; color: var(--admin-heading); font-size: 44px; font-weight: 800; letter-spacing: -1.2px; line-height: 1.1; }
-.home-sub { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--admin-muted); font-size: 18px; }
-.home-sub span { font-size: 15px; }
+.crumb { display: flex; align-items: center; gap: 8px; color: var(--admin-muted); font-size: 13px; }
+.home-left h1 { margin: 10px 0 6px; color: var(--admin-heading); font-size: 24px; font-weight: 700; letter-spacing: 0; line-height: 1.1; }
+.home-sub { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--admin-muted); font-size: 15px; }
+.home-sub span { font-size: 14px; }
 .sep { width: 6px; height: 6px; border-radius: 50%; background: var(--admin-border); }
 
-.plan-card { margin-top: 26px; padding: 22px 22px 18px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); }
-.plan-card h2 { margin: 0 0 16px; color: var(--admin-heading); font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
-.plan-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 14px 16px; border-radius: 12px; color: var(--admin-heading); font-size: 16px; }
-.plan-row i { flex: none; font-size: 20px; }
+.plan-card { margin-top: 24px; padding: 24px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
+.plan-card h2 { margin: 0 0 16px; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+.plan-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 14px 16px; border-radius: 12px; color: var(--admin-heading); font-size: 15px; }
+.plan-row i { flex: none; font-size: 18px; }
 .plan-row strong { min-width: 0; font-weight: 700; }
 .plan-row.bad { background: var(--admin-danger-bg); }
 .plan-row.bad i { color: var(--admin-danger-text); }
 .plan-row.next { background: var(--admin-accent-soft); }
-.plan-row.next i { color: var(--pk-yellow-dark); }
+.plan-row.next i { color: var(--pk-accent); }
 .plan-muted { margin: 0 0 10px; color: var(--admin-muted); font-size: 14px; }
 .error-text { color: var(--admin-danger-text); }
-.plan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.plan-button { display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font-size: 15px; font-weight: 700; }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.plan-button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font-size: 14px; font-weight: 700; }
 .plan-button .pi-chevron-right { font-size: 12px; }
-.plan-button:hover { border-color: var(--pk-yellow); }
-.plan-button.primary { border-color: var(--pk-yellow); background: var(--pk-yellow); color: var(--pk-on-accent); }
-.plan-button.primary:hover { background: var(--pk-yellow-dark); }
-.plan-findings { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 17px; }
-.plan-findings i { color: var(--admin-muted); font-size: 18px; }
+.plan-button:hover { background: rgba(145, 158, 171, .08); }
+.plan-button.primary { border-color: transparent; background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.plan-button.primary:hover { background: var(--pk-accent-hover); }
+.plan-findings { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(145, 158, 171, .24); color: var(--admin-heading); font-size: 15px; }
+.plan-findings i { color: var(--admin-muted); font-size: 16px; }
 
-.home-hero { position: relative; min-width: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
-.home-hero img { width: 100%; max-height: 440px; object-fit: contain; }
-.home-hero figcaption, .home-hero figcaption i { display: inline-flex; align-items: center; gap: 8px; }
-.home-hero figcaption { position: absolute; right: 8px; bottom: 6px; padding: 9px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
-
-.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.home-card { min-width: 0; min-height: 140px; display: flex; align-items: center; gap: 18px; padding: 12px 22px 12px 14px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); color: inherit; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); transition: transform .15s ease, border-color .15s ease; }
-.home-card:hover, .home-card:focus-visible { transform: translateY(-2px); border-color: var(--pk-yellow); }
-.home-card-image { flex: none; width: 150px; height: 112px; object-fit: contain; }
+.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.home-card { min-width: 0; display: flex; align-items: center; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); color: inherit; box-shadow: var(--pk-card-shadow); transition: box-shadow .2s ease; }
+.home-card:hover, .home-card:focus-visible { box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -4px rgba(145, 158, 171, .24); }
+.home-card-icon { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 14px; font-size: 22px; }
+.home-card-icon.violet { background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
+.home-card-icon.primary { background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
+.home-card-icon.info { background: var(--pk-info-lighter); color: var(--pk-info-dark); }
+.home-card-icon.success { background: var(--pk-success-lighter); color: var(--pk-success-dark); }
+.home-card-icon.warning { background: var(--pk-warning-lighter); color: var(--pk-warning-dark); }
+.home-card-icon.error { background: var(--pk-error-lighter); color: var(--pk-error-dark); }
 .home-card-text { flex: 1; min-width: 0; }
-.home-card strong { display: block; color: var(--admin-heading); font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
-.home-card-text span { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 16px; }
-.home-card > i { flex: none; color: var(--admin-heading); font-size: 15px; }
+.home-card strong { display: block; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+.home-card-text span { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 14px; }
+.home-card > i { flex: none; color: var(--admin-muted); font-size: 14px; }
 
-/* Dar ekranda çizim kalkar, kartlar ikili / tekli. */
-@media (max-width: 1100px) {
-  .home-top { grid-template-columns: minmax(0, 1fr); }
-  .home-hero { display: none; }
-  .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 800px) {
-  .home-left h1 { font-size: 34px; }
-  .home-card-image { width: 110px; height: 84px; }
-}
+@media (max-width: 1100px) { .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .home-cards { grid-template-columns: minmax(0, 1fr); } }
 </style>

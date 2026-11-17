@@ -15,8 +15,7 @@
     <div v-if="loading" class="card state">Yükleniyor...</div>
     <div v-else-if="loadError" class="card state error-text">{{ loadError }}</div>
     <template v-else>
-      <!-- Tasarım kataloğu 15: solda sağlayıcı, model, okuma yöntemi ve bağlantı; sağda çizim -->
-      <div class="layout">
+      <!-- Sağlayıcı, model, okuma yöntemi ve bağlantı -->
         <section class="card main">
           <h2><i class="pi pi-microchip-ai" /> Rapor okuma sağlayıcısı</h2>
           <!-- Varsayılan istemci -->
@@ -74,12 +73,6 @@
           <!-- Son değişikliği yapan: katalogda yok, gizli; ileride açılabilir -->
           <span v-if="SHOW_UPDATED_BY && updatedBy" class="muted">Son değişiklik: {{ updatedBy }}<template v-if="updatedAt"> · {{ formatDateTime(updatedAt) }}</template></span>
         </section>
-
-        <figure class="hero">
-          <!-- Katalogdaki görsel (tasarım kataloğu 15'ten kırpıldı; çipteki marka logosu ve forklift yazısı silindi) -->
-          <img src="/katalog/yapay-zeka-katalog.webp" alt="" />
-        </figure>
-      </div>
 
       <!-- Her istemcinin modeli ve API anahtarı (Bağlantıyı yönet ile açılır) -->
       <template v-if="showConnections">
@@ -211,19 +204,18 @@ onMounted(() => { loadAccount(); load() })
 </script>
 
 <style scoped>
-.ai-page{margin:0 auto;display:grid;gap:16px}
-.page-head h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
+.ai-page{margin:0 auto;display:grid;gap:24px}
+.page-head h1{margin:0;color:var(--admin-heading);font-size: 24px;font-weight: 700;line-height:1.15;letter-spacing: 0}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
 .crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
 .crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
 .crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
-.card{padding:18px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;min-width:0;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
-.card h2{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--admin-heading);font-size:15px}
+.card{padding:24px;background:var(--admin-card);border:0;border-radius:var(--pk-radius);min-width:0;box-shadow:var(--pk-card-shadow)}
+.card h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;color:var(--admin-heading);font-size:17px;font-weight:700}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:13px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-/* Katalog 15: ana kart ve çizim */
-.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
-.card.main{display:grid;gap:18px;padding:24px}
-.card.main h2{margin:0;font-size:21px;font-weight:800}.card.main h2 i{color:var(--admin-link);font-size:22px}
+/* Ana kart */
+.card.main{display:grid;gap:24px;padding:24px}
+.card.main h2{margin:0;font-size:17px;font-weight:700}.card.main h2 i{color:var(--admin-link);font-size:22px}
 .providers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .provider{position:relative;display:flex;align-items:center;gap:14px;min-height:72px;padding:12px 18px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);cursor:pointer}
 .provider:hover{background:var(--admin-hover)}
@@ -233,7 +225,7 @@ onMounted(() => { loadAccount(); load() })
 .provider strong{color:var(--admin-heading);font-size:17px;font-weight:600}
 .radio-mark{flex:none;width:22px;height:22px;display:grid;place-items:center;margin-left:auto;border:1.5px solid var(--admin-muted);border-radius:50%;color:var(--pk-on-accent);font-size:11px}
 .provider.active .radio-mark{border-color:var(--pk-accent);background:var(--pk-accent)}
-.key-state{display:inline-flex;align-items:center;gap:6px;align-self:center;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;font-style:normal}
+.key-state{display:inline-flex;align-items:center;gap:6px;align-self:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;font-style:normal}
 .key-state.ok::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
 .key-state.ok{background:var(--admin-success-bg);color:var(--admin-success-text)}.key-state.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.key-state.missing{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .field{display:grid;gap:8px}
@@ -257,14 +249,12 @@ onMounted(() => { loadAccount(); load() })
 .text-link{display:inline-flex;align-items:center;gap:8px;margin-left:auto;padding:0;border:0;background:none;color:var(--admin-link);font:inherit;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
 .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .actions.end{display:flex;justify-content:flex-end}
-.primary-button,.secondary-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:12px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;text-decoration:none}
-.primary-button{border:0;background:var(--pk-accent);color:var(--pk-on-accent)}.primary-button:hover{background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}.secondary-button:hover{background:var(--admin-hover)}
+.primary-button,.secondary-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border-radius:8px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
+.primary-button{border:0;background:var(--pk-accent);color:var(--pk-on-accent);box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover{background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
+.secondary-button{border:1px solid rgba(145,158,171,.32);background:var(--admin-card);color:var(--admin-heading)}.secondary-button:hover{background:var(--admin-hover)}
 .secondary-button i{color:var(--admin-link)}
-.hero{min-width:0;margin:-90px 0 0;display:flex;justify-content:center}
-.hero img{display:block;width:min(100%,560px)}
 /* Bağlantıyı yönet: istemci kartları */
-.badge{padding:2px 9px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-heading);font-size:11px;font-weight:700}
+.badge{padding:2px 8px;border-radius:6px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font-size:12px;font-weight:700}
 .fields{display:grid;gap:12px}
 .fields label{display:grid;gap:6px;color:var(--admin-heading);font-size:12px;font-weight:700}
 .fields label small{font-weight:400;color:var(--admin-muted);font-size:11px}
@@ -278,6 +268,5 @@ onMounted(() => { loadAccount(); load() })
 .muted{color:var(--admin-muted);font-size:12px}
 .error-text{margin:0;color:var(--admin-danger-text);font-size:13px}
 .saved-text{display:flex;align-items:center;gap:6px;margin:0;color:var(--admin-success-text);font-size:13px;font-weight:700}
-@media (max-width:1100px){.layout{grid-template-columns:1fr}.hero{margin:0;grid-row:1}.hero img{width:min(100%,420px)}}
-@media (max-width:700px){.providers,.methods,.actions{grid-template-columns:1fr}.page-head h1{font-size:30px}.connection{flex-wrap:wrap}}
+@media (max-width:700px){.providers,.methods,.actions{grid-template-columns:1fr}.page-head h1{font-size: 22px}.connection{flex-wrap:wrap}}
 </style>

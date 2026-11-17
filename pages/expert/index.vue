@@ -64,59 +64,53 @@
     <div v-else-if="error" class="card state error-text">{{ error }}</div>
     <div v-else-if="!groups.length" class="card state">{{ multiUser ? 'Henüz size atanmış bir işyeri yok.' : 'Henüz işyeriniz yok.' }} {{ kamu ? 'Lokasyonlar' : 'Firmalarım' }}'dan {{ multiUser ? 'işyeri' : 'firma' }} ekleyin.</div>
 
-    <!-- Tasarım kataloğu 02 (bütün hesaplar): solda sayılar, ortada örnek yerleşim, sağda kontrol durumu çubukları;
-         altta öncelikli kontroller ve en yakın kontrol günü. Kapsam üstteki lokasyon / firma seçicisinden. -->
+    <!-- Behance CRM tasarımı (bütün hesaplar): üstte halka grafikli kontrol durumu kartları + en yakın kontrol günü,
+         ortada pastel sayı kutuları, altta öncelikli kontroller. Kapsam üstteki lokasyon / firma seçicisinden. -->
     <template v-else-if="data && !detailTables">
-      <div class="gb-top">
-        <div class="gb-kpis">
-          <NuxtLink v-for="kpi in sideKpis" :key="kpi.to" :to="kpi.to" class="card gb-kpi">
-            <span class="gb-kpi-icon" :class="kpi.tone"><i :class="kpi.icon" /></span>
-            <span class="gb-kpi-text"><strong>{{ kpi.value }}</strong><small>{{ kpi.label }}</small></span>
-            <i class="pi pi-chevron-right" aria-hidden="true" />
-          </NuxtLink>
-        </div>
-        <figure class="gb-hero">
-          <!-- Katalogdaki görsel (tasarım kataloğu 02'den kırpıldı, marka yazıları silindi); elle çizilmiş karşılığı public/katalog/yerlesim.svg -->
-          <img src="/katalog/genel-bakis-katalog.webp" alt="" />
-          <figcaption><i class="pi pi-map-marker" /> Örnek yerleşim</figcaption>
-        </figure>
-        <div class="gb-side">
-          <NuxtLink v-for="box in statusBars" :key="box.to" :to="box.to" class="card gb-status">
-            <span class="gb-status-head"><i :class="box.icon" /><strong>{{ box.title }}</strong><i class="pi pi-chevron-right" aria-hidden="true" /></span>
-            <strong class="gb-status-total">{{ trNumber(box.total) }}</strong>
-            <span class="gb-bar" role="img" :aria-label="box.parts.map(part => `${part.count} ${part.label}`).join(', ') || 'Kayıt yok'">
-              <span v-for="part in box.parts" :key="part.key" :class="part.key" :style="{ width: `${part.share}%` }">{{ part.share >= 8 ? trNumber(part.count) : '' }}</span>
-            </span>
-            <span class="gb-legend"><span v-for="part in box.parts" :key="part.key"><i :class="part.key" /> {{ trNumber(part.count) }} {{ part.label }}</span></span>
-          </NuxtLink>
-        </div>
-      </div>
-
-      <div class="gb-bottom">
-        <section class="card gb-panel">
-          <header class="gb-panel-head"><span class="gb-head-icon"><i class="pi pi-list" /></span><h3>Öncelikli kontroller</h3></header>
-          <div class="gb-inner">
-            <p v-if="!priorityRows.length" class="muted gb-empty">Gecikmiş ya da 30 gün içinde dolan kontrol yok.</p>
-            <div v-for="row in priorityRows" :key="row.key" class="gb-row">
-              <span class="gb-row-icon"><i :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
-              <span class="gb-row-name"><strong>{{ row.name }}</strong><small v-if="row.meta"> · {{ row.meta }}</small></span>
-              <span class="gb-pill" :class="row.days_left < 0 ? 'bad' : 'warn'">{{ row.when }}</span>
-              <button type="button" class="gb-inspect" @click="priorityDate = row.date">İncele <i class="pi pi-chevron-right" /></button>
-            </div>
+      <div class="gb-rings">
+        <NuxtLink v-for="box in statusBars" :key="box.to" :to="box.to" class="card gb-ring-card">
+          <h3>{{ box.title }}</h3>
+          <div class="gb-ring" role="img" :aria-label="box.parts.map(part => `${part.count} ${part.label}`).join(', ') || 'Kayıt yok'">
+            <Chart type="doughnut" :data="ringData(box)" :options="RING_OPTIONS" class="gb-ring-canvas" />
+            <span class="gb-ring-center"><small>Toplam</small><strong>{{ trNumber(box.total) }}</strong></span>
           </div>
-        </section>
-        <section class="card gb-panel">
-          <header class="gb-panel-head"><span class="gb-head-icon"><i class="pi pi-calendar" /></span><h3>Kontrol takvimi</h3></header>
-          <div class="gb-inner gb-next">
+          <ul class="gb-ring-legend">
+            <li v-for="part in box.parts" :key="part.key"><i :class="part.key" /><span>{{ part.label }}</span><strong>{{ trNumber(part.count) }}</strong><small>%{{ Math.round(part.share) }}</small></li>
+            <li v-if="!box.parts.length" class="empty">Kayıt yok</li>
+          </ul>
+        </NuxtLink>
+        <section class="card gb-ring-card gb-next-card">
+          <h3>Sıradaki kontrol</h3>
+          <div class="gb-next">
             <template v-if="nextDay">
               <span class="gb-date"><strong>{{ nextDate.day }}</strong><span>{{ nextDate.month }}</span></span>
               <span class="gb-next-text"><strong>{{ agendaGroupsText(nextDay.entries) }}</strong><small>{{ nextDate.long }}</small></span>
             </template>
             <p v-else class="muted gb-empty">Yaklaşan kontrol yok.</p>
           </div>
-          <NuxtLink to="/expert/calendar" class="gb-go"><i class="pi pi-calendar" /> Takvime git <i class="pi pi-chevron-right" /></NuxtLink>
+          <NuxtLink to="/expert/calendar" class="gb-go">Takvime git</NuxtLink>
         </section>
       </div>
+
+      <h2 class="gb-title">Özet</h2>
+      <div class="gb-tiles">
+        <NuxtLink v-for="kpi in sideKpis" :key="kpi.to" :to="kpi.to" class="gb-tile" :class="kpi.tone">
+          <span class="gb-tile-label">{{ kpi.label }}</span>
+          <strong>{{ kpi.value }}</strong>
+          <span class="gb-tile-icon"><i :class="kpi.icon" /></span>
+        </NuxtLink>
+      </div>
+
+      <section class="card gb-panel">
+        <header class="gb-panel-head"><h3>Öncelikli kontroller</h3><small>Süresi geçen ve 30 gün içinde dolan kontroller</small></header>
+        <p v-if="!priorityRows.length" class="muted gb-empty">Gecikmiş ya da 30 gün içinde dolan kontrol yok.</p>
+        <div v-for="row in priorityRows" :key="row.key" class="gb-row">
+          <span class="gb-row-icon"><i :class="row.kind === 'installation' ? 'pi pi-sitemap' : 'pi pi-box'" /></span>
+          <span class="gb-row-name"><strong>{{ row.name }}</strong><small v-if="row.meta">{{ row.meta }}</small></span>
+          <span class="gb-pill" :class="row.days_left < 0 ? 'bad' : 'warn'">{{ row.when }}</span>
+          <button type="button" class="gb-inspect" @click="priorityDate = row.date">İncele</button>
+        </div>
+      </section>
       <ExpertControlDayModal v-if="priorityDate" :date="priorityDate" :entries="entriesOnDate(priorityDate)" :query="viewQuery" @close="priorityDate = null" />
     </template>
 
@@ -571,10 +565,18 @@ watch(() => JSON.stringify(viewQuery.value['location_ids[]'] || []), async (key)
   } catch { if (no === findingsRequest) openFindings.value = null }
 }, { immediate: true })
 const sideKpis = computed(() => [
-  { to: '/expert/equipment', label: 'Ekipman', value: trNumber(data.value?.totals?.equipment || 0), icon: 'pi pi-box', tone: 'equipment' },
-  { to: '/expert/installations', label: 'Tesisat', value: trNumber(data.value?.installations?.length || 0), icon: 'pi pi-sitemap', tone: 'installation' },
-  { to: '/expert/bulgu-takip', label: 'Açık bulgu', value: openFindings.value === null ? '—' : trNumber(openFindings.value), icon: 'pi pi-exclamation-triangle', tone: 'finding' }
+  { to: '/expert/equipment', label: 'Ekipman', value: trNumber(data.value?.totals?.equipment || 0), icon: 'pi pi-box', tone: 'violet' },
+  { to: '/expert/installations', label: 'Tesisat', value: trNumber(data.value?.installations?.length || 0), icon: 'pi pi-sitemap', tone: 'primary' },
+  { to: '/expert/bulgu-takip', label: 'Açık bulgu', value: openFindings.value === null ? '—' : trNumber(openFindings.value), icon: 'pi pi-exclamation-triangle', tone: 'warning' },
+  { to: '/expert/calendar', label: 'Süresi geçen kontrol', value: trNumber(statusBars.value.reduce((sum, box) => sum + (box.parts.find(part => part.key === 'overdue')?.count || 0), 0)), icon: 'pi pi-clock', tone: 'error' }
 ])
+// Halka grafik (Chart.js doughnut): dilim renkleri paletten; ortadaki toplam HTML ile.
+const RING_COLORS: Record<string, string> = { ok: '#00ab55', soon: '#ff8f00', overdue: '#ff4842', none: '#c4cdd5' }
+const ringData = (box: { parts: { key: string; count: number }[] }) => ({
+  labels: box.parts.map(part => part.key),
+  datasets: [{ data: box.parts.length ? box.parts.map(part => part.count) : [1], backgroundColor: box.parts.length ? box.parts.map(part => RING_COLORS[part.key]) : ['#edeff2'], borderWidth: 0, borderRadius: box.parts.length > 1 ? 6 : 0, spacing: box.parts.length > 1 ? 2 : 0 }]
+})
+const RING_OPTIONS = { cutout: '76%', responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
 // Ekipman ve tesisat kontrol durumu çubuğu (Periyodik Kontrol Durumu halkalarıyla aynı hesap); yalnız sıfır olmayan dilimler.
 const BAR_PARTS = [
   { key: 'ok', label: 'tamamlanan' },
@@ -682,86 +684,73 @@ onMounted(async () => {
 .crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--admin-muted); font-size: 13px; }
 .crumb a { color: var(--admin-muted); } .crumb a:hover { color: var(--admin-heading); }
 .crumb strong { color: var(--admin-heading); font-weight: 600; } .crumb .pi-angle-right { font-size: 11px; }
-.expert-dashboard .page-head h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; }
+.expert-dashboard .page-head h1 { font-size: 24px; font-weight: 700; letter-spacing: 0; }
 .expert-dashboard .page-head p { font-size: 15px; }
-.scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
+.scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; background: var(--admin-card); color: var(--admin-heading); font-size: 13px; font-weight: 600; box-shadow: var(--pk-card-shadow); }
 .scope-pill i { color: var(--pk-yellow-dark); }
-.gb-top { display: grid; grid-template-columns: 236px minmax(0, 1fr) 320px; gap: 16px; align-items: stretch; }
-.gb-kpis, .gb-side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.card.gb-kpi, .card.gb-status { flex: 1; border-radius: 16px; color: inherit; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); transition: border-color .15s ease; }
-.gb-kpi:hover, .gb-kpi:focus-visible, .gb-status:hover, .gb-status:focus-visible { border-color: var(--pk-yellow); }
-.gb-kpi { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
-.gb-kpi-icon { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; font-size: 22px; }
-.gb-kpi-icon.equipment { background: var(--admin-accent-soft); color: var(--pk-yellow-dark); }
-.gb-kpi-icon.installation { background: #ebe9fe; color: #5925dc; }
-.gb-kpi-icon.finding { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
-.gb-kpi-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.gb-kpi-text strong { color: var(--admin-heading); font-size: 30px; line-height: 1.1; }
-.gb-kpi-text small { color: var(--admin-muted); font-size: 15px; }
-.gb-kpi > .pi, .gb-status-head > .pi-chevron-right { color: var(--admin-heading); font-size: 13px; }
-.gb-hero { position: relative; min-width: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
-.gb-hero img { width: 100%; max-height: 400px; object-fit: contain; }
-.gb-hero figcaption { position: absolute; right: 12px; bottom: 6px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 13px; font-weight: 600; }
-.gb-status { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; }
-.gb-status-head { display: flex; align-items: center; gap: 10px; }
-.gb-status-head > i:first-child { color: var(--pk-yellow-dark); font-size: 18px; }
-.gb-status-head strong { flex: 1; color: var(--admin-heading); font-size: 16px; }
-.gb-status-total { color: var(--admin-heading); font-size: 30px; line-height: 1.1; }
-.gb-bar { display: flex; gap: 2px; height: 26px; border-radius: 8px; background: var(--admin-chip); overflow: hidden; }
-.gb-bar span { display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; }
-.gb-bar .ok, .gb-legend i.ok { background: #12805c; }
-.gb-bar .soon, .gb-legend i.soon { background: #f5b800; }
-.gb-bar .overdue, .gb-legend i.overdue { background: #d92d20; }
-.gb-bar .none, .gb-legend i.none { background: #a8b3c2; }
-.gb-bar .soon { color: #111827; }
-.gb-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--admin-muted); font-size: 13px; }
-.gb-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.gb-legend i { width: 10px; height: 10px; border-radius: 50%; }
-.gb-bottom { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; }
-.card.gb-panel { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: 18px; }
-.gb-panel-head { display: flex; align-items: center; gap: 12px; }
-.gb-panel-head h3 { font-size: 20px; font-weight: 800; }
-.gb-head-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--admin-accent-soft); color: var(--pk-yellow-dark); font-size: 16px; }
-.gb-inner { border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-surface); }
-.gb-empty { padding: 18px 16px; }
-.gb-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 16px; }
-.gb-row + .gb-row { border-top: 1px solid var(--admin-row-border); }
-.gb-row-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-chip); color: var(--admin-heading); font-size: 20px; }
-.gb-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gb-row-name strong { color: var(--admin-heading); font-size: 16px; }
-.gb-row-name small { color: var(--admin-muted); font-size: 15px; }
-.gb-pill { padding: 7px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+/* Behance CRM tasarımı: halka grafik kartları, pastel sayı kutuları, öncelikli kontroller */
+.gb-rings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.card.gb-ring-card { display: flex; flex-direction: column; gap: 18px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); color: inherit; transition: box-shadow .2s ease; }
+a.gb-ring-card:hover, a.gb-ring-card:focus-visible { box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -4px rgba(145, 158, 171, .24); }
+.gb-ring-card h3 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+.gb-ring { position: relative; height: 168px; }
+.gb-ring-canvas { position: absolute; inset: 0; }
+.gb-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.gb-ring-center small { color: var(--admin-muted); font-size: 13px; }
+.gb-ring-center strong { color: var(--admin-heading); font-size: 28px; font-weight: 700; line-height: 1.15; }
+.gb-ring-legend { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gb-ring-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 42px; align-items: center; gap: 10px; color: var(--admin-text); font-size: 13px; }
+.gb-ring-legend li.empty { display: block; color: var(--admin-muted); }
+.gb-ring-legend i { width: 12px; height: 12px; border-radius: 4px; }
+.gb-ring-legend i.ok { background: var(--pk-success-main); } .gb-ring-legend i.soon { background: var(--pk-warning); }
+.gb-ring-legend i.overdue { background: var(--pk-error); } .gb-ring-legend i.none { background: #c4cdd5; }
+.gb-ring-legend strong { color: var(--admin-heading); font-weight: 700; }
+.gb-ring-legend small { color: var(--admin-muted); text-align: right; }
+.gb-next { flex: 1; display: flex; align-items: center; gap: 20px; }
+.gb-date { flex: none; width: 92px; display: flex; flex-direction: column; overflow: hidden; border-radius: 14px; text-align: center; background: var(--pk-primary-lighter); }
+.gb-date strong { padding: 12px 0 2px; color: var(--pk-primary-dark); font-size: 34px; font-weight: 800; line-height: 1.1; }
+.gb-date span { padding: 0 0 12px; color: var(--pk-primary-dark); font-size: 15px; font-weight: 700; }
+.gb-next-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gb-next-text strong { color: var(--admin-heading); font-size: 18px; font-weight: 700; line-height: 1.3; }
+.gb-next-text small { color: var(--admin-muted); font-size: 14px; }
+.gb-go { align-self: flex-start; display: inline-flex; align-items: center; min-height: 38px; padding: 0 16px; border-radius: 8px; background: var(--pk-accent); color: var(--pk-on-accent); font-size: 14px; font-weight: 700; box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.gb-go:hover, .gb-go:focus-visible { background: var(--pk-accent-hover); }
+.gb-title { margin: 32px 0 16px; color: var(--admin-heading); font-size: 18px; font-weight: 700; }
+.gb-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-bottom: 32px; }
+.gb-tile { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 120px; padding: 20px 22px; border-radius: var(--pk-radius); transition: transform .15s ease; }
+.gb-tile:hover, .gb-tile:focus-visible { transform: translateY(-2px); }
+.gb-tile-label { font-size: 15px; font-weight: 700; }
+.gb-tile strong { font-size: 32px; font-weight: 700; line-height: 1.15; }
+.gb-tile-icon { position: absolute; right: 18px; bottom: 16px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, .55); font-size: 15px; }
+.gb-tile.violet { background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
+.gb-tile.primary { background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
+.gb-tile.warning { background: var(--pk-warning-lighter); color: var(--pk-warning-dark); }
+.gb-tile.error { background: var(--pk-error-lighter); color: var(--pk-error-dark); }
+:global(.dark-theme) .gb-tile { background: var(--admin-card); }
+.card.gb-panel { display: flex; flex-direction: column; padding: 8px 0; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.gb-panel-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; padding: 16px 24px 12px; }
+.gb-panel-head h3 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+.gb-panel-head small { color: var(--admin-muted); font-size: 13px; }
+.gb-empty { padding: 12px 24px 18px; }
+.gb-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 24px; }
+.gb-row + .gb-row { border-top: 1px dashed rgba(145, 158, 171, .24); }
+.gb-row-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: rgba(145, 158, 171, .12); color: var(--admin-muted); font-size: 16px; }
+.gb-row-name { min-width: 0; display: flex; flex-direction: column; }
+.gb-row-name strong, .gb-row-name small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-row-name strong { color: var(--admin-heading); font-size: 14px; font-weight: 600; }
+.gb-row-name small { color: var(--admin-muted); font-size: 13px; }
+.gb-pill { padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .gb-pill.bad { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
 .gb-pill.warn { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
-.gb-inspect { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 0; border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.gb-inspect:hover, .gb-inspect:focus-visible { background: var(--pk-yellow); color: var(--pk-on-accent); }
-.gb-inspect .pi { font-size: 11px; }
-.gb-next { flex: 1; display: flex; align-items: center; gap: 28px; padding: 20px 28px; }
-.gb-date { flex: none; width: 106px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--admin-border); border-radius: 14px; text-align: center; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .08); }
-.gb-date strong { padding: 10px 0 6px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 36px; line-height: 1.1; }
-.gb-date span { padding: 6px 0 8px; background: var(--admin-surface); color: var(--admin-heading); font-size: 20px; font-weight: 800; }
-.gb-next-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-left: 28px; border-left: 1px solid var(--admin-border); }
-.gb-next-text strong { color: var(--admin-heading); font-size: 26px; font-weight: 800; line-height: 1.2; }
-.gb-next-text small { color: var(--admin-muted); font-size: 17px; }
-.gb-go { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 54px; padding: 0 22px; border-radius: 12px; background: var(--pk-yellow); color: var(--pk-on-accent); font-size: 17px; font-weight: 700; }
-.gb-go:hover, .gb-go:focus-visible { background: var(--pk-yellow-dark); }
-.gb-go .pi-chevron-right { position: absolute; right: 22px; font-size: 13px; }
-@media (max-width: 1250px) {
-  .gb-top { grid-template-columns: 220px minmax(0, 1fr); }
-  .gb-side { grid-column: 1 / -1; flex-direction: row; }
-  .gb-side > * { min-width: 0; }
-}
-@media (max-width: 1000px) { .gb-bottom { grid-template-columns: minmax(0, 1fr); } }
+.gb-inspect { padding: 6px 14px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.gb-inspect:hover, .gb-inspect:focus-visible { background: rgba(145, 158, 171, .08); }
+@media (max-width: 1250px) { .gb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .gb-rings { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 800px) {
-  .expert-dashboard .page-head h1 { font-size: 32px; }
-  .gb-top { grid-template-columns: minmax(0, 1fr); }
-  .gb-hero { display: none; }
-  .gb-side { flex-direction: column; }
-  .gb-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
-  .gb-row-icon { width: 40px; height: 40px; }
+  .expert-dashboard .page-head h1 { font-size: 26px; }
+  .gb-tiles { grid-template-columns: minmax(0, 1fr); }
+  .gb-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; padding: 12px 16px; }
   .gb-inspect { grid-column: 2 / -1; justify-self: start; }
-  .gb-next { gap: 16px; padding: 16px; }
-  .gb-next-text { padding-left: 16px; }
 }
 .map-slot { flex: 1; min-height: 0; display: flex; }
 .map-slot > * { flex: 1; min-width: 0; }
@@ -792,7 +781,7 @@ onMounted(async () => {
 .expert-dashboard{margin:0 auto;display:grid;gap:16px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:4px}
 .eyebrow{display:block;margin-bottom:7px;color:var(--pk-yellow-dark);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.page-head h1{margin:0;color:var(--admin-heading);font-size:30px;line-height:1.15;letter-spacing:-.7px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
+.page-head h1{margin:0;color:var(--admin-heading);font-size: 22px;line-height:1.15;letter-spacing: 0}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:13px}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;min-width:0}
 .state{display:flex;align-items:center;justify-content:center;gap:8px;padding:60px 20px;color:var(--admin-muted);font-size:13px}
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}

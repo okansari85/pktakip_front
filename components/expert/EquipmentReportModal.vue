@@ -11,12 +11,6 @@
       <input ref="fileInput" type="file" accept="application/pdf,image/jpeg,image/png" hidden @change="onFile" />
       <div class="rd-grid">
         <div class="rd-left">
-          <!-- Katalogdaki görsel (tasarım kataloğu 22'den kırpıldı; marka yazıları silindi); haplarda rapordan okunan no ve model -->
-          <figure class="hero">
-            <img src="/katalog/rapor-yukle-katalog.webp" alt="" />
-            <span class="tag no">Ekipman no: {{ analysis?.match?.fields?.code || equipment.code || '—' }}</span>
-            <span class="tag model">Model: {{ [analysis?.match?.fields?.brand, analysis?.match?.fields?.model].filter(Boolean).join(' ') || '—' }}</span>
-          </figure>
           <ExpertReportSource :file="file" :disabled="busy" @pick="fileInput?.click()">
             <strong>Rapor dosyasını seçin</strong><small>PDF, JPG ya da PNG · en fazla 50 MB</small>
           </ExpertReportSource>
@@ -434,7 +428,7 @@ const save = async () => {
 .test-note{margin:0 0 10px}
 .form-hint{margin:0 0 10px}
 /* Eşleşme: eşleşti yeşil kart (katalogdaki "Mevcut kayıtla eşleşti"); yazım farkı / bilinmiyor sarı, ait değil kırmızı */
-.match{margin:14px 0;padding:14px 16px;border:1px solid transparent;border-radius:14px}
+.match{margin:16px 0;padding:14px 16px;border:1px solid transparent;border-radius:12px}
 .match.match{background:var(--admin-success-bg);color:var(--admin-success-text);border-color:var(--admin-success-bg)}
 .match.close,.match.unknown{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .match.mismatch{background:var(--admin-danger-bg);color:var(--admin-danger-text);border-color:var(--admin-danger-text)}
@@ -442,7 +436,7 @@ const save = async () => {
 .match-head > i{flex:none;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--admin-card);font-size:16px}
 .match.match .match-head > i{background:var(--admin-success-text);color:var(--pk-on-accent)}
 .match-head span{display:flex;flex-direction:column;gap:2px;min-width:0}
-.match-head strong{font-weight:800}.match.match .match-head strong{color:var(--admin-heading);font-size:16px}
+.match-head strong{font-weight:700}.match.match .match-head strong{color:var(--admin-heading);font-size:16px}
 .match-head small{font-size:14px}
 .match table{width:100%;margin-top:10px;border-collapse:collapse;font-size:12px}
 .match th{padding:4px 8px;text-align:left;font-size:10px;font-weight:700;opacity:.8}.match td{padding:5px 8px;border-top:1px solid rgba(127,127,127,.25);color:var(--admin-heading);overflow-wrap:anywhere}
@@ -450,19 +444,19 @@ const save = async () => {
 .match tr.ok td:last-child{color:var(--admin-success-text)}.match tr.close td:last-child{color:var(--admin-warning-text)}.match tr.diff td{color:var(--admin-danger-text);font-weight:700}
 .match-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:12px}
 .match-actions .secondary-button{min-height:40px;font-size:13px}
-.danger-button{min-height:40px;padding:0 16px;border:1px solid var(--admin-danger-text);border-radius:12px;background:var(--admin-card);color:var(--admin-danger-text);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.danger-button{min-height:40px;padding:0 16px;border:1px solid var(--admin-danger-text);border-radius:8px;background:var(--admin-card);color:var(--admin-danger-text);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 /* Bulgular: katalogdaki "Bulgular · n bulgu" satırı, altında düzenlenebilir liste */
-.findings-edit{display:grid;gap:10px;padding:12px 16px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card)}
+.findings-edit{display:grid;gap:10px;padding:12px 16px;border:1px solid rgba(145,158,171,.2);border-radius:12px;background:var(--admin-card)}
 .findings-head{display:flex;align-items:center;gap:12px;color:var(--admin-text);font-size:15px}.findings-head small{color:var(--admin-muted);font-size:12px}
 .findings-head strong{color:var(--admin-heading)}.findings-head .link-button{margin-left:auto}
 .findings-edit ol{display:grid;gap:6px;margin:0;padding-left:22px;color:var(--admin-muted);font-size:12px}
 .findings-edit li{padding-left:2px}.findings-edit li > *{vertical-align:top}
-.findings-edit li textarea{display:inline-block;width:calc(100% - 40px);margin:0;padding:8px 10px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;resize:vertical;outline:0}
+.findings-edit li textarea{display:inline-block;width:calc(100% - 40px);margin:0;padding:8px 10px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px;resize:vertical;outline:0}
 .findings-edit li textarea:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
 .findings-edit .icon-button{margin-left:6px}
 /* Yapay zeka önerisi (açılır) */
-.ai-result{margin-top:14px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-soft)}
-.ai-result-head{width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px;border:0;border-radius:14px;background:transparent;color:var(--admin-heading);font:inherit;font-size:14px;font-weight:800;text-align:left;cursor:pointer}
+.ai-result{margin-top:16px;border:0;border-radius:12px;background:rgba(145,158,171,.08)}
+.ai-result-head{width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px;border:0;border-radius:12px;background:transparent;color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer}
 .ai-result-head:hover{background:var(--admin-hover)}.ai-result-head > i:first-child{color:var(--admin-link)}
 .ai-result-head span{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}.ai-result-head small{color:var(--admin-muted);font-size:12px;font-weight:400}
 .ai-result-head .chevron{color:var(--admin-muted);font-size:11px;transition:transform .15s}.ai-result.open .chevron{transform:rotate(180deg)}
@@ -471,7 +465,7 @@ const save = async () => {
 .ai-result dd small{color:var(--admin-muted)}
 .check-line{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--admin-heading);font-size:13px;cursor:pointer}
 .check-line .evidence{color:var(--admin-muted)}
-.tech{margin-top:12px;padding-top:10px;border-top:1px solid var(--admin-border)}
+.tech{margin-top:12px;padding-top:10px;border-top:1px solid rgba(145,158,171,.2)}
 .tech h4{margin:0 0 8px;color:var(--admin-heading);font-size:13px}.tech h4 small{color:var(--admin-muted);font-weight:400}
 .prop-group{display:grid;gap:2px;margin-bottom:10px}
 .prop-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;color:var(--admin-heading);font-size:13px;font-weight:700}.prop-group-head .link-button{font-size:12px}
@@ -484,10 +478,10 @@ const save = async () => {
 .prop-row{display:grid;grid-template-columns:minmax(110px,45%) 1fr;gap:8px;padding:5px 6px;font-size:13px}
 .prop-field{color:var(--admin-muted)}.prop-value{color:var(--admin-heading);font-weight:700;overflow-wrap:anywhere}
 .prop-changes{display:grid;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--admin-warning-text);border-radius:12px;background:var(--admin-warning-bg)}
-.prop-changes-title{display:flex;align-items:center;gap:6px;margin:0;color:var(--admin-warning-text);font-size:13px;font-weight:800}
+.prop-changes-title{display:flex;align-items:center;gap:6px;margin:0;color:var(--admin-warning-text);font-size:13px;font-weight:700}
 .prop-change{display:grid;gap:5px;padding-top:8px;border-top:1px solid rgba(127,127,127,.25)}
 .prop-values{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;color:var(--admin-heading);font-size:13px}.prop-values strong{margin-right:4px}.prop-values small{color:var(--admin-muted)}.prop-values i{color:var(--admin-muted);font-size:10px}
-.report-value{font-weight:800}
+.report-value{font-weight:700}
 .choice{display:flex;flex-wrap:wrap;gap:4px 16px;color:var(--admin-heading);font-size:13px}.choice label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
 .hint .link-button{margin-left:6px}
 </style>

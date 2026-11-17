@@ -34,13 +34,13 @@ onMounted(load)
 </script>
 
 <style scoped>
-.credit-summary{display:grid;gap:6px;padding:12px 14px;border:1px solid var(--admin-border);border-radius:10px;background:var(--admin-card);font-size:12px}
+.credit-summary{display:grid;gap:6px;padding:12px 14px;border:0;border-radius:12px;background:var(--admin-card);box-shadow:var(--pk-card-shadow);font-size:12px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .label{color:var(--admin-muted);font-size:11px}
 strong{color:var(--admin-heading);font-size:14px}strong.empty{color:var(--admin-danger-text)}
 small{color:var(--admin-muted);font-size:11px}
-.bar{height:4px;border-radius:999px;background:var(--admin-border);overflow:hidden}.bar span{display:block;height:100%;background:var(--pk-yellow)}
-.credit-summary.compact{padding:9px 10px;gap:5px;background:transparent;border-color:var(--admin-sidebar-border)}
+.bar{height:4px;border-radius:999px;background:rgba(145,158,171,.2);overflow:hidden}.bar span{display:block;height:100%;background:var(--pk-accent)}
+.credit-summary.compact{padding:9px 10px;gap:5px;background:transparent;border:1px solid var(--admin-sidebar-border);box-shadow:none}
 .credit-summary.compact .label{color:var(--admin-sidebar-muted)}
 .credit-summary.compact strong{font-size:12px;color:var(--admin-sidebar-text, var(--admin-heading))}
 .credit-summary.compact strong.empty{color:var(--admin-danger-text)}

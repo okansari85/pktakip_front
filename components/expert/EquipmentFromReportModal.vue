@@ -10,12 +10,6 @@
       <input ref="fileInput" type="file" accept="application/pdf" hidden @change="onFile" />
       <div class="rd-grid">
         <div class="rd-left">
-          <!-- Katalogdaki görsel (tasarım kataloğu 22'den kırpıldı; marka yazıları silindi); haplarda rapordan okunan no ve model -->
-          <figure class="hero">
-            <img src="/katalog/rapor-yukle-katalog.webp" alt="" />
-            <span class="tag no">Ekipman no: {{ result?.fields?.code || '—' }}</span>
-            <span class="tag model">Model: {{ [result?.fields?.brand, result?.fields?.model].filter(Boolean).join(' ') || '—' }}</span>
-          </figure>
           <!-- 1) Rapor dosyası -->
           <ExpertReportSource :file="file" :disabled="busy" @pick="fileInput?.click()">
             <strong>Periyodik kontrol raporunu seçin</strong><small>PDF · tek ekipmanlı rapor (forklift, transpalet, kompresör...) ya da tüp kontrol formu</small>
@@ -312,16 +306,16 @@ onMounted(() => Promise.all([loadAreas(props.context?.location_id), loadUnits(pr
 
 <style scoped src="~/assets/css/rapor-yukleme.css"></style>
 <style scoped>
-h4{margin:18px 0 10px;color:var(--admin-heading);font-size:15px;font-weight:800}
+h4{margin:18px 0 10px;color:var(--admin-heading);font-size:15px;font-weight:700}
 .choices{display:grid;gap:8px}
-.choice{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-card);cursor:pointer}
+.choice{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid rgba(145,158,171,.2);border-radius:12px;background:var(--admin-card);cursor:pointer}
 .choice.active{border-color:var(--pk-accent);background:var(--admin-accent-soft)}
 /* Kesin eşleşen ekipman seçiliyken katalogdaki "Mevcut kayıtla eşleşti" kartı */
 .choice.active.strong{border-color:var(--admin-success-text);background:var(--admin-success-bg)}
 .choice input{margin-top:3px;accent-color:var(--pk-accent)}.choice span{display:flex;flex-direction:column;gap:4px;min-width:0}
 .choice strong{color:var(--admin-heading);font-size:14px}.choice small{color:var(--admin-muted);font-size:12px}
-.choice em{width:max-content;padding:2px 9px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-style:normal;font-weight:700}
-.choice em.strong{background:var(--admin-success-text);color:var(--pk-on-accent)}
-.other-select{width:100%;height:44px;padding:0 12px;border:1px solid var(--pk-accent);border-radius:10px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:14px;outline:0}
-.new-form{margin-top:14px;padding-top:14px;border-top:1px solid var(--admin-border)}
+.choice em{width:max-content;padding:2px 8px;border-radius:6px;background:var(--admin-chip);color:var(--admin-muted);font-size:12px;font-style:normal;font-weight:700}
+.choice em.strong{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.other-select{width:100%;height:44px;padding:0 12px;border:1px solid var(--pk-accent);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:14px;outline:0}
+.new-form{margin-top:16px;padding-top:16px;border-top:1px dashed rgba(145,158,171,.24)}
 </style>

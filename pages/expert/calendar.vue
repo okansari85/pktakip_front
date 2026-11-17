@@ -16,7 +16,7 @@
           <button type="button" :class="{ on: view === 'yillik' }" :aria-pressed="view === 'yillik'" @click="view = 'yillik'"><i class="pi pi-calendar" /> Yıllık plan</button>
         </div>
       </div>
-      <button v-if="data && groups.length && view === 'yillik'" class="plan-button" type="button" @click="openNewPlan"><i class="pi pi-calendar" /> Kontrol planla <i class="pi pi-arrow-right" /></button>
+      <button v-if="data && groups.length" class="plan-button" type="button" @click="openNewPlan"><i class="pi pi-calendar" /> Kontrol planla <i class="pi pi-arrow-right" /></button>
     </div>
 
     <div v-if="loading && !data" class="card state"><i class="pi pi-spin pi-spinner" /> Takvim hazırlanıyor...</div>
@@ -25,7 +25,7 @@
     <template v-else-if="data">
       <p v-if="plansError" class="plans-error"><i class="pi pi-exclamation-circle" /> {{ plansError }}</p>
 
-      <!-- Ajanda (tasarım kataloğu 03): solda 7 günlük özet, ortada en yakın kontrol, sağda seçili gün; altta hafta ve gecikenler. -->
+      <!-- Ajanda: solda 7 günlük özet ve en yakın kontrol, sağda seçili gün; altta hafta ve gecikenler. -->
       <template v-if="view === 'ajanda'">
         <div class="cal-top">
           <section class="card cal-summary">
@@ -40,35 +40,9 @@
               <i class="pi pi-chevron-right" aria-hidden="true" />
             </NuxtLink>
             <p class="cal-sum-note"><i class="pi pi-calendar" /> Önümüzdeki 7 gün</p>
+            <p v-if="nextDay" class="cal-sum-next"><i class="pi pi-box" /> {{ agendaGroupsText(nextDay.entries) }} · {{ longDate(nextDay.date) }}</p>
             <NuxtLink v-if="overdueGroups" to="/expert/kontroller/suresi-gecen" class="cal-sum-alert"><i class="pi pi-exclamation-triangle" /> {{ number(overdueGroups) }} kontrol grubu gecikmiş</NuxtLink>
           </section>
-
-          <figure class="cal-hero">
-            <div class="cal-hero-actions">
-              <span v-if="nextDay" class="cal-hero-tag"><i class="pi pi-box" /> {{ agendaGroupsText(nextDay.entries) }} · {{ longDate(nextDay.date) }}</span>
-              <button class="plan-button" type="button" @click="openNewPlan"><i class="pi pi-calendar" /> Kontrol planla <i class="pi pi-arrow-right" /></button>
-            </div>
-            <!-- Katalogdaki görsel (tasarım kataloğu 03'ten kırpıldı: forklift, işaret ve yazısız masa takvimi; marka yazıları silindi).
-                 Takvimin günü ve ayı en yakın kontrol günü, görselin üstüne yazılır. Elle çizilmiş karşılığı forklift-izometrik.svg + SVG takvim. -->
-            <div class="cal-hero-art">
-              <span v-if="SHOW_HERO_PIN" class="cal-hero-pin" aria-hidden="true"><i class="pi pi-calendar" /></span>
-              <img src="/katalog/takvim-katalog.webp" alt="" />
-              <span class="cal-hero-day" aria-hidden="true">{{ heroDate.day }}</span>
-              <span class="cal-hero-month" aria-hidden="true">{{ heroDate.month }}</span>
-              <svg v-if="SHOW_SVG_CALENDAR" class="cal-hero-cal" viewBox="0 0 150 200" aria-hidden="true">
-                <ellipse cx="78" cy="176" rx="66" ry="16" fill="#1f2937" fill-opacity=".14" />
-                <polygon points="40,70 135.3,15 100.7,125 5.4,180" fill="#aeb7c1" />
-                <g transform="translate(-5 -3)"><rect width="110" height="120" rx="12" fill="#c3cad2" transform="matrix(0.866 -0.5 0 1 40 70)" /></g>
-                <g transform="matrix(0.866 -0.5 0 1 40 70)">
-                  <rect width="110" height="120" rx="12" fill="#ffffff" stroke="#d6dce4" stroke-width="1.5" />
-                  <path d="M0 62 V12 a12 12 0 0 1 12 -12 h86 a12 12 0 0 1 12 12 V62 Z" fill="#e5483d" />
-                  <text x="55" y="50" text-anchor="middle" font-size="46" font-weight="800" fill="#ffffff">{{ heroDate.day }}</text>
-                  <text x="55" y="104" text-anchor="middle" font-size="30" font-weight="800" fill="#1f2937">{{ heroDate.month }}</text>
-                  <g fill="#7d8792"><rect x="22" y="-9" width="8" height="20" rx="4" /><rect x="51" y="-9" width="8" height="20" rx="4" /><rect x="80" y="-9" width="8" height="20" rx="4" /></g>
-                </g>
-              </svg>
-            </div>
-          </figure>
 
           <section class="card cal-day">
             <header class="cal-day-head"><i class="pi pi-calendar" /><h3>{{ selected.title }}</h3></header>
@@ -141,7 +115,7 @@
 <script setup lang="ts">
 import { agendaDate, agendaDateKey, agendaGroupsText, agendaMergedGroups, agendaNextDay, agendaShortName, controlPlanText, type AgendaEntry } from '~/composables/controlAgenda'
 
-// Kontrol Takvimi (tasarım kataloğu 03): Ajanda (haftalık) ve Yıllık plan; Genel Bakış'ın verisiyle (/pk-dashboard), bulgu tekrar
+// Kontrol Takvimi: Ajanda (haftalık) ve Yıllık plan; Genel Bakış'ın verisiyle (/pk-dashboard), bulgu tekrar
 // kontrolleri (/pk-findings/rechecks) ve kontrol planları (/pk-control-plans). Planlar kontrollerle birlikte, kesikli çizgiyle görünür.
 // Kapsam üstteki lokasyon / firma menüsünden; bu sayfada menüde "Tüm lokasyonlar" da seçilebilir (dashboardScope).
 definePageMeta({ layout: 'expert', middleware: 'expert', dashboardScope: true })
@@ -219,15 +193,8 @@ const soonGroups = computed(() => soon.value.reduce((sum, entry) => sum + entry.
 const soonEquipment = computed(() => soon.value.reduce((sum, entry) => sum + entry.total, 0))
 const overdueGroups = computed(() => agenda.value.filter(entry => entry.days_left < 0).reduce((sum, entry) => sum + entry.groups.length, 0))
 
-// Orta: en yakın kontrol günü (bugün ya da sonrası).
+// En yakın kontrol günü (bugün ya da sonrası).
 const nextDay = computed(() => agendaNextDay(agenda.value))
-// Eski elle çizilmiş takvim ve işaret: katalog görselinde ikisi de var; gizli, ileride açılabilir (forklift-izometrik.svg ile).
-const SHOW_SVG_CALENDAR = false
-const SHOW_HERO_PIN = false
-const heroDate = computed(() => {
-  const date = agendaDate(nextDay.value?.date || todayKey)
-  return { day: date.getDate(), month: new Intl.DateTimeFormat('tr-TR', { month: 'short' }).format(date).toLocaleUpperCase('tr-TR') }
-})
 
 // Seçili gün (sağ kart) ve hafta: açılışta ve kapsam değişince en yakın kontrol günü.
 const mondayOf = (date: string) => {
@@ -361,114 +328,97 @@ const onPlanDeleted = () => {
 </script>
 
 <style scoped>
-.calendar-page{margin:0 auto;display:grid;gap:16px}
+.calendar-page{margin:0 auto;display:grid;gap:24px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:4px}
-.page-head h1{margin:0;color:var(--admin-heading);font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
+.page-head h1{margin:0;color:var(--admin-heading);font-size: 24px;font-weight: 700;line-height:1.15;letter-spacing: 0}.page-head p{margin:7px 0 0;color:var(--admin-muted);font-size:15px}
 .crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
 .crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
 .crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;min-width:0}
+.card{background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow);min-width:0}
 .state{display:flex;align-items:center;justify-content:center;gap:8px;padding:60px 20px;color:var(--admin-muted);font-size:13px}
 .error-text{color:var(--admin-danger-text)}
 .reloading > *{opacity:.5;transition:opacity .15s}
 .muted{margin:0;color:var(--admin-muted);font-size:13px}
 .plans-error{display:flex;align-items:center;gap:8px;margin:0;padding:10px 14px;border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:13px}
-/* Görünüm düğmesi ve mavi ana düğme (katalogdaki gibi) */
-.view-switch{display:inline-flex;gap:4px;margin-top:16px;padding:4px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-card);box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.06)}
-.view-switch button{min-height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 20px;border:0;border-radius:10px;background:none;color:var(--admin-heading);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
-.view-switch button.on{background:var(--pk-yellow);color:var(--pk-on-accent)}
-.plan-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--pk-yellow);color:var(--pk-on-accent);font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(var(--pk-accent-rgb),.25)}
-.plan-button:hover,.plan-button:focus-visible{background:var(--pk-yellow-dark)}
+/* Görünüm düğmesi ve mavi ana düğme */
+.view-switch{display:inline-flex;gap:4px;margin-top:16px;padding:4px;border:1px solid rgba(145,158,171,.32);border-radius:10px;background:var(--admin-card)}
+.view-switch button{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:0;border-radius:7px;background:none;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.view-switch button.on{background:var(--pk-accent);color:var(--pk-on-accent)}
+.plan-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 18px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}
+.plan-button:hover,.plan-button:focus-visible{background:var(--pk-accent-hover)}
 .plan-button .pi-arrow-right{font-size:12px}
-/* Üst sıra: özet, en yakın kontrol, seçili gün */
-.cal-top{display:grid;grid-template-columns:330px minmax(0,1fr) 370px;gap:16px;align-items:stretch}
-.card.cal-summary{display:flex;flex-direction:column;padding:12px 18px 16px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
-.cal-sum-row{display:flex;align-items:center;gap:16px;padding:12px 4px;color:inherit}
-.cal-sum-row + .cal-sum-row{border-top:1px solid var(--admin-row-border)}
+/* Üst sıra: özet ve en yakın kontrol, seçili gün */
+.cal-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:stretch}
+.card.cal-summary{display:flex;flex-direction:column;padding:16px 24px 24px}
+.cal-sum-row{display:flex;align-items:center;gap:16px;padding:12px 0;color:inherit}
+.cal-sum-row + .cal-sum-row{border-top:1px dashed rgba(145,158,171,.24)}
 .cal-sum-row:hover .cal-sum-text small,.cal-sum-row:focus-visible .cal-sum-text small{color:var(--admin-heading)}
-.cal-sum-icon{flex:none;width:52px;height:52px;display:grid;place-items:center;border-radius:12px;background:var(--admin-accent-soft);color:var(--pk-yellow-dark);font-size:22px}
-.cal-sum-icon.equipment{background:var(--admin-success-bg);color:var(--admin-success-text)}
+.cal-sum-icon{flex:none;width:52px;height:52px;display:grid;place-items:center;border-radius:12px;background:var(--pk-primary-lighter);color:var(--pk-primary-dark);font-size:22px}
+.cal-sum-icon.equipment{background:var(--pk-success-lighter);color:var(--pk-success-dark)}
 .cal-sum-text{flex:1;min-width:0;display:flex;flex-direction:column}
-.cal-sum-text strong{color:var(--admin-heading);font-size:30px;line-height:1.1}.cal-sum-text small{color:var(--admin-muted);font-size:15px}
-.cal-sum-row > .pi{color:var(--admin-heading);font-size:13px}
-.cal-sum-note{display:flex;align-items:center;gap:10px;margin:0;padding:12px 4px;border-top:1px solid var(--admin-border);color:var(--admin-text);font-size:14px}
-.cal-sum-alert{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:14px;font-weight:600}
-.cal-hero{position:relative;min-width:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.cal-hero-actions{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.cal-hero-tag{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--admin-border);border-radius:999px;background:var(--admin-card);color:var(--admin-heading);font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(var(--pk-shadow-rgb),.06)}
-.cal-hero-tag i{color:var(--pk-yellow-dark)}
-.cal-hero-art{position:relative;width:min(100%,600px);container-type:inline-size}
-/* Görseldeki masa takviminin kırmızı ve beyaz yüzü (görselde gün merkezi x %78,3 y %67, ay x %76,8 y %80) */
-.cal-hero-day,.cal-hero-month{position:absolute;transform:translate(-50%,-50%);font-weight:800;line-height:1;white-space:nowrap}
-.cal-hero-day{left:78.3%;top:67%;color:#fff;font-size:9.2cqw}
-.cal-hero-month{left:76.8%;top:80%;color:#1f2937;font-size:6.4cqw}
-.cal-hero-art img{display:block;width:100%}
-.cal-hero-cal{position:absolute;right:3%;bottom:10%;width:30%;font-family:inherit}
-.cal-hero-pin{position:absolute;top:-4%;left:26%;width:42px;height:42px;display:grid;place-items:center;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pk-yellow);color:var(--pk-on-accent);box-shadow:0 6px 16px var(--admin-shadow)}
-.cal-hero-pin i{transform:rotate(45deg);font-size:16px}
-.card.cal-day{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.06)}
+.cal-sum-text strong{color:var(--admin-heading);font-size:28px;font-weight:700;line-height:1.15}.cal-sum-text small{color:var(--admin-muted);font-size:14px}
+.cal-sum-row > .pi{color:var(--admin-muted);font-size:13px}
+.cal-sum-note,.cal-sum-next{display:flex;align-items:center;gap:10px;margin:0;padding:12px 0;border-top:1px dashed rgba(145,158,171,.24);color:var(--admin-text);font-size:14px}
+.cal-sum-next{color:var(--admin-heading);font-weight:600}.cal-sum-next i{color:var(--pk-accent)}
+.cal-sum-alert{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:14px;font-weight:600}
+.card.cal-day{display:flex;flex-direction:column;gap:12px;padding:24px}
 .cal-day-head{display:flex;align-items:center;gap:12px}
-.cal-day-head i{color:var(--pk-yellow-dark);font-size:22px}
-.cal-day-head h3{margin:0;color:var(--admin-heading);font-size:22px;font-weight:800}
-.cal-pill{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:12px;font-size:16px;font-weight:700}
+.cal-day-head i{color:var(--pk-accent);font-size:18px}
+.cal-day-head h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
+.cal-pill{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;line-height:20px}
 .cal-pill.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}.cal-pill.bad{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
-.cal-line{display:flex;align-items:center;gap:12px;padding:6px 4px 10px;border-bottom:1px solid var(--admin-row-border);color:var(--admin-heading);font-size:15px}
+.cal-line{display:flex;align-items:center;gap:12px;padding:6px 0 10px;border-bottom:1px dashed rgba(145,158,171,.24);color:var(--admin-heading);font-size:14px}
 .cal-line > .pi:first-child{color:var(--admin-muted);font-size:15px}
-.cal-plan-line{width:100%;border:1px dashed var(--admin-heading);border-radius:10px;padding:8px 10px;background:none;font:inherit;text-align:left;cursor:pointer}
+.cal-plan-line{width:100%;border:1px dashed rgba(145,158,171,.48);border-radius:8px;padding:8px 10px;background:none;font:inherit;text-align:left;cursor:pointer}
 .cal-plan-line span{flex:1;min-width:0}.cal-plan-line .pi-pencil{color:var(--admin-muted);font-size:12px}
 .cal-plan-line:hover{background:var(--admin-hover)}
 .cal-day-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto}
 .cal-day-actions > *{flex:1}
-.cal-secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 16px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-surface);color:var(--admin-heading);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
-.cal-secondary:hover{border-color:var(--pk-yellow)}.cal-secondary i{color:var(--pk-yellow-dark)}
+.cal-secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 16px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.cal-secondary:hover{background:rgba(145,158,171,.08)}.cal-secondary i{color:var(--pk-accent)}
 /* Alt sıra: hafta ve geciken kontrol grupları */
-.cal-bottom{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px}
-.card.cal-week,.card.cal-late{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border-radius:18px}
+.cal-bottom{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:24px}
+.card.cal-week,.card.cal-late{display:flex;flex-direction:column;gap:16px;padding:24px}
 .cal-week-head{display:flex;align-items:center;gap:14px}
-.cal-week-head h3{margin:0;color:var(--admin-heading);font-size:22px;font-weight:800}
-.cal-nav{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--admin-border);border-radius:50%;background:var(--admin-surface);color:var(--admin-heading);cursor:pointer}
-.cal-nav:hover{border-color:var(--pk-yellow)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr));overflow-x:auto;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-surface)}
+.cal-week-head h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
+.cal-nav{width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);cursor:pointer}
+.cal-nav:hover{background:rgba(145,158,171,.08)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr));overflow-x:auto;border-radius:12px}
 .cal-col{display:flex;flex-direction:column;min-width:0;cursor:pointer}
-.cal-col + .cal-col{border-left:1px solid var(--admin-border)}
+.cal-col + .cal-col{border-left:1px solid rgba(145,158,171,.2)}
 .cal-col.selected{background:var(--admin-accent-soft)}
-.cal-col-head{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:0;border-bottom:1px solid var(--admin-border);background:none;font:inherit;cursor:pointer}
-.cal-col-head strong{color:var(--admin-heading);font-size:15px}.cal-col-head small{color:var(--admin-muted);font-size:13px}
+.cal-col-head{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:0;background:rgba(145,158,171,.08);font:inherit;cursor:pointer}
+.cal-col-head strong{color:var(--admin-muted);font-size:13px;font-weight:600}.cal-col-head small{color:var(--admin-muted);font-size:12px}
 .cal-col.selected .cal-col-head strong,.cal-col.selected .cal-col-head small{color:var(--admin-accent-text)}
 .cal-cell{flex:1;min-height:140px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:6px;padding:8px 6px}
 .cal-empty{color:var(--admin-muted);text-align:center}
 .cal-more{color:var(--admin-muted);font-size:12px;font-weight:700;text-align:center}
-.cal-chip{display:flex;align-items:flex-start;gap:7px;min-width:0;padding:8px 9px;border:0;border-radius:10px;font:inherit;text-align:left}
+.cal-chip{display:flex;align-items:flex-start;gap:7px;min-width:0;padding:8px 9px;border:0;border-radius:8px;font:inherit;text-align:left}
 .cal-chip > span{min-width:0;display:flex;flex-direction:column}
 .cal-chip strong{font-size:13px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}.cal-chip small{font-size:12px;opacity:.85}
 .cal-chip > i{margin-top:2px;font-size:13px}
-.cal-chip.due{background:var(--pk-yellow);color:var(--pk-on-accent)}
+.cal-chip.due{background:var(--pk-accent);color:var(--pk-on-accent)}
 .cal-chip.late{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .cal-chip.recheck{background:var(--admin-chip);color:var(--admin-heading)}
-.cal-chip.plan{border:1.5px dashed var(--admin-heading);background:var(--admin-surface);color:var(--admin-heading);cursor:pointer}
+.cal-chip.plan{border:1px dashed rgba(145,158,171,.48);background:var(--admin-card);color:var(--admin-heading);cursor:pointer}
 .cal-chip.plan:hover{background:var(--admin-hover)}
-.cal-scope{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;padding:10px 14px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-surface);color:var(--admin-text);font-size:14px}
+.cal-scope{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;padding:0;color:var(--admin-muted);font-size:13px}
 .cal-scope i{color:var(--admin-muted)}.cal-scope strong{color:var(--admin-heading)}
 .cal-late-head{display:flex;align-items:center;gap:12px}
-.cal-late-head i{color:var(--pk-yellow-dark);font-size:20px}
-.cal-late-head h3{margin:0;color:var(--admin-heading);font-size:20px;font-weight:800}
-.cal-late-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;align-items:center;gap:14px;width:100%;padding:12px 14px;border:1px solid var(--admin-border);border-radius:14px;background:var(--admin-surface);font:inherit;text-align:left;cursor:pointer}
-.cal-late-row:hover,.cal-late-row:focus-visible{border-color:var(--pk-yellow)}
-.cal-late-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:12px;background:var(--admin-chip);color:var(--admin-heading);font-size:20px}
+.cal-late-head i{color:var(--pk-accent);font-size:18px}
+.cal-late-head h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
+.cal-late-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;align-items:center;gap:14px;width:100%;padding:12px 0;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+.cal-late-row + .cal-late-row{border-top:1px dashed rgba(145,158,171,.24)}
+.cal-late-row:hover .cal-late-name strong,.cal-late-row:focus-visible .cal-late-name strong{color:var(--admin-link)}
+.cal-late-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:var(--pk-error-lighter);color:var(--pk-error-dark);font-size:16px}
 .cal-late-name{min-width:0;display:flex;flex-direction:column}
-.cal-late-name strong{color:var(--admin-heading);font-size:16px}.cal-late-name small{color:var(--admin-muted);font-size:13px}
-.cal-late-days{padding:6px 14px;border-radius:999px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:15px;font-weight:700;white-space:nowrap}
-.cal-late-row > .pi{color:var(--admin-heading);font-size:13px}
-.cal-link{display:inline-flex;align-items:center;gap:8px;color:var(--admin-link);font-size:15px;font-weight:700}
-@media (max-width:1250px){
-  .cal-top{grid-template-columns:300px minmax(0,1fr)}
-  .cal-day{grid-column:1 / -1}
-}
+.cal-late-name strong{color:var(--admin-heading);font-size:14px;font-weight:600}.cal-late-name small{color:var(--admin-muted);font-size:13px}
+.cal-late-days{padding:2px 8px;border-radius:6px;background:var(--admin-danger-bg);color:var(--admin-danger-text);font-size:12px;font-weight:700;white-space:nowrap}
+.cal-late-row > .pi{color:var(--admin-muted);font-size:13px}
+.cal-link{display:inline-flex;align-items:center;gap:8px;color:var(--admin-link);font-size:14px;font-weight:700}
 @media (max-width:1000px){.cal-bottom{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.cal-top{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:800px){
-  .page-head h1{font-size:32px}
-  .cal-top{grid-template-columns:minmax(0,1fr)}
-  .cal-hero-art{display:none}
-  .cal-hero-actions{align-self:stretch;align-items:stretch}
+  .page-head h1{font-size: 22px}
 }
 </style>

@@ -98,7 +98,7 @@ onMounted(async () => { await load(); loadData() })
 .control-page { margin: 0 auto; }
 .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; color: var(--admin-muted); font-size: 12.5px; }
 .crumbs a:hover { color: var(--admin-heading); }
-h1 { margin: 0 0 14px; color: var(--admin-heading); font-size: 28px; letter-spacing: -.6px; }
+h1 { margin: 0 0 14px; color: var(--admin-heading); font-size: 22px; letter-spacing: 0; }
 .notice { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid; border-radius: 10px; font-size: 13.5px; }
 .notice > i { font-size: 18px; }
 .notice.blue, .notice.red { background: #fef3f2; border-color: #fecdca; color: #b42318; }

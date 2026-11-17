@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-// Tasarım kataloğu 22: rapor pencerelerinin "Kaynak rapor" kartı. Dosya seçimi pencerenin kendi dosya kutusundan (pick); kart
+// Rapor pencerelerinin "Kaynak rapor" kartı. Dosya seçimi pencerenin kendi dosya kutusundan (pick); kart
 // yalnızca adı, boyutu ve önizlemeyi gösterir.
 const props = defineProps<{ file: File | null; disabled?: boolean }>()
 const emit = defineEmits<{ pick: [] }>()
@@ -35,20 +35,21 @@ const size = computed(() => props.file ? `${(props.file.size / 1024 / 1024).toFi
 </script>
 
 <style scoped>
-.source{display:grid;gap:14px;min-width:0;padding:16px 18px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:18px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
+.source{display:grid;gap:16px;min-width:0;padding:24px;background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow)}
 header{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;min-width:0}
 .head-icon{color:var(--admin-link);font-size:20px}
-h3{margin:0;color:var(--admin-heading);font-size:20px;font-weight:800;white-space:nowrap}
+h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700;white-space:nowrap}
 header strong{min-width:0;max-width:100%;overflow:hidden;color:var(--admin-heading);font-size:16px;font-weight:600;white-space:nowrap;text-overflow:ellipsis}
-.chip{padding:3px 10px;border-radius:999px;background:var(--admin-accent-soft);color:var(--admin-link);font-size:12px;font-weight:700;white-space:nowrap}
-.outline-button{display:inline-flex;align-items:center;gap:7px;height:36px;margin-left:auto;padding:0 13px;border:1px solid var(--pk-accent);border-radius:10px;background:var(--admin-card);color:var(--admin-link);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-.outline-button:hover{background:var(--admin-accent-soft)}.outline-button:disabled{opacity:.55;cursor:not-allowed}
-.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:190px;padding:22px;border:1.5px dashed var(--admin-border);border-radius:14px;background:var(--admin-soft);color:var(--admin-muted);font:inherit;text-align:center;cursor:pointer}
+.chip{padding:2px 8px;border-radius:6px;background:var(--admin-accent-soft);color:var(--admin-accent-text);font-size:12px;font-weight:700;white-space:nowrap}
+.outline-button{display:inline-flex;align-items:center;gap:7px;height:36px;margin-left:auto;padding:0 13px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:var(--admin-card);color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.outline-button:hover{background:rgba(145,158,171,.08)}.outline-button:disabled{opacity:.55;cursor:not-allowed}
+.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:190px;padding:24px;border:1px dashed rgba(145,158,171,.32);border-radius:12px;background:rgba(145,158,171,.04);color:var(--admin-muted);font:inherit;text-align:center;cursor:pointer}
 .pick:hover{border-color:var(--pk-accent)}.pick:disabled{cursor:not-allowed}
-.pick > i{width:52px;height:52px;display:grid;place-items:center;border-radius:14px;background:var(--admin-accent-soft);color:var(--admin-link);font-size:24px}
+.pick > i{width:52px;height:52px;display:grid;place-items:center;border-radius:12px;background:var(--pk-primary-lighter);color:var(--pk-primary-dark);font-size:24px}
+:global(.dark-theme) .pick > i{background:var(--admin-accent-soft);color:var(--admin-accent-text)}
 .pick span{display:flex;flex-direction:column;gap:5px;max-width:420px}
 .pick :slotted(strong){color:var(--admin-heading);font-size:15px}
 .pick :slotted(small){color:var(--admin-muted);font-size:12px;line-height:1.45}
-.preview{width:100%;height:340px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-soft)}
+.preview{width:100%;height:340px;border:1px solid rgba(145,158,171,.2);border-radius:8px;background:var(--admin-soft)}
 .preview.image{height:auto;max-height:340px;object-fit:contain}
 </style>

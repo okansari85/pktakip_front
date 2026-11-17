@@ -1,15 +1,25 @@
 :root {
-  /* Vurgu rengi (tasarım kataloğu mavisi): birincil düğme, seçili menü, sekme çizgisi, odak halkası. */
-  --pk-accent: #1a6ff4;
-  --pk-accent-rgb: 26, 111, 244;
-  --pk-accent-hover: #1259d6;
+  /* Renk paleti (Behance CRM tasarımı): her rengin açık → koyu beş tonu. Durum renkleri ve pastel kutular buradan. */
+  --pk-primary-lighter: #d6e2ff; --pk-primary-light: #6b97ff; --pk-primary: #0047ff; --pk-primary-dark: #0030b8; --pk-primary-darker: #001a73;
+  --pk-info-lighter: #d0f2ff; --pk-info-light: #74caff; --pk-info: #1890ff; --pk-info-dark: #0c53b7; --pk-info-darker: #04297a;
+  --pk-success-lighter: #c8f2d8; --pk-success-light: #5be584; --pk-success-main: #00ab55; --pk-success-dark: #007b55; --pk-success-darker: #005249;
+  --pk-warning-lighter: #fff2d6; --pk-warning-light: #ffcb6b; --pk-warning: #ff8f00; --pk-warning-dark: #b75a00; --pk-warning-darker: #7a3300;
+  --pk-error-lighter: #ffe7d9; --pk-error-light: #ffa48d; --pk-error: #ff4842; --pk-error-dark: #b72136; --pk-error-darker: #7a0c2e;
+  --pk-violet-lighter: #f3e0ff; --pk-violet-light: #d78bff; --pk-violet: #a43df5; --pk-violet-dark: #6a1fb8; --pk-violet-darker: #3b0f7a;
+  /* Vurgu rengi = paletin birincil mavisi: birincil düğme, seçili menü, sekme çizgisi, odak halkası. */
+  --pk-accent: var(--pk-primary);
+  --pk-accent-rgb: 0, 71, 255;
+  --pk-accent-hover: var(--pk-primary-dark);
   /* Vurgu zemini üstündeki yazı (birincil düğme, seçili menü) */
   --pk-on-accent: #ffffff;
-  --pk-focus-ring: rgba(26, 111, 244, .16);
-  /* Kart / çip gölgelerinin tonu (katalogda serin, mavimsi gri) */
-  --pk-shadow-rgb: 30, 64, 140;
+  --pk-focus-ring: rgba(0, 71, 255, .16);
+  /* Kart / çip gölgelerinin tonu: nötr gri (Behance CRM tasarımı, yumuşak ve kenarlıksız kart) */
+  --pk-shadow-rgb: 145, 158, 171;
+  /* Kart gölgesi ve köşe: bütün beyaz kartlar */
+  --pk-card-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 12px 24px -4px rgba(145, 158, 171, .12);
+  --pk-radius: 16px;
   /* Logo: katalogdaki gibi mavi altıgen (içinde ✓) */
-  --pk-logo: linear-gradient(155deg, #3d8bf8 0%, #1a6ff4 55%, #1159e6 100%);
+  --pk-logo: linear-gradient(135deg, var(--pk-primary-light) 0%, var(--pk-primary) 55%, var(--pk-primary-dark) 100%);
   --pk-logo-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M40.5 5.5Q50 0 59.5 5.5L83.8 19.5Q93.3 25 93.3 36L93.3 64Q93.3 75 83.8 80.5L59.5 94.5Q50 100 40.5 94.5L16.2 80.5Q6.7 75 6.7 64L6.7 36Q6.7 25 16.2 19.5Z'/%3E%3C/svg%3E");
   /* Eski adlar (kodda çok yerde geçer): artık vurgu mavisini verir. */
   --pk-yellow: var(--pk-accent);
@@ -20,19 +30,15 @@
   --pk-border: #e5e7eb;
   --pk-surface: #ffffff;
   --pk-background: #f8fafc;
-  --pk-success: #16a34a;
-  --pk-danger: #ef4444;
+  --pk-success: var(--pk-success-main);
+  --pk-danger: var(--pk-error);
 
-  --admin-background: #f2f4f9;
-  /* Panel zemini (tasarım kataloğu): açık serin zemin, üstte mavi, sağ altta sıcak şeftali ışık. */
-  --admin-backdrop:
-    radial-gradient(1100px 620px at 62% -10%, rgba(26, 111, 244, .10), transparent 62%),
-    radial-gradient(900px 560px at -6% 28%, rgba(96, 140, 245, .07), transparent 60%),
-    radial-gradient(1000px 640px at 92% 108%, rgba(255, 205, 160, .34), transparent 62%),
-    #f2f4f9;
+  --admin-background: #f4f6f8;
+  /* Panel zemini (Behance CRM tasarımı): düz açık gri; ışık / degrade yok. */
+  --admin-backdrop: #f4f6f8;
   --admin-surface: #ffffff;
-  /* Kartlar yarı saydam beyaz: zemindeki ışık hafifçe görünür. */
-  --admin-card: rgba(255, 255, 255, .86);
+  /* Kartlar düz beyaz, gölgeyle ayrılır. */
+  --admin-card: #ffffff;
   --admin-soft: #f8fafc;
   --admin-border: #e2e8f0;
   --admin-heading: #0f172a;
@@ -51,27 +57,27 @@
   --admin-hover: #f5f7fa;
   --admin-row-border: #edf0f5;
   --admin-chip: #f2f4f7;
-  --admin-accent-soft: #e9f1fe;
-  --admin-accent-text: #1259d6;
+  --admin-accent-soft: rgba(0, 71, 255, .08);
+  --admin-accent-text: var(--pk-primary-dark);
   --admin-overlay: rgba(15, 23, 42, .16);
   --admin-shadow: rgba(15, 23, 42, .16);
-  --admin-success-bg: #ecfdf3;
-  --admin-success-text: #067647;
-  --admin-warning-bg: #fffaeb;
-  --admin-warning-text: #b54708;
-  --admin-danger-bg: #fef3f2;
-  --admin-danger-text: #b42318;
+  --admin-success-bg: rgba(0, 171, 85, .12);
+  --admin-success-text: var(--pk-success-dark);
+  --admin-warning-bg: rgba(255, 143, 0, .14);
+  --admin-warning-text: var(--pk-warning-dark);
+  --admin-danger-bg: rgba(255, 72, 66, .12);
+  --admin-danger-text: var(--pk-error-dark);
   /* Yaklaşan kontrol (60 gün içinde) kalan gün yazısı: sarı */
   --admin-upcoming-text: #ca8a04;
-  --admin-link: #175cd3;
+  --admin-link: var(--pk-primary);
 }
 
 :root.dark-theme {
   color-scheme: dark;
   /* Koyu zeminde okunur mavi: dolgu #2563eb (beyaz yazı 5,2:1), üstüne gelince açılır. */
-  --pk-accent: #2563eb;
-  --pk-accent-rgb: 37, 99, 235;
-  --pk-accent-hover: #3b82f6;
+  --pk-accent: #3d6dff;
+  --pk-accent-rgb: 61, 109, 255;
+  --pk-accent-hover: var(--pk-primary-light);
   --pk-focus-ring: rgba(96, 165, 250, .25);
   --admin-input: #0f1729;
   --admin-hover: #1a2436;
@@ -90,13 +96,11 @@
   --admin-upcoming-text: #facc15;
   --admin-link: #60a5fa;
   --admin-background: #0b1120;
-  --admin-backdrop:
-    radial-gradient(1100px 620px at 62% -10%, rgba(37, 99, 235, .16), transparent 62%),
-    radial-gradient(900px 560px at -6% 28%, rgba(59, 130, 246, .07), transparent 60%),
-    radial-gradient(1000px 640px at 92% 108%, rgba(37, 99, 235, .08), transparent 62%),
-    #0b1120;
+  --admin-backdrop: #0b1120;
   --admin-surface: #111827;
-  --admin-card: rgba(17, 24, 39, .88);
+  --admin-card: #111827;
+  --pk-shadow-rgb: 0, 0, 0;
+  --pk-card-shadow: 0 0 2px rgba(0, 0, 0, .3), 0 12px 24px -4px rgba(0, 0, 0, .35);
   --admin-soft: #172033;
   --admin-border: #263244;
   --admin-heading: #f8fafc;
@@ -120,7 +124,7 @@ html, body, #__nuxt {
 body {
   background: var(--admin-background);
   color: var(--admin-text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Public Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 a { color: inherit; text-decoration: none; }

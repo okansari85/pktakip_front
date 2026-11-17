@@ -14,9 +14,9 @@ const { mode: sidebarMode } = useSidebarMode()
 </script>
 
 <style scoped>
-.expert-layout { min-height: 100vh; display: flex; background: var(--admin-backdrop); background-attachment: fixed; }
+.expert-layout { min-height: 100vh; display: flex; background: var(--admin-backdrop); }
 .main-area { min-width: 0; flex: 1; }
-.page-content { padding: 30px 34px 40px; }
+.page-content { padding: 32px 40px 48px; }
 @media (max-width: 800px) {
   .expert-layout { display: block; }
   .page-content { padding: 20px 16px 30px; }

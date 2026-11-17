@@ -28,48 +28,57 @@
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
-      <!-- Firma ve lokasyon detayı (tasarım kataloğu 12): organizasyon yapısı, lokasyon çizimi, seçili lokasyon -->
+      <!-- Organizasyon şeması (KSY-SIS'teki gibi): ana firma → dallar → lokasyonlar. Dalda "+ Dal" / "+ Lokasyon"; lokasyona
+           tıklayınca sağdaki kart o lokasyon olur, oradan "İşyeri aç". Formlar aşağıdaki ağaçta, ilgili satırın altında açılır. -->
       <div v-if="!embedded && nodes.length" class="overview">
-        <section class="card org-card">
-          <header class="card-head"><i class="pi pi-sitemap" aria-hidden="true" /><h2>Organizasyon yapısı</h2></header>
-          <ul class="mini-tree">
-            <li v-for="item in miniRows" :key="item.key" :style="{ '--depth': item.depth }">
-              <span v-if="item.kind === 'node'" class="mini-node"><i :class="item.depth ? 'pi pi-building' : 'pi pi-briefcase'" aria-hidden="true" /> {{ item.node.name }}</span>
-              <button v-else type="button" class="mini-location" :class="{ on: String(focusLocation?.id) === String(item.location.id) }" :aria-pressed="String(focusLocation?.id) === String(item.location.id)" @click="focusId = item.location.id"><i class="pi pi-map-marker" aria-hidden="true" /> {{ item.location.name }}</button>
-            </li>
-          </ul>
-          <div class="org-counts">
-            <div><i class="pi pi-clone" aria-hidden="true" /><strong>{{ orgCount }}</strong><small>{{ firm.type === 'public' ? 'birim' : 'organizasyon' }}</small></div>
-            <div><i class="pi pi-map-marker" aria-hidden="true" /><strong>{{ locations.length }}</strong><small>lokasyon</small></div>
-            <div><i class="pi pi-building" aria-hidden="true" /><strong>{{ firmWorkplaces.length }}</strong><small>işyeri</small></div>
+        <section class="card schema-card">
+          <header class="schema-head">
+            <div><h2>Organizasyon şeması</h2><small>{{ orgCount }} {{ firm.type === 'public' ? 'birim' : 'dal' }} · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+          </header>
+          <div class="schema">
+            <div v-for="item in schemaRows" :key="item.key" class="schema-row" :class="{ child: item.depth }" :style="{ '--depth': item.depth }">
+              <div class="schema-node" :class="{ root: !item.depth }">
+                <span class="schema-node-icon"><i :class="item.depth ? 'pi pi-sitemap' : 'pi pi-building'" aria-hidden="true" /></span>
+                <span class="schema-node-text"><strong>{{ item.node.name }}</strong><small v-if="labelOf(item.node)">{{ labelOf(item.node) }}</small></span>
+                <span v-if="canEdit" class="schema-node-actions">
+                  <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'birim' : 'dal'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
+                  <button v-tooltip.top="'Lokasyon ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
+                </span>
+              </div>
+              <div v-if="item.locations.length" class="schema-locations">
+                <button v-for="location in item.locations" :key="location.id" type="button" class="schema-location" :class="{ on: String(focusLocation?.id) === String(location.id) }" :aria-pressed="String(focusLocation?.id) === String(location.id)" @click="focusId = location.id">
+                  <i class="pi pi-map-marker" aria-hidden="true" />
+                  <span><strong>{{ location.name }}</strong><small>{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}<template v-if="location.city"> · {{ location.city }}</template></small></span>
+                </button>
+              </div>
+            </div>
           </div>
         </section>
-        <figure class="hero">
-          <div class="hero-art">
-            <!-- Katalogdaki görsel (tasarım kataloğu 12'den kırpıldı, binadaki ve tabeladaki kurum adı silindi); etiket seçili lokasyon -->
-            <img src="/katalog/firma-detay-katalog.webp" alt="" />
-            <span v-if="focusLocation" class="pin-chip"><i class="pi pi-map-marker" aria-hidden="true" /> {{ focusLocation.name }}</span>
-          </div>
-          <figcaption><i class="pi pi-clone" aria-hidden="true" /> Örnek yerleşim</figcaption>
-        </figure>
         <section v-if="focusLocation" class="card location-card">
           <header>
-            <i class="pi pi-map-marker" aria-hidden="true" />
+            <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
             <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
           </header>
-          <!-- Ekipman / tesisat sayfası ve Lokasyona git: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
-          <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
-            <span class="count-icon"><i class="pi pi-box" /></span>
-            <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
-            <i class="pi pi-angle-right" aria-hidden="true" />
-          </button>
-          <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
-            <span class="count-icon"><i class="pi pi-sitemap" /></span>
-            <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
-            <i class="pi pi-angle-right" aria-hidden="true" />
-          </button>
-          <button class="primary-button go-button" type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')">Lokasyona git <i class="pi pi-arrow-right" aria-hidden="true" /></button>
-          <small v-if="!workplacesOf(focusLocation).length" class="muted">Henüz işyeri yok; önce aşağıdaki ağaçtan işyeri ekleyin.</small>
+          <ul v-if="workplacesOf(focusLocation).length" class="location-workplaces">
+            <li v-for="w in workplacesOf(focusLocation)" :key="w.id"><span>{{ nameOf(w.id) || w.company_name }}</span><span class="hazard-badge" :class="hazardClassKey(w.hazard_class)">{{ w.hazard_class }}</span></li>
+          </ul>
+          <p v-else class="muted location-empty">Bu lokasyonda henüz işyeri yok.</p>
+          <button v-if="canEdit" class="primary-button go-button" type="button" @click="startWorkplace(focusLocation)"><i class="pi pi-plus" aria-hidden="true" /> İşyeri aç</button>
+          <div class="location-links">
+            <!-- Ekipman / tesisat sayfası ve Lokasyona git: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
+            <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
+              <span class="count-icon violet"><i class="pi pi-box" /></span>
+              <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
+            </button>
+            <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
+              <span class="count-icon info"><i class="pi pi-sitemap" /></span>
+              <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
+            </button>
+          </div>
+          <button class="secondary-button" type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')">Lokasyonun genel bakışı</button>
+        </section>
+        <section v-else class="card location-card">
+          <p class="muted location-empty">Henüz lokasyon yok. Şemada ana firmanın yanındaki <i class="pi pi-map-marker" /> + ile ilk lokasyonu ekleyin.</p>
         </section>
       </div>
 
@@ -202,6 +211,14 @@
                   <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
                 </div>
                 <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
+                <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
+                <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
+                  <p><i class="pi pi-info-circle" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
+                  <div v-for="c in candidates" :key="c.id" class="candidate">
+                    <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
+                    <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><i class="pi pi-link" /> Bağla</button>
+                  </div>
+                </div>
                 <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
                 <div class="add-actions">
                   <button class="primary-button" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
@@ -357,7 +374,7 @@ const route = useRoute()
 // Birden çok ağaç aynı sayfada olabilir: form ve satır aramaları bu ağacın içinde yapılır.
 const rootEl = ref<HTMLElement | null>(null)
 const inTree = <T extends Element = Element>(selector: string) => rootEl.value?.querySelector<T>(selector) ?? null
-const { get, patch, del, errorMessage } = useExpertApi()
+const { get, post, patch, del, errorMessage } = useExpertApi()
 const { listFirms, loadStructure, addNode, addLocation, addWorkplace, addWorkplaceRow, workplaceLimitMessage } = useFirmSetup()
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
 const { load: loadNames, nameOf, workplaceLabel } = useWorkplaceNames()
@@ -579,12 +596,51 @@ async function saveLocation() {
     }
     else if (!progress.value.locationId) progress.value.locationId = await addLocation(firm.value.id, node.id, draft)
     const id = progress.value.locationId
+    const withWorkplace = autoWorkplace.value
     await load()
     resetLocationForm()
     closeForm()
-    nextTick(() => inTree(`[data-key="l${id}"]`)?.scrollIntoView({ block: 'nearest' }))
+    // Yeni lokasyon sağdaki kartta seçilir; işyeri birlikte açılmadıysa işyeri formu hemen açılır (en az tıklama).
+    focusId.value = id ?? null
+    const created = locations.value.find(l => String(l.id) === String(id))
+    if (created && !withWorkplace) startWorkplace(created)
+    else nextTick(() => inTree(`[data-key="l${id}"]`)?.scrollIntoView({ block: 'nearest' }))
   } catch (e: any) {
     formError.value = errorMessage(e, e?.message || 'Lokasyon eklenemedi. Tekrar deneyin.')
+  } finally { saving.value = false }
+}
+
+// --- Kayıtlı lokasyonu bağla: lokasyon formunda yazılan ada göre (ara → bağla → işyeri formu) ---
+const candidates = ref<{ id: number; name: string; city: string | null; district: string | null; links: number }[]>([])
+let candidateTimer: ReturnType<typeof setTimeout> | undefined
+let candidateRequest = 0
+watch(() => adding.value === 'location' ? draft.name.trim() : '', (q) => {
+  clearTimeout(candidateTimer)
+  if (q.length < 2 || !firm.value) { candidates.value = []; return }
+  const no = ++candidateRequest
+  candidateTimer = setTimeout(async () => {
+    try {
+      const list = await get<typeof candidates.value>(`/customers/${firm.value!.id}/pk-location-candidates`, { q })
+      if (no === candidateRequest) candidates.value = list.slice(0, 5)
+    } catch { if (no === candidateRequest) candidates.value = [] }
+  }, 300)
+})
+async function linkCandidate(candidate: { id: number }) {
+  const node = selected.value
+  if (!firm.value || !node || saving.value) return
+  saving.value = true
+  formError.value = ''
+  try {
+    await post(`/customers/${firm.value.id}/organizations/${node.id}/pk-location-links`, { location_id: candidate.id })
+    await load()
+    resetLocationForm()
+    closeForm()
+    candidates.value = []
+    focusId.value = candidate.id
+    const linked = locations.value.find(l => String(l.id) === String(candidate.id))
+    if (linked && canEdit.value) startWorkplace(linked)
+  } catch (e: any) {
+    formError.value = errorMessage(e, 'Lokasyon bağlanamadı. Tekrar deneyin.')
   } finally { saving.value = false }
 }
 
@@ -814,12 +870,11 @@ const goEquipment = (location: FirmLocation) => goToEquipment(location.id)
 // eski Yere göre / Firmaya göre seçimi (aynı iş Lokasyonlar / İşyeri sekmelerinde).
 const SHOW_HEADER_STATS = false
 const SHOW_VIEW_TOGGLE = false
-// Organizasyon yapısı kartı: düğümler ve lokasyonlar (işyerleri aşağıdaki ağaçta); lokasyona tıklayınca sağdaki kart o lokasyon.
-const miniRows = computed(() => {
-  const out: TreeRow[] = []
+// Organizasyon şeması: her düğüm bir satır (girintili), doğrudan bağlı lokasyonları yanında kutu olarak.
+const schemaRows = computed(() => {
+  const out: { key: string; depth: number; node: FirmNode; locations: FirmLocation[] }[] = []
   const walk = (node: FirmNode, depth: number) => {
-    out.push({ kind: 'node', key: `n${node.id}`, depth, node })
-    for (const location of locationsOf(node)) out.push({ kind: 'location', key: `l${location.id}`, depth: depth + 1, location })
+    out.push({ key: `n${node.id}`, depth, node, locations: locationsOf(node) })
     for (const child of node.children || []) walk(child, depth + 1)
   }
   nodes.value.forEach(node => walk(node, 0))
@@ -913,7 +968,10 @@ async function openRemove(target: RemoveTarget) {
   finally { removeChecking.value = false }
 }
 // Önce firma bağları kaldırılır: backend eski saha kayıtları olan firmayı burada reddeder, lokasyon silinmez.
+// Başka ana firmaya da bağlı (ortak) lokasyon silinmez, yalnız bu ana firmadan ayrılır: işyerleri ve kayıtları öbüründe kalır.
 async function removeLocation(location: FirmLocation) {
+  try { await del(`/customers/${firm.value!.id}/pk-location-links/${location.id}`); return }
+  catch (e: any) { if (e?.data?.code !== 'tek_bag') throw e }
   for (const link of workplacesOf(location)) await del(`/customers/${firm.value!.id}/locations/${location.id}/companies/${link.id}`)
   await del(`/locations/${location.id}`)
 }
@@ -995,53 +1053,71 @@ onMounted(async () => {
 .back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--admin-muted); font-size: 13.5px; font-weight: 600; }
 .back:hover { color: var(--admin-heading); }
 .page-head { margin-bottom: 16px; }
-h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.6px; overflow-wrap: anywhere; }
+h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0; overflow-wrap: anywhere; }
 .page-head p { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; color: var(--admin-muted); font-size: 13.5px; }
 .chip { padding: 3px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-heading); font-size: 12px; font-weight: 600; }
 .card { padding: 14px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card, var(--admin-input)); }
 .tree-card { min-height: 260px; padding: 0 18px 18px; border-radius: 16px; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .05); }
 /* Firma ve lokasyon detayı üst sırası (tasarım kataloğu 12) */
-.page-head h1 { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
+.page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
-.overview { display: grid; grid-template-columns: minmax(270px, 340px) minmax(0, 1fr) minmax(260px, 320px); gap: 16px; align-items: start; margin-bottom: 18px; }
-.org-card, .location-card { display: grid; gap: 12px; padding: 18px; border-radius: 16px; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .06); }
-.card-head { display: flex; align-items: center; gap: 10px; }
-.card-head i { color: var(--admin-accent-text); font-size: 19px; }
-.card-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 800; }
-.mini-tree { --step: 26px; max-height: 280px; overflow: auto; display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
-.mini-tree li { padding-left: calc(var(--depth) * var(--step)); }
-.mini-node, .mini-location { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 10px; color: var(--admin-heading); font-size: 14.5px; }
-.mini-node i { color: var(--admin-heading); font-size: 16px; }
-.mini-location { width: 100%; border: 1px solid transparent; background: none; font: inherit; text-align: left; cursor: pointer; }
-.mini-location i { color: var(--admin-accent-text); }
-.mini-location:hover { background: var(--admin-hover); }
-.mini-location.on { background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 600; box-shadow: 0 8px 20px rgba(var(--pk-accent-rgb), .25); }
-.mini-location.on i { color: var(--pk-on-accent); }
-.org-counts { display: grid; grid-template-columns: repeat(3, 1fr); padding-top: 12px; border-top: 1px solid var(--admin-border); text-align: center; }
-.org-counts > div { display: grid; justify-items: center; gap: 2px; }
-.org-counts > div + div { border-left: 1px solid var(--admin-border); }
-.org-counts i { color: var(--admin-accent-text); font-size: 17px; }
-.org-counts strong { color: var(--admin-heading); font-size: 20px; font-weight: 800; }
-.org-counts small { color: var(--admin-text); font-size: 13.5px; }
-.hero { position: relative; min-width: 0; margin: 0; display: flex; justify-content: center; }
-.hero-art { position: relative; width: min(100%, 820px); margin-top: 30px; }
-.hero-art img { display: block; width: 100%; }
-/* Etiket katalogdaki gibi binadaki noktanın çizgisinin ucunda (görselde x %47,6, y %9,8) */
-.pin-chip { position: absolute; left: calc(47.6% - 22px); top: 9.8%; transform: translateY(calc(-100% + 2px)); display: inline-flex; align-items: center; gap: 8px; max-width: 60%; padding: 8px 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); color: var(--admin-heading); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 8px 22px rgba(var(--pk-shadow-rgb), .12); }
-.pin-chip i { color: var(--pk-accent); }
-.hero figcaption { position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px 15px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); color: var(--admin-heading); font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
+/* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-bottom: 24px; }
+.schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.schema-head small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 13px; }
+/* Satırlar girintili; dalın solunda üst düğümden gelen dirsek çizgisi */
+.schema { --step: 32px; max-height: 520px; overflow: auto; display: grid; gap: 12px; padding: 4px 2px 4px 0; background-image: radial-gradient(rgba(145, 158, 171, .28) 1px, transparent 1px); background-size: 16px 16px; border-radius: 12px; }
+.schema-row { position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 14px; padding-left: calc(var(--depth) * var(--step) + 8px); padding-top: 4px; }
+.schema-row.child::before { content: ""; position: absolute; left: calc((var(--depth) - 1) * var(--step) + 22px); top: -12px; width: 18px; height: 40px; border-left: 2px solid rgba(145, 158, 171, .4); border-bottom: 2px solid rgba(145, 158, 171, .4); border-bottom-left-radius: 8px; }
+.schema-node { position: relative; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 10px 8px 8px; border-radius: 12px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .24); }
+.schema-node.root { box-shadow: 0 0 0 2px rgba(var(--pk-accent-rgb), .35); }
+.schema-node-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
+.schema-node.root .schema-node-icon { background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
+.schema-node-text { display: grid; }
+.schema-node-text strong { color: var(--admin-heading); font-size: 14px; font-weight: 700; }
+.schema-node-text small { color: var(--admin-muted); font-size: 12px; }
+.schema-node-actions { display: flex; gap: 4px; margin-left: 6px; }
+.schema-add { position: relative; width: 32px; height: 32px; display: grid; place-items: center; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 8px; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.schema-add:hover, .schema-add:focus-visible { border-style: solid; border-color: var(--pk-accent); background: var(--admin-accent-soft); color: var(--pk-accent); }
+.schema-add .mini { position: absolute; right: 2px; bottom: 2px; font-size: 8px; }
+.schema-locations { display: flex; flex-wrap: wrap; gap: 8px; }
+.schema-location { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px 8px 10px; border: 0; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); font: inherit; text-align: left; cursor: pointer; }
+.schema-location > i { color: var(--pk-success-dark); }
+.schema-location span { display: grid; }
+.schema-location strong { font-size: 13px; font-weight: 700; }
+.schema-location small { color: var(--pk-success-dark); font-size: 12px; }
+.schema-location:hover { box-shadow: 0 0 0 2px rgba(0, 171, 85, .35); }
+.schema-location.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.schema-location.on > i, .schema-location.on small { color: var(--pk-on-accent); }
+:global(.dark-theme) .schema-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }
+.location-card { position: sticky; top: 92px; }
 .location-card header { display: flex; align-items: flex-start; gap: 12px; }
-.location-card header > i { margin-top: 4px; color: var(--pk-accent); font-size: 22px; }
-.location-card h2 { font-size: 22px; overflow-wrap: anywhere; }
-.location-card header small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 14px; }
-.count-row { display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 10px 16px; border: 1px solid var(--admin-row-border); border-radius: 14px; background: var(--admin-soft); color: var(--admin-heading); font: inherit; text-align: left; cursor: pointer; }
-.count-row:hover:not(:disabled) { border-color: var(--admin-border); background: var(--admin-hover); }
-.count-row:disabled { opacity: .6; cursor: default; }
-.count-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 19px; }
-.count-text { flex: 1; display: grid; }
-.count-text strong { font-size: 22px; font-weight: 800; line-height: 1.1; }
-.count-text small { color: var(--admin-text); font-size: 14px; }
-.go-button { min-height: 50px; font-size: 16px; box-shadow: 0 8px 20px rgba(var(--pk-accent-rgb), .25); }
+.location-icon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-success-lighter); color: var(--pk-success-dark); }
+.location-card header small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 13px; }
+.location-workplaces { display: grid; margin: 0; padding: 0; list-style: none; }
+.location-workplaces li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; color: var(--admin-heading); font-size: 14px; }
+.location-workplaces li + li { border-top: 1px dashed rgba(145, 158, 171, .24); }
+.location-empty { margin: 0; font-size: 13px; }
+.go-button { width: 100%; justify-content: center; min-height: 44px; }
+.location-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.count-row { display: flex; align-items: center; gap: 10px; padding: 12px; border: 0; border-radius: 12px; background: rgba(145, 158, 171, .08); color: var(--admin-heading); font: inherit; text-align: left; cursor: pointer; }
+.count-row:hover:not(:disabled) { background: rgba(145, 158, 171, .16); }
+.count-row:disabled { opacity: .55; cursor: default; }
+.count-icon { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
+.count-icon.violet { background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
+.count-icon.info { background: var(--pk-info-lighter); color: var(--pk-info-dark); }
+.count-text { display: grid; }
+.count-text strong { font-size: 18px; font-weight: 700; line-height: 1.1; }
+.count-text small { color: var(--admin-muted); font-size: 12px; }
+/* Lokasyon formunda kayıtlı lokasyonlar */
+.candidates { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--pk-info-lighter); color: var(--pk-info-darker); }
+.candidates p { margin: 0; font-size: 13px; font-weight: 600; }
+.candidate { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 8px; background: var(--admin-card); }
+.candidate span { display: grid; min-width: 0; }
+.candidate strong { color: var(--admin-heading); font-size: 14px; }
+.candidate small { color: var(--admin-muted); font-size: 12px; }
+:global(.dark-theme) .candidates { background: rgba(24, 144, 255, .12); color: var(--admin-text); }
 /* Sekmeler: Lokasyonlar / İşyerleri ve Lokasyon ekle */
 .tabs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -18px 14px; padding: 6px 18px 0; border-bottom: 1px solid var(--admin-border); }
 .tabs { display: flex; gap: 6px; }
@@ -1050,8 +1126,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 28px; letter-spacing: -.
 .tabs button.active { color: var(--admin-accent-text); border-bottom-color: var(--pk-yellow); font-weight: 700; }
 .tabs button.active i { color: var(--admin-accent-text); }
 .tabs-row .primary-button { margin: 6px 0; }
-@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .hero { grid-column: 1 / -1; order: 3; } }
-@media (max-width: 760px) { .overview { grid-template-columns: 1fr; } .page-head h1 { font-size: 30px; } }
+@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } .location-card { position: static; } }
+@media (max-width: 760px) { .overview { grid-template-columns: 1fr; } .page-head h1 { font-size: 22px; } }
 .tree-head { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }
 .view-toggle button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--admin-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }

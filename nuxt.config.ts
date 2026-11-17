@@ -1,10 +1,10 @@
 import Aura from '@primevue/themes/aura'
 import { definePreset } from '@primevue/themes'
 
-// Tasarım kataloğu: PrimeVue birincil rengi katalog mavisi (Aura'nın yeşili yerine; onay kutusu, ilerleme çubuğu, seçim düğmesi, sayfalama).
+// PrimeVue birincil rengi = Behance CRM paletinin birincil mavisi (onay kutusu, ilerleme çubuğu, seçim düğmesi, sayfalama).
 const PKTakipTheme = definePreset(Aura, {
   semantic: {
-    primary: { 50: '#eef5ff', 100: '#d9e8ff', 200: '#bcd6ff', 300: '#8ebcff', 400: '#5996fb', 500: '#1a6ff4', 600: '#1259d6', 700: '#1048ad', 800: '#133d8a', 900: '#15366f', 950: '#0f2247' }
+    primary: { 50: '#eef3ff', 100: '#d6e2ff', 200: '#adc6ff', 300: '#6b97ff', 400: '#3d6dff', 500: '#0047ff', 600: '#003de0', 700: '#0030b8', 800: '#002590', 900: '#001a73', 950: '#000f47' }
   }
 })
 
@@ -13,6 +13,16 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // Oturum localStorage'da tutulduğu için sunucu kullanıcıyı bilemez; panel SPA olarak çalışır.
   ssr: false,
+  // Yazı tipi: Public Sans (Behance CRM tasarımındaki yuvarlak, sade grotesk).
+  app: {
+    head: {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap' }
+      ]
+    }
+  },
   modules: ['@primevue/nuxt-module'],
   primevue: {
     options: {

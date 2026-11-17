@@ -129,15 +129,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Tasarım kataloğu: üst çubuk zeminin üstünde (ayrı bant yok); seçiciler, tema ve kullanıcı ayrı kartlar. */
-.expert-topbar { min-height: 76px; display: flex; align-items: center; gap: 12px; padding: 14px 30px 0; }
-.menu-toggle { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-heading); cursor: pointer; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
-.menu-toggle:hover { border-color: var(--pk-yellow); color: var(--pk-yellow-dark); }
+/* Behance CRM tasarımı: düz beyaz üst çubuk, altta ince çizgi; simge düğmeleri kenarlıksız, kullanıcı sağda ad + avatar. */
+.expert-topbar { position: sticky; top: 0; z-index: 20; min-height: 72px; display: flex; align-items: center; gap: 12px; padding: 0 34px; background: color-mix(in srgb, var(--admin-surface) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid rgba(145, 158, 171, .2); }
+.menu-toggle { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.menu-toggle:hover { background: rgba(145, 158, 171, .12); color: var(--admin-heading); }
 .topbar-eyebrow { display: block; margin-bottom: 2px; color: var(--pk-yellow-dark); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 .expert-topbar strong { color: var(--admin-heading); font-size: 15px; }
 .topbar-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-.theme-toggle { width: 44px; height: 44px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-muted); cursor: pointer; box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
-.theme-toggle:hover { color: var(--pk-yellow-dark); border-color: var(--pk-yellow); }
+.theme-toggle { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.theme-toggle:hover { background: rgba(145, 158, 171, .12); color: var(--admin-heading); }
 .bell { position: relative; }
 .bell-count { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 5px; border: 2px solid var(--admin-surface); border-radius: 999px; background: var(--admin-danger-text); color: #fff; font-size: 10px; font-weight: 800; line-height: 1; }
 .notif-panel { width: min(380px, calc(100vw - 32px)); }
@@ -160,9 +160,10 @@ onMounted(() => {
 .notif-item time { color: var(--admin-muted); font-size: 11px; }
 .return-button { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--pk-yellow); border-radius: 9px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .return-button:hover { background: var(--pk-yellow); color: var(--pk-on-accent); }
-.user-chip { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 14px 4px 4px; border: 1px solid var(--admin-border); border-radius: 999px; background: var(--admin-card); box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
-.avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--pk-text); color: #fff; font-size: 12px; font-weight: 800; }
-.user-chip strong { display: block; font-size: 12px; }
+.user-chip { display: flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-height: 40px; padding-left: 6px; }
+.user-chip > div { text-align: right; }
+.avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: rgba(var(--pk-accent-rgb), .12); color: var(--pk-accent); font-size: 13px; font-weight: 700; }
+.user-chip strong { display: block; font-size: 13px; font-weight: 600; }
 .user-chip small { display: block; margin-top: 2px; color: var(--admin-muted); font-size: 10px; }
-@media (max-width: 800px) { .expert-topbar { padding: 12px 16px 0; } }
+@media (max-width: 800px) { .expert-topbar { position: static; padding: 0 16px; } .user-chip > div { display: none; } }
 </style>
