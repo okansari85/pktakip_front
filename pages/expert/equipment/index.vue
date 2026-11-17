@@ -746,7 +746,8 @@ onActivated(() => {
 <style scoped>
 .equipment-page { margin: 0 auto; display: grid; gap: 24px; }
 /* Üst sıra: başlık + öne çıkan ekipman, sayı kartları + kontrol kapsamı */
-.top{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:24px;align-items:start}
+.top{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:24px;align-items:stretch}
+.top-left{display:flex;flex-direction:column;min-width:0}.top-left>.featured{flex:1}
 .crumb{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--admin-muted);font-size:13px}
 .crumb a{color:var(--admin-muted)}.crumb a:hover{color:var(--admin-heading)}
 .crumb strong{color:var(--admin-heading);font-weight:600}.crumb .pi-angle-right{font-size:11px}
@@ -762,7 +763,7 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}h3{margin:22px 0 10px;colo
 .featured-row{display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px dashed rgba(145,158,171,.24);color:var(--admin-text);font-size:14px}
 .featured-row i{color:var(--admin-muted)}.featured-row strong{margin-left:auto;color:var(--admin-heading);font-size:16px}
 .featured-img{display:block;width:100%;height:150px;object-fit:contain}
-.featured-link{width:100%;text-decoration:none}.featured-link .pi-file{margin-left:auto}.featured-link .pi-arrow-right{margin-left:auto}
+.featured-link{width:100%;margin-top:auto;text-decoration:none}.featured-link .pi-file{margin-left:auto}.featured-link .pi-arrow-right{margin-left:auto}
 .top-right{display:grid;gap:24px}
 /* Sayı kartları: pastel kutular (Genel bakıştaki .gb-tile gibi) */
 .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}

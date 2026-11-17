@@ -366,7 +366,7 @@ onMounted(async () => {
 .secondary-button{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .secondary-button:disabled{opacity:.55;cursor:not-allowed}
 /* Gruplar */
-.subject-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.subject-groups{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
 .card.subject.open{grid-column:1 / -1;padding-bottom:12px}
 .subject-head{width:100%;display:flex;align-items:center;gap:14px;padding:20px 24px;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
 .subject-head .chevron{color:var(--pk-accent);font-size:14px}

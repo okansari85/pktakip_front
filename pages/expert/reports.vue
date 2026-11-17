@@ -464,7 +464,7 @@ h2{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
 .segment button{min-width:200px;height:38px;padding:0 20px;border:0;border-radius:8px;background:none;color:var(--admin-heading);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .segment button.active{background:var(--pk-accent);color:var(--pk-on-accent);font-weight:700}
 /* Ekipman bazında üst sıra: kapsam, iki çubuk kartı yan yana */
-.top{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:24px;align-items:start}
+.top{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:24px;align-items:stretch}
 .scope-card,.bar-card{display:flex;flex-direction:column;gap:12px;padding:24px}
 .facts{display:grid;margin:0}
 .facts > div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px dashed rgba(145,158,171,.24)}
@@ -472,7 +472,7 @@ h2{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
 .facts dd{margin:0;color:var(--admin-heading);font-size:14.5px;font-weight:700;text-align:right;overflow-wrap:anywhere}
 .scope-chip{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;margin-top:6px;padding:6px 12px;border-radius:8px;background:var(--pk-primary-lighter);color:var(--pk-primary-dark);font-size:14px;font-weight:700}
 :global(.dark-theme) .scope-chip{background:var(--admin-accent-soft);color:var(--admin-accent-text)}
-.top-right{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
+.top-right{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:stretch}
 .bar-card header,.table-head{display:flex;align-items:center;gap:10px}.bar-card header i,.table-head i{color:var(--admin-accent-text);font-size:19px}
 .bar-card h3,.table-head h3{font-size:17px;font-weight:700}
 .stack{display:flex;gap:0;height:30px;border-radius:8px;overflow:hidden;background:var(--admin-chip)}

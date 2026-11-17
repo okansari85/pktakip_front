@@ -348,7 +348,7 @@ const onPlanDeleted = () => {
 .plan-button:hover,.plan-button:focus-visible{background:var(--pk-accent-hover)}
 .plan-button .pi-arrow-right{font-size:12px}
 /* Üst sıra: özet ve en yakın kontrol, seçili gün */
-.cal-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:stretch}
+.cal-top{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:24px;align-items:stretch}
 .card.cal-summary{display:flex;flex-direction:column;padding:16px 24px 24px}
 .cal-sum-row{display:flex;align-items:center;gap:16px;padding:12px 0;color:inherit}
 .cal-sum-row + .cal-sum-row{border-top:1px dashed rgba(145,158,171,.24)}

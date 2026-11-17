@@ -1162,8 +1162,11 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
-.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto 1fr; gap: 24px; align-items: start; margin-bottom: 24px; }
-.overview > .schema-card { grid-row: span 2; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-bottom: 24px; }
+/* Solda şema + altında Firmalar, sağda seçili lokasyon kartı (iki satır boyunca) */
+.overview > .schema-card { grid-column: 1; grid-row: 1; }
+.overview > .firms-card { grid-column: 1; grid-row: 2; }
+.overview > .location-card { grid-column: 2; grid-row: 1 / span 2; }
 .firms-card { display: grid; gap: 10px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
@@ -1222,6 +1225,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .sub-add input, .firm-add input { flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 /* Firmalar sekmesi */
 .firm-add { display: flex; gap: 10px; margin-bottom: 6px; }
+.firm-add .primary-button, .sub-add .secondary-button { flex: none; }
 .firm-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-top: 1px dashed rgba(145, 158, 171, .24); }
 .firm-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
 .firm-text { flex: 1; display: grid; min-width: 0; }
@@ -1256,7 +1260,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .tabs button.active { color: var(--pk-accent); border-bottom-color: var(--pk-accent); font-weight: 700; }
 .tabs button.active i { color: var(--admin-accent-text); }
 .tabs-row .primary-button { margin: 6px 0; }
-@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } .location-card { position: static; } }
+@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } .overview > .schema-card, .overview > .firms-card, .overview > .location-card { grid-column: 1; grid-row: auto; } }
 @media (max-width: 760px) { .overview { grid-template-columns: 1fr; } .page-head h1 { font-size: 22px; } }
 .tree-head { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }

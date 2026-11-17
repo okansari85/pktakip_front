@@ -309,6 +309,8 @@ onMounted(() => {
 .top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .top.single { grid-template-columns: minmax(0, 1fr); }
 .main-col, .side-col { display: grid; gap: 24px; min-width: 0; }
+/* Geniş ekranda yan kart, başlık ve sekmelerin değil ana kartın hizasından başlar */
+@media (min-width: 1001px) { .top:not(.single) { grid-template-rows: auto auto 1fr; } .top:not(.single) > .main-col { display: contents; } .top:not(.single) > .main-col > * { grid-column: 1; } .top:not(.single) > .side-col { grid-column: 2; grid-row: 3; align-self: start; } }
 /* Sekmeler: hap görünümlü, seçili mavi */
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 10px; background: var(--admin-card); }
 .tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
