@@ -31,13 +31,20 @@
       <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
            paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
       <div v-if="nodes.length" class="overview">
+        <div class="main-col">
+        <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
+        <section v-if="listNode" class="card list-banner">
+          <span class="list-banner-icon"><i class="pi pi-sitemap" aria-hidden="true" /></span>
+          <div>
+            <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><i class="pi pi-angle-right" aria-hidden="true" /><span>{{ listNode.name }}</span></nav>
+            <h2>{{ listNode.name }}</h2>
+            <small>{{ listLocations.length }} lokasyon · {{ listLocations.reduce((sum, l) => sum + workplacesOf(l).length, 0) }} işyeri</small>
+          </div>
+          <button class="close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
+        </section>
         <section class="card schema-card">
-          <header class="schema-head">
-            <div v-if="!listNode"><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
-            <template v-else>
-              <div><h2><button class="link-button crumb-back" type="button" @click="closeList">{{ topLabel }} şeması</button> <i class="pi pi-angle-right" aria-hidden="true" /> {{ listNode.name }}</h2><small>{{ listLocations.length }} lokasyon</small></div>
-              <button class="secondary-button close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
-            </template>
+          <header v-if="!listNode" class="schema-head">
+            <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
           <!-- Çok lokasyonlu dalın listesi: yeşil "N lokasyon" kutusundan açılır, şemanın yerini alır; Kapat ile şemaya dönülür -->
           <div v-if="listNode" class="chart-list">
@@ -68,6 +75,7 @@
             @move-location="moveLocation" @move-node="moveNode" @open-list="openList"
           />
         </section>
+        </div>
 
         <aside class="side">
           <!-- Açık form (dal, lokasyon, düzenleme, işyeri): seçili kutunun panelinde -->
@@ -1246,7 +1254,18 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text { display: grid; }
 .count-text strong { font-size: 18px; font-weight: 700; line-height: 1.1; }
 .count-text small { color: var(--admin-muted); font-size: 12px; }
-/* Dalın lokasyon listesi (şemanın yerinde) */
+/* Dalın lokasyon listesi (şemanın yerinde) + üstte ayrı başlık kartı */
+.main-col { display: grid; gap: 16px; min-width: 0; }
+.list-banner { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border: 0; border-radius: var(--pk-radius); background: var(--pk-violet-lighter); box-shadow: var(--pk-card-shadow); }
+.list-banner-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-card); color: var(--pk-violet-dark); font-size: 18px; }
+.list-banner > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.list-banner h2 { margin: 0; color: var(--pk-violet-darker); font-size: 19px; font-weight: 700; }
+.list-banner small { color: var(--pk-violet-dark); font-size: 13px; font-weight: 600; }
+.list-crumb { display: flex; align-items: center; gap: 6px; color: var(--pk-violet-dark); font-size: 12.5px; }
+.list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
+.list-crumb .pi-angle-right { font-size: 10px; }
+.list-banner .close-list { background: var(--admin-card); border-color: transparent; }
+:global(.dark-theme) .list-banner { background: var(--admin-card); }
 .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
 .schema-head h2 .pi-angle-right { margin: 0 4px; color: var(--admin-muted); font-size: 12px; }
