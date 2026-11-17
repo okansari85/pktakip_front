@@ -54,12 +54,12 @@ defineExpose({ reload: () => loadPage(1) })
 </script>
 
 <style scoped>
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;overflow:hidden}
+.card{background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow);overflow:hidden}
 .state{padding:40px 20px;text-align:center;color:var(--admin-muted);font-size:12px}.error-text{color:var(--admin-danger-text)}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}
-th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text)}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
+th,td{padding:12px 24px;text-align:left;border-bottom:1px solid rgba(145,158,171,.2);font-size:14px;color:var(--admin-text)}
+th{border-bottom:0;font-size:13px;font-weight:600;color:var(--admin-muted);background:rgba(145,158,171,.08);white-space:nowrap}
 .nowrap{white-space:nowrap}.amount{text-align:right;font-weight:800;white-space:nowrap}.amount.plus{color:var(--admin-success-text)}.amount.minus{color:var(--admin-heading)}
-.table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:var(--admin-muted);font-size:12px}
-.secondary-button{min-height:34px;padding:0 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
+.table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;color:var(--admin-muted);font-size:13px}
+.secondary-button{min-height:36px;padding:0 14px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.secondary-button:hover{background:rgba(145,158,171,.08)}
 </style>

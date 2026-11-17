@@ -60,14 +60,14 @@ onMounted(() => loadPage(1))
 </script>
 
 <style scoped>
-.card{padding:22px 24px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;box-shadow:0 10px 28px rgba(var(--pk-shadow-rgb),.05)}
-.list-title{margin:0 0 16px;color:var(--admin-heading);font-size:26px;font-weight:800}
+.card{padding:24px;background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow)}
+.list-title{margin:0 0 16px;color:var(--admin-heading);font-size:17px;font-weight:700}
 .state{padding:40px 20px;text-align:center;color:var(--admin-muted);font-size:13px}.error-text{color:var(--admin-danger-text)}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}
-th,td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:16px;color:var(--admin-heading)}
-th{font-size:15px;font-weight:700;background:var(--admin-soft);white-space:nowrap}
-th:first-child{border-radius:12px 0 0 12px}th:last-child{border-radius:0 12px 12px 0}
-.nowrap{white-space:nowrap}.amount{font-size:17px;font-weight:800;white-space:nowrap}.mono{font-variant-numeric:tabular-nums;color:var(--admin-text)}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid rgba(145,158,171,.2);font-size:14px;color:var(--admin-heading)}
+th{border-bottom:0;font-size:13px;font-weight:600;color:var(--admin-muted);background:rgba(145,158,171,.08);white-space:nowrap}
+th:first-child{border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
+.nowrap{white-space:nowrap}.amount{font-size:14px;font-weight:700;white-space:nowrap}.mono{font-variant-numeric:tabular-nums;color:var(--admin-text)}
 .table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;color:var(--admin-muted);font-size:12px}
-.secondary-button{min-height:34px;padding:0 14px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
+.secondary-button{min-height:36px;padding:0 14px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.secondary-button:hover{background:rgba(145,158,171,.08)}
 </style>

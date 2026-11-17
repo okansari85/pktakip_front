@@ -22,5 +22,5 @@ PKTakip uygulama önyüzü (Nuxt + PrimeVue 4.5 + Chart.js). Backend: `C:\Users\
 - Backend'in çok kelimeli ilişki anahtarları snake_case gelir (`location_business_entity`).
 
 ## Backend
-- Backend'de yalnızca yeni kod eklenir; mevcut metot/route değişmez (ayrıntı: backend `CLAUDE.md`).
+- Taşeron uygulaması iptal (17 Kas 2026): backend yalnız PKTakip'in, mevcut uçlar değiştirilebilir (ayrıntı: backend `CLAUDE.md`).
 - Laragon PHP 8.4: `/c/laragon/bin/php/php-8.4.12-nts-Win32-vs17-x64/php.exe artisan …`.

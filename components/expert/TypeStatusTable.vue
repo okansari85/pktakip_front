@@ -41,13 +41,13 @@ const levelOf = (value: number) => value >= 90 ? 'ok' : value >= 70 ? 'warn' : '
 
 <style scoped>
 .table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse}th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text);vertical-align:top}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
+table{width:100%;border-collapse:collapse}th,td{padding:12px 16px;text-align:left;border-bottom:1px solid rgba(145,158,171,.2);font-size:13px;color:var(--admin-text);vertical-align:top}
+th{border-bottom:0;font-size:13px;font-weight:600;color:var(--admin-muted);background:rgba(145,158,171,.08);white-space:nowrap}
 td strong{color:var(--admin-heading)}
 .ok-text{color:var(--admin-success-text);font-weight:700}.bad-text{color:var(--admin-danger-text);font-weight:700}.warn-text{color:var(--admin-warning-text);font-weight:700}.muted{color:var(--admin-muted)}
 .bar-col{width:180px}
 .ratio{display:flex;align-items:center;gap:8px}
 .ratio-bar{flex:1;height:8px;border-radius:999px;overflow:hidden;background:var(--admin-chip)}.ratio-bar i{display:block;height:100%;border-radius:999px}
-.ratio-bar i.ok{background:#16a34a}.ratio-bar i.warn{background:#d97706}.ratio-bar i.bad{background:#dc2626}
-.ratio strong{min-width:44px;text-align:right;font-size:12px}.ratio strong.ok{color:#16a34a}.ratio strong.warn{color:#d97706}.ratio strong.bad{color:#dc2626}
+.ratio-bar i.ok{background:var(--pk-success-main)}.ratio-bar i.warn{background:var(--pk-warning)}.ratio-bar i.bad{background:var(--pk-error)}
+.ratio strong{min-width:44px;text-align:right;font-size:13px}.ratio strong.ok{color:var(--admin-success-text)}.ratio strong.warn{color:var(--admin-warning-text)}.ratio strong.bad{color:var(--admin-danger-text)}
 </style>

@@ -31,14 +31,14 @@ const emit = defineEmits<{ select: [date: string] }>()
 table { width: 100%; min-width: 520px; border-collapse: collapse; }
 table.compact { min-width: 430px; }
 table.compact th, table.compact td { padding-left: 7px; padding-right: 7px; font-size: 12.5px; }
-th { padding: 9px 10px; background: var(--admin-soft); color: var(--admin-muted); font-size: 12px; font-weight: 700; text-align: left; white-space: nowrap; }
-td { padding: 10px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 13px; }
+th { padding: 12px 16px; background: rgba(145, 158, 171, .08); color: var(--admin-muted); font-size: 13px; font-weight: 600; text-align: left; white-space: nowrap; }
+td { padding: 12px 16px; border-top: 1px solid rgba(145, 158, 171, .2); color: var(--admin-heading); font-size: 13px; }
 tbody tr[tabindex] { cursor: pointer; }
 tbody tr[tabindex]:hover, tbody tr[tabindex]:focus-visible { outline: 0; background: var(--admin-accent-soft); }
 .nowrap { white-space: nowrap; }
 .empty { padding: 24px 10px; color: var(--admin-muted); text-align: center; }
-.priority { display: inline-block; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.priority.blue, .priority.amber { background: #fda29b; color: #7a271a; }
-.priority.slate { background: #fedf89; color: #7a2e0e; }
-.priority.red { background: #7a271a; color: #fff; }
+.priority { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.priority.blue, .priority.amber { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
+.priority.slate { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
+.priority.red { background: var(--pk-error-dark); color: #fff; }
 </style>

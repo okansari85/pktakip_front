@@ -41,8 +41,8 @@
                 <span class="schema-node-icon"><i :class="item.depth ? 'pi pi-sitemap' : 'pi pi-building'" aria-hidden="true" /></span>
                 <span class="schema-node-text"><strong>{{ item.node.name }}</strong><small v-if="labelOf(item.node)">{{ labelOf(item.node) }}</small></span>
                 <span v-if="canEdit" class="schema-node-actions">
-                  <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'birim' : 'dal'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
-                  <button v-tooltip.top="'Lokasyon ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
+                  <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'birim' : 'dal'} ekle`" @click="startOrg(item.node)"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
+                  <button type="button" class="schema-add" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-plus" /> Lokasyon</button>
                 </span>
               </div>
               <div v-if="item.locations.length" class="schema-locations">
@@ -124,7 +124,7 @@
                     <span class="row-text"><span class="name-line"><strong>{{ item.node.name }}</strong><span v-if="labelOf(item.node)" class="type-badge">{{ labelOf(item.node) }}</span></span><small>{{ nodeSummary(item.node) }}</small></span>
                   </button>
                   <div class="row-actions">
-                    <button v-if="canEdit && canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt organizasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
+                    <button v-if="canEdit && canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
                     <button v-if="canEdit" v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
                     <button v-if="canEdit" v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
                     <!-- Kurumsal / kamu hesabında kök de bir organizasyondur: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
@@ -204,7 +204,7 @@
             <li v-if="item.kind === 'node' && adding === 'org' && String(selected?.id) === String(item.node.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
               <form class="add-row float-card" @submit.prevent="saveChild">
                 <div class="add-row-head">
-                  <h3>{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'organizasyon' }} ekle</h3>
+                  <h3>{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
                   <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
                 </div>
                 <div class="inline-form">
@@ -259,10 +259,15 @@
                     <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <button class="link-button" type="button" @click="treeView = 'firmalar'">Firmalar sekmesinden ekleyin</button></small>
                   </label>
                   <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
-                    <select v-model="row.subFacilityId">
+                    <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
                       <option :value="null">Lokasyonun geneli</option>
                       <option v-for="sub in subsOf(item.location)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
+                      <option v-if="canEdit" :value="-1">+ Yeni alt tesis…</option>
                     </select>
+                    <span v-if="newSubOpen" class="sub-add">
+                      <input v-model="newSubName" type="text" placeholder="Alt tesis adı (ör. Hangar 2)" aria-label="Yeni alt tesis adı" @keydown.enter.prevent="addSubToRow(item.location)" />
+                      <button class="secondary-button" type="button" :disabled="!newSubName.trim() || subSaving" @click="addSubToRow(item.location)">Ekle</button>
+                    </span>
                   </label>
                   <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
                     <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
@@ -282,7 +287,7 @@
                   <span v-if="row.naceCode" class="nace-picked"><i class="pi pi-check-circle" /> {{ row.naceCode }} {{ row.activity }}</span>
                 </div>
                 <div v-if="naceOpen" class="nace-box">
-                  <input v-model="naceQuery" type="text" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
+                  <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
                   <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
                     <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
                   </ul>
@@ -292,7 +297,7 @@
                 </label>
                 <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
                 <div class="add-actions">
-                  <button class="primary-button" type="submit" :disabled="rowSaving || limitFull"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
+                  <button class="primary-button" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(item.location)"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
                   <small>Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
                 </div>
               </form>
@@ -500,7 +505,7 @@ function toggleLocation(location: FirmLocation) {
 // Kart ağacı itmez, üstünde durur: ekranın altında kalırsa görünene kadar kaydırılır.
 const focusForm = () => nextTick(() => {
   inTree('.float-card')?.scrollIntoView({ block: 'nearest' })
-  inTree<HTMLInputElement>('.float-card input')?.focus({ preventScroll: true })
+  inTree<HTMLElement>('.float-card select, .float-card input')?.focus({ preventScroll: true })
 })
 // Aynı anda tek kart açık olur; aynı simgeye yeniden basmak kapatır.
 const adding = ref<'org' | 'location' | 'workplace' | 'edit' | null>(null)
@@ -537,14 +542,14 @@ function closeForm() {
 const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && (editName.value.trim() !== selected.value.name || editLabel.value !== labelOf(selected.value)))
   : adding.value === 'org' ? !!groupName.value.trim()
   : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId || draft.hazard)
-  : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || newCompany.value.trim() || bulkText.value.trim() || naceQuery.value.trim()))
+  : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
 function onPagePointer(event: PointerEvent) {
   if (!adding.value || formDirty.value || dialogOpen()) return
   if (!(event.target as Element).closest?.('.float-card, .row-actions')) closeForm()
 }
 function onPageKey(event: KeyboardEvent) {
-  if (event.key === 'Escape' && adding.value && !dialogOpen()) closeForm()
+  if (event.key === 'Escape' && adding.value && !dialogOpen() && !formDirty.value) closeForm()
 }
 onMounted(() => {
   document.addEventListener('pointerdown', onPagePointer)
@@ -728,6 +733,16 @@ async function addSub(location: FirmLocation) {
   catch (e: any) { subError.value = errorMessage(e, 'Alt tesis eklenemedi.') }
   finally { subSaving.value = false }
 }
+// İşyeri formundaki "+ Yeni alt tesis": açılır, formda seçili gelir.
+const newSubOpen = ref(false)
+async function addSubToRow(location: FirmLocation) {
+  if (!newSubName.value.trim() || subSaving.value) return
+  subSaving.value = true
+  rowError.value = ''
+  try { row.subFacilityId = await ensureSub(location, newSubName.value.trim()); newSubName.value = ''; newSubOpen.value = false }
+  catch (e: any) { rowError.value = errorMessage(e, 'Alt tesis eklenemedi.') }
+  finally { subSaving.value = false }
+}
 async function removeSub(location: FirmLocation, sub: SubFacility) {
   subError.value = ''
   try { await del(`/locations/${location.id}/sub-facilities/${sub.id}`); await loadSubs(location.id) }
@@ -765,6 +780,7 @@ const companyFor = (location: FirmLocation) => {
 }
 function resetRow(keepNothing = false) {
   Object.assign(row, { name: '', sgk: '', hazard: '', naceCode: null, activity: null, subFacilityId: null })
+  newSubOpen.value = false
   newCompany.value = ''
   bulkText.value = ''
   rowError.value = ''
@@ -798,7 +814,7 @@ async function saveRow() {
     if (limit) { rowError.value = limit; limitFull.value = true; return }
     // Toplu: her satır bir alt tesis (yoksa açılır), seçili firma her birinde ayrı işyeri açar.
     for (const name of names) {
-      const subFacilityId = bulk.value ? await ensureSub(location, name) : row.subFacilityId
+      const subFacilityId = bulk.value ? await ensureSub(location, name) : row.subFacilityId === -1 ? null : row.subFacilityId
       await addWorkplaceRow(firm.value.id, location.id, { ...row, name: bulk.value ? '' : name, company, sgk: bulk.value ? '' : row.sgk, subFacilityId }, firm.value.type)
       done++
     }
@@ -852,14 +868,14 @@ const nodeSummary = (node: FirmNode) => {
   const locs = locationsUnder(node)
   const count = locs.reduce((sum, l) => sum + workplacesOf(l).length, 0)
   const parts: string[] = []
-  if (node.children?.length) parts.push(`${node.children.length} alt ${firm.value?.type === 'public' ? 'birim' : 'organizasyon'}`)
+  if (node.children?.length) parts.push(`${node.children.length} alt ${firm.value?.type === 'public' ? 'birim' : 'dal'}`)
   parts.push(`${locs.length} lokasyon`, `${count} işyeri`)
   return parts.join(' · ')
 }
 const headerStats = computed(() => {
   const orgs = flatten(nodes.value).length - nodes.value.length
   const parts: string[] = []
-  if (orgs) parts.push(`${orgs} ${firm.value?.type === 'public' ? 'birim' : 'organizasyon'}`)
+  if (orgs) parts.push(`${orgs} ${firm.value?.type === 'public' ? 'birim' : 'dal'}`)
   parts.push(`${locations.value.length} lokasyon`, `${firmWorkplaces.value.length} işyeri`)
   return parts.join(' · ')
 })
@@ -1153,9 +1169,9 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .schema-node-text strong { color: var(--admin-heading); font-size: 14px; font-weight: 700; }
 .schema-node-text small { color: var(--admin-muted); font-size: 12px; }
 .schema-node-actions { display: flex; gap: 4px; margin-left: 6px; }
-.schema-add { position: relative; width: 32px; height: 32px; display: grid; place-items: center; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 8px; background: transparent; color: var(--admin-muted); cursor: pointer; }
+.schema-add { position: relative; height: 30px; display: inline-flex; align-items: center; gap: 4px; padding: 0 9px; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 8px; background: transparent; color: var(--admin-muted); cursor: pointer; }
 .schema-add:hover, .schema-add:focus-visible { border-style: solid; border-color: var(--pk-accent); background: var(--admin-accent-soft); color: var(--pk-accent); }
-.schema-add .mini { position: absolute; right: 2px; bottom: 2px; font-size: 8px; }
+.schema-add .pi { font-size: 10px; }
 .schema-locations { display: flex; flex-wrap: wrap; gap: 8px; }
 .schema-location { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px 8px 10px; border: 0; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); font: inherit; text-align: left; cursor: pointer; }
 .schema-location > i { color: var(--pk-success-dark); }

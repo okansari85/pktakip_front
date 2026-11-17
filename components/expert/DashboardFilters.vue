@@ -25,8 +25,8 @@ const { corporate } = useAccount()
 
 <style scoped>
 .dashboard-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-select{height:38px;min-width:170px;max-width:280px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px}
+select{height:38px;min-width:170px;max-width:280px;padding:0 10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:13px}
 select:disabled{opacity:.55}
-.reset{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-card);color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.reset:hover{color:var(--admin-heading)}
+.reset{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.reset:hover{color:var(--admin-heading);background:rgba(145,158,171,.08)}
 @media(max-width:700px){select{flex:1 1 100%;max-width:none}}
 </style>

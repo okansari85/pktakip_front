@@ -133,13 +133,13 @@ watch(orgAvailable, on => { if (on) loadOrganizations() }, { immediate: true })
 <style scoped>
 /* Tasarım kataloğu: her seçici ayrı kart (küçük başlık, kalın seçim). */
 .switcher { min-width: 0; display: flex; align-items: center; gap: 8px; margin-right: auto; }
-.select-field { min-width: 0; display: flex; flex-direction: column; gap: 1px; padding: 6px 10px 6px 14px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 6px 18px rgba(var(--pk-shadow-rgb), .06); }
+.select-field { min-width: 0; display: flex; flex-direction: column; gap: 1px; padding: 6px 10px 6px 14px; border: 1px solid transparent; border-radius: 12px; background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
 .select-field:focus-within { border-color: var(--pk-yellow); box-shadow: 0 0 0 3px var(--pk-focus-ring); }
 .select-field > span { display: flex; align-items: center; gap: 5px; color: var(--admin-muted); font-size: 10px; font-weight: 700; }
 .select-field > span i { font-size: 10px; color: var(--pk-yellow-dark); }
 .select-field select { width: 220px; height: 26px; padding: 0 4px 0 0; border: 0; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; outline: 0; cursor: pointer; }
 .select-field select:disabled { cursor: not-allowed; opacity: .7; }
-.empty .select-field:first-child { border-color: #fec84b; }
+.empty .select-field:first-child { border-color: var(--pk-warning-light); }
 .separator { color: var(--admin-muted); font-size: 12px; }
 @media (max-width: 1100px) { .select-field select { width: 170px; } }
 @media (max-width: 800px) { .switcher { display: none; } }
