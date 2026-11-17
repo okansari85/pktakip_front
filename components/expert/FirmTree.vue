@@ -51,10 +51,16 @@
         <section v-if="listNode" class="card loc-cards-card">
           <ul class="loc-rows">
             <li v-for="location in filteredList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
-              <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
-              <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ location.address || 'Adres girilmemiş' }}</small></span>
-              <!-- Sağda soluk bilgi (mockup'taki saat gibi) + işyeri varsa küçük rozet; işlemler fare üstündeyken ya da seçiliyken -->
-              <span class="loc-meta"><small>{{ location.district || location.city || '' }}</small><b v-if="workplacesOf(location).length" class="loc-badge">{{ workplacesOf(location).length }}</b></span>
+              <span class="loc-row-main">
+                <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
+                <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ location.address || 'Adres girilmemiş' }}</small></span>
+              </span>
+              <!-- Çizginin altında: solda rozetler (ilçe, işyeri), sağda işlem çubuğu -->
+              <span class="loc-row-foot">
+                <span class="loc-badges">
+                  <b v-if="location.district || location.city" class="loc-chip">{{ location.district || location.city }}</b>
+                  <span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</span>
+                </span>
               <span class="loc-actions">
                 <button v-if="canEdit" v-tooltip.top="'İşyeri aç'" type="button" :aria-label="`${location.name} içinde işyeri aç`" @click.stop="startWorkplace(location)"><BriefcaseBusiness :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit" v-tooltip.top="'Alt tesisler'" type="button" :aria-label="`${location.name} alt tesisleri`" @click.stop="openSub(location)"><Layers :size="16" :stroke-width="1.8" /></button>
@@ -62,6 +68,7 @@
                 <button v-if="multiUser" v-tooltip.top="'Alanlar'" type="button" :aria-label="`${location.name} alanları`" @click.stop="areaLocation = location"><LayoutGrid :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit && flatten(nodes).length > 1" v-tooltip.top="firm.type === 'public' ? 'Başka birime taşı' : 'Başka dala taşı'" type="button" :aria-label="`${location.name} taşı`" @click.stop="openMove(location)"><FolderInput :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit" v-tooltip.top="'Sil'" type="button" class="danger" :aria-label="`${location.name} sil`" @click.stop="openRemove({ name: location.name, location: location })"><Trash2 :size="16" :stroke-width="1.8" /></button>
+              </span>
               </span>
             </li>
             <li v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</li>
@@ -1355,19 +1362,18 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-pill { padding: 2px 8px; border-radius: 6px; background: var(--admin-success-bg); color: var(--admin-success-text); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .count-pill.none { background: rgba(145, 158, 171, .12); color: var(--admin-muted); }
 /* Sade lokasyon listesi (mockup): avatar, ad, alt yazı, işyeri, işlemler; iç kaydırma yok, sayfa uzar */
-/* Mockup: tek beyaz yuvarlak kart, ferah satırlar (ayraç yok), büyük avatar, soluk alt yazı, sağda soluk bilgi + rozet */
-.loc-cards-card { padding: 10px 0; border: 0; border-radius: 22px; box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -12px rgba(145, 158, 171, .28); }
+/* Lokasyon listesi: tek beyaz kart (tepede boşluk yok); her lokasyon: üstte avatar + ad + adres, çizgi, altta rozetler + işlem çubuğu */
+.loc-cards-card { padding: 0; overflow: hidden; border: 0; border-radius: 20px; box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -12px rgba(145, 158, 171, .28); }
 .loc-rows { display: grid; margin: 0; padding: 0; list-style: none; }
-.loc-row { display: flex; align-items: center; gap: 16px; padding: 14px 26px; cursor: pointer; transition: background .15s ease; }
+.loc-row { display: grid; gap: 10px; padding: 14px 22px 10px; cursor: pointer; transition: background .15s ease; }
+.loc-row + .loc-row { border-top: 1px solid rgba(145, 158, 171, .2); }
 .loc-row:hover, .loc-row:focus-visible { outline: 0; background: rgba(145, 158, 171, .05); }
 .loc-row.selected { background: var(--admin-accent-soft); }
 .loc-rows > .location-empty { padding: 24px; text-align: center; }
-.loc-meta { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 70px; }
-.loc-meta small { color: #919eab; font-size: 12px; }
-.loc-badge { min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 6px; border-radius: 6px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); font-size: 11.5px; font-weight: 700; }
-.loc-row .loc-actions { display: none; }
-.loc-row:hover .loc-actions, .loc-row:focus-within .loc-actions, .loc-row.selected .loc-actions { display: flex; }
-.loc-row:hover .loc-meta, .loc-row:focus-within .loc-meta, .loc-row.selected .loc-meta { display: none; }
+.loc-row-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.loc-row-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px dashed rgba(145, 158, 171, .24); }
+.loc-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.loc-chip { padding: 2px 8px; border-radius: 6px; background: rgba(145, 158, 171, .12); color: var(--admin-text); font-size: 12px; font-weight: 600; }
 .loc-avatar { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; font-size: 15px; font-weight: 700; letter-spacing: .02em; }
 .loc-avatar.big { width: 72px; height: 72px; font-size: 22px; }
 .loc-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
@@ -1385,7 +1391,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-detail-sub { color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 .loc-detail-addr { color: var(--admin-muted); font-size: 12.5px; line-height: 1.45; }
 .loc-detail .location-links { width: 100%; }
-@media (max-width: 800px) { .loc-row { flex-wrap: wrap; } .loc-actions { width: 100%; justify-content: flex-end; } }
+@media (max-width: 800px) { .loc-row-foot { flex-wrap: wrap; } .loc-actions { margin-left: auto; } }
 /* (eski) sağ panel listesi stilleri */
 .list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 .loc-list { max-height: 460px; overflow-y: auto; display: grid; margin: 0; padding: 0; list-style: none; }
