@@ -1236,7 +1236,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
 .overview { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 24px; }
-.side { display: grid; gap: 24px; align-content: start; min-width: 0; }
+.side { position: sticky; top: 90px; display: grid; gap: 24px; align-content: start; min-width: 0; max-height: calc(100vh - 110px); overflow-y: auto; }
+@media (max-width: 1180px) { .side { position: static; max-height: none; overflow: visible; } }
 .panel-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .panel-card .float-card { position: static; width: auto; max-height: none; overflow: visible; box-shadow: none; display: grid; gap: 14px; }
 .panel-card .add-row-head { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 8px; }
