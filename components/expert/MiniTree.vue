@@ -73,9 +73,9 @@ const activeName = computed(() => dots.value.find(d => d.active)?.name || '')
 
 <style scoped>
 .mini-tree { width: 140px; height: 64px; flex: none; }
-.mini-line { fill: none; stroke: rgba(106, 31, 184, .3); stroke-width: 1.2; }
-.mini-dot { fill: var(--admin-card); stroke: rgba(106, 31, 184, .55); stroke-width: 1.4; }
-.mini-dot.root { fill: rgba(106, 31, 184, .35); }
+.mini-line { fill: none; stroke: rgba(145, 158, 171, .7); stroke-width: 1.2; }
+.mini-dot { fill: var(--admin-card); stroke: rgba(99, 115, 129, .7); stroke-width: 1.4; }
+.mini-dot.root { fill: rgba(0, 71, 255, .35); stroke: rgba(0, 71, 255, .6); }
 .mini-dot.active { fill: var(--pk-violet); stroke: var(--admin-card); stroke-width: 1.5; }
 .mini-pulse { fill: var(--pk-violet); opacity: .35; transform-box: fill-box; transform-origin: center; animation: mini-pulse 1.4s ease-out infinite; }
 @keyframes mini-pulse { 0% { transform: scale(.6); opacity: .5; } 100% { transform: scale(1.8); opacity: 0; } }

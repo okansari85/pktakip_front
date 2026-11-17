@@ -68,7 +68,7 @@
             :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
             :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
             @select="selectChart" @add-branch="id => startOrg(nodeById(id))" @add-location="id => startLocation(nodeById(id))"
-            @move-location="moveLocation" @move-node="moveNode" @open-list="openList" @layout="positions => chartPositions = positions"
+            @move-location="moveLocation" @move-node="moveNode" @open-list="openList" @edit="id => startEdit(nodeById(id))" @layout="positions => chartPositions = positions"
           />
         </section>
         </div>
@@ -1263,21 +1263,23 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
 .list-banner .close-list { background: var(--admin-card); }
-.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--pk-violet-lighter); cursor: pointer; }
+/* Küçük şemanın zemini büyük şemanınki gibi: açık gri, noktalı */
+.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: radial-gradient(rgba(145, 158, 171, .35) 1px, transparent 1px) 0 0 / 8px 8px, rgba(145, 158, 171, .06); box-shadow: inset 0 0 0 1px rgba(145, 158, 171, .18); cursor: pointer; }
 .mini-tree-button:hover { box-shadow: 0 0 0 2px rgba(164, 61, 245, .3); }
 @media (max-width: 700px) { .mini-tree-button { padding: 2px 4px; } }
 .list-tools-card { display: flex; gap: 10px; padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .list-tools-card .list-search { flex: 1; }
 .loc-cards-card { padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
-.loc-cards { max-height: 560px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; padding: 2px; }
-.loc-card { display: grid; align-content: start; gap: 6px; padding: 14px; border: 1px solid rgba(145, 158, 171, .24); border-radius: 12px; background: var(--admin-card); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.loc-cards { max-height: 600px; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 2px; }
+.loc-card { display: grid; grid-template-columns: minmax(200px, 1.1fr) minmax(110px, .6fr) minmax(0, 1.6fr) auto; align-items: center; gap: 4px 16px; padding: 12px 16px; border: 1px solid rgba(145, 158, 171, .24); border-radius: 12px; background: var(--admin-card); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
 .loc-card:hover { border-color: rgba(0, 171, 85, .45); }
 .loc-card.selected { border-color: var(--pk-accent); box-shadow: 0 0 0 2px rgba(var(--pk-accent-rgb), .25); }
 .loc-card-head { display: flex; align-items: center; gap: 10px; }
 .loc-card-head strong { color: var(--admin-heading); font-size: 14px; font-weight: 700; line-height: 1.3; }
 .loc-card-district { color: var(--admin-heading); font-size: 12.5px; font-weight: 600; }
 .loc-card-address { display: -webkit-box; overflow: hidden; color: var(--admin-muted); font-size: 12px; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.loc-card .count-pill { justify-self: start; margin-top: 2px; }
+.loc-card .count-pill { justify-self: end; }
+@media (max-width: 900px) { .loc-card { grid-template-columns: minmax(0, 1fr) auto; } .loc-card-address, .loc-card-district { grid-column: 1; } }
 .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
 .schema-head h2 .pi-angle-right { margin: 0 4px; color: var(--admin-muted); font-size: 12px; }

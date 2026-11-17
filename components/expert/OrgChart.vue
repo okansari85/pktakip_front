@@ -25,13 +25,20 @@
       <template #node-org="{ id, data }">
         <div class="chart-group" :class="{ 'has-area': data.hasLocations, target: dropId === id }">
           <Handle type="target" :position="Position.Top" class="handle" />
-          <div class="chart-node" :class="{ root: data.root, on: selectedKey === id }">
-            <span class="chart-node-icon"><i :class="data.root ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
-            <span class="chart-node-text"><strong>{{ data.name }}</strong><small v-if="data.label">{{ data.label }}</small></span>
-            <span v-if="canEdit" class="chart-node-actions nodrag">
-              <button v-if="canBranch" type="button" class="chart-add" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><i class="pi pi-plus" /> {{ branchLabel }}</button>
-              <button type="button" class="chart-add" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><i class="pi pi-plus" /> Lokasyon</button>
+          <div class="chart-node" :class="{ root: data.root, on: selectedKey === id }" :style="{ '--c': data.color.main, '--c-soft': data.color.soft }">
+            <span class="chart-node-top">
+              <span class="chart-node-icon"><i :class="data.root ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
+              <span class="chart-node-text"><strong>{{ data.name }}</strong><small>{{ data.subtitle }}</small></span>
             </span>
+            <!-- İşlemler kutunun altında (mockup): alt dal, lokasyon, düzenle, lokasyon listesi, diğer -->
+            <span class="chart-node-actions nodrag">
+              <button v-if="canEdit && canBranch" v-tooltip.bottom="`${branchLabel} ekle`" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><i class="pi pi-sitemap" /></button>
+              <button v-if="canEdit" v-tooltip.bottom="'Lokasyon ekle'" type="button" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><i class="pi pi-map-marker" /></button>
+              <button v-if="canEdit" v-tooltip.bottom="'Düzenle'" type="button" :aria-label="`${data.name} düzenle`" @click.stop="emit('edit', data.nodeId)"><i class="pi pi-pencil" /></button>
+              <button v-if="data.count" v-tooltip.bottom="'Lokasyon listesi'" type="button" :aria-label="`${data.name} lokasyon listesi`" @click.stop="emit('open-list', data.nodeId)"><i class="pi pi-list" /></button>
+              <button v-tooltip.bottom="'Diğer işlemler'" type="button" :aria-label="`${data.name} diğer işlemler`" @click.stop="emit('select', id)"><i class="pi pi-ellipsis-v" /></button>
+            </span>
+            <button v-if="canEdit && canBranch" class="chart-plus nodrag" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><i class="pi pi-plus" /></button>
           </div>
           <span v-if="data.hasLocations" class="chart-area" aria-hidden="true" />
           <!-- Çok lokasyonlu dal: lokasyonlar tek tek çizilmez, özet kutu; tıklayınca liste sağ panelde açılır -->
@@ -79,16 +86,18 @@ const emit = defineEmits<{
   'move-location': [locationId: number | string, nodeId: number | string]
   'move-node': [nodeId: number | string, parentId: number | string]
   'open-list': [nodeId: number | string]
+  edit: [nodeId: number | string]
   layout: [positions: Record<string, { x: number; y: number }>]
 }>()
 
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
+const branchLabel = computed(() => props.branchLabel)
 const flowId = `org-chart-${Math.random().toString(36).slice(2, 8)}`
 const { getNodes, fitView } = useVueFlow(flowId)
 // Kutular ölçüldükten sonra (ilk açılış ve her yeniden yerleşim) şema alana sığdırılır; çok büyütülmez.
 const fit = () => nextTick(() => setTimeout(() => fitView({ padding: 0.08, maxZoom: 1, duration: 150 }), 60))
 
-const ORG = { width: 300, height: 58 }
+const ORG = { width: 300, height: 98 }
 const LOC = { width: 230, height: 54 }
 const COLS = 4
 // Bu sayıdan fazla lokasyonu olan dalda lokasyonlar şemada özet kutu olur (liste sağ panelde).
@@ -96,9 +105,15 @@ const INLINE_MAX = 4
 const SUMMARY = { width: 300, height: 48 }
 const GAP = 12
 const PAD = 14 // alanın iç boşluğu
+// Her alt birimin kendi rengi (paletten sırayla); ona giden çizgi ve uç noktası da o renk. Kök: birincil mavi.
+const COLORS = [
+  { main: '#a43df5', soft: '#f3e0ff' }, { main: '#1890ff', soft: '#d0f2ff' }, { main: '#00ab55', soft: '#c8f2d8' },
+  { main: '#ff8f00', soft: '#fff2d6' }, { main: '#ff4842', soft: '#ffe7d9' }, { main: '#0047ff', soft: '#d6e2ff' }
+]
+const ROOT_COLOR = { main: '#0047ff', soft: '#d6e2ff' }
 // Bağlantı çizgisi: yuvarlak köşeli basamak (organizasyon şeması görünümü), yumuşak mavi.
-// İnce, kesikli ve akış yönünde hareketli (Vue Flow animated); kardeşler aynı hizada olduğu için tek yatay hatta birleşir.
-const EDGE = { type: 'smoothstep', animated: true, pathOptions: { borderRadius: 14 }, style: { stroke: 'rgba(107, 151, 255, .8)', strokeWidth: 1.4 } } as const
+// İnce, kavisli köşeli düz çizgi (mockup); rengi gittiği alt birimin rengi.
+const EDGE = { type: 'smoothstep', pathOptions: { borderRadius: 22 } } as const
 const flowNodes = ref<Node[]>([])
 const flowEdges = ref<Edge[]>([])
 // Düğüm → üst düğüm (döngü kontrolü için).
@@ -109,7 +124,8 @@ function layout() {
   const g = new dagre.graphlib.Graph()
   g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 64, marginx: 16, marginy: 16 })
   g.setDefaultEdgeLabel(() => ({}))
-  const groups: { id: string; node: FirmNode; parent: FirmNode | null; locs: FirmLocation[]; width: number; height: number; blockWidth: number; summary: number }[] = []
+  const groups: { id: string; node: FirmNode; parent: FirmNode | null; locs: FirmLocation[]; width: number; height: number; blockWidth: number; summary: number; count: number; color: { main: string; soft: string } }[] = []
+  let colorIndex = 0
   const edges: Edge[] = []
   parentOf.clear()
   const walk = (node: FirmNode, parent: FirmNode | null) => {
@@ -122,11 +138,12 @@ function layout() {
     const rows = Math.ceil(locs.length / COLS)
     const blockWidth = cols ? cols * LOC.width + (cols - 1) * GAP : 0
     const width = Math.max(ORG.width, blockWidth + 2 * PAD)
-    const height = ORG.height + (rows ? 12 + PAD + rows * LOC.height + (rows - 1) * GAP + PAD : summary ? 10 + SUMMARY.height : 0)
+    const height = ORG.height + (rows ? 22 + PAD + rows * LOC.height + (rows - 1) * GAP + PAD : summary ? 22 + SUMMARY.height : 0)
     // dagre konumu bu nesneye yazar: her kutuya ayrı nesne
     g.setNode(id, { width, height })
-    groups.push({ id, node, parent, locs, width, height, blockWidth, summary })
-    if (parent) { g.setEdge(`n${parent.id}`, id); edges.push({ id: `e${parent.id}-${node.id}`, source: `n${parent.id}`, target: id, ...EDGE }) }
+    const color = parent ? COLORS[colorIndex++ % COLORS.length] : ROOT_COLOR
+    groups.push({ id, node, parent, locs, width, height, blockWidth, summary, count: all.length, color })
+    if (parent) { g.setEdge(`n${parent.id}`, id); edges.push({ id: `e${parent.id}-${node.id}`, source: `n${parent.id}`, target: id, ...EDGE, style: { stroke: color.main, strokeWidth: 1.6, opacity: 0.75 } }) }
     for (const child of node.children || []) walk(child, node)
   }
   props.nodes.forEach(node => walk(node, null))
@@ -147,12 +164,13 @@ function layout() {
       id: group.id, type: 'org', position: { x: box.x - group.width / 2, y: top },
       style: { width: `${group.width}px`, height: `${group.height}px` },
       draggable: props.canEdit && !!group.parent,
-      data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary }
+      data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary, count: group.count, color: group.color,
+        subtitle: [group.parent ? branchLabel.value : 'Ana yapı', group.count ? `${group.count} lokasyon` : '', props.labels[String(group.node.id)] || ''].filter(Boolean).join(' · ') }
     })
     group.locs.forEach((location, i) => {
       nodes.push({
         id: `l${location.id}`, type: 'loc', parentNode: group.id,
-        position: { x: (group.width - group.blockWidth) / 2 + (i % COLS) * (LOC.width + GAP), y: ORG.height + 12 + PAD + Math.floor(i / COLS) * (LOC.height + GAP) },
+        position: { x: (group.width - group.blockWidth) / 2 + (i % COLS) * (LOC.width + GAP), y: ORG.height + 22 + PAD + Math.floor(i / COLS) * (LOC.height + GAP) },
         data: { locationId: location.id, nodeId: group.node.id, name: location.name, city: location.city, count: props.counts[String(location.id)] || 0 }
       })
     })
@@ -216,23 +234,25 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .handle { opacity: 0; pointer-events: none; }
 /* Dal alanı: üstte dal kutusu, altında lokasyonların durduğu kesik çizgili alan */
 .chart-group { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
-.chart-area { position: absolute; left: 0; right: 0; top: 70px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
+.chart-area { position: absolute; left: 0; right: 0; top: 112px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
 .chart-group.target .chart-area { border-color: var(--pk-success-main); background: rgba(0, 171, 85, .08); }
 .chart-group.target .chart-node { box-shadow: 0 0 0 3px var(--pk-success-main), 0 8px 16px rgba(0, 171, 85, .25); }
-.chart-node { position: relative; z-index: 1; width: 300px; min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 8px; border-radius: 12px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .28), 0 4px 10px -4px rgba(145, 158, 171, .3); transition: box-shadow .15s ease; }
-.chart-node.root { box-shadow: 0 0 0 2px rgba(var(--pk-accent-rgb), .35), 0 4px 10px -4px rgba(145, 158, 171, .3); }
-.chart-node.on { box-shadow: 0 0 0 2px var(--pk-accent), 0 8px 16px rgba(var(--pk-accent-rgb), .2); }
-.chart-node-icon { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
-.chart-node.root .chart-node-icon { background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
-.chart-node-text { flex: 1; min-width: 0; display: grid; }
-.chart-node-text strong { display: -webkit-box; overflow: hidden; color: var(--admin-heading); font-size: 13px; font-weight: 700; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.chart-node-text small { color: var(--admin-muted); font-size: 11px; }
-/* Ekleme düğmeleri yalnız fare üstündeyken ya da kutu seçiliyken: uzun birim adları kesilmesin. */
-.chart-node-actions { flex: none; display: none; gap: 4px; }
-.chart-node:hover .chart-node-actions, .chart-node.on .chart-node-actions, .chart-node:focus-within .chart-node-actions { display: flex; }
-.chart-add { height: 26px; display: inline-flex; align-items: center; gap: 3px; padding: 0 7px; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; }
-.chart-add .pi { font-size: 9px; }
-.chart-add:hover, .chart-add:focus-visible { border-style: solid; border-color: var(--pk-accent); background: var(--admin-accent-soft); color: var(--pk-accent); }
+/* Dal kutusu (mockup): üstte simge + ad + alt yazı, çizginin altında işlem simgeleri, kutunun altında koyu "+" */
+.chart-node { --c: #0047ff; --c-soft: #d6e2ff; position: relative; z-index: 1; width: 300px; height: 98px; display: grid; grid-template-rows: 1fr auto; padding: 10px 12px 0; border-radius: 14px; background: var(--admin-card); box-shadow: 0 0 0 1px rgba(145, 158, 171, .22), 0 8px 20px -6px rgba(145, 158, 171, .35); transition: box-shadow .15s ease; }
+.chart-node::before { content: ""; position: absolute; top: -5px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border: 2px solid var(--c); border-radius: 50%; background: var(--admin-card); }
+.chart-node.root::before { display: none; }
+.chart-node.on { box-shadow: 0 0 0 2px var(--c), 0 10px 22px -6px rgba(145, 158, 171, .45); }
+.chart-node-top { display: flex; align-items: center; gap: 10px; min-height: 0; }
+.chart-node-icon { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--c-soft); color: var(--c); }
+.chart-node-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.chart-node-text strong { display: -webkit-box; overflow: hidden; color: var(--admin-heading); font-size: 13.5px; font-weight: 700; line-height: 1.25; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.chart-node-text small { overflow: hidden; color: var(--admin-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.chart-node-actions { display: flex; justify-content: space-around; padding: 4px 0; border-top: 1px solid rgba(145, 158, 171, .2); }
+.chart-node-actions button { width: 30px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font-size: 13px; cursor: pointer; }
+.chart-node-actions button:hover, .chart-node-actions button:focus-visible { background: var(--c-soft); color: var(--c); }
+.chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 24px; height: 24px; margin-left: -12px; display: grid; place-items: center; border: 0; border-radius: 7px; background: #212b36; color: #fff; font-size: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); }
+.chart-plus:hover, .chart-plus:focus-visible { background: var(--c); }
+.chart-group.target .chart-node { box-shadow: 0 0 0 3px var(--pk-success-main), 0 8px 16px rgba(0, 171, 85, .25); }
 .chart-location { width: 230px; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); }
 .chart-location > i { color: var(--pk-success-dark); }
 .chart-location span { min-width: 0; display: grid; }
@@ -242,7 +262,7 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-location.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .chart-location.on > i, .chart-location.on small { color: var(--pk-on-accent); }
 :global(.dark-theme) .chart-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }
-.chart-summary { position: relative; z-index: 1; width: 300px; height: 48px; margin-top: 10px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); font: inherit; cursor: pointer; }
+.chart-summary { position: relative; z-index: 1; width: 300px; height: 48px; margin-top: 22px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); font: inherit; cursor: pointer; }
 .chart-summary strong { font-size: 13px; font-weight: 700; }
 .chart-summary span { margin-left: auto; color: var(--pk-success-dark); font-size: 12px; font-weight: 600; }
 .chart-summary .pi-angle-right { color: var(--pk-success-dark); }
