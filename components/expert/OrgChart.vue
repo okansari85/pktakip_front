@@ -13,7 +13,7 @@
       :min-zoom="0.3"
       :max-zoom="1.6"
       :default-edge-options="{ type: 'smoothstep' }"
-      fit-view-on-init
+      @nodes-initialized="fit"
       @node-click="onNodeClick"
       @node-drag-start="onDragStart"
       @node-drag="onDrag"
@@ -36,7 +36,7 @@
       </template>
 
       <template #node-loc="{ id, data }">
-        <div class="chart-location" :class="{ on: selectedKey === id }">
+        <div class="chart-location" :class="{ on: selectedKey === id, target: dragId !== id && inDropArea(data) }">
           <Handle type="target" :position="Position.Top" class="handle" />
           <i class="pi pi-map-marker" aria-hidden="true" />
           <span><strong>{{ data.name }}</strong><small>{{ data.count ? `${data.count} işyeri` : 'İşyeri yok' }}<template v-if="data.city"> · {{ data.city }}</template></small></span>
@@ -77,6 +77,8 @@ const emit = defineEmits<{
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
 const flowId = `org-chart-${Math.random().toString(36).slice(2, 8)}`
 const { getIntersectingNodes, fitView } = useVueFlow(flowId)
+// Kutular ölçüldükten sonra (ilk açılış ve her yeniden yerleşim) şema alana sığdırılır; çok büyütülmez.
+const fit = () => nextTick(() => fitView({ padding: 0.12, maxZoom: 1, duration: 150 }))
 
 const SIZE = { org: { width: 300, height: 58 }, loc: { width: 230, height: 54 } }
 const flowNodes = ref<Node[]>([])
@@ -115,7 +117,7 @@ function layout() {
   })
   flowEdges.value = edges
 }
-watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); nextTick(() => fitView({ padding: 0.15, duration: 200 })) }, { immediate: true, deep: true })
+watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); fit() }, { immediate: true, deep: true })
 
 const onNodeClick = ({ node }: NodeMouseEvent) => emit('select', node.id)
 
@@ -126,13 +128,19 @@ const isDescendant = (candidate: string, ancestor: string) => {
   for (let id: string | null | undefined = candidate; id; id = parentOf.get(id)) if (id === ancestor) return true
   return false
 }
+// Bırakma alanı (KSY-SIS'teki gibi): dalın kutusu ya da o dalın lokasyonlarından biri; hedef her zaman dal.
+const orgOf = (other: Node) => other.type === 'org' ? other : flowNodes.value.find(n => n.id === `n${other.data.nodeId}`)
 const targetFor = (node: Node) => getIntersectingNodes(node)
-  .filter(other => other.type === 'org' && other.id !== node.id)
-  .find(other => node.type === 'loc'
+  .filter(other => other.id !== node.id)
+  .sort((a, b) => (a.type === 'org' ? 0 : 1) - (b.type === 'org' ? 0 : 1))
+  .map(orgOf)
+  .find((other): other is Node => !!other && (node.type === 'loc'
     ? `n${node.data.nodeId}` !== other.id
-    : !isDescendant(other.id, node.id) && parentOf.get(node.id) !== other.id)
+    : other.id !== node.id && !isDescendant(other.id, node.id) && parentOf.get(node.id) !== other.id))
 const onDragStart = ({ node }: NodeDragEvent) => { dragId.value = node.id }
 const onDrag = ({ node }: NodeDragEvent) => { dropId.value = targetFor(node)?.id ?? null }
+// Hedef dalın lokasyonları da yeşil yanar (alanın tamamı).
+const inDropArea = (data: { nodeId: number | string }) => !!dropId.value && dropId.value === `n${data.nodeId}`
 const onDragStop = ({ node }: NodeDragEvent) => {
   const target = targetFor(node)
   dragId.value = null
@@ -171,6 +179,7 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-location strong { overflow: hidden; font-size: 12.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .chart-location small { color: var(--pk-success-dark); font-size: 11px; }
 .chart-location:hover { box-shadow: 0 0 0 2px rgba(0, 171, 85, .35); }
+.chart-location.target { box-shadow: 0 0 0 3px var(--pk-success-main); }
 .chart-location.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .chart-location.on > i, .chart-location.on small { color: var(--pk-on-accent); }
 :global(.dark-theme) .chart-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }

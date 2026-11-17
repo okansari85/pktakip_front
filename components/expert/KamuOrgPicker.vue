@@ -16,7 +16,7 @@
       <div class="list">
         <template v-if="!searching">
           <button type="button" class="row all" :class="{ on: !value }" @click="pickOrganization('')">
-            <span class="name">Tüm organizasyon</span><span class="count">{{ total }}</span>
+            <span class="name">Tümü</span><span class="count">{{ total }}</span>
           </button>
         </template>
         <p v-if="searching && rows.length" class="section">BİRİMLER</p>
@@ -115,7 +115,7 @@ const buildings = computed(() => {
 
 const currentLabel = computed(() => {
   const option = options.value.find(item => item.value === props.value)
-  return option ? `${option.label} (${count(option.value)})` : 'Tüm organizasyon'
+  return option ? `${option.label} (${count(option.value)})` : 'Tümü'
 })
 
 function toggle() {
