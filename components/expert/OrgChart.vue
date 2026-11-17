@@ -96,12 +96,12 @@ function layout() {
   const walk = (node: FirmNode, parent: FirmNode | null) => {
     const id = `n${node.id}`
     parentOf.set(id, parent ? `n${parent.id}` : null)
-    g.setNode(id, SIZE.org)
+    g.setNode(id, { ...SIZE.org }) // dagre konumu bu nesneye yazar: her kutuya ayrı kopya
     nodes.push({ id, type: 'org', position: { x: 0, y: 0 }, draggable: props.canEdit && !!parent, data: { nodeId: node.id, name: node.name, label: props.labels[String(node.id)] || '', root: !parent } })
     if (parent) { g.setEdge(`n${parent.id}`, id); edges.push({ id: `e${parent.id}-${node.id}`, source: `n${parent.id}`, target: id }) }
     for (const location of props.locations.filter(l => String(l.organization_id) === String(node.id))) {
       const lid = `l${location.id}`
-      g.setNode(lid, SIZE.loc)
+      g.setNode(lid, { ...SIZE.loc })
       g.setEdge(id, lid)
       nodes.push({ id: lid, type: 'loc', position: { x: 0, y: 0 }, data: { locationId: location.id, nodeId: node.id, name: location.name, city: location.city, count: props.counts[String(location.id)] || 0 } })
       edges.push({ id: `e${node.id}-l${location.id}`, source: id, target: lid, class: 'loc-edge' })
