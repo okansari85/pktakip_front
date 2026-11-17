@@ -87,7 +87,7 @@ const emit = defineEmits<{
   'move-node': [nodeId: number | string, parentId: number | string]
   'open-list': [nodeId: number | string]
   edit: [nodeId: number | string]
-  layout: [positions: Record<string, { x: number; y: number }>]
+  layout: [positions: Record<string, { x: number; y: number; color: string }>]
 }>()
 
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
@@ -217,7 +217,7 @@ function layout() {
   flowNodes.value = nodes
   flowEdges.value = edges
   // Dal kutusunun (üst kutu) merkezleri: küçük şema bu yerleşimi kullanır.
-  emit('layout', Object.fromEntries(groups.map(group => { const box = g.node(group.id); return [String(group.node.id), { x: box.x, y: (rankTop.get(depthOf(group.id)) ?? 0) + ORG.height / 2 }] })))
+  emit('layout', Object.fromEntries(groups.map(group => { const box = g.node(group.id); return [String(group.node.id), { x: box.x, y: (rankTop.get(depthOf(group.id)) ?? 0) + ORG.height / 2, color: group.color.main }] })))
 }
 watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); fit() }, { immediate: true, deep: true })
 

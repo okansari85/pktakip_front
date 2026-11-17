@@ -48,12 +48,13 @@
           <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
           <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
         </section>
-        <section v-if="listNode" class="loc-cards-card">
+        <section v-if="listNode" class="card loc-cards-card">
           <ul class="loc-rows">
             <li v-for="location in filteredList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
               <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
-              <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ [location.district, location.address].filter(Boolean).join(' · ') || 'Adres girilmemiş' }}</small></span>
-              <span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</span>
+              <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ location.address || 'Adres girilmemiş' }}</small></span>
+              <!-- Sağda soluk bilgi (mockup'taki saat gibi) + işyeri varsa küçük rozet; işlemler fare üstündeyken ya da seçiliyken -->
+              <span class="loc-meta"><small>{{ location.district || location.city || '' }}</small><b v-if="workplacesOf(location).length" class="loc-badge">{{ workplacesOf(location).length }}</b></span>
               <span class="loc-actions">
                 <button v-if="canEdit" v-tooltip.top="'İşyeri aç'" type="button" :aria-label="`${location.name} içinde işyeri aç`" @click.stop="startWorkplace(location)"><BriefcaseBusiness :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit" v-tooltip.top="'Alt tesisler'" type="button" :aria-label="`${location.name} alt tesisleri`" @click.stop="openSub(location)"><Layers :size="16" :stroke-width="1.8" /></button>
@@ -1321,8 +1322,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
 .list-banner .close-list { background: var(--admin-card); }
-/* Küçük şemanın zemini büyük şemanınki gibi: açık gri, noktalı */
-.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: radial-gradient(rgba(145, 158, 171, .35) 1px, transparent 1px) 0 0 / 8px 8px, rgba(145, 158, 171, .06); box-shadow: inset 0 0 0 1px rgba(145, 158, 171, .18); cursor: pointer; }
+/* Küçük şema: beyaz zemin, büyük şemanın renkleri */
+.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: inset 0 0 0 1px rgba(145, 158, 171, .22); cursor: pointer; }
 .mini-tree-button:hover { box-shadow: 0 0 0 2px rgba(164, 61, 245, .3); }
 @media (max-width: 700px) { .mini-tree-button { padding: 2px 4px; } }
 .list-tools-card { display: flex; gap: 10px; padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
@@ -1353,18 +1354,24 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-pill { padding: 2px 8px; border-radius: 6px; background: var(--admin-success-bg); color: var(--admin-success-text); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .count-pill.none { background: rgba(145, 158, 171, .12); color: var(--admin-muted); }
 /* Sade lokasyon listesi (mockup): avatar, ad, alt yazı, işyeri, işlemler; iç kaydırma yok, sayfa uzar */
-.loc-cards-card { padding: 0; }
-/* Her lokasyon ayrı kart (tablo satırı değil): beyaz, yuvarlak, gölgeli, aralarında boşluk */
-.loc-rows { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.loc-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; background: var(--admin-card); box-shadow: var(--pk-card-shadow); cursor: pointer; transition: box-shadow .15s ease, transform .15s ease; }
-.loc-row:hover, .loc-row:focus-visible { outline: 0; transform: translateY(-1px); box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 16px 28px -6px rgba(145, 158, 171, .28); }
-.loc-row.selected { box-shadow: 0 0 0 2px var(--pk-accent), 0 12px 24px -6px rgba(var(--pk-accent-rgb), .22); }
-.loc-rows > .location-empty { padding: 24px; border-radius: 14px; background: var(--admin-card); text-align: center; }
-.loc-avatar { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+/* Mockup: tek beyaz yuvarlak kart, ferah satırlar (ayraç yok), büyük avatar, soluk alt yazı, sağda soluk bilgi + rozet */
+.loc-cards-card { padding: 10px 0; border: 0; border-radius: 22px; box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -12px rgba(145, 158, 171, .28); }
+.loc-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.loc-row { display: flex; align-items: center; gap: 16px; padding: 14px 26px; cursor: pointer; transition: background .15s ease; }
+.loc-row:hover, .loc-row:focus-visible { outline: 0; background: rgba(145, 158, 171, .05); }
+.loc-row.selected { background: var(--admin-accent-soft); }
+.loc-rows > .location-empty { padding: 24px; text-align: center; }
+.loc-meta { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 70px; }
+.loc-meta small { color: #919eab; font-size: 12px; }
+.loc-badge { min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 6px; border-radius: 6px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); font-size: 11.5px; font-weight: 700; }
+.loc-row .loc-actions { display: none; }
+.loc-row:hover .loc-actions, .loc-row:focus-within .loc-actions, .loc-row.selected .loc-actions { display: flex; }
+.loc-row:hover .loc-meta, .loc-row:focus-within .loc-meta, .loc-row.selected .loc-meta { display: none; }
+.loc-avatar { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; font-size: 15px; font-weight: 700; letter-spacing: .02em; }
 .loc-avatar.big { width: 72px; height: 72px; font-size: 22px; }
 .loc-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.loc-row-text strong { overflow: hidden; color: var(--admin-heading); font-size: 14.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.loc-row-text small { overflow: hidden; color: var(--admin-muted); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.loc-row-text strong { overflow: hidden; color: var(--admin-heading); font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.loc-row-text small { overflow: hidden; color: #919eab; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .loc-actions { flex: none; display: flex; gap: 2px; }
 .loc-actions button { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #637381; cursor: pointer; }
 .loc-actions button:hover:not(:disabled), .loc-actions button:focus-visible { background: rgba(145, 158, 171, .12); color: var(--admin-heading); }
