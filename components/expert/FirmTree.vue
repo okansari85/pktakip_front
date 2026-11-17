@@ -33,7 +33,7 @@
       <div v-if="nodes.length" class="overview">
         <div class="main-col">
         <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
-        <section v-if="listNode" class="card list-banner">
+        <section v-if="listNode" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
           <!-- Şemanın küçük hâli (solda, simgenin yerinde): bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
           <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /></button>
           <div>
@@ -1321,18 +1321,19 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text small { color: var(--admin-muted); font-size: 12px; }
 /* Dalın lokasyon listesi (şemanın yerinde) + üstte ayrı başlık kartı */
 .main-col { display: grid; gap: 16px; min-width: 0; }
-.list-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 1.5px solid var(--pk-violet-light); border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
+/* Başlık kartı dalın renginde hafif zemin (ör. Müdahale turuncu-sarı), çerçeve yok */
+.list-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; border-radius: var(--pk-radius); background: color-mix(in srgb, var(--dal) 10%, var(--admin-card)); box-shadow: var(--pk-card-shadow); }
 .list-banner-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-card); color: var(--pk-violet-dark); font-size: 18px; }
 .list-banner > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .list-banner h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 700; }
 .list-banner small { color: var(--admin-muted); font-size: 13px; font-weight: 600; }
-.list-crumb { display: flex; align-items: center; gap: 6px; color: var(--pk-violet-dark); font-size: 12.5px; }
-.list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
+.list-crumb { display: flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--dal) 70%, #212b36); font-size: 12.5px; }
+.list-crumb .link-button { padding: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
-.list-banner .close-list { background: var(--admin-card); }
+.list-banner .close-list { border-color: transparent; background: var(--admin-card); }
 /* Küçük şema: beyaz zemin, büyük şemanın renkleri */
-.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: inset 0 0 0 1px rgba(145, 158, 171, .22); cursor: pointer; }
-.mini-tree-button:hover { box-shadow: 0 0 0 2px rgba(164, 61, 245, .3); }
+.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: none; cursor: pointer; }
+.mini-tree-button:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--dal) 35%, transparent); }
 @media (max-width: 700px) { .mini-tree-button { padding: 2px 4px; } }
 .list-tools-card { display: flex; gap: 10px; padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .list-tools-card .list-search { flex: 1; }
