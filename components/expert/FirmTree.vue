@@ -18,7 +18,7 @@
     <div v-else-if="error && !firm" class="state error">{{ error }}<button class="secondary-button" type="button" @click="load">Tekrar Dene</button></div>
 
     <template v-else-if="firm">
-      <div v-if="!embedded" class="page-head">
+      <div class="page-head">
         <div>
           <h1>{{ firm.name }}</h1>
           <!-- Tasarım kataloğu 12: "Kamu kurumu · Firma detayları"; sayılar Organizasyon yapısı kartında -->
@@ -28,299 +28,220 @@
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
-      <!-- Organizasyon şeması (KSY-SIS'teki gibi): ana firma → dallar → lokasyonlar. Dalda "+ Dal" / "+ Lokasyon"; lokasyona
-           tıklayınca sağdaki kart o lokasyon olur, oradan "İşyeri aç". Formlar aşağıdaki ağaçta, ilgili satırın altında açılır. -->
-      <div v-if="!embedded && nodes.length" class="overview">
+      <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
+           paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
+      <div v-if="nodes.length" class="overview">
         <section class="card schema-card">
           <header class="schema-head">
             <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
-          <div class="schema">
-            <div v-for="item in schemaRows" :key="item.key" class="schema-row" :class="{ child: item.depth }" :style="{ '--depth': item.depth }">
-              <div class="schema-node" :class="{ root: !item.depth }">
-                <span class="schema-node-icon"><i :class="item.depth ? 'pi pi-sitemap' : 'pi pi-building'" aria-hidden="true" /></span>
-                <span class="schema-node-text"><strong>{{ item.node.name }}</strong><small v-if="labelOf(item.node)">{{ labelOf(item.node) }}</small></span>
-                <span v-if="canEdit" class="schema-node-actions">
-                  <button v-if="canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" type="button" class="schema-add" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'birim' : 'dal'} ekle`" @click="startOrg(item.node)"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
-                  <button type="button" class="schema-add" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-plus" /> Lokasyon</button>
-                </span>
-              </div>
-              <div v-if="item.locations.length" class="schema-locations">
-                <button v-for="location in item.locations" :key="location.id" type="button" class="schema-location" :class="{ on: String(focusLocation?.id) === String(location.id) }" :aria-pressed="String(focusLocation?.id) === String(location.id)" @click="focusId = location.id">
-                  <i class="pi pi-map-marker" aria-hidden="true" />
-                  <span><strong>{{ location.name }}</strong><small>{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}<template v-if="location.city"> · {{ location.city }}</template></small></span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <ExpertOrgChart
+            :nodes="nodes" :locations="locations" :counts="locationWorkplaceCounts" :labels="nodeLabels"
+            :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
+            :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
+            @select="selectChart" @add-branch="id => startOrg(nodeById(id))" @add-location="id => startLocation(nodeById(id))"
+            @move-location="moveLocation" @move-node="moveNode"
+          />
         </section>
-        <section v-if="focusLocation" class="card location-card">
-          <header>
-            <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
-            <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
-          </header>
-          <ul v-if="workplacesOf(focusLocation).length" class="location-workplaces">
-            <li v-for="w in workplacesOf(focusLocation)" :key="w.id"><span>{{ nameOf(w.id) || w.company_name }}<small v-if="w.sub_facility_name"> · {{ w.sub_facility_name }}</small></span><span class="hazard-badge" :class="hazardClassKey(w.hazard_class)">{{ w.hazard_class }}</span></li>
-          </ul>
-          <p v-else class="muted location-empty">Bu lokasyonda henüz işyeri yok.</p>
-          <!-- Alt tesisler (KSY-SIS): bina, hangar…; aynı firmanın ikinci işyeri ayrı alt tesiste açılır -->
-          <div class="subs">
-            <strong>Alt tesisler</strong>
-            <div class="sub-chips">
-              <span v-for="sub in subsOf(focusLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="canEdit && !sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(focusLocation, sub)"><i class="pi pi-times" /></button></span>
-              <span v-if="!subsOf(focusLocation).length" class="muted">Yok</span>
-            </div>
-            <form v-if="canEdit" class="sub-add" @submit.prevent="addSub(focusLocation)">
-              <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
-              <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
+
+        <aside class="side">
+          <!-- Açık form (dal, lokasyon, düzenleme, işyeri): seçili kutunun panelinde -->
+          <section v-if="adding === 'edit' && selected" class="card panel-card">
+            <form class="float-card" @submit.prevent="saveEdit">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} düzenle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><i class="pi pi-times" /></button>
+              </div>
+              <label class="field">Ad <span class="req">*</span>
+                <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(selected)" />
+              </label>
+              <!-- Tür etiketi yalnız bireysel uzman hesabında var (backend OSGB / kurumsalda kapalı). -->
+              <label v-if="!multiUser" class="field">Tür <small>(isteğe bağlı)</small>
+                <select v-model="editLabel">
+                  <option value="">Yok</option>
+                  <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
+                </select>
+              </label>
+              <small v-if="isLocked(selected)" class="field-note">Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</small>
+              <p v-if="editError" class="form-error" role="alert">{{ editError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!editName.trim() || editSaving">{{ editSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
             </form>
-            <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
-          </div>
-          <button v-if="canEdit" class="primary-button go-button" type="button" @click="startWorkplace(focusLocation)"><i class="pi pi-plus" aria-hidden="true" /> İşyeri aç</button>
-          <div class="location-links">
-            <!-- Ekipman / tesisat sayfası ve Lokasyona git: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
-            <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
-              <span class="count-icon violet"><i class="pi pi-box" /></span>
-              <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
-            </button>
-            <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
-              <span class="count-icon info"><i class="pi pi-sitemap" /></span>
-              <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
-            </button>
-          </div>
-          <button class="secondary-button" type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')">Lokasyonun genel bakışı</button>
-        </section>
-        <section v-else class="card location-card">
-          <p class="muted location-empty">Henüz lokasyon yok. Şemada ana firmanın yanındaki <i class="pi pi-map-marker" /> + ile ilk lokasyonu ekleyin.</p>
-        </section>
-        <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları, şemanın yanında hep görünür; işyeri yalnız bunlarla açılır. -->
-        <section v-if="firm.type !== 'public'" id="firmalar" class="card firms-card">
-          <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
-          <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
-            <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
-            <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
-          </form>
-          <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
-          <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
-          <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
-            <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
-            <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
-            <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
-          </div>
-        </section>
+          </section>
+
+          <section v-else-if="adding === 'org' && selected" class="card panel-card">
+            <form class="float-card" @submit.prevent="saveChild">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+              </div>
+              <label class="field">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
+                <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
+              </label>
+              <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
+            </form>
+          </section>
+
+          <section v-else-if="adding === 'location' && selected" class="card panel-card">
+            <form class="float-card" @submit.prevent="saveLocation">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} altına lokasyon ekle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
+              </div>
+              <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
+              <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
+              <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
+                <p><i class="pi pi-info-circle" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
+                <div v-for="c in candidates" :key="c.id" class="candidate">
+                  <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
+                  <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><i class="pi pi-link" /> Bağla</button>
+                </div>
+              </div>
+              <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
+            </form>
+          </section>
+
+          <section v-else-if="adding === 'workplace' && selectedLocation" class="card panel-card">
+            <form class="float-card" @submit.prevent="saveRow">
+              <div class="add-row-head">
+                <h3>{{ selectedLocation.name }} içine işyeri aç</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><i class="pi pi-times" /></button>
+              </div>
+              <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
+              <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
+              <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
+                <select v-model="companyChoice" :disabled="!companyOptions.length">
+                  <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
+                </select>
+                <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
+              </label>
+              <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
+                <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
+                  <option :value="null">Lokasyonun geneli</option>
+                  <option v-for="sub in subsOf(selectedLocation)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
+                  <option v-if="canEdit" :value="-1">+ Yeni alt tesis…</option>
+                </select>
+                <span v-if="newSubOpen" class="sub-add">
+                  <input v-model="newSubName" type="text" placeholder="Alt tesis adı (ör. Hangar 2)" aria-label="Yeni alt tesis adı" @keydown.enter.prevent="addSubToRow(selectedLocation)" />
+                  <button class="secondary-button" type="button" :disabled="!newSubName.trim() || subSaving" @click="addSubToRow(selectedLocation)">Ekle</button>
+                </span>
+              </label>
+              <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
+                <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
+              </label>
+              <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
+                <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
+              </label>
+              <label class="field">Tehlike sınıfı <span class="req">*</span>
+                <select v-model="row.hazard">
+                  <option value="" disabled>Seçin</option>
+                  <option v-for="h in HAZARD_CLASSES" :key="h" :value="h">{{ h }}</option>
+                </select>
+              </label>
+              <div class="nace-line">
+                <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
+                <span v-if="row.naceCode" class="nace-picked"><i class="pi pi-check-circle" /> {{ row.naceCode }} {{ row.activity }}</span>
+              </div>
+              <div v-if="naceOpen" class="nace-box">
+                <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
+                <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
+                  <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
+                </ul>
+              </div>
+              <label v-if="bulk" class="field">Her satıra bir alt tesis yazın; seçili firma her birinde ayrı işyeri açar
+                <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
+              </label>
+              <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
+              <small class="field-note">Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
+            </form>
+          </section>
+
+          <!-- Seçili dal / kök: bilgiler ve işlemler -->
+          <section v-else-if="focusNode" class="card location-card">
+            <header>
+              <span class="location-icon org"><i :class="focusNode.id === nodes[0]?.id ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
+              <div><h2>{{ focusNode.name }}</h2><small>{{ nodeSummary(focusNode) }}</small></div>
+            </header>
+            <div v-if="canEdit" class="panel-actions">
+              <button v-if="canBranch && !singleCompany" class="secondary-button" type="button" @click="startOrg(focusNode)"><i class="pi pi-plus" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
+              <button class="secondary-button" type="button" @click="startLocation(focusNode)"><i class="pi pi-plus" /> Lokasyon</button>
+              <button class="secondary-button" type="button" @click="startEdit(focusNode)"><i class="pi pi-pencil" /> Düzenle</button>
+              <!-- Kurumsal / kamu hesabında kök de bir düğümdür: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
+              <button class="secondary-button danger" type="button" @click="focusNode.id !== nodes[0]?.id || corporate ? openRemove({ name: focusNode.name, node: focusNode }) : openDelete()"><i class="pi pi-trash" /> {{ focusNode.id !== nodes[0]?.id || corporate ? 'Sil' : 'Ana firmayı sil' }}</button>
+            </div>
+          </section>
+
+          <!-- Seçili lokasyon -->
+          <section v-else-if="focusLocation" class="card location-card">
+            <header>
+              <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
+              <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
+            </header>
+            <ul v-if="workplacesOf(focusLocation).length" class="location-workplaces">
+              <li v-for="w in workplacesOf(focusLocation)" :key="w.id" :class="{ fresh: freshIds.includes(w.id) }"><span>{{ nameOf(w.id) || w.company_name }}<small v-if="w.sub_facility_name"> · {{ w.sub_facility_name }}</small></span><span class="hazard-badge" :class="hazardClassKey(w.hazard_class)">{{ w.hazard_class }}</span></li>
+            </ul>
+            <p v-else class="muted location-empty">Bu lokasyonda henüz işyeri yok.</p>
+            <button v-if="canEdit" class="primary-button go-button" type="button" @click="startWorkplace(focusLocation)"><i class="pi pi-plus" aria-hidden="true" /> İşyeri aç</button>
+            <!-- Alt tesisler (KSY-SIS): bina, hangar…; aynı firmanın ikinci işyeri ayrı alt tesiste açılır -->
+            <div class="subs">
+              <strong>Alt tesisler</strong>
+              <div class="sub-chips">
+                <span v-for="sub in subsOf(focusLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="canEdit && !sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(focusLocation, sub)"><i class="pi pi-times" /></button></span>
+                <span v-if="!subsOf(focusLocation).length" class="muted">Yok</span>
+              </div>
+              <form v-if="canEdit" class="sub-add" @submit.prevent="addSub(focusLocation)">
+                <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
+                <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
+              </form>
+              <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+            </div>
+            <div class="location-links">
+              <!-- Ekipman / tesisat sayfası: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
+              <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="goEquipment(focusLocation)">
+                <span class="count-icon violet"><i class="pi pi-box" /></span>
+                <span class="count-text"><strong>{{ focusCounts ? focusCounts.equipment : '—' }}</strong><small>Ekipman</small></span>
+              </button>
+              <button type="button" class="count-row" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert/installations')">
+                <span class="count-icon info"><i class="pi pi-sitemap" /></span>
+                <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
+              </button>
+            </div>
+            <div class="panel-actions">
+              <button class="secondary-button" type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')">Genel bakış</button>
+              <!-- OSGB / kurumsal / kamu: lokasyonun alanları -->
+              <button v-if="multiUser" class="secondary-button" type="button" @click="areaLocation = focusLocation"><i class="pi pi-th-large" /> Alanlar</button>
+              <button v-if="canEdit" class="secondary-button danger" type="button" @click="openRemove({ name: focusLocation.name, location: focusLocation })"><i class="pi pi-trash" /> Sil</button>
+            </div>
+          </section>
+          <section v-else class="card location-card">
+            <p class="muted location-empty">Şemada bir kutuya tıklayın; işlemleri burada görürsünüz. İlk lokasyonu eklemek için ana firmanın kutusundaki "+ Lokasyon"u kullanın.</p>
+          </section>
+
+          <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. Kamuda firma kurumun kendisi. -->
+          <section v-if="firm.type !== 'public'" id="firmalar" class="card firms-card">
+            <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
+            <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
+              <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
+              <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
+            </form>
+            <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
+            <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
+            <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
+              <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
+              <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
+              <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
+            </div>
+          </section>
+        </aside>
       </div>
+      <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
-      <!-- Tek pencere: bütün yapı ağaçta; ekleme, düzenleme ve silme ilgili satırın altında açılır. -->
-      <section v-if="nodes.length" :class="embedded ? 'tree-embedded' : 'card tree-card'">
-        <!-- Katalogdaki sekmeler: Lokasyonlar = yere göre ağaç, İşyerleri = firmaya göre (eski Yere göre / Firmaya göre seçimi) -->
-        <div v-if="!embedded" class="tabs-row">
-          <div class="tabs" role="tablist">
-            <button type="button" role="tab" :aria-selected="treeView === 'yer'" :class="{ active: treeView === 'yer' }" @click="treeView = 'yer'"><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyonlar</button>
-            <button type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-briefcase" aria-hidden="true" /> İşyerleri</button>
-          </div>
-          <button v-if="canEdit" class="primary-button" type="button" @click="addLocationFromTab"><i class="pi pi-plus" aria-hidden="true" /> Lokasyon ekle</button>
-        </div>
-        <div v-if="SHOW_VIEW_TOGGLE && canBranch && !embedded" class="tree-head">
-          <div class="view-toggle" role="group" aria-label="Görünüm">
-            <button type="button" :class="{ on: treeView === 'yer' }" :aria-pressed="treeView === 'yer'" @click="treeView = 'yer'">Yere göre</button>
-            <button type="button" :class="{ on: treeView === 'firma' }" :aria-pressed="treeView === 'firma'" @click="treeView = 'firma'">Firmaya göre</button>
-          </div>
-        </div>
-
-        <ul v-if="treeView === 'yer'" class="tree">
-          <template v-for="item in treeRows" :key="item.key">
-            <li class="tree-row" :class="`r-${item.kind}`" :style="{ '--depth': item.depth }" :data-key="item.key">
-              <!-- Organizasyon -->
-              <template v-if="item.kind === 'node'">
-                  <button class="row-main" type="button" :aria-expanded="hasContent(item.node) ? !closed.has(item.key) : undefined" @click="toggleNode(item.key)">
-                    <i class="chevron" :class="!hasContent(item.node) ? '' : closed.has(item.key) ? 'pi pi-chevron-right' : 'pi pi-chevron-down'" />
-                    <i :class="item.depth ? 'pi pi-sitemap k-org' : 'pi pi-building k-root'" />
-                    <span class="row-text"><span class="name-line"><strong>{{ item.node.name }}</strong><span v-if="labelOf(item.node)" class="type-badge">{{ labelOf(item.node) }}</span></span><small>{{ nodeSummary(item.node) }}</small></span>
-                  </button>
-                  <div class="row-actions">
-                    <button v-if="canEdit && canBranch && !singleCompany" v-tooltip.top="firm.type === 'public' ? 'Alt birim ekle' : 'Alt dal ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına ${firm.type === 'public' ? 'alt birim' : 'alt organizasyon'} ekle`" @click="startOrg(item.node)"><i class="pi pi-sitemap" /><i class="pi pi-plus mini" /></button>
-                    <button v-if="canEdit" v-tooltip.top="'Lokasyon ekle'" class="row-button icon add" type="button" :aria-label="`${item.node.name} altına lokasyon ekle`" @click="startLocation(item.node)"><i class="pi pi-map-marker" /><i class="pi pi-plus mini" /></button>
-                    <button v-if="canEdit" v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${item.node.name} adını düzenle`" @click="startEdit(item.node)"><i class="pi pi-pencil" /></button>
-                    <!-- Kurumsal / kamu hesabında kök de bir organizasyondur: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
-                    <button v-if="canEdit" v-tooltip.top="item.depth || corporate ? 'Sil' : 'Firmayı sil'" class="row-button icon remove" type="button" :aria-label="`${item.node.name} kaydını sil`" @click="item.depth || corporate ? openRemove({ name: item.node.name, node: item.node }) : openDelete()"><i class="pi pi-trash" /></button>
-                  </div>
-              </template>
-
-              <!-- Lokasyon -->
-              <template v-else-if="item.kind === 'location'">
-                <button class="row-main" type="button" :aria-expanded="workplacesOf(item.location).length ? openLocations.has(item.key) : undefined" @click="toggleLocation(item.location)">
-                  <i class="chevron" :class="!workplacesOf(item.location).length ? '' : openLocations.has(item.key) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
-                  <i class="pi pi-map-marker k-location" />
-                  <span class="row-text">
-                    <strong>{{ item.location.name }}</strong>
-                    <small><template v-if="item.location.city">{{ item.location.city }}<template v-if="item.location.district"> / {{ item.location.district }}</template> · </template><span :class="{ 'no-firm': !workplacesOf(item.location).length }">{{ workplacesOf(item.location).length ? `${workplacesOf(item.location).length} işyeri` : 'Henüz işyeri yok' }}</span></small>
-                  </span>
-                </button>
-                <div class="row-actions">
-                  <button v-if="canEdit" v-tooltip.top="'İşyeri ekle'" class="row-button icon add" type="button" :aria-label="`${item.location.name} içine işyeri ekle`" @click="startWorkplace(item.location)"><i class="pi pi-briefcase" /><i class="pi pi-plus mini" /></button>
-                  <!-- OSGB / kurumsal / kamu: lokasyonun alanları (Ayarlar → Lokasyonlar'daki Alanlar paneli) -->
-                  <button v-if="multiUser" v-tooltip.top="'Alanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} alanları`" @click="areaLocation = item.location"><i class="pi pi-th-large" /></button>
-                  <button v-if="workplacesOf(item.location).length" v-tooltip.top="'Ekipmanlar'" class="row-button icon" type="button" :aria-label="`${item.location.name} ekipmanları`" @click="goEquipment(item.location)"><i class="pi pi-wrench" /></button>
-                  <button v-if="canEdit" v-tooltip.top="'Sil'" class="row-button icon remove" type="button" :aria-label="`${item.location.name} lokasyonunu sil`" @click="openRemove({ name: item.location.name, location: item.location })"><i class="pi pi-trash" /></button>
-                </div>
-              </template>
-
-              <!-- İşyeri -->
-              <template v-else>
-                <div class="row-main static" :class="{ fresh: freshIds.includes(item.workplace.id) }">
-                  <i class="chevron" />
-                  <i class="pi pi-briefcase k-workplace" />
-                  <span class="row-text">
-                    <strong>{{ nameOf(item.workplace.id) || item.workplace.company_name }}</strong>
-                    <small><template v-if="item.workplace.sub_facility_name">{{ item.workplace.sub_facility_name }} · </template>SGK: {{ item.workplace.sgk_workplace_number || 'Girilmedi' }}</small>
-                  </span>
-                  <span v-if="showCompanyColumn" class="company-chip">{{ item.workplace.company_name }}</span>
-                  <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
-                </div>
-                <div class="row-actions">
-                  <!-- OSGB / kurumsal / kamu: işyerinin birimleri (Ayarlar → Lokasyonlar → Firmalar'daki Birimler penceresi) -->
-                  <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} birimleri`" @click="unitTarget = { location: item.location, workplace: { id: item.workplace.id, name: workplaceLabel(item.workplace.id, item.workplace.company_name) } }"><i class="pi pi-sitemap" /></button>
-                  <!-- OSGB / kurumsal / kamu: işyerinin uzmanı (Ayarlar → Firmalar'daki Uzman ata penceresi) -->
-                  <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerine uzman ata`" @click="assignId = item.workplace.id"><i class="pi pi-user-edit" /></button>
-                  <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${nameOf(item.workplace.id) || item.workplace.company_name} işyerini bu lokasyondan çıkar`" @click="openRemove({ name: nameOf(item.workplace.id) || item.workplace.company_name, workplace: item.workplace, location: item.location })"><i class="pi pi-times" /></button>
-                </div>
-              </template>
-            </li>
-
-            <!-- Düzeltme kartı: ad ve isteğe bağlı tür -->
-            <li v-if="item.kind === 'node' && adding === 'edit' && String(selected?.id) === String(item.node.id)" class="tree-form">
-              <form class="add-row float-card" @submit.prevent="saveEdit">
-                <div class="add-row-head">
-                  <h3>{{ item.node.name }} düzenle</h3>
-                  <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><i class="pi pi-times" /></button>
-                </div>
-                <div class="add-grid">
-                  <label class="field">Ad <span class="req">*</span>
-                    <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(item.node)" />
-                  </label>
-                  <!-- Tür etiketi yalnız bireysel uzman hesabında var (backend OSGB / kurumsalda kapalı). -->
-                  <label v-if="!multiUser" class="field">Tür <small>(isteğe bağlı)</small>
-                    <select v-model="editLabel">
-                      <option value="">Yok</option>
-                      <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
-                    </select>
-                  </label>
-                </div>
-                <small v-if="isLocked(item.node)" class="field-note">Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</small>
-                <p v-if="editError" class="form-error" role="alert">{{ editError }}</p>
-                <div class="add-actions">
-                  <button class="primary-button" type="submit" :disabled="!editName.trim() || editSaving">{{ editSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
-                </div>
-              </form>
-            </li>
-
-            <!-- Alt organizasyon formu -->
-            <li v-if="item.kind === 'node' && adding === 'org' && String(selected?.id) === String(item.node.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <form class="add-row float-card" @submit.prevent="saveChild">
-                <div class="add-row-head">
-                  <h3>{{ item.node.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
-                  <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
-                </div>
-                <div class="inline-form">
-                  <label class="field grow">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
-                    <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
-                  </label>
-                  <button class="primary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
-                </div>
-                <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
-              </form>
-            </li>
-
-            <!-- Lokasyon formu -->
-            <li v-if="item.kind === 'node' && adding === 'location' && String(selected?.id) === String(item.node.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <form class="add-row float-card" @submit.prevent="saveLocation">
-                <div class="add-row-head">
-                  <h3>{{ item.node.name }} altına lokasyon ekle</h3>
-                  <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
-                </div>
-                <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
-                <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
-                <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
-                  <p><i class="pi pi-info-circle" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
-                  <div v-for="c in candidates" :key="c.id" class="candidate">
-                    <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
-                    <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><i class="pi pi-link" /> Bağla</button>
-                  </div>
-                </div>
-                <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
-                <div class="add-actions">
-                  <button class="primary-button" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
-                </div>
-              </form>
-            </li>
-
-            <!-- İşyeri formu: firma ↔ lokasyon eşleştirmesi eklerken yapılır. -->
-            <li v-if="item.kind === 'location' && adding === 'workplace' && String(selectedLocation?.id) === String(item.location.id)" class="tree-form" :style="{ '--depth': item.depth + 1 }">
-              <form class="add-row float-card" @submit.prevent="saveRow">
-                <div class="add-row-head">
-                  <h3>{{ item.location.name }} içine işyeri ekle</h3>
-                  <div class="head-end">
-                    <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
-                    <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><i class="pi pi-times" /></button>
-                  </div>
-                </div>
-                <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
-                <div class="add-grid">
-                  <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
-                    <select v-model="companyChoice" :disabled="!companyOptions.length">
-                      <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
-                    </select>
-                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
-                  </label>
-                  <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
-                    <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
-                      <option :value="null">Lokasyonun geneli</option>
-                      <option v-for="sub in subsOf(item.location)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
-                      <option v-if="canEdit" :value="-1">+ Yeni alt tesis…</option>
-                    </select>
-                    <span v-if="newSubOpen" class="sub-add">
-                      <input v-model="newSubName" type="text" placeholder="Alt tesis adı (ör. Hangar 2)" aria-label="Yeni alt tesis adı" @keydown.enter.prevent="addSubToRow(item.location)" />
-                      <button class="secondary-button" type="button" :disabled="!newSubName.trim() || subSaving" @click="addSubToRow(item.location)">Ekle</button>
-                    </span>
-                  </label>
-                  <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
-                    <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
-                  </label>
-                  <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
-                    <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
-                  </label>
-                  <label class="field">Tehlike sınıfı <span class="req">*</span>
-                    <select v-model="row.hazard">
-                      <option value="" disabled>Seçin</option>
-                      <option v-for="h in HAZARD_CLASSES" :key="h" :value="h">{{ h }}</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="nace-line">
-                  <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
-                  <span v-if="row.naceCode" class="nace-picked"><i class="pi pi-check-circle" /> {{ row.naceCode }} {{ row.activity }}</span>
-                </div>
-                <div v-if="naceOpen" class="nace-box">
-                  <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
-                  <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
-                    <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
-                  </ul>
-                </div>
-                <label v-if="bulk" class="field">Her satıra bir alt tesis yazın; seçili firma her birinde ayrı işyeri açar (Excel'den yapıştırabilirsiniz)
-                  <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
-                </label>
-                <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
-                <div class="add-actions">
-                  <button class="primary-button" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(item.location)"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
-                  <small>Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
-                </div>
-              </form>
-            </li>
-          </template>
-        </ul>
-
-        <!-- İşyerleri (KSY-SIS'teki müşteri işyerleri listesi): firma, lokasyon, alt tesis, tehlike sınıfı; satır ağaçta o lokasyonu açar. -->
-        <div v-else class="wp-table-wrap">
+      <!-- İşyerleri (KSY-SIS'teki müşteri işyerleri listesi): firma, lokasyon, alt tesis, tehlike sınıfı; satır şemada o lokasyonu seçer. -->
+      <section v-if="nodes.length" class="card wp-card">
+        <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplaceRows.length }} işyeri</small></div></header>
+        <div class="wp-table-wrap">
           <table class="wp-table">
             <thead><tr><th>Firma</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
             <tbody>
@@ -329,14 +250,20 @@
                 <td><strong>{{ entry.location.name }}</strong><small>{{ entry.location.city || '—' }} / {{ entry.location.district || '—' }}</small></td>
                 <td :class="{ muted: !entry.workplace.sub_facility_name }">{{ entry.workplace.sub_facility_name || '—' }}</td>
                 <td><span class="hazard-badge" :class="hazardClassKey(entry.workplace.hazard_class)">{{ entry.workplace.hazard_class }}</span></td>
-                <td class="end"><button class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} işyerini ağaçta göster`" @click.stop="revealLocation(entry.location)"><i class="pi pi-angle-right" /></button></td>
+                <td class="end" @click.stop>
+                  <span class="wp-actions">
+                    <!-- OSGB / kurumsal / kamu: işyerinin birimleri ve uzmanı -->
+                    <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} birimleri`" @click="unitTarget = { location: entry.location, workplace: { id: entry.workplace.id, name: workplaceLabel(entry.workplace.id, entry.workplace.company_name) } }"><i class="pi pi-sitemap" /></button>
+                    <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} işyerine uzman ata`" @click="assignId = entry.workplace.id"><i class="pi pi-user-edit" /></button>
+                    <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${entry.workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(entry.workplace.id) || entry.workplace.company_name, workplace: entry.workplace, location: entry.location })"><i class="pi pi-times" /></button>
+                  </span>
+                </td>
               </tr>
               <tr v-if="!workplaceRows.length"><td colspan="5" class="empty">Henüz işyeri yok.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
-      <section v-else class="card"><div class="state"><template v-if="embedded">{{ firm.name }}: </template>Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
       <!-- OSGB / kurumsal / kamu: Ayarlar'daki yapı sayfaları menüde yok, bağlantılar gösterilmez. -->
       <section v-if="!multiUser && !embedded" class="other">
@@ -564,12 +491,12 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onPagePointer)
   document.removeEventListener('keydown', onPageKey)
 })
-// "Firmaya göre"den gelince: üstleri açılır, lokasyon görünür hâle gelir.
+// İşyerleri tablosundan: lokasyon şemada seçilir, sayfa şemaya kayar.
 function revealLocation(location: FirmLocation) {
-  treeView.value = 'yer'
-  pathTo(nodes.value, location.organization_id).forEach(node => closed.value.delete(`n${node.id}`))
-  openLocations.value.add(`l${location.id}`)
-  nextTick(() => inTree(`[data-key="l${location.id}"]`)?.scrollIntoView({ block: 'center' }))
+  closeForm()
+  focusNodeId.value = null
+  focusId.value = location.id
+  nextTick(() => rootEl.value?.querySelector('.overview')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
 }
 
 // "Firmaya göre": aynı firmanın bu müşterideki bütün işyerleri, lokasyonlarıyla.
@@ -649,6 +576,7 @@ async function saveLocation() {
     resetLocationForm()
     closeForm()
     // Yeni lokasyon sağdaki kartta seçilir; işyeri birlikte açılmadıysa işyeri formu hemen açılır (en az tıklama).
+    focusNodeId.value = null
     focusId.value = id ?? null
     const created = locations.value.find(l => String(l.id) === String(id))
     if (created && !withWorkplace) startWorkplace(created)
@@ -656,6 +584,30 @@ async function saveLocation() {
   } catch (e: any) {
     formError.value = errorMessage(e, e?.message || 'Lokasyon eklenemedi. Tekrar deneyin.')
   } finally { saving.value = false }
+}
+
+// --- Şema (OrgChart): seçim, taşıma ---
+const nodeById = (id: number | string) => flatten(nodes.value).find(n => String(n.id) === String(id))!
+const focusNodeId = ref<number | string | null>(null)
+const focusNode = computed(() => focusNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(focusNodeId.value)) ?? null)
+const chartKey = computed(() => adding.value === 'workplace' && selectedLocation.value ? `l${selectedLocation.value.id}`
+  : adding.value && selected.value ? `n${selected.value.id}`
+  : focusNode.value ? `n${focusNode.value.id}` : focusLocation.value ? `l${focusLocation.value.id}` : null)
+const locationWorkplaceCounts = computed(() => Object.fromEntries(locations.value.map(l => [String(l.id), workplacesOf(l).length])))
+function selectChart(key: string) {
+  closeForm()
+  if (key.startsWith('l')) { focusNodeId.value = null; focusId.value = key.slice(1) }
+  else { focusNodeId.value = key.slice(1) }
+}
+async function moveLocation(locationId: number | string, nodeId: number | string) {
+  error.value = ''
+  try { await patch(`/customers/${props.customerId}/pk-location-links/${locationId}`, { organization_id: nodeId }); await load() }
+  catch (e: any) { error.value = errorMessage(e, 'Lokasyon taşınamadı.') }
+}
+async function moveNode(nodeId: number | string, parentId: number | string) {
+  error.value = ''
+  try { await patch(`/customers/${props.customerId}/pk-organizations/${nodeId}/parent`, { parent_id: parentId }); await load() }
+  catch (e: any) { error.value = errorMessage(e, 'Taşınamadı.') }
 }
 
 // --- Kayıtlı lokasyonu bağla: lokasyon formunda yazılan ada göre (ara → bağla → işyeri formu) ---
@@ -684,6 +636,7 @@ async function linkCandidate(candidate: { id: number }) {
     resetLocationForm()
     closeForm()
     candidates.value = []
+    focusNodeId.value = null
     focusId.value = candidate.id
     const linked = locations.value.find(l => String(l.id) === String(candidate.id))
     if (linked && canEdit.value) startWorkplace(linked)
@@ -1163,11 +1116,22 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
-.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto 1fr; gap: 24px; align-items: start; margin-bottom: 24px; }
-/* Solda şema + altında Firmalar, sağda seçili lokasyon kartı (iki satır boyunca) */
-.overview > .schema-card { grid-column: 1; grid-row: 1; }
-.overview > .firms-card { grid-column: 1; grid-row: 2; }
-.overview > .location-card { grid-column: 2; grid-row: 1 / span 2; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 24px; }
+.side { display: grid; gap: 24px; align-content: start; min-width: 0; }
+.panel-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.panel-card .float-card { display: grid; gap: 14px; }
+.panel-card .field { display: grid; gap: 6px; }
+.panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.panel-actions .secondary-button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.panel-actions .secondary-button:hover:not(:disabled) { background: rgba(145, 158, 171, .08); }
+.panel-actions .secondary-button.danger { color: var(--admin-danger-text); }
+.panel-actions .secondary-button:disabled { opacity: .5; cursor: default; }
+.primary-button.wide { width: 100%; justify-content: center; }
+.location-icon.org { background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
+.location-workplaces li.fresh { background: var(--pk-success-lighter); border-radius: 6px; }
+.wp-card { padding: 24px 0 8px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.wp-card .schema-head { padding: 0 24px 16px; }
+.wp-actions { display: inline-flex; gap: 6px; }
 .firms-card { display: grid; gap: 10px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
@@ -1261,7 +1225,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .tabs button.active { color: var(--pk-accent); border-bottom-color: var(--pk-accent); font-weight: 700; }
 .tabs button.active i { color: var(--admin-accent-text); }
 .tabs-row .primary-button { margin: 6px 0; }
-@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } .overview > .schema-card, .overview > .firms-card, .overview > .location-card { grid-column: 1; grid-row: auto; } }
+@media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .overview { grid-template-columns: 1fr; } .page-head h1 { font-size: 22px; } }
 .tree-head { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .view-toggle { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--admin-soft); }

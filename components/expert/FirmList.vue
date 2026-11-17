@@ -45,12 +45,8 @@
           <label class="search"><i class="pi pi-search" /><span class="sr-only">Firma ara</span><input v-model="search" type="text" placeholder="Firma adı ile ara..." /></label>
           <Select v-model="typeFilter" :options="typeOptions" option-label="label" option-value="id" placeholder="Tüm türler" show-clear class="type-filter" aria-label="Firma türü" />
         </div>
-        <!-- OSGB: bütün müşteriler tek ağaçta; müşteri satırına tıklanınca yapısı yüklenip açılır (bireysel uzmanda tablo aynen). -->
-        <div v-if="multiUser" class="tree-list">
-          <ExpertFirmTree v-for="firm in filtered" :key="firm.id" embedded :customer-id="firm.id" :preview="firm" @changed="load" />
-          <p v-if="!filtered.length" class="state">Aramanızla eşleşen firma yok.</p>
-        </div>
-        <div v-else class="table-wrap">
+        <!-- Bütün hesaplarda tablo; satır ana firmanın şema sayfasını açar (OSGB'deki satır içi ağaç kalktı, kullanıcı 17 Kas 2026). -->
+        <div class="table-wrap">
           <table>
             <thead><tr><th>Firma</th><th>Tür</th><th>Lokasyon</th><th v-if="SHOW_WORKPLACE_COLUMN" class="num">İşyeri</th><th>İşlemler</th></tr></thead>
             <tbody>
