@@ -6,7 +6,7 @@ import { useCustomerTypes, type CustomerType } from '~/composables/useCustomerTy
 export type FirmKind = 'sahis' | 'limited' | 'holding' | 'kamu'
 export interface Firm { id: number | string; name: string; type: CustomerType | null; locations_count: number; workplaces_count: number }
 export interface FirmNode { id: number | string; name: string; type?: string | null; children?: FirmNode[] }
-export interface FirmLocation { id: number | string; name: string; city?: string | null; district?: string | null; organization_id?: number | string | null }
+export interface FirmLocation { id: number | string; name: string; city?: string | null; district?: string | null; address?: string | null; organization_id?: number | string | null }
 export interface FirmProgress { customerId?: number | string; rootId?: number | string }
 export interface WorkplaceProgress { locationId?: number | string; workplaceDone?: boolean }
 export interface WorkplaceRowDraft { name: string; company: string; sgk: string; hazard: string; naceCode?: string | null; activity?: string | null; subFacilityId?: number | null }

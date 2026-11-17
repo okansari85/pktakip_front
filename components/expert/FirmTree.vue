@@ -33,9 +33,34 @@
       <div v-if="nodes.length" class="overview">
         <section class="card schema-card">
           <header class="schema-head">
-            <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <div v-if="!listNode"><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <template v-else>
+              <div><h2><button class="link-button crumb-back" type="button" @click="closeList">{{ topLabel }} şeması</button> <i class="pi pi-angle-right" aria-hidden="true" /> {{ listNode.name }}</h2><small>{{ listLocations.length }} lokasyon</small></div>
+              <button class="secondary-button close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
+            </template>
           </header>
-          <ExpertOrgChart
+          <!-- Çok lokasyonlu dalın listesi: yeşil "N lokasyon" kutusundan açılır, şemanın yerini alır; Kapat ile şemaya dönülür -->
+          <div v-if="listNode" class="chart-list">
+            <div class="chart-list-tools">
+              <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
+              <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
+            </div>
+            <div class="wp-table-wrap">
+              <table class="wp-table">
+                <thead><tr><th>Lokasyon</th><th>İlçe</th><th>Adres</th><th>İşyeri</th></tr></thead>
+                <tbody>
+                  <tr v-for="location in filteredList" :key="location.id" tabindex="0" :class="{ selected: String(focusLocation?.id) === String(location.id) }" @click="openFromList(location)" @keydown.enter="openFromList(location)">
+                    <td><span class="wp-firm"><span class="loc-dot"><i class="pi pi-map-marker" aria-hidden="true" /></span><strong>{{ location.name }}</strong></span></td>
+                    <td>{{ location.district || '—' }}</td>
+                    <td class="addr">{{ location.address || '—' }}</td>
+                    <td><span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'Yok' }}</span></td>
+                  </tr>
+                  <tr v-if="!filteredList.length"><td colspan="4" class="empty">Aramayla eşleşen lokasyon yok.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <ExpertOrgChart v-else
             :nodes="nodes" :locations="locations" :counts="locationWorkplaceCounts" :labels="nodeLabels"
             :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
             :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
@@ -158,26 +183,6 @@
             </form>
           </section>
 
-          <!-- Çok lokasyonlu dalın lokasyon listesi (şemadaki özet kutudan): aranır, satır lokasyon kartını açar -->
-          <section v-else-if="listNode" class="card location-card">
-            <header>
-              <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
-              <div><h2>{{ listNode.name }}</h2><small>{{ listLocations.length }} lokasyon</small></div>
-            </header>
-            <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon ya da ilçe ara" aria-label="Lokasyon ara" />
-            <ul class="loc-list">
-              <li v-for="location in filteredList" :key="location.id">
-                <button type="button" @click="openFromList(location)">
-                  <span><strong>{{ location.name }}</strong><small>{{ [location.district, location.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small></span>
-                  <em :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</em>
-                  <i class="pi pi-angle-right" aria-hidden="true" />
-                </button>
-              </li>
-              <li v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</li>
-            </ul>
-            <button v-if="canEdit" class="wide-outline" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
-          </section>
-
           <!-- Seçili dal / kök: bilgiler ve işlemler -->
           <section v-else-if="focusNode" class="card location-card">
             <header>
@@ -195,7 +200,6 @@
 
           <!-- Seçili lokasyon -->
           <section v-else-if="focusLocation" class="card location-card">
-            <button v-if="listBack" class="link-button back-to-list" type="button" @click="openList(listBack)"><i class="pi pi-angle-left" /> {{ nodeById(listBack)?.name }} lokasyonları</button>
             <header>
               <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
               <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
@@ -620,13 +624,11 @@ const focusNodeId = ref<number | string | null>(null)
 const focusNode = computed(() => focusNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(focusNodeId.value)) ?? null)
 const chartKey = computed(() => adding.value === 'workplace' && selectedLocation.value ? `l${selectedLocation.value.id}`
   : adding.value && selected.value ? `n${selected.value.id}`
-  : listNode.value ? `s${listNode.value.id}`
   : focusNode.value ? `n${focusNode.value.id}` : focusLocation.value ? `l${focusLocation.value.id}` : null)
 const locationWorkplaceCounts = computed(() => Object.fromEntries(locations.value.map(l => [String(l.id), workplacesOf(l).length])))
 function selectChart(key: string) {
   closeForm()
   listNodeId.value = null
-  listBack.value = null
   if (key.startsWith('l')) { focusNodeId.value = null; focusId.value = key.slice(1) }
   else { focusNodeId.value = key.slice(1) }
 }
@@ -643,26 +645,29 @@ async function moveNode(nodeId: number | string, parentId: number | string) {
 
 // --- Çok lokasyonlu dalın listesi (sağ panel) ---
 const listNodeId = ref<number | string | null>(null)
-const listBack = ref<number | string | null>(null)
 const listQuery = ref('')
 const listNode = computed(() => listNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(listNodeId.value)) ?? null)
 const listLocations = computed(() => listNode.value ? locationsOf(listNode.value).slice().sort((a, b) => a.name.localeCompare(b.name, 'tr')) : [])
 const filteredList = computed(() => {
   const q = listQuery.value.trim().toLocaleLowerCase('tr-TR')
-  return q ? listLocations.value.filter(l => [l.name, l.city, l.district].some(v => v?.toLocaleLowerCase('tr-TR').includes(q))) : listLocations.value
+  return q ? listLocations.value.filter(l => [l.name, l.city, l.district, l.address].some(v => v?.toLocaleLowerCase('tr-TR').includes(q))) : listLocations.value
 })
 function openList(nodeId: number | string) {
   closeForm()
   focusNodeId.value = null
-  listBack.value = null
   listQuery.value = ''
   listNodeId.value = nodeId
+  const first = listLocations.value[0]
+  if (first && !listLocations.value.some(l => String(l.id) === String(focusId.value))) focusId.value = first.id
 }
 function openFromList(location: FirmLocation) {
-  listBack.value = listNodeId.value
-  listNodeId.value = null
+  closeForm()
   focusNodeId.value = null
   focusId.value = location.id
+}
+function closeList() {
+  listNodeId.value = null
+  listQuery.value = ''
 }
 const moveTargets = computed(() => focusLocation.value ? flatten(nodes.value).filter(n => String(n.id) !== String(focusLocation.value!.organization_id)) : [])
 async function onMoveSelect(location: FirmLocation, nodeId: string) {
@@ -1241,7 +1246,22 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text { display: grid; }
 .count-text strong { font-size: 18px; font-weight: 700; line-height: 1.1; }
 .count-text small { color: var(--admin-muted); font-size: 12px; }
-/* Dalın lokasyon listesi (sağ panel) */
+/* Dalın lokasyon listesi (şemanın yerinde) */
+.schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
+.schema-head h2 .pi-angle-right { margin: 0 4px; color: var(--admin-muted); font-size: 12px; }
+.close-list { flex: none; min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.chart-list { height: 560px; display: flex; flex-direction: column; gap: 12px; }
+.chart-list-tools { display: flex; gap: 10px; }
+.chart-list-tools .list-search { flex: 1; }
+.chart-list .wp-table-wrap { flex: 1; overflow: auto; border-radius: 12px; box-shadow: 0 0 0 1px rgba(145, 158, 171, .2); }
+.chart-list .wp-table thead th { position: sticky; top: 0; z-index: 1; background: var(--admin-card); box-shadow: inset 0 -1px 0 rgba(145, 158, 171, .2); }
+.chart-list .wp-table tr.selected td { background: var(--admin-accent-soft); }
+.chart-list td.addr { max-width: 320px; color: var(--admin-muted); font-size: 13px; }
+.loc-dot { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: var(--pk-success-lighter); color: var(--pk-success-dark); font-size: 13px; }
+.count-pill { padding: 2px 8px; border-radius: 6px; background: var(--admin-success-bg); color: var(--admin-success-text); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.count-pill.none { background: rgba(145, 158, 171, .12); color: var(--admin-muted); }
+/* (eski) sağ panel listesi stilleri */
 .list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 .loc-list { max-height: 460px; overflow-y: auto; display: grid; margin: 0; padding: 0; list-style: none; }
 .loc-list li + li { border-top: 1px dashed rgba(145, 158, 171, .24); }
