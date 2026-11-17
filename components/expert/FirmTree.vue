@@ -40,6 +40,8 @@
             <h2>{{ listNode.name }}</h2>
             <small>{{ listLocations.length }} lokasyon · {{ listLocations.reduce((sum, l) => sum + workplacesOf(l).length, 0) }} işyeri</small>
           </div>
+          <!-- Şemanın küçük hâli: bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
+          <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" /></button>
           <button class="close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
         </section>
         <section class="card schema-card">
@@ -1265,6 +1267,9 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
 .list-banner .close-list { background: var(--admin-card); border-color: transparent; }
+.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); cursor: pointer; }
+.mini-tree-button:hover { box-shadow: 0 0 0 2px rgba(164, 61, 245, .3); }
+@media (max-width: 700px) { .mini-tree-button { display: none; } }
 :global(.dark-theme) .list-banner { background: var(--admin-card); }
 .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
