@@ -45,7 +45,7 @@
         </div>
       </template>
     </VueFlow>
-    <p v-if="canEdit" class="chart-hint"><i class="pi pi-arrows-alt" aria-hidden="true" /> Lokasyonu ya da {{ branchLabel.toLocaleLowerCase('tr-TR') }}ı tutup başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın alanına bırakarak taşıyabilirsiniz.</p>
+    <p v-if="canEdit" class="chart-hint"><i class="pi pi-arrows-alt" aria-hidden="true" /> Lokasyonu ya da {{ branchLabel.toLocaleLowerCase('tr-TR') }}ı tutup taşıyabilirsiniz: lokasyon başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın alanına, {{ branchLabel.toLocaleLowerCase('tr-TR') }} başka bir {{ branchLabel.toLocaleLowerCase('tr-TR') }}ın kutusunun üstüne.</p>
   </div>
 </template>
 
@@ -78,7 +78,7 @@ const emit = defineEmits<{
 
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
 const flowId = `org-chart-${Math.random().toString(36).slice(2, 8)}`
-const { getIntersectingNodes, fitView } = useVueFlow(flowId)
+const { getNodes, fitView } = useVueFlow(flowId)
 // Kutular ölçüldükten sonra (ilk açılış ve her yeniden yerleşim) şema alana sığdırılır; çok büyütülmez.
 const fit = () => nextTick(() => setTimeout(() => fitView({ padding: 0.08, maxZoom: 1, duration: 150 }), 60))
 
@@ -152,11 +152,23 @@ const isDescendant = (candidate: string, ancestor: string) => {
 }
 // En içteki (en derin) uygun dal: iç içe alanlarda bırakılan yerin en yakın dalı.
 const depth = (id: string) => { let d = 0; for (let p = parentOf.get(id); p; p = parentOf.get(p)) d++; return d }
-const targetFor = (node: Node) => getIntersectingNodes(node)
-  .filter(other => other.type === 'org' && other.id !== node.id && (node.type === 'loc'
-    ? `n${node.data.nodeId}` !== other.id
-    : !isDescendant(other.id, node.id) && parentOf.get(node.id) !== other.id))
-  .sort((a, b) => depth(b.id) - depth(a.id))[0] ?? null
+type Rect = { x: number; y: number; w: number; h: number }
+const overlap = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+const abs = (node: Node) => (node as any).computedPosition ?? node.position
+// Dalın üst kutusu (alanın ortasında, en üstte) ve alanın tamamı.
+const headerRect = (node: Node): Rect => { const p = abs(node); const w = node.dimensions?.width ?? ORG.width; return { x: p.x + (w - ORG.width) / 2, y: p.y, w: ORG.width, h: ORG.height } }
+const areaRect = (node: Node): Rect => { const p = abs(node); return { x: p.x, y: p.y, w: node.dimensions?.width ?? ORG.width, h: node.dimensions?.height ?? ORG.height } }
+// Lokasyon: kutusu başka bir dalın alanına girerse o dal. Dal: yalnız üst kutusu başka bir dalın üst kutusuna değerse o dal
+// (alanın tamamı sayılmaz; büyük dal sürüklenirken yanlış dala girmesin).
+const targetFor = (node: Node) => {
+  const own: Rect = node.type === 'loc' ? { ...abs(node), w: LOC.width, h: LOC.height } : headerRect(node)
+  return getNodes.value
+    .filter(other => other.type === 'org' && other.id !== node.id && (node.type === 'loc'
+      ? `n${node.data.nodeId}` !== other.id
+      : !isDescendant(other.id, node.id) && parentOf.get(node.id) !== other.id))
+    .filter(other => overlap(own, node.type === 'loc' ? areaRect(other) : headerRect(other)))
+    .sort((a, b) => depth(b.id) - depth(a.id))[0] ?? null
+}
 const onDragStart = ({ node }: NodeDragEvent) => { dragId.value = node.id }
 const onDrag = ({ node }: NodeDragEvent) => { dropId.value = targetFor(node)?.id ?? null }
 const onDragStop = ({ node }: NodeDragEvent) => {
