@@ -12,13 +12,42 @@
 <script setup lang="ts">
 import type { FirmNode } from '~/composables/useFirmSetup'
 
-const props = defineProps<{ nodes: FirmNode[]; activeId: number | string | null }>()
+const props = defineProps<{ nodes: FirmNode[]; activeId: number | string | null; positions?: Record<string, { x: number; y: number }> }>()
 
 // Basit katmanlı yerleşim: yapraklar soldan sağa sırayla, üst düğüm çocuklarının ortasında; derinlik = satır.
 const STEP_X = 16
 const STEP_Y = 18
 const M = 8
-const layout = computed(() => {
+const W = 140
+const H = 64
+// Büyük şemanın yerleşimi (OrgChart'tan): noktalar aynı yerde, kutuya sığacak biçimde ölçeklenir.
+const fromChart = computed(() => {
+  const pos = props.positions
+  if (!pos || !Object.keys(pos).length) return null
+  const all = Object.values(pos)
+  const minX = Math.min(...all.map(p => p.x)); const maxX = Math.max(...all.map(p => p.x))
+  const minY = Math.min(...all.map(p => p.y)); const maxY = Math.max(...all.map(p => p.y))
+  const scale = Math.min((W - 2 * M) / ((maxX - minX) || 1), (H - 2 * M) / ((maxY - minY) || 1))
+  const ox = (W - (maxX - minX) * scale) / 2
+  const oy = (H - (maxY - minY) * scale) / 2
+  const at = (id: string | number) => { const p = pos[String(id)]; return p ? { x: ox + (p.x - minX) * scale, y: oy + (p.y - minY) * scale } : null }
+  const dots: { id: string; x: number; y: number; active: boolean; root: boolean; name: string }[] = []
+  const lines: { key: string; d: string }[] = []
+  const walk = (node: FirmNode, depth: number) => {
+    const a = at(node.id)
+    if (!a) return
+    dots.push({ id: String(node.id), ...a, active: String(node.id) === String(props.activeId), root: depth === 0, name: node.name })
+    for (const child of node.children || []) {
+      const b = at(child.id)
+      if (b) { const mid = (a.y + b.y) / 2; lines.push({ key: `${node.id}-${child.id}`, d: `M${a.x},${a.y} V${mid} H${b.x} V${b.y}` }) }
+      walk(child, depth + 1)
+    }
+  }
+  props.nodes.forEach(node => walk(node, 0))
+  return { dots, lines, box: { width: W, height: H } }
+})
+const layout = computed(() => fromChart.value || simple.value)
+const simple = computed(() => {
   const dots: { id: string; x: number; y: number; active: boolean; root: boolean; name: string }[] = []
   const lines: { key: string; d: string }[] = []
   let leaf = 0

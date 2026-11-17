@@ -79,6 +79,7 @@ const emit = defineEmits<{
   'move-location': [locationId: number | string, nodeId: number | string]
   'move-node': [nodeId: number | string, parentId: number | string]
   'open-list': [nodeId: number | string]
+  layout: [positions: Record<string, { x: number; y: number }>]
 }>()
 
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
@@ -96,11 +97,13 @@ const SUMMARY = { width: 300, height: 48 }
 const GAP = 12
 const PAD = 14 // alanın iç boşluğu
 // Bağlantı çizgisi: yuvarlak köşeli basamak (organizasyon şeması görünümü), yumuşak mavi.
-const EDGE = { type: 'smoothstep', pathOptions: { borderRadius: 18, offset: 20 }, style: { stroke: 'rgba(107, 151, 255, .75)', strokeWidth: 2 } } as const
+// İnce, kesikli ve akış yönünde hareketli (Vue Flow animated); kardeşler aynı hizada olduğu için tek yatay hatta birleşir.
+const EDGE = { type: 'smoothstep', animated: true, pathOptions: { borderRadius: 14 }, style: { stroke: 'rgba(107, 151, 255, .8)', strokeWidth: 1.4 } } as const
 const flowNodes = ref<Node[]>([])
 const flowEdges = ref<Edge[]>([])
 // Düğüm → üst düğüm (döngü kontrolü için).
 const parentOf = new Map<string, string | null>()
+const depthOf = (id: string) => { let d = 0; for (let p = parentOf.get(id); p; p = parentOf.get(p)) d++; return d }
 
 function layout() {
   const g = new dagre.graphlib.Graph()
@@ -128,12 +131,20 @@ function layout() {
   }
   props.nodes.forEach(node => walk(node, null))
   dagre.layout(g)
+  // Aynı seviyedeki dallar üstten hizalı (dagre farklı boydaki kutuları ortalar; lokasyon bloğu olan dal yukarı kayıyordu).
+  const rankTop = new Map<number, number>()
+  for (const group of groups) {
+    const box = g.node(group.id)
+    const d = depthOf(group.id)
+    rankTop.set(d, Math.min(rankTop.get(d) ?? Infinity, box.y - group.height / 2))
+  }
   const nodes: Node[] = []
   for (const group of groups) {
     const box = g.node(group.id)
+    const top = rankTop.get(depthOf(group.id))!
     // Dal alanı (üst düğüm) önce, lokasyonları (alt düğüm, konumları alana göre) sonra.
     nodes.push({
-      id: group.id, type: 'org', position: { x: box.x - group.width / 2, y: box.y - group.height / 2 },
+      id: group.id, type: 'org', position: { x: box.x - group.width / 2, y: top },
       style: { width: `${group.width}px`, height: `${group.height}px` },
       draggable: props.canEdit && !!group.parent,
       data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary }
@@ -148,6 +159,8 @@ function layout() {
   }
   flowNodes.value = nodes
   flowEdges.value = edges
+  // Dal kutusunun (üst kutu) merkezleri: küçük şema bu yerleşimi kullanır.
+  emit('layout', Object.fromEntries(groups.map(group => { const box = g.node(group.id); return [String(group.node.id), { x: box.x, y: (rankTop.get(depthOf(group.id)) ?? 0) + ORG.height / 2 }] })))
 }
 watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); fit() }, { immediate: true, deep: true })
 
@@ -194,6 +207,8 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 <style scoped>
 .org-chart { position: relative; height: 560px; border-radius: 12px; background: rgba(145, 158, 171, .04); overflow: hidden; }
 .org-chart :deep(.vue-flow__node) { cursor: pointer; }
+.org-chart :deep(.vue-flow__edge.animated path) { stroke-dasharray: 6 5; animation-duration: 1.2s; }
+@media (prefers-reduced-motion: reduce) { .org-chart :deep(.vue-flow__edge.animated path) { animation: none; } }
 .org-chart :deep(.vue-flow__node.draggable) { cursor: grab; }
 .org-chart.dragging :deep(.vue-flow__node.dragging) { cursor: grabbing; z-index: 1000 !important; }
 .org-chart :deep(.vue-flow__controls) { box-shadow: var(--pk-card-shadow); border-radius: 8px; overflow: hidden; }

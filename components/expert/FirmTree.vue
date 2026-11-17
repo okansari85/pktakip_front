@@ -35,7 +35,7 @@
         <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
         <section v-if="listNode" class="card list-banner">
           <!-- Şemanın küçük hâli (solda, simgenin yerinde): bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
-          <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" /></button>
+          <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /></button>
           <div>
             <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><i class="pi pi-angle-right" aria-hidden="true" /><span>{{ listNode.name }}</span></nav>
             <h2>{{ listNode.name }}</h2>
@@ -43,37 +43,32 @@
           </div>
           <button class="close-list" type="button" @click="closeList"><i class="pi pi-times" /> Kapat</button>
         </section>
-        <section class="card schema-card">
-          <header v-if="!listNode" class="schema-head">
+        <!-- Dal lokasyonları: süzgeç ayrı kart, lokasyonlar kart liste -->
+        <section v-if="listNode" class="card list-tools-card">
+          <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
+          <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
+        </section>
+        <section v-if="listNode" class="card loc-cards-card">
+          <div class="loc-cards">
+            <button v-for="location in filteredList" :key="location.id" type="button" class="loc-card" :class="{ selected: String(focusLocation?.id) === String(location.id) }" @click="openFromList(location)">
+              <span class="loc-card-head"><span class="loc-dot"><i class="pi pi-map-marker" aria-hidden="true" /></span><strong>{{ location.name }}</strong></span>
+              <small class="loc-card-district">{{ [location.district, location.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small>
+              <small class="loc-card-address">{{ location.address || 'Adres girilmemiş' }}</small>
+              <span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</span>
+            </button>
+            <p v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</p>
+          </div>
+        </section>
+        <section v-else class="card schema-card">
+          <header class="schema-head">
             <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
-          <!-- Çok lokasyonlu dalın listesi: yeşil "N lokasyon" kutusundan açılır, şemanın yerini alır; Kapat ile şemaya dönülür -->
-          <div v-if="listNode" class="chart-list">
-            <div class="chart-list-tools">
-              <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
-              <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
-            </div>
-            <div class="wp-table-wrap">
-              <table class="wp-table">
-                <thead><tr><th>Lokasyon</th><th>İlçe</th><th>Adres</th><th>İşyeri</th></tr></thead>
-                <tbody>
-                  <tr v-for="location in filteredList" :key="location.id" tabindex="0" :class="{ selected: String(focusLocation?.id) === String(location.id) }" @click="openFromList(location)" @keydown.enter="openFromList(location)">
-                    <td><span class="wp-firm"><span class="loc-dot"><i class="pi pi-map-marker" aria-hidden="true" /></span><strong>{{ location.name }}</strong></span></td>
-                    <td>{{ location.district || '—' }}</td>
-                    <td class="addr">{{ location.address || '—' }}</td>
-                    <td><span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'Yok' }}</span></td>
-                  </tr>
-                  <tr v-if="!filteredList.length"><td colspan="4" class="empty">Aramayla eşleşen lokasyon yok.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <ExpertOrgChart v-else
+          <ExpertOrgChart
             :nodes="nodes" :locations="locations" :counts="locationWorkplaceCounts" :labels="nodeLabels"
             :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
             :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
             @select="selectChart" @add-branch="id => startOrg(nodeById(id))" @add-location="id => startLocation(nodeById(id))"
-            @move-location="moveLocation" @move-node="moveNode" @open-list="openList"
+            @move-location="moveLocation" @move-node="moveNode" @open-list="openList" @layout="positions => chartPositions = positions"
           />
         </section>
         </div>
@@ -655,6 +650,8 @@ async function moveNode(nodeId: number | string, parentId: number | string) {
 // --- Çok lokasyonlu dalın listesi (sağ panel) ---
 const listNodeId = ref<number | string | null>(null)
 const listQuery = ref('')
+// Büyük şemanın dal konumları (OrgChart yerleşimi): küçük şema aynı yerleşimi çizer.
+const chartPositions = ref<Record<string, { x: number; y: number }>>({})
 const listNode = computed(() => listNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(listNodeId.value)) ?? null)
 const listLocations = computed(() => listNode.value ? locationsOf(listNode.value).slice().sort((a, b) => a.name.localeCompare(b.name, 'tr')) : [])
 const filteredList = computed(() => {
@@ -1257,19 +1254,30 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text small { color: var(--admin-muted); font-size: 12px; }
 /* Dalın lokasyon listesi (şemanın yerinde) + üstte ayrı başlık kartı */
 .main-col { display: grid; gap: 16px; min-width: 0; }
-.list-banner { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border: 0; border-radius: var(--pk-radius); background: var(--pk-violet-lighter); box-shadow: var(--pk-card-shadow); }
+.list-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 1.5px solid var(--pk-violet-light); border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
 .list-banner-icon { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-card); color: var(--pk-violet-dark); font-size: 18px; }
 .list-banner > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.list-banner h2 { margin: 0; color: var(--pk-violet-darker); font-size: 19px; font-weight: 700; }
-.list-banner small { color: var(--pk-violet-dark); font-size: 13px; font-weight: 600; }
+.list-banner h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 700; }
+.list-banner small { color: var(--admin-muted); font-size: 13px; font-weight: 600; }
 .list-crumb { display: flex; align-items: center; gap: 6px; color: var(--pk-violet-dark); font-size: 12.5px; }
 .list-crumb .link-button { padding: 0; color: var(--pk-violet-dark); font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
-.list-banner .close-list { background: var(--admin-card); border-color: transparent; }
-.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); cursor: pointer; }
+.list-banner .close-list { background: var(--admin-card); }
+.mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--pk-violet-lighter); cursor: pointer; }
 .mini-tree-button:hover { box-shadow: 0 0 0 2px rgba(164, 61, 245, .3); }
 @media (max-width: 700px) { .mini-tree-button { padding: 2px 4px; } }
-:global(.dark-theme) .list-banner { background: var(--admin-card); }
+.list-tools-card { display: flex; gap: 10px; padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.list-tools-card .list-search { flex: 1; }
+.loc-cards-card { padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
+.loc-cards { max-height: 560px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; padding: 2px; }
+.loc-card { display: grid; align-content: start; gap: 6px; padding: 14px; border: 1px solid rgba(145, 158, 171, .24); border-radius: 12px; background: var(--admin-card); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.loc-card:hover { border-color: rgba(0, 171, 85, .45); }
+.loc-card.selected { border-color: var(--pk-accent); box-shadow: 0 0 0 2px rgba(var(--pk-accent-rgb), .25); }
+.loc-card-head { display: flex; align-items: center; gap: 10px; }
+.loc-card-head strong { color: var(--admin-heading); font-size: 14px; font-weight: 700; line-height: 1.3; }
+.loc-card-district { color: var(--admin-heading); font-size: 12.5px; font-weight: 600; }
+.loc-card-address { display: -webkit-box; overflow: hidden; color: var(--admin-muted); font-size: 12px; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.loc-card .count-pill { justify-self: start; margin-top: 2px; }
 .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
 .schema-head h2 .pi-angle-right { margin: 0 4px; color: var(--admin-muted); font-size: 12px; }
