@@ -40,7 +40,7 @@
             :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
             :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
             @select="selectChart" @add-branch="id => startOrg(nodeById(id))" @add-location="id => startLocation(nodeById(id))"
-            @move-location="moveLocation" @move-node="moveNode"
+            @move-location="moveLocation" @move-node="moveNode" @open-list="openList"
           />
         </section>
 
@@ -158,6 +158,26 @@
             </form>
           </section>
 
+          <!-- Çok lokasyonlu dalın lokasyon listesi (şemadaki özet kutudan): aranır, satır lokasyon kartını açar -->
+          <section v-else-if="listNode" class="card location-card">
+            <header>
+              <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
+              <div><h2>{{ listNode.name }}</h2><small>{{ listLocations.length }} lokasyon</small></div>
+            </header>
+            <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon ya da ilçe ara" aria-label="Lokasyon ara" />
+            <ul class="loc-list">
+              <li v-for="location in filteredList" :key="location.id">
+                <button type="button" @click="openFromList(location)">
+                  <span><strong>{{ location.name }}</strong><small>{{ [location.district, location.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small></span>
+                  <em :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</em>
+                  <i class="pi pi-angle-right" aria-hidden="true" />
+                </button>
+              </li>
+              <li v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</li>
+            </ul>
+            <button v-if="canEdit" class="wide-outline" type="button" @click="startLocation(listNode)"><i class="pi pi-plus" /> Lokasyon ekle</button>
+          </section>
+
           <!-- Seçili dal / kök: bilgiler ve işlemler -->
           <section v-else-if="focusNode" class="card location-card">
             <header>
@@ -175,6 +195,7 @@
 
           <!-- Seçili lokasyon -->
           <section v-else-if="focusLocation" class="card location-card">
+            <button v-if="listBack" class="link-button back-to-list" type="button" @click="openList(listBack)"><i class="pi pi-angle-left" /> {{ nodeById(listBack)?.name }} lokasyonları</button>
             <header>
               <span class="location-icon"><i class="pi pi-map-marker" aria-hidden="true" /></span>
               <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
@@ -214,6 +235,13 @@
               <button v-if="multiUser" class="secondary-button" type="button" @click="areaLocation = focusLocation"><i class="pi pi-th-large" /> Alanlar</button>
               <button v-if="canEdit" class="secondary-button danger" type="button" @click="openRemove({ name: focusLocation.name, location: focusLocation })"><i class="pi pi-trash" /> Sil</button>
             </div>
+            <!-- Başka dala taşı (listedeki lokasyon şemada sürüklenmez; yanlışlıkla taşıma olmasın, onay sorulur) -->
+            <label v-if="canEdit && moveTargets.length" class="move-field">{{ firm.type === 'public' ? 'Başka birime taşı' : 'Başka dala taşı' }}
+              <select :value="''" @change="onMoveSelect(focusLocation, ($event.target as HTMLSelectElement).value)">
+                <option value="" disabled>Seçin</option>
+                <option v-for="n in moveTargets" :key="n.id" :value="n.id">{{ n.name }}</option>
+              </select>
+            </label>
           </section>
           <section v-else class="card location-card">
             <p class="muted location-empty">Şemada bir kutuya tıklayın; işlemleri burada görürsünüz. İlk lokasyonu eklemek için ana firmanın kutusundaki "+ Lokasyon"u kullanın.</p>
@@ -592,10 +620,13 @@ const focusNodeId = ref<number | string | null>(null)
 const focusNode = computed(() => focusNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(focusNodeId.value)) ?? null)
 const chartKey = computed(() => adding.value === 'workplace' && selectedLocation.value ? `l${selectedLocation.value.id}`
   : adding.value && selected.value ? `n${selected.value.id}`
+  : listNode.value ? `s${listNode.value.id}`
   : focusNode.value ? `n${focusNode.value.id}` : focusLocation.value ? `l${focusLocation.value.id}` : null)
 const locationWorkplaceCounts = computed(() => Object.fromEntries(locations.value.map(l => [String(l.id), workplacesOf(l).length])))
 function selectChart(key: string) {
   closeForm()
+  listNodeId.value = null
+  listBack.value = null
   if (key.startsWith('l')) { focusNodeId.value = null; focusId.value = key.slice(1) }
   else { focusNodeId.value = key.slice(1) }
 }
@@ -608,6 +639,36 @@ async function moveNode(nodeId: number | string, parentId: number | string) {
   error.value = ''
   try { await patch(`/customers/${props.customerId}/pk-organizations/${nodeId}/parent`, { parent_id: parentId }); await load() }
   catch (e: any) { error.value = errorMessage(e, 'Taşınamadı.') }
+}
+
+// --- Çok lokasyonlu dalın listesi (sağ panel) ---
+const listNodeId = ref<number | string | null>(null)
+const listBack = ref<number | string | null>(null)
+const listQuery = ref('')
+const listNode = computed(() => listNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(listNodeId.value)) ?? null)
+const listLocations = computed(() => listNode.value ? locationsOf(listNode.value).slice().sort((a, b) => a.name.localeCompare(b.name, 'tr')) : [])
+const filteredList = computed(() => {
+  const q = listQuery.value.trim().toLocaleLowerCase('tr-TR')
+  return q ? listLocations.value.filter(l => [l.name, l.city, l.district].some(v => v?.toLocaleLowerCase('tr-TR').includes(q))) : listLocations.value
+})
+function openList(nodeId: number | string) {
+  closeForm()
+  focusNodeId.value = null
+  listBack.value = null
+  listQuery.value = ''
+  listNodeId.value = nodeId
+}
+function openFromList(location: FirmLocation) {
+  listBack.value = listNodeId.value
+  listNodeId.value = null
+  focusNodeId.value = null
+  focusId.value = location.id
+}
+const moveTargets = computed(() => focusLocation.value ? flatten(nodes.value).filter(n => String(n.id) !== String(focusLocation.value!.organization_id)) : [])
+async function onMoveSelect(location: FirmLocation, nodeId: string) {
+  const target = nodeId ? nodeById(nodeId) : null
+  if (!target || !window.confirm(`"${location.name}" lokasyonu "${target.name}" altına taşınsın mı?`)) return
+  await moveLocation(location.id, nodeId)
 }
 
 // --- Kayıtlı lokasyonu bağla: lokasyon formunda yazılan ada göre (ara → bağla → işyeri formu) ---
@@ -1180,6 +1241,22 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text { display: grid; }
 .count-text strong { font-size: 18px; font-weight: 700; line-height: 1.1; }
 .count-text small { color: var(--admin-muted); font-size: 12px; }
+/* Dalın lokasyon listesi (sağ panel) */
+.list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
+.loc-list { max-height: 460px; overflow-y: auto; display: grid; margin: 0; padding: 0; list-style: none; }
+.loc-list li + li { border-top: 1px dashed rgba(145, 158, 171, .24); }
+.loc-list button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 4px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.loc-list button:hover { background: rgba(145, 158, 171, .06); }
+.loc-list button > span { flex: 1; min-width: 0; display: grid; }
+.loc-list strong { color: var(--admin-heading); font-size: 13.5px; font-weight: 600; }
+.loc-list small { color: var(--admin-muted); font-size: 12px; }
+.loc-list em { flex: none; padding: 2px 8px; border-radius: 6px; background: var(--admin-success-bg); color: var(--admin-success-text); font-size: 11.5px; font-style: normal; font-weight: 700; }
+.loc-list em.none { background: rgba(145, 158, 171, .12); color: var(--admin-muted); }
+.loc-list .pi-angle-right { color: var(--admin-muted); font-size: 12px; }
+.wide-outline { width: 100%; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.back-to-list { justify-self: start; display: inline-flex; align-items: center; gap: 4px; padding: 0; font-size: 12.5px; }
+.move-field { display: grid; gap: 6px; color: var(--admin-muted); font-size: 12.5px; font-weight: 600; }
+.move-field select { min-height: 38px; padding: 0 10px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 13.5px; }
 /* Alt tesisler (lokasyon kartı) */
 .subs { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed rgba(145, 158, 171, .24); }
 .subs > strong { color: var(--admin-heading); font-size: 13px; }

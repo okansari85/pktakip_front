@@ -34,6 +34,10 @@
             </span>
           </div>
           <span v-if="data.hasLocations" class="chart-area" aria-hidden="true" />
+          <!-- Çok lokasyonlu dal: lokasyonlar tek tek çizilmez, özet kutu; tıklayınca liste sağ panelde açılır -->
+          <button v-if="data.summary" type="button" class="chart-summary nodrag" :class="{ on: selectedKey === `s${data.nodeId}` }" :aria-label="`${data.name}: ${data.summary} lokasyonun listesini aç`" @click.stop="emit('open-list', data.nodeId)">
+            <i class="pi pi-map-marker" aria-hidden="true" /><strong>{{ data.summary }} lokasyon</strong><span>Listeyi aç</span><i class="pi pi-angle-right" aria-hidden="true" />
+          </button>
           <Handle type="source" :position="Position.Bottom" class="handle" />
         </div>
       </template>
@@ -74,6 +78,7 @@ const emit = defineEmits<{
   'add-location': [nodeId: number | string]
   'move-location': [locationId: number | string, nodeId: number | string]
   'move-node': [nodeId: number | string, parentId: number | string]
+  'open-list': [nodeId: number | string]
 }>()
 
 // Birden çok şema aynı sayfada olabilir: her biri kendi Vue Flow örneği.
@@ -85,6 +90,9 @@ const fit = () => nextTick(() => setTimeout(() => fitView({ padding: 0.08, maxZo
 const ORG = { width: 300, height: 58 }
 const LOC = { width: 230, height: 54 }
 const COLS = 4
+// Bu sayıdan fazla lokasyonu olan dalda lokasyonlar şemada özet kutu olur (liste sağ panelde).
+const INLINE_MAX = 4
+const SUMMARY = { width: 300, height: 48 }
 const GAP = 12
 const PAD = 14 // alanın iç boşluğu
 // Bağlantı çizgisi: yuvarlak köşeli basamak (organizasyon şeması görünümü), yumuşak mavi.
@@ -98,21 +106,23 @@ function layout() {
   const g = new dagre.graphlib.Graph()
   g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 64, marginx: 16, marginy: 16 })
   g.setDefaultEdgeLabel(() => ({}))
-  const groups: { id: string; node: FirmNode; parent: FirmNode | null; locs: FirmLocation[]; width: number; height: number; blockWidth: number }[] = []
+  const groups: { id: string; node: FirmNode; parent: FirmNode | null; locs: FirmLocation[]; width: number; height: number; blockWidth: number; summary: number }[] = []
   const edges: Edge[] = []
   parentOf.clear()
   const walk = (node: FirmNode, parent: FirmNode | null) => {
     const id = `n${node.id}`
     parentOf.set(id, parent ? `n${parent.id}` : null)
-    const locs = props.locations.filter(l => String(l.organization_id) === String(node.id))
+    const all = props.locations.filter(l => String(l.organization_id) === String(node.id))
+    const summary = all.length > INLINE_MAX ? all.length : 0
+    const locs = summary ? [] : all
     const cols = Math.min(COLS, locs.length)
     const rows = Math.ceil(locs.length / COLS)
     const blockWidth = cols ? cols * LOC.width + (cols - 1) * GAP : 0
     const width = Math.max(ORG.width, blockWidth + 2 * PAD)
-    const height = ORG.height + (rows ? 12 + PAD + rows * LOC.height + (rows - 1) * GAP + PAD : 0)
+    const height = ORG.height + (rows ? 12 + PAD + rows * LOC.height + (rows - 1) * GAP + PAD : summary ? 10 + SUMMARY.height : 0)
     // dagre konumu bu nesneye yazar: her kutuya ayrı nesne
     g.setNode(id, { width, height })
-    groups.push({ id, node, parent, locs, width, height, blockWidth })
+    groups.push({ id, node, parent, locs, width, height, blockWidth, summary })
     if (parent) { g.setEdge(`n${parent.id}`, id); edges.push({ id: `e${parent.id}-${node.id}`, source: `n${parent.id}`, target: id, ...EDGE }) }
     for (const child of node.children || []) walk(child, node)
   }
@@ -126,7 +136,7 @@ function layout() {
       id: group.id, type: 'org', position: { x: box.x - group.width / 2, y: box.y - group.height / 2 },
       style: { width: `${group.width}px`, height: `${group.height}px` },
       draggable: props.canEdit && !!group.parent,
-      data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0 }
+      data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary }
     })
     group.locs.forEach((location, i) => {
       nodes.push({
@@ -217,6 +227,13 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-location.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .chart-location.on > i, .chart-location.on small { color: var(--pk-on-accent); }
 :global(.dark-theme) .chart-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }
+.chart-summary { position: relative; z-index: 1; width: 300px; height: 48px; margin-top: 10px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); font: inherit; cursor: pointer; }
+.chart-summary strong { font-size: 13px; font-weight: 700; }
+.chart-summary span { margin-left: auto; color: var(--pk-success-dark); font-size: 12px; font-weight: 600; }
+.chart-summary .pi-angle-right { color: var(--pk-success-dark); }
+.chart-summary:hover { box-shadow: 0 0 0 2px rgba(0, 171, 85, .35); }
+.chart-summary.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.chart-summary.on span, .chart-summary.on .pi { color: var(--pk-on-accent); }
 .chart-hint { position: absolute; right: 12px; bottom: 10px; margin: 0; padding: 5px 10px; border-radius: 8px; background: var(--admin-card); box-shadow: var(--pk-card-shadow); color: var(--admin-muted); font-size: 12px; }
 @media (max-width: 800px) { .org-chart { height: 440px; } .chart-hint { display: none; } }
 </style>
