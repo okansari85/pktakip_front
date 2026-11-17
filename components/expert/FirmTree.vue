@@ -33,7 +33,7 @@
       <div v-if="!embedded && nodes.length" class="overview">
         <section class="card schema-card">
           <header class="schema-head">
-            <div><h2>Organizasyon şeması</h2><small>{{ firms.length }} firma · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <div><h2>{{ topLabel }} şeması</h2><small>{{ firms.length }} firma · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
           <div class="schema">
             <div v-for="item in schemaRows" :key="item.key" class="schema-row" :class="{ child: item.depth }" :style="{ '--depth': item.depth }">
@@ -93,6 +93,21 @@
         <section v-else class="card location-card">
           <p class="muted location-empty">Henüz lokasyon yok. Şemada ana firmanın yanındaki <i class="pi pi-map-marker" /> + ile ilk lokasyonu ekleyin.</p>
         </section>
+        <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları, şemanın yanında hep görünür; işyeri yalnız bunlarla açılır. -->
+        <section id="firmalar" class="card firms-card">
+          <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
+          <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
+            <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
+            <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
+          </form>
+          <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
+          <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
+          <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
+            <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
+            <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
+            <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
+          </div>
+        </section>
       </div>
 
       <!-- Tek pencere: bütün yapı ağaçta; ekleme, düzenleme ve silme ilgili satırın altında açılır. -->
@@ -101,8 +116,7 @@
         <div v-if="!embedded" class="tabs-row">
           <div class="tabs" role="tablist">
             <button type="button" role="tab" :aria-selected="treeView === 'yer'" :class="{ active: treeView === 'yer' }" @click="treeView = 'yer'"><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyonlar</button>
-            <button v-if="canBranch" type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-briefcase" aria-hidden="true" /> İşyerleri</button>
-            <button type="button" role="tab" :aria-selected="treeView === 'firmalar'" :class="{ active: treeView === 'firmalar' }" @click="treeView = 'firmalar'"><i class="pi pi-building" aria-hidden="true" /> Firmalar <small class="tab-count">{{ firms.length }}</small></button>
+            <button type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-briefcase" aria-hidden="true" /> İşyerleri</button>
           </div>
           <button v-if="canEdit" class="primary-button" type="button" @click="addLocationFromTab"><i class="pi pi-plus" aria-hidden="true" /> Lokasyon ekle</button>
         </div>
@@ -208,7 +222,7 @@
                   <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><i class="pi pi-times" /></button>
                 </div>
                 <div class="inline-form">
-                  <label class="field grow">{{ firm.type === 'public' ? 'Birimin adı' : 'Organizasyonun adı' }}
+                  <label class="field grow">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
                     <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
                   </label>
                   <button class="primary-button" type="submit" :disabled="!groupName.trim() || saving"><i class="pi pi-plus" /> Ekle</button>
@@ -256,7 +270,7 @@
                     <select v-model="companyChoice" :disabled="!companyOptions.length">
                       <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
                     </select>
-                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <button class="link-button" type="button" @click="treeView = 'firmalar'">Firmalar sekmesinden ekleyin</button></small>
+                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
                   </label>
                   <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
                     <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
@@ -305,31 +319,22 @@
           </template>
         </ul>
 
-        <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. -->
-        <div v-else-if="treeView === 'firmalar'" class="firms-tab">
-          <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
-            <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
-            <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Firma ekle' }}</button>
-          </form>
-          <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
-          <p v-if="!firms.length" class="empty">Henüz firma yok. Ticari unvanı yazıp ekleyin; işyeri açarken bu listeden seçilir.</p>
-          <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
-            <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
-            <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
-            <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
-          </div>
+        <!-- İşyerleri (KSY-SIS'teki müşteri işyerleri listesi): firma, lokasyon, alt tesis, tehlike sınıfı; satır ağaçta o lokasyonu açar. -->
+        <div v-else class="wp-table-wrap">
+          <table class="wp-table">
+            <thead><tr><th>Firma</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+            <tbody>
+              <tr v-for="entry in workplaceRows" :key="entry.workplace.id" tabindex="0" @click="revealLocation(entry.location)" @keydown.enter="revealLocation(entry.location)">
+                <td><span class="wp-firm"><span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span><span><strong>{{ entry.workplace.company_name }}</strong><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></span></span></td>
+                <td><strong>{{ entry.location.name }}</strong><small>{{ entry.location.city || '—' }} / {{ entry.location.district || '—' }}</small></td>
+                <td :class="{ muted: !entry.workplace.sub_facility_name }">{{ entry.workplace.sub_facility_name || '—' }}</td>
+                <td><span class="hazard-badge" :class="hazardClassKey(entry.workplace.hazard_class)">{{ entry.workplace.hazard_class }}</span></td>
+                <td class="end"><button class="row-button icon" type="button" :aria-label="`${entry.workplace.company_name} işyerini ağaçta göster`" @click.stop="revealLocation(entry.location)"><i class="pi pi-angle-right" /></button></td>
+              </tr>
+              <tr v-if="!workplaceRows.length"><td colspan="5" class="empty">Henüz işyeri yok.</td></tr>
+            </tbody>
+          </table>
         </div>
-
-        <!-- Firmaya göre: aynı firmanın işyerleri; satır, ağaçta o lokasyonu açar. -->
-        <template v-else>
-          <p v-if="!byCompany.length" class="empty">Henüz işyeri yok.</p>
-          <div v-for="group in byCompany" :key="group.company" class="company-group">
-            <div class="company-head"><strong>{{ group.company }}</strong><small>{{ group.items.length }} işyeri</small></div>
-            <button v-for="entry in group.items" :key="entry.id" class="company-item" type="button" @click="revealLocation(entry.location)">
-              <span>{{ entry.title }}</span><small>{{ entry.location.name }}</small>
-            </button>
-          </div>
-        </template>
       </section>
       <section v-else class="card"><div class="state"><template v-if="embedded">{{ firm.name }}: </template>Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
@@ -416,7 +421,7 @@ const { listFirms, loadStructure, addNode, addLocation, addWorkplace, addWorkpla
 const { workplaces, load: loadWorkplaces } = useMyWorkplaces()
 const { load: loadNames, nameOf, workplaceLabel } = useWorkplaceNames()
 const { load: loadOrganizationScope } = useOrganizationScope()
-const { multiUser, corporate, isManager, isOperation, load: loadAccount } = useAccount()
+const { multiUser, corporate, isManager, isOperation, topLabel, load: loadAccount } = useAccount()
 const goToEquipment = useGoToEquipment()
 // OSGB / kurumsal / kamu: yapıyı yönetici değiştirir, operasyon yöneticisi görür (Ayarlar → Lokasyonlar'daki kural).
 const canEdit = computed(() => !multiUser.value || isManager.value)
@@ -568,7 +573,7 @@ function revealLocation(location: FirmLocation) {
 }
 
 // "Firmaya göre": aynı firmanın bu müşterideki bütün işyerleri, lokasyonlarıyla.
-const treeView = ref<'yer' | 'firma' | 'firmalar'>('yer')
+const treeView = ref<'yer' | 'firma'>('yer')
 const byCompany = computed(() => {
   const map = new Map<string, { company: string; items: { id: number; title: string; location: FirmLocation }[] }>()
   for (const location of locations.value) {
@@ -579,6 +584,10 @@ const byCompany = computed(() => {
   }
   return [...map.values()].sort((a, b) => a.company.localeCompare(b.company, 'tr'))
 })
+// İşyerleri tablosu: bu ana firmanın bütün işyerleri, firma adına göre (KSY-SIS müşteri işyerleri).
+const workplaceRows = computed(() => locations.value
+  .flatMap(location => workplacesOf(location).map(workplace => ({ workplace, location })))
+  .sort((a, b) => a.workplace.company_name.localeCompare(b.workplace.company_name, 'tr') || a.location.name.localeCompare(b.location.name, 'tr')))
 
 async function load() {
   error.value = ''
@@ -803,7 +812,7 @@ async function saveRow() {
   const company = companyFor(location)
   const names = bulk.value ? bulkText.value.split('\n').map(s => s.trim()).filter(Boolean) : [row.name.trim()]
   rowError.value = ''
-  if (!company) { rowError.value = 'Firma seçin (Firmalar sekmesinden ekleyebilirsiniz).'; return }
+  if (!company) { rowError.value = 'Firma seçin (yukarıdaki Firmalar kartından ekleyebilirsiniz).'; return }
   if (bulk.value && !names.length) { rowError.value = 'En az bir alt tesis yazın.'; return }
   if (!row.hazard) { rowError.value = 'Tehlike sınıfını seçin.'; return }
   rowSaving.value = true
@@ -1148,12 +1157,14 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .page-head p { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; color: var(--admin-muted); font-size: 13.5px; }
 .chip { padding: 3px 9px; border-radius: 7px; background: var(--admin-soft); color: var(--admin-heading); font-size: 12px; font-weight: 600; }
 .card { padding: 14px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card, var(--admin-input)); }
-.tree-card { min-height: 260px; padding: 0 18px 18px; border-radius: 16px; box-shadow: 0 10px 28px rgba(var(--pk-shadow-rgb), .05); }
+.tree-card { min-height: 260px; padding: 0 24px 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); overflow: visible; }
 /* Firma ve lokasyon detayı üst sırası (tasarım kataloğu 12) */
 .page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
-.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-bottom: 24px; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto 1fr; gap: 24px; align-items: start; margin-bottom: 24px; }
+.overview > .schema-card { grid-row: span 2; }
+.firms-card { display: grid; gap: 10px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
 .schema-head small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 13px; }
@@ -1182,7 +1193,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .schema-location.on { background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .schema-location.on > i, .schema-location.on small { color: var(--pk-on-accent); }
 :global(.dark-theme) .schema-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }
-.location-card { position: sticky; top: 92px; }
+.location-card { align-self: start; }
 .location-card header { display: flex; align-items: flex-start; gap: 12px; }
 .location-icon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-success-lighter); color: var(--pk-success-dark); }
 .location-card header small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 13px; }
@@ -1210,14 +1221,25 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .sub-add { display: flex; gap: 8px; }
 .sub-add input, .firm-add input { flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 /* Firmalar sekmesi */
-.firms-tab { display: grid; gap: 10px; }
 .firm-add { display: flex; gap: 10px; margin-bottom: 6px; }
 .firm-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-top: 1px dashed rgba(145, 158, 171, .24); }
 .firm-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
 .firm-text { flex: 1; display: grid; min-width: 0; }
 .firm-text strong { color: var(--admin-heading); font-size: 14px; }
 .firm-text small { color: var(--admin-muted); font-size: 12px; }
-.tab-count { margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(145, 158, 171, .16); font-size: 11px; font-weight: 700; }
+/* İşyerleri tablosu (KSY-SIS düzeni) */
+.wp-table-wrap { overflow-x: auto; }
+.wp-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.wp-table th { padding: 12px 16px; background: rgba(145, 158, 171, .08); color: var(--admin-muted); font-size: 13px; font-weight: 600; text-align: left; }
+.wp-table td { padding: 12px 16px; border-top: 1px solid rgba(145, 158, 171, .2); color: var(--admin-heading); font-size: 14px; vertical-align: middle; }
+.wp-table td small { display: block; margin-top: 2px; color: var(--admin-muted); font-size: 12px; }
+.wp-table td.muted { color: var(--admin-muted); }
+.wp-table td.end { text-align: right; }
+.wp-table tbody tr[tabindex] { cursor: pointer; }
+.wp-table tbody tr[tabindex]:hover, .wp-table tbody tr[tabindex]:focus-visible { outline: 0; background: rgba(145, 158, 171, .06); }
+.wp-firm { display: flex; align-items: center; gap: 12px; }
+.wp-firm > span:last-child { display: grid; min-width: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Lokasyon formunda kayıtlı lokasyonlar */
 .candidates { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--pk-info-lighter); color: var(--pk-info-darker); }
 .candidates p { margin: 0; font-size: 13px; font-weight: 600; }
@@ -1227,11 +1249,11 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .candidate small { color: var(--admin-muted); font-size: 12px; }
 :global(.dark-theme) .candidates { background: rgba(24, 144, 255, .12); color: var(--admin-text); }
 /* Sekmeler: Lokasyonlar / İşyerleri ve Lokasyon ekle */
-.tabs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -18px 14px; padding: 6px 18px 0; border-bottom: 1px solid var(--admin-border); }
+.tabs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -24px 16px; padding: 6px 24px 0; border-bottom: 1px solid rgba(145, 158, 171, .2); }
 .tabs { display: flex; gap: 6px; }
 .tabs button { display: inline-flex; align-items: center; gap: 9px; margin-bottom: -1px; padding: 14px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--admin-heading); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 .tabs button i { color: var(--admin-muted); }
-.tabs button.active { color: var(--admin-accent-text); border-bottom-color: var(--pk-yellow); font-weight: 700; }
+.tabs button.active { color: var(--pk-accent); border-bottom-color: var(--pk-accent); font-weight: 700; }
 .tabs button.active i { color: var(--admin-accent-text); }
 .tabs-row .primary-button { margin: 6px 0; }
 @media (max-width: 1180px) { .overview { grid-template-columns: minmax(0, 1fr); } .location-card { position: static; } }

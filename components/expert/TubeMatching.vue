@@ -205,18 +205,18 @@ onMounted(load)
 </script>
 
 <style scoped>
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px}
+.card{background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow)}
 .matching-card{overflow:hidden}
-.matching-head{padding:16px 18px;border-bottom:1px solid var(--admin-border)}
-h3{margin:0;color:var(--admin-heading);font-size:15px}.matching-head small{display:block;margin-top:4px;color:var(--admin-muted);font-size:12px;line-height:1.5}
-h4{margin:0;color:var(--admin-heading);font-size:13px}
-.count{min-width:20px;padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700}
+.matching-head{padding:20px 24px 8px}
+h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}.matching-head small{display:block;margin-top:4px;color:var(--admin-muted);font-size:13px;line-height:1.5}
+h4{margin:0;color:var(--admin-heading);font-size:14px;font-weight:700}
+.count{min-width:20px;padding:1px 7px;border-radius:6px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700}
 .count.warn{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .state{padding:50px 20px;text-align:center;color:var(--admin-muted);font-size:13px}
 .empty{display:flex;flex-direction:column;align-items:center;gap:7px}.empty i{font-size:26px;color:var(--admin-success-text)}.empty strong{color:var(--admin-heading)}
-.board{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 18px}
-.column{display:flex;flex-direction:column;min-width:0;border:1px solid var(--admin-border);border-radius:10px;overflow:hidden}
-.column header{padding:10px 12px;border-bottom:1px solid var(--admin-border);background:var(--admin-soft)}.column header small{display:block;margin-top:3px;color:var(--admin-muted);font-size:11px}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 24px 20px}
+.column{display:flex;flex-direction:column;min-width:0;border:1px solid rgba(145,158,171,.24);border-radius:12px;overflow:hidden}
+.column header{padding:12px 14px;background:rgba(145,158,171,.08)}.column header small{display:block;margin-top:3px;color:var(--admin-muted);font-size:12px}
 .search{display:flex;align-items:center;gap:8px;margin:10px 12px 6px;padding:0 10px;height:34px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-input);color:var(--admin-muted)}
 .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--admin-heading);font:inherit;font-size:12px}
 .items{height:440px;overflow:auto;margin:0;padding:0 6px 6px;list-style:none}
@@ -228,18 +228,20 @@ h4{margin:0;color:var(--admin-heading);font-size:13px}
 .label{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .label strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--admin-heading);font-size:12px;font-weight:600}
 .label small{color:var(--admin-muted);font-size:11px}
-.similar{flex-shrink:0;padding:1px 7px;border-radius:999px;background:var(--admin-warning-bg);color:var(--admin-warning-text);font-size:10px;font-weight:700}
-.column footer{margin-top:auto;padding:10px 12px;border-top:1px solid var(--admin-border)}
-.match-bar{position:sticky;bottom:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 18px;border-top:1px solid var(--admin-border);background:var(--admin-card);box-shadow:0 -6px 16px var(--admin-shadow)}
+.similar{flex-shrink:0;padding:1px 7px;border-radius:6px;background:var(--admin-warning-bg);color:var(--admin-warning-text);font-size:11px;font-weight:700}
+.column footer{margin-top:auto;padding:10px 14px;border-top:1px solid rgba(145,158,171,.2)}
+.match-bar{position:sticky;bottom:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 24px;border-top:1px solid rgba(145,158,171,.2);background:var(--admin-card);box-shadow:0 -6px 16px var(--admin-shadow)}
 .match-bar .pick{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 10px;border:1px solid var(--pk-accent);border-radius:8px;color:var(--admin-heading);font-size:12px;font-weight:700}
 .match-bar .pick.empty{border-style:dashed;border-color:var(--admin-border);color:var(--admin-muted);font-weight:400}
 .match-bar > i{color:var(--admin-muted)}
 .match-bar small{flex-basis:100%;color:var(--admin-muted);font-size:12px}.match-bar small strong{color:var(--admin-heading)}
 .match-bar .error-text{flex-basis:100%;margin:0;font-size:12px}
 .bar-actions{display:flex;gap:8px;margin-left:auto}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 15px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
-.secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.primary-button:disabled,.secondary-button:disabled{opacity:.55;cursor:not-allowed}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 15px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24);white-space:nowrap}
+.primary-button:hover:not(:disabled){background:var(--pk-accent-hover)}
+.secondary-button{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 13px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.secondary-button:hover:not(:disabled){background:rgba(145,158,171,.08)}
+.primary-button:disabled,.secondary-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
 .error-text{color:var(--admin-danger-text)}
 @media(max-width:900px){.board{grid-template-columns:1fr}.match-bar .pick{max-width:100%}}
 </style>

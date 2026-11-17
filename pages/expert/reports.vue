@@ -37,7 +37,7 @@
           <section class="card scope-card">
             <h2>Kapsam</h2>
             <dl class="facts">
-              <div><dt><i class="pi pi-building" aria-hidden="true" /> Organizasyon</dt><dd>{{ organizationName }}</dd></div>
+              <div><dt><i class="pi pi-building" aria-hidden="true" /> {{ topLabel }}</dt><dd>{{ organizationName }}</dd></div>
               <div><dt><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyon</dt><dd>{{ locationName }}</dd></div>
               <div><dt><i class="pi pi-calendar" aria-hidden="true" /> Rapor tarihi</dt><dd>{{ formatDate(reportDate) }}</dd></div>
             </dl>
@@ -352,9 +352,11 @@ const reportDate = new Date().toISOString()
 const today = new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date())
 
 // Kapsam kartı: üstteki Organizasyon seçimi (yoksa lokasyonun müşterisi) ve lokasyon.
+const { topLabel } = useAccount()
+const topAll = computed(() => ({ Müşteri: 'Tüm müşteriler', Kurum: 'Tüm kurumlar' } as Record<string, string>)[topLabel.value] || 'Tüm ana firmalar')
 const organizationName = computed(() => organizationLabel.value
   || (locationId.value ? groups.value.find(group => group.location_id === locationId.value)?.customer_name : '')
-  || (locationId.value ? '—' : 'Tüm organizasyonlar'))
+  || (locationId.value ? '—' : topAll.value))
 const locationName = computed(() => locationId.value ? locationLabel(locationId.value) : `Tüm lokasyonlar (${locations.value.length})`)
 // Kategori simgeleri Ekipmanlar'daki sekmelerle aynı (ekipman kataloğundan).
 const categoryIcons = ref<Record<string, string>>({})

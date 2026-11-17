@@ -261,10 +261,10 @@ onMounted(async () => {
 
 <style scoped>
 .package-page { display: grid; gap: 20px; }
-.card { padding: 22px 24px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 8px 24px rgba(40, 70, 110, .06); }
+.card { padding: 24px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
 .card-head { display: flex; gap: 14px; margin-bottom: 16px; }
 .card-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--admin-soft); color: var(--admin-link); }
-.card-head h2 { margin: 0; color: var(--admin-heading); font-size: 17px; }
+.card-head h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
 .card-head p { margin: 3px 0 0; color: var(--admin-muted); font-size: 12.5px; }
 .status-card .summary { max-width: 420px; }
 .text-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--admin-link); font-size: 13px; font-weight: 600; }
@@ -275,24 +275,24 @@ onMounted(async () => {
 /* Paket seçenekleri (tasarım kataloğu 19) */
 .card.options { display: grid; gap: 18px; }
 .options-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.options-head h2 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 800; }
+.options-head h2 { margin: 0; color: var(--admin-heading); font-size: 18px; font-weight: 700; }
 .period-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .muted { color: var(--admin-muted); font-size: 13px; }
 .packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }
-.package { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px; border: 1px solid var(--admin-border); border-radius: 16px; background: var(--admin-card); box-shadow: 0 8px 22px rgba(var(--pk-shadow-rgb), .05); }
-.package.current { border: 1.5px solid var(--pk-accent); box-shadow: 0 10px 26px rgba(var(--pk-accent-rgb), .12); }
+.package { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 1.5px solid transparent; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
+.package.current { border-color: var(--pk-accent); box-shadow: 0 0 2px rgba(145, 158, 171, .2), 0 20px 40px -4px rgba(var(--pk-accent-rgb), .16); }
 .package.highlight { outline: 2px solid var(--admin-link); outline-offset: 2px; }
-.package-head { display: flex; align-items: center; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--admin-border); }
+.package-head { display: flex; align-items: center; gap: 16px; padding-bottom: 14px; border-bottom: 1px dashed rgba(145, 158, 171, .24); }
 .package-icon { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 22px; }
 .package-title { flex: 1; display: grid; gap: 2px; min-width: 0; }
-.package h3 { margin: 0; color: var(--admin-heading); font-size: 22px; font-weight: 800; }
-.package-title small { color: var(--admin-text); font-size: 15px; }
-.current-tag { align-self: flex-start; padding: 5px 12px; border-radius: 10px; background: var(--admin-accent-soft); color: var(--admin-link); font-size: 13.5px; font-weight: 700; white-space: nowrap; }
-.package ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; color: var(--admin-heading); font-size: 16px; }
+.package h3 { margin: 0; color: var(--admin-heading); font-size: 18px; font-weight: 700; }
+.package-title small { color: var(--admin-muted); font-size: 14px; }
+.current-tag { align-self: flex-start; padding: 2px 8px; border-radius: 6px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.package ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; color: var(--admin-heading); font-size: 14px; }
 .package li { display: flex; align-items: center; gap: 12px; }
 .package li i { color: var(--admin-success-text); font-size: 15px; font-weight: 700; }
-.choose-button { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; border: 1.5px solid var(--pk-accent); border-radius: 12px; background: var(--admin-card); color: var(--admin-link); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
-.choose-button:hover { background: var(--admin-accent-soft); }
+.choose-button { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 44px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.choose-button:hover { background: rgba(145, 158, 171, .08); }
 .locked { margin: auto 0 0; padding: 10px 12px; border-radius: 10px; background: var(--admin-soft); color: var(--admin-muted); font-size: 13px; line-height: 1.5; }
 .flow { display: grid; gap: 18px; }
 .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
@@ -300,18 +300,18 @@ onMounted(async () => {
 .steps li { display: flex; align-items: center; gap: 8px; }
 .steps span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--admin-soft); font-size: 12px; }
 .steps li.active { color: var(--admin-heading); }
-.steps li.active span { background: var(--pk-yellow); color: var(--pk-on-accent); }
+.steps li.active span { background: var(--pk-accent); color: var(--pk-on-accent); }
 .steps li.done span { background: var(--admin-success-bg); color: var(--admin-success-text); }
 .chosen-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-radius: 12px; background: var(--admin-soft); color: var(--admin-text); font-size: 14px; }
 .chosen-line strong { color: var(--admin-heading); }
-.action-tag { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 12px; font-weight: 700; }
+.action-tag { margin-left: auto; padding: 2px 8px; border-radius: 6px; background: var(--admin-accent-soft); color: var(--admin-accent-text); font-size: 12px; font-weight: 700; }
 .step-body { display: grid; gap: 14px; max-width: 860px; }
-.step-body h3 { margin: 0; color: var(--admin-heading); font-size: 17px; }
+.step-body h3 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
 .explain { margin: 0; color: var(--admin-text); font-size: 14px; line-height: 1.6; }
-.sum { display: grid; gap: 8px; margin: 0; padding: 14px 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-soft); }
+.sum { display: grid; gap: 8px; margin: 0; padding: 16px 20px; border: 0; border-radius: 12px; background: rgba(145, 158, 171, .08); }
 .sum div { display: flex; justify-content: space-between; gap: 12px; color: var(--admin-text); font-size: 14px; }
 .sum dd { margin: 0; white-space: nowrap; }
-.sum .total { padding-top: 8px; border-top: 1px solid var(--admin-border); color: var(--admin-heading); font-size: 16px; font-weight: 800; }
+.sum .total { padding-top: 8px; border-top: 1px dashed rgba(145, 158, 171, .24); color: var(--admin-heading); font-size: 16px; font-weight: 700; }
 .hint { margin: 0; color: var(--admin-muted); font-size: 13px; line-height: 1.55; }
 .check { display: flex; align-items: flex-start; gap: 10px; color: var(--admin-text); font-size: 14px; line-height: 1.55; cursor: pointer; }
 .check input { flex: none; width: 19px; height: 19px; margin-top: 2px; accent-color: var(--admin-link); }
@@ -319,19 +319,21 @@ onMounted(async () => {
 .step-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
 .paytr { width: 100%; min-height: 420px; border: 0; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: var(--admin-overlay); }
-.modal-card { display: grid; gap: 14px; width: min(720px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 22px; background: var(--admin-card); border-radius: 12px; box-shadow: 0 20px 60px var(--admin-shadow); }
+.modal-card { display: grid; gap: 14px; width: min(720px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 24px; background: var(--admin-card); border: 0; border-radius: var(--pk-radius); box-shadow: 0 24px 48px -8px var(--admin-shadow); }
 .modal-head { display: flex; justify-content: space-between; gap: 15px; }
-.modal-head h2 { margin: 0; color: var(--admin-heading); font-size: 18px; }
+.modal-head h2 { margin: 0; color: var(--admin-heading); font-size: 18px; font-weight: 700; }
 .modal-head p { margin: 5px 0 0; color: var(--admin-muted); font-size: 12px; }
 .close-button { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); cursor: pointer; }
 .close-button:hover { background: var(--admin-hover); color: var(--admin-heading); }
 .error { margin: 0; color: var(--admin-danger-text); font-size: 13.5px; }
-.primary-button, .secondary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.primary-button { border: 0; background: var(--pk-yellow); color: var(--pk-on-accent); }
-.secondary-button { border: 1px solid var(--admin-border); background: var(--admin-card); color: var(--admin-text); font-weight: 600; }
-.primary-button:disabled, .secondary-button:disabled { opacity: .55; cursor: not-allowed; }
+.primary-button, .secondary-button { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.primary-button { border: 0; background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.primary-button:hover:not(:disabled) { background: var(--pk-accent-hover); }
+.secondary-button { border: 1px solid rgba(145, 158, 171, .32); background: transparent; color: var(--admin-heading); }
+.secondary-button:hover:not(:disabled) { background: rgba(145, 158, 171, .08); }
+.primary-button:disabled, .secondary-button:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 .text-button { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--admin-link); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-.state { padding: 30px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-card); color: var(--admin-muted); }
+.state { padding: 30px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); color: var(--admin-muted); }
 .state.error { color: var(--admin-danger-text); }
 @media (max-width: 640px) { .steps { gap: 10px; font-size: 12px; } .action-tag { margin-left: 0; } }
 </style>

@@ -59,5 +59,7 @@ export const useAccount = () => {
     return account.value && !multiUser.value ? '/expert/anasayfa' : '/expert'
   }
 
-  return { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load, panelHome }
+  // En üst kaydın ekrandaki adı (kullanıcı 17 Kas 2026: "organizasyon" denmez): OSGB'de Müşteri, kurumsal ve bireyselde Ana firma; kamuda kurum.
+  const topLabel = computed(() => account.value?.type === 'osgb' ? 'Müşteri' : kamu.value ? 'Kurum' : 'Ana firma')
+  return { account, multiUser, corporate, kamu, isManager, isOperation, edition, roleLabel, settingsHome, load, panelHome, topLabel }
 }

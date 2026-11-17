@@ -69,12 +69,18 @@ const print = () => window.print()
 
 <style scoped>
 .qr-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); }
-.qr-dialog { width: 100%; max-width: 380px; background: #fff; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.qr-dialog { width: 100%; max-width: 380px; background: var(--admin-card); border-radius: var(--pk-radius); box-shadow: 0 24px 48px -8px var(--admin-shadow); padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
 .qr-head { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-.qr-head h2 { margin: 0; font-size: 18px; color: #0f172a; }
-.qr-close { width: 36px; height: 36px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; }
-.qr-note { margin: 0; font-size: 12.5px; color: #64748b; text-align: center; }
+.qr-head h2 { margin: 0; font-size: 18px; font-weight: 700; color: var(--admin-heading); }
+.qr-close { width: 36px; height: 36px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); cursor: pointer; }
+.qr-close:hover { background: rgba(145, 158, 171, .08); }
+.qr-note { margin: 0; font-size: 12.5px; color: var(--admin-muted); text-align: center; }
 .qr-actions { width: 100%; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.qr-actions .primary-button, .qr-actions .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.qr-actions .primary-button { border: 0; background: var(--pk-accent); color: var(--pk-on-accent); box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.qr-actions .primary-button:hover { background: var(--pk-accent-hover); }
+.qr-actions .secondary-button { border: 1px solid rgba(145, 158, 171, .32); background: transparent; color: var(--admin-heading); }
+.qr-actions .secondary-button:hover { background: rgba(145, 158, 171, .08); }
 
 /* Etiket: tanıtım sitesi features/QrLabel.vue ile aynı */
 .qr-label { width: 244px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1); overflow: hidden; font-family: Inter, system-ui, sans-serif; }

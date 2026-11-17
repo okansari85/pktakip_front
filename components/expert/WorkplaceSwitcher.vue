@@ -5,9 +5,9 @@
       <!-- Kamu hesabı: yüzlerce birim için aramalı ağaç (diğer hesaplarda düz kutu aynen) -->
       <ExpertKamuOrgPicker v-if="kamu" :options="orgOptions" :value="orgScope" :count="orgCount" :total="groups.length" :buildings="buildingItems" @organization="applyOrganization" @location="pickLocationId" />
       <label v-else class="select-field">
-        <span><i class="pi pi-sitemap" /> Organizasyon</span>
+        <span><i class="pi pi-sitemap" /> {{ topLabel }}</span>
         <select :value="orgScope" @change="onOrganizationChange">
-          <option value="">Tüm organizasyon</option>
+          <option value="">Tümü</option>
           <option v-for="option in orgOptions" :key="option.value" :value="option.value">{{ INDENT.repeat(option.depth) + option.label }} ({{ orgCount(option.value) }})</option>
         </select>
       </label>
@@ -47,7 +47,7 @@
 <script setup lang="ts">
 const { context, setContext, allLocations, setAllLocations } = useWorkplaceContext()
 const { groups, loaded, load, selectLocation, selectWorkplace } = useMyWorkplaces()
-const { corporate, kamu } = useAccount()
+const { corporate, kamu, topLabel } = useAccount()
 const { load: loadOrganizations, available: orgAvailable, options: orgOptions, visible: orgVisible, scope: orgScope, setScope, locationIds: orgLocationIds, idsFor } = useOrganizationScope()
 // Seçeneğin kapsadığı, menüde olan (işyeri bulunan) lokasyon sayısı.
 const orgCount = (value: string) => {

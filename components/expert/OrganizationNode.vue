@@ -7,13 +7,13 @@
       <span v-else class="expand-placeholder" />
       <i class="pi pi-folder node-icon" />
       <span class="node-name">{{ node.name }}</span>
-      <button class="node-menu" type="button" title="Alt organizasyon ekle" @click="emit('add-child', node)">
+      <button class="node-menu" type="button" :title="kamu ? 'Alt birim ekle' : 'Dal ekle'" @click="emit('add-child', node)">
         <i class="pi pi-plus" />
       </button>
       <button class="node-edit" type="button" title="Adını düzenle" @click="emit('edit', node)">
         <i class="pi pi-pencil" />
       </button>
-      <button class="node-delete" type="button" title="Organizasyonu sil" @click="emit('delete', node)">
+      <button class="node-delete" type="button" :title="kamu ? 'Birimi sil' : 'Dalı sil'" @click="emit('delete', node)">
         <i class="pi pi-trash" />
       </button>
     </div>
@@ -28,6 +28,7 @@ interface OrganizationNode { id: number | string; name: string; children?: Organ
 withDefaults(defineProps<{ node: OrganizationNode; depth?: number }>(), { depth: 0 })
 const emit = defineEmits<{ 'add-child': [node: OrganizationNode]; edit: [node: OrganizationNode]; delete: [node: OrganizationNode] }>()
 const expanded = ref(true)
+const { kamu } = useAccount()
 const forwardAddChild = (node: OrganizationNode) => emit('add-child', node)
 const forwardEdit = (node: OrganizationNode) => emit('edit', node)
 const forwardDelete = (node: OrganizationNode) => emit('delete', node)

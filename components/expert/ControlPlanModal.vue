@@ -181,9 +181,9 @@ const remove = async () => {
 
 <style scoped>
 .modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--admin-overlay)}
-.modal-card{width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-card);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
+.modal-card{width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px;background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:0 24px 48px -8px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:14px}
-h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
+h2{margin:0;color:var(--admin-heading);font-size:18px;font-weight:700}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid label,.field-label{display:block;color:var(--admin-heading);font-size:12px;font-weight:700}.form-grid label > span{color:var(--admin-danger-text)}
@@ -195,8 +195,8 @@ h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0
 .form-grid select:disabled{opacity:.6}
 .error-text{margin:10px 0 0;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:13px;font-weight:800;cursor:pointer}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary-button{min-height:40px;padding:0 18px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-hover);color:var(--admin-heading);font-size:12px;font-weight:700;cursor:pointer}
+.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover:not(:disabled){background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.secondary-button{min-height:40px;padding:0 18px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.secondary-button:hover{background:rgba(145,158,171,.08)}
 .danger-button{display:inline-flex;align-items:center;gap:7px;min-height:40px;margin-right:auto;padding:0 16px;border:1px solid var(--admin-danger-text);border-radius:8px;background:transparent;color:var(--admin-danger-text);font-size:12px;font-weight:700;cursor:pointer}
 .danger-button:hover{background:var(--admin-danger-bg)}.danger-button:disabled{opacity:.55;cursor:not-allowed}
 @media (max-width:560px){.form-grid{grid-template-columns:1fr}}

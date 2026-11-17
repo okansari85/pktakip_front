@@ -1,6 +1,6 @@
 <template>
   <div ref="root" class="picker select-field" :class="{ field: page }">
-    <span><i v-if="!page" class="pi pi-sitemap" /> Organizasyon</span>
+    <span><i v-if="!page" class="pi pi-sitemap" /> Birim</span>
     <button type="button" class="trigger" :class="{ open }" @click="toggle">
       <span class="trigger-text">{{ currentLabel }}</span>
       <i class="pi pi-chevron-down" />

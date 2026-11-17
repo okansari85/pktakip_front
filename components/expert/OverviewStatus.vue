@@ -60,12 +60,12 @@ const blocks = computed(() => {
 </script>
 
 <style scoped>
-.status-card { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-card); }
+.status-card { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 16px 20px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); box-shadow: var(--pk-card-shadow); }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
-h3 { margin: 0; color: var(--admin-heading); font-size: 15.5px; }
-header small { color: var(--admin-muted); font-size: 11.5px; }
+h3 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; }
+header small { color: var(--admin-muted); font-size: 13px; }
 .status-block { flex: 1; min-height: 0; display: flex; align-items: center; gap: 18px; padding: 3px 0; }
-.status-block + .status-block { border-top: 1px solid var(--admin-border); }
+.status-block + .status-block { border-top: 1px dashed rgba(145, 158, 171, .24); }
 .donut { flex: none; width: clamp(64px, calc((100vh - 630px) / 2), 118px); aspect-ratio: 1; height: auto; display: grid; place-items: center; border-radius: 50%; }
 .donut-center { width: 66%; height: 66%; display: grid; place-content: center; border-radius: 50%; background: var(--admin-card); text-align: center; }
 .donut-center small { color: var(--admin-muted); font-size: clamp(8.5px, 1.2vh, 10.5px); }

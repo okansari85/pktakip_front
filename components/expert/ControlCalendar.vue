@@ -217,17 +217,17 @@ watch(() => props.agenda, () => { selectedDate.value = null })
 
 <style scoped>
 .control-calendar{display:grid;gap:16px}
-.card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;min-width:0;padding:16px 18px}
-h3{margin:0;color:var(--admin-heading);font-size:15px}
+.card{background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:var(--pk-card-shadow);min-width:0;padding:20px 24px}
+h3{margin:0;color:var(--admin-heading);font-size:17px;font-weight:700}
 .calendar-head,.list-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.calendar-head small,.list-card header small{display:block;margin-top:4px;color:var(--admin-muted);font-size:12px}
+.calendar-head small,.list-card header small{display:block;margin-top:4px;color:var(--admin-muted);font-size:13px}
 .year-nav{display:flex;align-items:center;gap:4px}
-.nav-button,.year-button{height:32px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-card);color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.nav-button,.year-button{height:32px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .nav-button{width:32px;display:grid;place-items:center}.year-button{padding:0 10px}
-.nav-button:hover,.year-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
-.year-current{min-width:64px;height:32px;display:grid;place-items:center;border-radius:8px;background:var(--pk-yellow);color:var(--pk-on-accent);font-size:14px}
+.nav-button:hover,.year-button:hover{background:rgba(145,158,171,.08);color:var(--admin-heading)}
+.year-current{min-width:64px;height:32px;display:grid;place-items:center;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font-size:14px;font-weight:700;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}
 .link-button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--admin-link);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0 6px}
-.earlier{display:grid;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--admin-danger-text);border-radius:10px;background:var(--admin-danger-bg)}
+.earlier{display:grid;gap:8px;margin-bottom:12px;padding:12px 14px;border:0;border-radius:12px;background:var(--admin-danger-bg)}
 .earlier > strong{display:flex;align-items:center;gap:7px;color:var(--admin-danger-text);font-size:12px}
 .earlier-items{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .earlier-item{padding:5px 10px;border:1px solid var(--admin-danger-text);border-radius:999px;background:var(--admin-card);color:var(--admin-danger-text);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
@@ -235,15 +235,15 @@ h3{margin:0;color:var(--admin-heading);font-size:15px}
 .legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:12px;color:var(--admin-muted);font-size:11px}
 .legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:12px;height:12px;border-radius:50%}
 .legend .undated{margin-left:auto}
-.overdue{--timing:#dc2626}.d30{--timing:#f97316}.d60{--timing:#facc15}.later{--timing:#16a34a}
+.overdue{--timing:var(--pk-error)}.d30{--timing:var(--pk-warning)}.d60{--timing:var(--pk-warning-light)}.later{--timing:var(--pk-success-main)}
 .legend i,.dot{background:var(--timing,var(--admin-muted))}
 .legend i.plan,.dot.plan{background:transparent;border:2px dashed var(--admin-heading)}
 .months{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.month{display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border:1px solid var(--admin-border);border-radius:10px}
+.month{display:flex;flex-direction:column;gap:8px;min-width:0;padding:14px;border:1px solid rgba(145,158,171,.24);border-radius:12px}
 .month.current{border-color:var(--pk-yellow);box-shadow:0 0 0 1px var(--pk-yellow)}
 .month > header{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.month > header strong{color:var(--admin-heading);font-size:13px}
-.count{padding:1px 8px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700}
+.month > header strong{color:var(--admin-heading);font-size:14px;font-weight:700}
+.count{padding:2px 8px;border-radius:6px;background:var(--admin-chip);color:var(--admin-muted);font-size:12px;font-weight:700}
 .empty{margin:0;color:var(--admin-muted);font-size:11px;text-align:center}
 .more{align-self:flex-start}
 /* PrimeVue DatePicker: başlık gizli, uygulama renkleri (açık / koyu tema) */

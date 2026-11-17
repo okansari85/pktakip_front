@@ -4,7 +4,7 @@
       <div>
         <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Lokasyonlar</strong></div>
         <h1>Lokasyonlar</h1>
-        <p>{{ corporate ? 'Organizasyon' : multiUser ? 'Müşteri ve organizasyon' : 'Organizasyon ve alt organizasyon' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
+        <p>{{ kamu ? 'Birim' : corporate ? 'Dal' : multiUser ? 'Müşteri ve dal' : 'Ana firma ve dal' }} seçerek lokasyonları görüntüleyin<template v-if="canEditStructure"> ve yeni lokasyon ekleyin</template>.</p>
       </div>
       <button v-if="canEditStructure" class="primary-button" type="button" :disabled="!selectedCustomerId || organizationOptions.length === 0" @click="openLocationForm">
         <i class="pi pi-plus" />
@@ -16,18 +16,18 @@
       <div class="toolbar" :class="{ 'no-customer': corporate }">
         <!-- Kurumsal hesapta müşteri firmanın kendisi: seçim kutusu yok (otomatik seçili) -->
         <label v-if="!corporate" class="field">
-          <span>{{ multiUser ? 'Müşteri' : 'Organizasyon' }}</span>
+          <span>{{ multiUser ? 'Müşteri' : 'Ana firma' }}</span>
           <select v-model="selectedCustomerId" @change="onCustomerChange">
-            <option :value="null" disabled>{{ multiUser ? 'Müşteri seçin' : 'Organizasyon seçin' }}</option>
+            <option :value="null" disabled>{{ multiUser ? 'Müşteri seçin' : 'Ana firma seçin' }}</option>
             <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }}</option>
           </select>
         </label>
         <!-- Kamu hesabı: yüzlerce birim için üst menüdeki gibi aramalı ağaç (kullanıcı 18 Ekim 2026) -->
         <ExpertKamuOrgPicker v-if="kamu" page :options="pickerOptions" :value="selectedOrganizationId ? String(selectedOrganizationId) : ''" :count="orgLocationCount" :total="locations.length" :buildings="locationItems" @organization="value => selectedOrganizationId = value ? Number(value) : null" @location="pickLocationRow" />
         <label v-else class="field">
-          <span>{{ corporate || multiUser ? 'Organizasyon' : 'Alt organizasyon' }}</span>
+          <span>Dal</span>
           <select v-model="selectedOrganizationId" :disabled="!selectedCustomerId">
-            <option :value="null">{{ corporate || multiUser ? 'Tüm organizasyonlar' : 'Tümü' }}</option>
+            <option :value="null">{{ corporate || multiUser ? 'Tüm dallar' : 'Tümü' }}</option>
             <option v-for="option in organizationOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
           </select>
         </label>
@@ -40,28 +40,28 @@
         </label>
       </div>
 
-      <div v-if="customersLoading" class="state-row">{{ multiUser ? 'Müşteriler' : 'Organizasyonlar' }} yükleniyor...</div>
+      <div v-if="customersLoading" class="state-row">{{ multiUser ? 'Müşteriler' : 'Ana firmalar' }} yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
       <div v-else-if="!selectedCustomerId" class="state-row empty-state">
         <i class="pi pi-building" />
-        <strong>{{ multiUser ? 'Müşteri seçin' : 'Organizasyon seçin' }}</strong>
-        <span>Lokasyonları görmek için önce bir {{ multiUser ? 'müşteri' : 'organizasyon' }} seçin.</span>
+        <strong>{{ multiUser ? 'Müşteri seçin' : 'Ana firma seçin' }}</strong>
+        <span>Lokasyonları görmek için önce bir {{ multiUser ? 'müşteri' : 'ana firma' }} seçin.</span>
       </div>
       <div v-else-if="locationsLoading" class="state-row">Lokasyonlar yükleniyor...</div>
       <div v-else-if="filteredLocations.length === 0" class="state-row empty-state">
         <i class="pi pi-map-marker" />
         <strong>Lokasyon bulunmuyor</strong>
-        <span v-if="organizationOptions.length === 0 && corporate">Henüz organizasyon yok. Önce Organizasyon sayfasından organizasyon ekleyin.</span>
-        <span v-else-if="organizationOptions.length === 0 && !multiUser">Bu organizasyonun yapısı boş. Önce Organizasyon Yönetimi sayfasından ekleyin.</span>
-        <span v-else-if="organizationOptions.length === 0">Bu müşterinin organizasyonu yok. Önce Müşteriler sayfasından organizasyon ekleyin.</span>
-        <span v-else>Seçili organizasyon için ilk lokasyonu ekleyebilirsiniz.</span>
+        <span v-if="organizationOptions.length === 0 && corporate">{{ kamu ? 'Henüz birim yok. Önce Organizasyon sayfasından birim ekleyin.' : 'Henüz dal yok. Önce Dallar sayfasından dal ekleyin.' }}</span>
+        <span v-else-if="organizationOptions.length === 0 && !multiUser">Bu ana firmanın yapısı boş. Önce Ana Firmalar sayfasından ekleyin.</span>
+        <span v-else-if="organizationOptions.length === 0">Bu müşterinin dalı yok. Önce Müşteriler sayfasından dal ekleyin.</span>
+        <span v-else>Seçili {{ kamu ? 'birim' : 'dal' }} için ilk lokasyonu ekleyebilirsiniz.</span>
       </div>
       <div v-else class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Lokasyon Adı</th>
-              <th>Organizasyon</th>
+              <th>{{ kamu ? 'Birim' : 'Dal' }}</th>
               <th>İl / İlçe</th>
               <th>Adres</th>
               <th>Oluşturma Tarihi</th>
@@ -168,9 +168,9 @@
           <div><h2>Lokasyon Ekle</h2><p>{{ selectedCustomer?.name }} için yeni lokasyon oluşturun.</p></div>
           <button class="close-button" type="button" @click="closeLocationForm"><i class="pi pi-times" /></button>
         </div>
-        <label>Organizasyon <span>*</span>
+        <label>{{ kamu ? 'Birim' : 'Dal' }} <span>*</span>
           <select v-model="form.organization_id">
-            <option :value="null" disabled>Organizasyon seçin</option>
+            <option :value="null" disabled>{{ kamu ? 'Birim seçin' : 'Dal seçin' }}</option>
             <option v-for="option in organizationOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
           </select>
         </label>

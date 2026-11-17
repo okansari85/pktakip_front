@@ -151,7 +151,7 @@ interface AccountUser { id: number; name: string; email: string; role: string; r
 
 const ROLE_LABELS = ACCOUNT_ROLE_LABELS
 const ROLE_HINTS: Record<string, string> = {
-  yonetici: 'Müşteri, lokasyon, organizasyon, firma ve kullanıcıları yönetir; her şeyi görür.',
+  yonetici: 'Müşteri, lokasyon, firma ve kullanıcıları yönetir; her şeyi görür.',
   operasyon: 'Her şeyi görür ve çalışır, uzmanları firmalara atar; yapıyı ve kullanıcıları değiştirmez.',
   uzman: 'Atandığı firmalarda ve o lokasyonların lokasyon geneli ekipmanında çalışır.'
 }

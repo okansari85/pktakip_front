@@ -108,13 +108,13 @@ if (only?.groups[0]) toggle(only, only.groups[0])
 
 <style scoped>
 .modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--admin-overlay)}
-.modal-card{width:min(920px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:var(--admin-card);border-radius:12px;box-shadow:0 20px 60px var(--admin-shadow)}
+.modal-card{width:min(920px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px;background:var(--admin-card);border:0;border-radius:var(--pk-radius);box-shadow:0 24px 48px -8px var(--admin-shadow)}
 .modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:14px}
-h2{margin:0;color:var(--admin-heading);font-size:18px}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
+h2{margin:0;color:var(--admin-heading);font-size:18px;font-weight:700}.modal-head p{margin:5px 0 0;color:var(--admin-muted);font-size:12px}
 .close-button{width:34px;height:34px;display:grid;place-items:center;border:0;background:transparent;color:var(--admin-muted);cursor:pointer;border-radius:7px}.close-button:hover{background:var(--admin-hover);color:var(--admin-heading)}
 .days{font-weight:800}.days.overdue{color:var(--admin-danger-text)}.days.d30,.days.d60{color:var(--admin-upcoming-text)}.days.later{color:var(--admin-success-text)}
-.entry{padding-top:12px;border-top:1px solid var(--admin-border)}.entry + .entry{margin-top:14px}
-h3{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--admin-heading);font-size:14px}h3 i{color:var(--admin-muted);font-size:13px}
+.entry{padding-top:12px;border-top:1px solid rgba(145,158,171,.2)}.entry + .entry{margin-top:14px}
+h3{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--admin-heading);font-size:15px;font-weight:700}h3 i{color:var(--admin-muted);font-size:13px}
 .group{border-radius:9px}.group.open{background:var(--admin-soft)}
 .group-toggle{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:none;font:inherit;text-align:left;cursor:pointer;color:var(--admin-text)}
 .group-toggle:hover{background:var(--admin-hover)}

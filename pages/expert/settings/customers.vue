@@ -27,7 +27,7 @@
         <i class="pi pi-building" />
         <strong>{{ t.emptyTitle }}</strong>
         <span>{{ t.emptyText }}</span>
-        <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus" /> {{ orgMode ? 'İlk organizasyonunuzu ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
+        <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><i class="pi pi-plus" /> {{ orgMode ? 'İlk ana firmanızı ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -54,10 +54,10 @@
               <td>{{ customer.firms_count ?? 0 }}</td>
               <td>{{ formatDate(customer.created_at) }}</td>
               <td class="actions">
-                <button class="icon-button tree-button" type="button" :title="orgMode ? 'Yapıyı yönet' : 'Organizasyonu yönet'" @click="openOrganization(customer)">
+                <button class="icon-button tree-button" type="button" title="Yapıyı yönet" @click="openOrganization(customer)">
                   <i class="pi pi-sitemap" />
                 </button>
-                <button class="icon-button delete-button" type="button" :title="orgMode ? 'Organizasyonu sil' : 'Müşteriyi sil'" @click="openDelete(customer)"><i class="pi pi-trash" /></button>
+                <button class="icon-button delete-button" type="button" :title="orgMode ? 'Ana firmayı sil' : 'Müşteriyi sil'" @click="openDelete(customer)"><i class="pi pi-trash" /></button>
               </td>
             </tr>
           </tbody>
@@ -70,21 +70,21 @@
       <aside class="organization-drawer">
         <div class="drawer-head">
           <div>
-            <h2>{{ orgMode ? 'Organizasyon Yapısı' : 'Müşteri Organizasyonu' }}</h2>
-            <div class="drawer-customer"><i class="pi pi-building" /><div><strong>{{ selectedCustomer?.name }}</strong><span>Organizasyon yapısını yönetin.</span></div></div>
+            <h2>{{ orgMode ? 'Ana Firma Yapısı' : 'Müşteri Yapısı' }}</h2>
+            <div class="drawer-customer"><i class="pi pi-building" /><div><strong>{{ selectedCustomer?.name }}</strong><span>Dalları yönetin.</span></div></div>
           </div>
           <button class="close-button" type="button" @click="closeOrganization"><i class="pi pi-times" /></button>
         </div>
 
         <div class="drawer-toolbar">
-          <button class="primary-button small" type="button" @click="openOrganizationForm(orgMode ? rootNode : null)"><i class="pi pi-plus" /> Alt Organizasyon Ekle</button>
+          <button class="primary-button small" type="button" @click="openOrganizationForm(orgMode ? rootNode : null)"><i class="pi pi-plus" /> Dal Ekle</button>
         </div>
 
-        <div class="drawer-search search-box"><i class="pi pi-search" /><input v-model="organizationSearch" type="text" placeholder="Organizasyon ara..." /></div>
+        <div class="drawer-search search-box"><i class="pi pi-search" /><input v-model="organizationSearch" type="text" placeholder="Dal ara..." /></div>
 
-        <div v-if="organizationLoading" class="drawer-state">Organizasyonlar yükleniyor...</div>
+        <div v-if="organizationLoading" class="drawer-state">Dallar yükleniyor...</div>
         <div v-else-if="organizationError" class="drawer-state error-state">{{ organizationError }}</div>
-        <div v-else-if="filteredTree.length === 0" class="drawer-state">{{ orgMode ? 'Bu organizasyonun yapısı boş.' : 'Bu müşteriye bağlı organizasyon bulunmuyor.' }}</div>
+        <div v-else-if="filteredTree.length === 0" class="drawer-state">{{ orgMode ? 'Bu ana firmanın yapısı boş.' : 'Bu müşteriye bağlı dal bulunmuyor.' }}</div>
         <div v-else class="tree-list">
           <ExpertOrganizationNode
             v-for="node in filteredTree"
@@ -102,7 +102,7 @@
     <div v-if="customerFormOpen" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon"><i class="pi pi-building" /></span><div><h2>Müşteri Ekle</h2><p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu ekleyin. Müşterinin altına organizasyon yapısını, lokasyonlarını ve işyerlerini sonra eklersiniz.</p></div></div>
+          <div class="head-title"><span class="head-icon"><i class="pi pi-building" /></span><div><h2>Müşteri Ekle</h2><p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu ekleyin. Müşterinin altına dallarını, lokasyonlarını ve işyerlerini sonra eklersiniz.</p></div></div>
           <button class="close-button" type="button" @click="closeCustomerForm"><i class="pi pi-times" /></button>
         </div>
         <label>Müşteri Adı <span>*</span><input v-model="customerName" type="text" placeholder="Örn. ABC Holding" /></label>
@@ -116,7 +116,7 @@
             </button>
           </div>
         </div>
-        <p class="field-hint"><i class="pi pi-info-circle" /> Tür, işyeri tanımlarken sorulan soruları belirler: kamu kurumunda ve şahıs işletmesinde firma sorulmaz, kurumsal firmada hangi şirkete ait olduğu sorulur.</p>
+        <p class="field-hint"><i class="pi pi-info-circle" /> Tür, işyeri tanımlarken sorulan soruları belirler: şahıs işletmesinde firma sorulmaz, kurumsal firmada ve kamu kurumunda firma müşterinin Firmalar listesinden seçilir.</p>
         <label>Not <small>(Opsiyonel)</small><textarea v-model="customerNotes" rows="3" placeholder="Örn. sözleşme dönemi, yetkili kişi..."></textarea></label>
         <p class="field-hint"><i class="pi pi-info-circle" /> Hesaptaki kullanıcıların göreceği iç not; raporlara yazılmaz.</p>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeCustomerForm">İptal</button><button class="primary-button" type="button" :disabled="saving || !customerTypeChoice" @click="createCustomer">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
@@ -127,13 +127,13 @@
     <div v-if="deleteTarget" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon danger"><i class="pi pi-trash" /></span><div><h2>{{ orgMode ? 'Organizasyonu Sil' : 'Müşteriyi Sil' }}</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir.</p></div></div>
+          <div class="head-title"><span class="head-icon danger"><i class="pi pi-trash" /></span><div><h2>{{ orgMode ? 'Ana Firmayı Sil' : 'Müşteriyi Sil' }}</h2><p>"{{ deleteTarget.name }}" ve altındaki her şey kalıcı olarak silinir.</p></div></div>
           <button class="close-button" type="button" @click="closeDelete"><i class="pi pi-times" /></button>
         </div>
-        <div class="info-box danger"><i class="pi pi-exclamation-triangle" /><span>Bu işlem <strong>geri alınamaz</strong>. Alt organizasyonlar, lokasyonlar, işyerleri, periyodik kontrol ekipmanları ve kontrol raporları (dosyalarıyla) birlikte silinir. Firma kartları silinmez; gerekirse Firmalar sayfasından ayrıca silebilirsiniz.</span></div>
-        <p v-if="deleteSummaryLoading" class="muted-text">{{ orgMode ? 'Organizasyonun' : 'Müşterinin' }} altındaki kayıtlar hesaplanıyor...</p>
+        <div class="info-box danger"><i class="pi pi-exclamation-triangle" /><span>Bu işlem <strong>geri alınamaz</strong>. Dallar, lokasyonlar, işyerleri, periyodik kontrol ekipmanları ve kontrol raporları (dosyalarıyla) birlikte silinir. Firma kartları silinmez; gerekirse Firmalar sayfasından ayrıca silebilirsiniz.</span></div>
+        <p v-if="deleteSummaryLoading" class="muted-text">{{ orgMode ? 'Ana firmanın' : 'Müşterinin' }} altındaki kayıtlar hesaplanıyor...</p>
         <template v-else-if="deleteSummary">
-          <p v-if="!deleteHasData" class="muted-text">Bu {{ orgMode ? 'organizasyonun' : 'müşterinin' }} altında kayıt yok.</p>
+          <p v-if="!deleteHasData" class="muted-text">Bu {{ orgMode ? 'ana firmanın' : 'müşterinin' }} altında kayıt yok.</p>
           <template v-else>
             <p class="muted-text">Birlikte silinecekler:</p>
             <ul class="delete-list">
@@ -141,7 +141,7 @@
             </ul>
           </template>
           <p v-if="deleteSummary.blockers.length" class="form-error">Silinemez: {{ deleteSummary.blockers.join(', ') }}.</p>
-          <label v-else-if="deleteHasData">Onaylamak için {{ orgMode ? 'organizasyon' : 'müşteri' }} adını yazın<input v-model="deleteConfirm" type="text" :placeholder="deleteTarget.name" /></label>
+          <label v-else-if="deleteHasData">Onaylamak için {{ orgMode ? 'ana firma' : 'müşteri' }} adını yazın<input v-model="deleteConfirm" type="text" :placeholder="deleteTarget.name" /></label>
         </template>
         <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
         <div class="modal-actions"><button class="secondary-button" type="button" :disabled="deleting" @click="closeDelete">İptal</button><button class="danger-button" type="button" :disabled="!canDelete || deleting" @click="deleteCustomer">{{ deleting ? 'Siliniyor...' : 'Kalıcı olarak sil' }}</button></div>
@@ -154,12 +154,12 @@
     <div v-if="organizationFormOpen" class="modal-backdrop">
       <section class="modal-card wide">
         <div class="modal-head">
-          <div class="head-title"><span class="head-icon"><i :class="editingOrganization ? 'pi pi-pencil' : 'pi pi-sitemap'" /></span><div><h2>{{ editingOrganization ? 'Organizasyonu Düzenle' : 'Alt Organizasyon Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" organizasyonunun adını değiştirin.</p><p v-else>{{ organizationParent ? `"${organizationParent.name}" altına` : orgMode ? 'En üst düzeye' : 'Müşteri köküne' }} yeni bir alt organizasyon ekleyin.</p></div></div>
+          <div class="head-title"><span class="head-icon"><i :class="editingOrganization ? 'pi pi-pencil' : 'pi pi-sitemap'" /></span><div><h2>{{ editingOrganization ? 'Dalı Düzenle' : 'Dal Ekle' }}</h2><p v-if="editingOrganization">"{{ editingOrganization.name }}" dalının adını değiştirin.</p><p v-else>{{ organizationParent ? `"${organizationParent.name}" altına` : orgMode ? 'En üst düzeye' : 'Müşteri köküne' }} yeni bir dal ekleyin.</p></div></div>
           <button class="close-button" type="button" @click="closeOrganizationForm"><i class="pi pi-times" /></button>
         </div>
-        <div v-if="!editingOrganization" class="info-box"><i class="pi pi-lightbulb" /><span>Alt organizasyon, büyük yapılarda birimleri gruplamak içindir: daire başkanlığı, müdürlük, fabrika, bölge müdürlüğü gibi. Lokasyonlar bu organizasyonlara bağlanır; raporlar ve listeler organizasyona göre süzülebilir.</span></div>
-        <label>Organizasyon Adı <span>*</span><input v-model="organizationName" type="text" :placeholder="editingOrganization ? editingOrganization.name : 'Örn. Üretim Müdürlüğü'" /></label>
-        <p class="field-hint"><i class="pi pi-info-circle" /> {{ editingOrganization ? 'Yeni ad listelerde, lokasyonlarda ve raporlarda hemen görünür.' : 'Altına sonra başka organizasyonlar da ekleyebilirsiniz (+ düğmesi).' }}</p>
+        <div v-if="!editingOrganization" class="info-box"><i class="pi pi-lightbulb" /><span>Dal, büyük yapılarda birimleri gruplamak içindir: daire başkanlığı, müdürlük, fabrika, bölge müdürlüğü gibi. Lokasyonlar bu dallara bağlanır; raporlar ve listeler dala göre süzülebilir.</span></div>
+        <label>Dal Adı <span>*</span><input v-model="organizationName" type="text" :placeholder="editingOrganization ? editingOrganization.name : 'Örn. Üretim Müdürlüğü'" /></label>
+        <p class="field-hint"><i class="pi pi-info-circle" /> {{ editingOrganization ? 'Yeni ad listelerde, lokasyonlarda ve raporlarda hemen görünür.' : 'Altına sonra başka dallar da ekleyebilirsiniz (+ düğmesi).' }}</p>
         <p v-if="organizationFormError" class="form-error">{{ organizationFormError }}</p>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeOrganizationForm">İptal</button><button class="primary-button" type="button" :disabled="savingOrganization" @click="editingOrganization ? renameOrganization() : createOrganization()">{{ savingOrganization ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
       </section>
@@ -209,11 +209,11 @@ const savingOrganization = ref(false)
 const { account, multiUser, load: loadAccount } = useAccount()
 const orgMode = computed(() => !multiUser.value)
 const t = computed(() => orgMode.value ? {
-  page: 'Organizasyon Yönetimi', intro: 'Hizmet verdiğiniz organizasyonları ve alt organizasyonlarını yönetin.', add: 'Organizasyon Ekle',
-  search: 'Organizasyon ara', loading: 'Organizasyonlar yükleniyor...', emptyTitle: 'Henüz organizasyon yok',
-  emptyText: 'Hizmet verdiğiniz şirket, işletme ya da kamu kurumunu ekleyerek başlayın.', nameCol: 'Organizasyon Adı', unit: 'organizasyon'
+  page: 'Ana Firmalar', intro: 'Hizmet verdiğiniz ana firmaları ve dallarını yönetin.', add: 'Ana Firma Ekle',
+  search: 'Ana firma ara', loading: 'Ana firmalar yükleniyor...', emptyTitle: 'Henüz ana firma yok',
+  emptyText: 'Hizmet verdiğiniz şirket, işletme ya da kamu kurumunu ekleyerek başlayın.', nameCol: 'Ana Firma Adı', unit: 'ana firma'
 } : {
-  page: 'Müşteriler', intro: 'Müşterilerinizi yönetin. Her müşteri için organizasyon yapısını hiyerarşik olarak oluşturabilirsiniz.', add: 'Müşteri Ekle',
+  page: 'Müşteriler', intro: 'Müşterilerinizi yönetin. Her müşteri için dalları hiyerarşik olarak oluşturabilirsiniz.', add: 'Müşteri Ekle',
   search: 'Müşteri ara', loading: 'Müşteriler yükleniyor...', emptyTitle: 'Henüz müşteri bulunmuyor',
   emptyText: 'İlk müşterinizi ekleyerek başlayabilirsiniz.', nameCol: 'Müşteri Adı', unit: 'müşteri'
 })
@@ -303,7 +303,7 @@ const createCustomer = async () => {
       try {
         await $fetch(`${config.public.apiBaseUrl}/customers/${created.id}/organizations`, { method: 'POST', headers: tenantHeaders(), body: { name, parent_id: null, color: '#465FFF' } })
       } catch (e: any) {
-        rootError = `Müşteri oluşturuldu ama kök organizasyon eklenemedi (${e?.data?.message || 'bilinmeyen hata'}); müşterinin organizasyon ağacından elle ekleyebilirsiniz.`
+        rootError = `Müşteri oluşturuldu ama kök dal eklenemedi (${e?.data?.message || 'bilinmeyen hata'}); müşterinin yapısından elle ekleyebilirsiniz.`
       }
     }
     await loadCustomers()
@@ -321,7 +321,7 @@ const createOrganization = async () => {
     })
     organizationFormOpen.value = false
     await openOrganization(selectedCustomer.value)
-  } catch (e: any) { organizationError.value = e?.data?.message || 'Organizasyon oluşturulamadı.' }
+  } catch (e: any) { organizationError.value = e?.data?.message || 'Dal oluşturulamadı.' }
   finally { savingOrganization.value = false }
 }
 
@@ -346,21 +346,21 @@ const renameOrganization = async () => {
     await openOrganization(selectedCustomer.value)
   } catch (e: any) {
     const errors = e?.data?.errors
-    organizationFormError.value = (errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Organizasyon güncellenemedi.'
+    organizationFormError.value = (errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Dal güncellenemedi.'
   } finally { savingOrganization.value = false }
 }
 
 const deleteOrganization = async (node: OrganizationNode) => {
   if (!selectedCustomer.value) return
-  if (node.children?.length) { alert('Alt organizasyonları bulunan bir organizasyon silinemez. Önce alt organizasyonları silin.'); return }
-  if (!confirm(`"${node.name}" organizasyonu silinsin mi?`)) return
+  if (node.children?.length) { alert('Altında dal bulunan bir dal silinemez. Önce alttaki dalları silin.'); return }
+  if (!confirm(`"${node.name}" dalı silinsin mi?`)) return
   try {
     // pktakip ucu: türden bağımsız siler; lokasyon ya da başka bağ varsa sebebi yazar (500 yerine 422).
     await $fetch(`${config.public.apiBaseUrl}/customers/${selectedCustomer.value.id}/pk-organizations/${node.id}`, { method: 'DELETE', headers: tenantHeaders() })
     await openOrganization(selectedCustomer.value)
   } catch (e: any) {
     const errors = e?.data?.errors
-    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Organizasyon silinemedi.')
+    alert((errors && Object.values(errors).flat()[0] as string) || e?.data?.message || 'Dal silinemedi.')
   }
 }
 
@@ -374,7 +374,7 @@ const deleteConfirm = ref('')
 const deleteError = ref('')
 const deleting = ref(false)
 const deleteRows = computed(() => deleteSummary.value ? [
-  { label: 'organizasyon', count: deleteSummary.value.organizations },
+  { label: 'dal', count: deleteSummary.value.organizations },
   { label: 'lokasyon', count: deleteSummary.value.locations },
   { label: 'işyeri', count: deleteSummary.value.workplaces },
   { label: 'periyodik kontrol ekipmanı', count: deleteSummary.value.equipment },

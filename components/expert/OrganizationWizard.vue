@@ -5,7 +5,7 @@
         <div class="head-title">
           <span class="head-icon"><i class="pi pi-sitemap" /></span>
           <div>
-            <h2>{{ customerMode ? 'Müşteri Ekle' : 'Organizasyon Ekle' }}</h2>
+            <h2>{{ customerMode ? 'Müşteri Ekle' : 'Ana Firma Ekle' }}</h2>
             <p>Hizmet verdiğiniz şirketi, işletmeyi ya da kamu kurumunu birkaç adımda tanımlayın.</p>
           </div>
         </div>
@@ -19,7 +19,7 @@
             <span class="dot"><i :class="step > n ? 'pi pi-check' : STEPS[n - 1]!.icon" /></span>
             <span class="name">{{ STEPS[n - 1]!.name }}</span>
           </li>
-          <li class="stepper-note"><i class="pi pi-info-circle" /> Lokasyonları ve firmaları {{ customerMode ? 'müşteriyi' : 'organizasyonu' }} oluşturduktan sonra eklersiniz.</li>
+          <li class="stepper-note"><i class="pi pi-info-circle" /> Lokasyonları ve firmaları {{ customerMode ? 'müşteriyi' : 'ana firmayı' }} oluşturduktan sonra eklersiniz.</li>
         </ol>
 
         <div class="content">
@@ -82,9 +82,9 @@
                   <button class="icon-button danger" type="button" title="Kaldır" @click="child.children.splice(j, 1)"><i class="pi pi-trash" /></button>
                 </div>
               </div>
-              <button class="add-row" type="button" @click="addChild"><i class="pi pi-plus" /> Alt organizasyon ekle</button>
+              <button class="add-row" type="button" @click="addChild"><i class="pi pi-plus" /> Dal ekle</button>
             </div>
-            <p class="hint muted"><i class="pi pi-info-circle" /> <span><strong>+</strong> düğmesi satırın altına bir düzey daha açar. Alt organizasyon şart değildir; sonra "Yapıyı yönet" düğmesinden de ekleyebilirsiniz.</span></p>
+            <p class="hint muted"><i class="pi pi-info-circle" /> <span><strong>+</strong> düğmesi satırın altına bir düzey daha açar. Dal şart değildir; sonra "Yapıyı yönet" düğmesinden de ekleyebilirsiniz.</span></p>
           </div>
 
           <!-- 4: özet -->
@@ -96,7 +96,7 @@
                 <div class="sum-row"><i class="pi pi-angle-right" /> {{ child.name }}</div>
                 <div v-for="g in child.children" :key="g.key" class="sum-row grand"><i class="pi pi-angle-right" /> {{ g.name }}</div>
               </template>
-              <p v-if="!cleanChildren.length" class="muted">Alt organizasyon yok.</p>
+              <p v-if="!cleanChildren.length" class="muted">Dal yok.</p>
             </div>
             <div class="next-steps">
               <strong><i class="pi pi-directions" /> Sonra ne yapacaksınız?</strong>
@@ -107,7 +107,7 @@
                   <li>Lokasyon satırındaki <b>İşyeri ekle</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı).</li>
                 </template>
                 <template v-else>
-                  <li><b>Lokasyonlar</b> sayfasından bu organizasyona lokasyon (adres, bina, tesis) ekleyin.</li>
+                  <li><b>Lokasyonlar</b> sayfasından bu ana firmaya lokasyon (adres, bina, tesis) ekleyin.</li>
                   <li>Lokasyonda <b>Lokasyona Firma Tanımla</b> ile işyerini tanımlayın (faaliyet, tehlike sınıfı, çalışan sayısı).</li>
                 </template>
                 <li>İşyerine periyodik kontrol ekipmanlarını ekleyin.</li>
@@ -138,8 +138,8 @@ import type { CustomerType } from '~/composables/useCustomerTypes'
 // "Lokasyona Firma Ata" sihirbazı soruyu buna göre sorar. Şahıs işletmesinde alt organizasyon adımı yok (şubeler lokasyondur).
 // customerMode: OSGB "Müşteri Ekle" (ekranda "müşteri" denir, Not alanı var); bireysel uzmanda "organizasyon".
 const props = defineProps<{ customerMode?: boolean }>()
-const noun = computed(() => props.customerMode ? 'müşteri' : 'organizasyon')
-const Noun = computed(() => props.customerMode ? 'Müşterinin' : 'Organizasyonun')
+const noun = computed(() => props.customerMode ? 'müşteri' : 'ana firma')
+const Noun = computed(() => props.customerMode ? 'Müşterinin' : 'Ana firmanın')
 const notes = ref('')
 const emit = defineEmits<{ close: []; created: [customerId: number | string, warning: string] }>()
 
@@ -156,21 +156,21 @@ const KINDS: { id: Kind; title: string; text: string; effect: string; icon: stri
   },
   {
     id: 'sahis', title: 'Şahıs işletmesi', text: 'Tek kişiye ait işletme.', icon: 'pi pi-user',
-    effect: 'Alt organizasyon sorulmaz; her lokasyon işletmenin bir şubesi olur.',
+    effect: 'Dal sorulmaz; her lokasyon işletmenin bir şubesi olur.',
     nameLabel: 'İşletme adı', namePlaceholder: 'Örn. ABC Mobilya', nameHint: 'Tabelada ya da vergi levhasında geçen adı yazabilirsiniz.',
     childHint: 'Birden fazla şubesi varsa şubeleri ekleyebilirsiniz.', childPlaceholder: 'Örn. Merkez Şube', grandPlaceholder: 'Örn. Atölye'
   },
   {
     id: 'kamu', title: 'Kamu kurumu', text: 'Belediye, il müdürlüğü, hastane, okul.', icon: 'pi pi-flag',
-    effect: 'Daire başkanlığı, müdürlük gibi birimler alt organizasyon olur; işyeri tanımlarken firma sorulmaz.',
+    effect: 'Daire başkanlığı, müdürlük gibi birimler yapıya birim olarak eklenir; işyeri tanımlarken firma Firmalar listesinden seçilir.',
     nameLabel: 'Kurum adı', namePlaceholder: 'Örn. ABC Belediyesi', nameHint: 'Kurumun resmî adını yazın.',
     childHint: 'Daire başkanlıklarını, müdürlükleri ya da bağlı birimleri ekleyebilirsiniz.', childPlaceholder: 'Örn. İtfaiye Dairesi Başkanlığı', grandPlaceholder: 'Örn. Merkez İtfaiye Müdürlüğü'
   }
 ]
 const STEPS = [
-  { name: 'Tür', icon: 'pi pi-tags', title: 'Organizasyonun türü nedir?', desc: 'Türe göre sonraki adımlar ve işyeri tanımlarken sorulan sorular değişir. Bir kez seçilir.' },
-  { name: 'Ad', icon: 'pi pi-pencil', title: 'Organizasyonun adı nedir?', desc: 'Organizasyon yapısının en üstünde bu ad durur.' },
-  { name: 'Alt organizasyonlar', icon: 'pi pi-sitemap', title: 'Alt organizasyonları var mı?', desc: 'İsteğe bağlıdır. Büyük yapılarda birimleri gruplamak, raporları ve listeleri birime göre ayırmak için kullanılır.' },
+  { name: 'Tür', icon: 'pi pi-tags', title: 'Ana firmanın türü nedir?', desc: 'Türe göre sonraki adımlar ve işyeri tanımlarken sorulan sorular değişir. Bir kez seçilir.' },
+  { name: 'Ad', icon: 'pi pi-pencil', title: 'Ana firmanın adı nedir?', desc: 'Yapının en üstünde bu ad durur.' },
+  { name: 'Dallar', icon: 'pi pi-sitemap', title: 'Dalları var mı?', desc: 'İsteğe bağlıdır. Büyük yapılarda birimleri gruplamak, raporları ve listeleri birime göre ayırmak için kullanılır.' },
   { name: 'Özet', icon: 'pi pi-list-check', title: 'Kontrol edip oluşturun', desc: 'Aşağıdaki yapı oluşturulacak. Geri dönüp değiştirebilirsiniz.' }
 ]
 
@@ -226,9 +226,9 @@ async function create() {
   let customerId: number | string | null = null
   try {
     customerId = (await post('/customers', { name: title, notes: notes.value.trim() || null }))?.id
-    if (!customerId) throw new Error('Organizasyon oluşturulamadı.')
+    if (!customerId) throw new Error(props.customerMode ? 'Müşteri oluşturulamadı.' : 'Ana firma oluşturulamadı.')
   } catch (e: any) {
-    error.value = e?.data?.message || e?.message || 'Organizasyon oluşturulamadı.'
+    error.value = e?.data?.message || e?.message || (props.customerMode ? 'Müşteri oluşturulamadı.' : 'Ana firma oluşturulamadı.')
     saving.value = false
     return
   }

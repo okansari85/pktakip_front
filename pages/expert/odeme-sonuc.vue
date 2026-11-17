@@ -57,11 +57,12 @@ onMounted(async () => {
 
 <style scoped>
 .result-page { display: grid; place-items: center; padding: 40px 0; }
-.card { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 520px; padding: 34px 28px; border: 1px solid var(--admin-border); border-radius: 18px; background: var(--admin-card); text-align: center; box-shadow: 0 8px 24px rgba(40, 70, 110, .06); }
+.card { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 520px; padding: 34px 28px; border: 0; border-radius: var(--pk-radius); background: var(--admin-card); text-align: center; box-shadow: var(--pk-card-shadow); }
 .icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; font-size: 24px; }
 .icon.ok { background: var(--admin-success-bg); color: var(--admin-success-text); }
 .icon.fail { background: var(--admin-danger-bg); color: var(--admin-danger-text); }
-h1 { margin: 0; color: var(--admin-heading); font-size: 24px; }
+h1 { margin: 0; color: var(--admin-heading); font-size: 24px; font-weight: 700; }
 p { margin: 0; color: var(--admin-text); font-size: 14.5px; line-height: 1.6; }
-.primary-button { display: inline-flex; align-items: center; justify-content: center; align-self: stretch; height: 46px; border-radius: 10px; background: var(--pk-yellow); color: var(--pk-on-accent); font-weight: 800; text-decoration: none; }
+.primary-button { display: inline-flex; align-items: center; justify-content: center; align-self: stretch; height: 46px; border-radius: 8px; background: var(--pk-accent); color: var(--pk-on-accent); font-weight: 700; text-decoration: none; box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
+.primary-button:hover { background: var(--pk-accent-hover); }
 </style>

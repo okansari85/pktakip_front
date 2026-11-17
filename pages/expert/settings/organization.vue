@@ -2,30 +2,30 @@
   <div class="organization-page">
     <div class="page-head">
       <div>
-        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>Organizasyon</strong></div>
-        <h1>Organizasyon</h1>
+        <div class="breadcrumb"><span>Ayarlar</span><i class="pi pi-angle-right" /><strong>{{ kamu ? 'Organizasyon' : 'Dallar' }}</strong></div>
+        <h1>{{ kamu ? 'Organizasyon' : 'Dallar' }}</h1>
         <p v-if="kamu">Kurumunuzun organizasyon yapısını (daire başkanlıkları, şube müdürlükleri) hiyerarşik olarak oluşturun. Binaları lokasyon olarak Lokasyonlar sayfasından eklersiniz.</p>
-        <p v-else>Firmanızın organizasyon yapısını hiyerarşik olarak oluşturun. Lokasyonları organizasyonlara Lokasyonlar sayfasından eklersiniz.</p>
+        <p v-else>Ana firmanızın dallarını hiyerarşik olarak oluşturun. Lokasyonları dallara Lokasyonlar sayfasından eklersiniz.</p>
       </div>
       <button v-if="customer" class="primary-button" type="button" @click="openForm(null)">
-        <i class="pi pi-plus" /><span>Organizasyon Ekle</span>
+        <i class="pi pi-plus" /><span>{{ kamu ? 'Birim Ekle' : 'Dal Ekle' }}</span>
       </button>
     </div>
 
     <section class="table-card">
       <div class="toolbar">
-        <div v-if="customer" class="customer"><span class="row-icon"><i class="pi pi-building" /></span><div><strong>{{ customer.name }}</strong><small>{{ nodeCount }} organizasyon</small></div></div>
-        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" placeholder="Organizasyon ara..." /></div>
+        <div v-if="customer" class="customer"><span class="row-icon"><i class="pi pi-building" /></span><div><strong>{{ customer.name }}</strong><small>{{ nodeCount }} {{ kamu ? 'birim' : 'dal' }}</small></div></div>
+        <div class="search-box"><i class="pi pi-search" /><input v-model="search" type="text" :placeholder="kamu ? 'Birim ara...' : 'Dal ara...'" /></div>
       </div>
 
-      <div v-if="!corporate && account" class="state-row">Bu sayfa kurumsal hesaplar içindir. Müşteri organizasyonlarını <NuxtLink to="/expert/settings/customers">Müşteriler</NuxtLink> sayfasından yönetirsiniz.</div>
-      <div v-else-if="loading" class="state-row">Organizasyon yükleniyor...</div>
+      <div v-if="!corporate && account" class="state-row">Bu sayfa kurumsal hesaplar içindir. Müşterilerin yapısını <NuxtLink to="/expert/settings/customers">Müşteriler</NuxtLink> sayfasından yönetirsiniz.</div>
+      <div v-else-if="loading" class="state-row">{{ kamu ? 'Birimler' : 'Dallar' }} yükleniyor...</div>
       <div v-else-if="error" class="state-row error-state">{{ error }}</div>
-      <div v-else-if="!customer" class="state-row">{{ kamu ? 'Kurum' : 'Firma' }} kaydı bulunamadı.</div>
+      <div v-else-if="!customer" class="state-row">{{ kamu ? 'Kurum' : 'Ana firma' }} kaydı bulunamadı.</div>
       <div v-else-if="filteredTree.length === 0" class="state-row empty-state">
         <i class="pi pi-sitemap" />
-        <strong>{{ search ? 'Aramaya uyan organizasyon yok' : 'Henüz organizasyon yok' }}</strong>
-        <span v-if="!search">Şirketleri, bölgeleri ya da tesisleri "Organizasyon Ekle" ile oluşturun (ör. Holding → Şirket → Fabrika).</span>
+        <strong>{{ search ? `Aramaya uyan ${kamu ? 'birim' : 'dal'} yok` : `Henüz ${kamu ? 'birim' : 'dal'} yok` }}</strong>
+        <span v-if="!search">Şirketleri, bölgeleri ya da tesisleri "{{ kamu ? 'Birim Ekle' : 'Dal Ekle' }}" ile oluşturun (ör. Holding → Şirket → Fabrika).</span>
       </div>
       <div v-else class="tree-list">
         <ExpertOrganizationNode v-for="node in filteredTree" :key="node.id" :node="node" :depth="0" @add-child="openForm" @edit="openEditForm" @delete="remove" />
@@ -35,10 +35,10 @@
     <div v-if="formOpen" class="modal-backdrop">
       <section class="modal-card">
         <div class="modal-head">
-          <div><h2>{{ editing ? 'Organizasyonu Düzenle' : 'Organizasyon Ekle' }}</h2><p v-if="editing">"{{ editing.name }}" organizasyonunun adını değiştirin.</p><p v-else>{{ parent ? `${parent.name} altına` : 'En üste' }} yeni organizasyon ekleyin.</p></div>
+          <div><h2>{{ editing ? (kamu ? 'Birimi Düzenle' : 'Dalı Düzenle') : (kamu ? 'Birim Ekle' : 'Dal Ekle') }}</h2><p v-if="editing">"{{ editing.name }}" {{ kamu ? 'biriminin' : 'dalının' }} adını değiştirin.</p><p v-else>{{ parent ? `${parent.name} altına` : 'En üste' }} yeni {{ kamu ? 'birim' : 'dal' }} ekleyin.</p></div>
           <button class="close-button" type="button" @click="closeForm"><i class="pi pi-times" /></button>
         </div>
-        <label>Organizasyon Adı <span>*</span><input v-model="name" type="text" placeholder="Örn. Dayanıklı Tüketim" /></label>
+        <label>{{ kamu ? 'Birim Adı' : 'Dal Adı' }} <span>*</span><input v-model="name" type="text" placeholder="Örn. Dayanıklı Tüketim" /></label>
         <p v-if="formError" class="form-error">{{ formError }}</p>
         <div class="modal-actions"><button class="secondary-button" type="button" @click="closeForm">İptal</button><button class="primary-button" type="button" :disabled="saving || !name.trim()" @click="save">{{ saving ? 'Kaydediliyor...' : 'Kaydet' }}</button></div>
       </section>
@@ -81,7 +81,7 @@ const loadTree = async () => {
   try {
     const data = unwrap(await get(`/customers/${customer.value.id}/organizations`))
     tree.value = Array.isArray(data) ? data : (data?.organizations || data?.items || data?.tree || [])
-  } catch (e: any) { error.value = errorMessage(e, 'Organizasyon ağacı alınamadı.') }
+  } catch (e: any) { error.value = errorMessage(e, kamu.value ? 'Birimler alınamadı.' : 'Dallar alınamadı.') }
 }
 
 const load = async () => {
@@ -116,17 +116,17 @@ const save = async () => {
     else await post(`/customers/${customer.value.id}/organizations`, { name: name.value.trim(), parent_id: parent.value?.id ?? null, color: '#465FFF' })
     formOpen.value = false
     await loadTree()
-  } catch (e: any) { formError.value = errorMessage(e, 'Organizasyon kaydedilemedi.') }
+  } catch (e: any) { formError.value = errorMessage(e, kamu.value ? 'Birim kaydedilemedi.' : 'Dal kaydedilemedi.') }
   finally { saving.value = false }
 }
 
 const remove = async (node: OrganizationNode) => {
-  if (node.children?.length) { alert('Alt organizasyonları bulunan bir organizasyon silinemez. Önce alt organizasyonları silin.'); return }
-  if (!confirm(`"${node.name}" organizasyonu silinsin mi?`)) return
+  if (node.children?.length) { alert(kamu.value ? 'Alt birimleri bulunan bir birim silinemez. Önce alt birimleri silin.' : 'Altında dal bulunan bir dal silinemez. Önce alttaki dalları silin.'); return }
+  if (!confirm(`"${node.name}" ${kamu.value ? 'birimi' : 'dalı'} silinsin mi?`)) return
   try {
     await del(`/organizations/${node.id}`)
     await loadTree()
-  } catch (e: any) { alert(errorMessage(e, 'Organizasyon silinemedi.')) }
+  } catch (e: any) { alert(errorMessage(e, kamu.value ? 'Birim silinemedi.' : 'Dal silinemedi.')) }
 }
 
 onMounted(async () => {

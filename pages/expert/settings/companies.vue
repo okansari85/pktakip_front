@@ -22,7 +22,7 @@
       <div v-else-if="filteredCompanies.length === 0" class="state-row empty-state">
         <i class="pi pi-briefcase" />
         <strong>Henüz firma tanımı yok</strong>
-        <span>Firmaları buradan ya da işyeri eklerken tanımlayabilirsiniz.</span>
+        <span>Firmalar ana firmanın sayfasındaki Firmalar kartından eklenir.</span>
       </div>
       <div v-else class="table-wrap">
         <table>

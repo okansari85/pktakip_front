@@ -99,29 +99,29 @@ const remove = async (property: any) => {
 .empty{margin:0;padding:24px 8px;text-align:center;color:var(--admin-muted);font-size:12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 tr:nth-child(odd of :not(.history-row)) th,tr:nth-child(odd of :not(.history-row)) td{background:var(--admin-soft)}
-th,td{padding:7px 10px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--admin-row-border)}
+th,td{padding:8px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid rgba(145,158,171,.2)}
 th{width:44%;color:var(--admin-muted);font-weight:600}
 .value{color:var(--admin-heading);font-weight:700;overflow-wrap:anywhere}
 .row-actions{width:1%;white-space:nowrap;text-align:right}
 .row-actions .icon-button{opacity:.35}tr:hover .row-actions .icon-button,.row-actions .icon-button.active{opacity:1}
 .icon-button{width:26px;height:26px;display:inline-grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--admin-muted);cursor:pointer}
 .icon-button:hover,.icon-button.active{background:var(--admin-hover);color:var(--admin-heading)}.icon-button.danger:hover{color:var(--admin-danger-text)}.icon-button i{font-size:12px}
-.badge{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;background:var(--admin-chip);color:var(--admin-muted)}
+.badge{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:11px;font-weight:700;background:var(--admin-chip);color:var(--admin-muted)}
 .badge.manual{background:var(--admin-accent-soft);color:var(--admin-heading)}.badge.changed{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 .badge.current{background:var(--admin-success-bg);color:var(--admin-success-text)}.badge.rejected{background:var(--admin-danger-bg);color:var(--admin-danger-text)}
 .edit{display:flex;gap:6px}
 .edit input{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--admin-border);border-radius:7px;background:var(--admin-input);color:var(--admin-heading);font:inherit;font-size:12px;outline:0}
 .edit input:focus{border-color:var(--pk-accent);box-shadow:0 0 0 3px var(--pk-focus-ring)}
-.primary-button,.secondary-button{height:30px;padding:0 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer}
-.primary-button{border:0;background:var(--pk-yellow);color:var(--pk-on-accent)}.primary-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary-button{border:1px solid var(--admin-border);background:var(--admin-card);color:var(--admin-heading)}
+.primary-button,.secondary-button{height:30px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.primary-button{border:0;background:var(--pk-accent);color:var(--pk-on-accent);box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover:not(:disabled){background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.secondary-button{border:1px solid rgba(145,158,171,.32);background:transparent;color:var(--admin-heading)}.secondary-button:hover{background:rgba(145,158,171,.08)}
 .history-row td{background:var(--admin-card);padding:6px 10px 10px}
 .history{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--admin-border);display:grid;gap:5px}
 .history li{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;font-size:12px;color:var(--admin-heading)}
 .history li small{color:var(--admin-muted);font-size:10px}
 .history li.rejected strong{color:var(--admin-muted);text-decoration:line-through}.history li.removed strong{color:var(--admin-danger-text)}
 .error-text{margin:4px 0 0;color:var(--admin-danger-text);font-size:11px}
-.pending{margin-top:12px;padding:10px 12px;border:1px dashed var(--admin-border);border-radius:9px}
+.pending{margin-top:12px;padding:12px 14px;border:1px dashed rgba(145,158,171,.32);border-radius:12px}
 .pending h4{display:flex;align-items:center;gap:6px;margin:0 0 6px;color:var(--admin-warning-text);font-size:12px}
 .pending-row{display:grid;grid-template-columns:44% 1fr;gap:10px;padding:4px 0;font-size:12px;color:var(--admin-muted)}.pending-row strong{color:var(--admin-heading)}
 .note{margin:8px 0 0;color:var(--admin-muted);font-size:10px}

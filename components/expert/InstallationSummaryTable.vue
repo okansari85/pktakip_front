@@ -122,17 +122,17 @@ const daysClass = (days: number | null) => days === null || days === undefined ?
 
 <style scoped>
 .table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse}th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--admin-row-border);font-size:12px;color:var(--admin-text);vertical-align:top}
-th{font-size:11px;font-weight:700;color:var(--admin-muted);background:var(--admin-soft);white-space:nowrap}
-td small{display:block;margin-top:3px;color:var(--admin-muted);font-size:11px}
+table{width:100%;border-collapse:collapse}th,td{padding:12px 16px;text-align:left;border-bottom:1px solid rgba(145,158,171,.2);font-size:13px;color:var(--admin-text);vertical-align:top}
+th{border-bottom:0;font-size:13px;font-weight:600;color:var(--admin-muted);background:rgba(145,158,171,.08);white-space:nowrap}
+td small{display:block;margin-top:3px;color:var(--admin-muted);font-size:12px}
 .title{display:inline-flex;align-items:center;gap:7px}.title strong{color:var(--admin-heading)}
 .chevron{font-size:10px;color:var(--admin-muted)}
-.count{padding:1px 7px;border-radius:999px;background:var(--admin-chip);color:var(--admin-muted);font-size:10px;font-weight:700;white-space:nowrap}
+.count{padding:1px 7px;border-radius:6px;background:var(--admin-chip);color:var(--admin-muted);font-size:11px;font-weight:700;white-space:nowrap}
 tr.group{cursor:pointer}tr.group:hover td{background:var(--admin-hover)}tr.group.open td{background:var(--admin-soft)}
 tr.child td{background:var(--admin-soft)}.child-name{display:block;padding-left:24px;color:var(--admin-heading);font-weight:600}
 .nowrap{white-space:nowrap}
 .ok-text{color:var(--admin-success-text);font-weight:700}.bad-text{color:var(--admin-danger-text);font-weight:700}.warn-text{color:var(--admin-warning-text);font-weight:700}.muted{color:var(--admin-muted)}
 .body-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--admin-chip);color:var(--admin-muted)}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;background:var(--admin-chip);color:var(--admin-muted)}
 .status-badge.uygun{background:var(--admin-success-bg);color:var(--admin-success-text)}.status-badge.uygun_degil{background:var(--admin-danger-bg);color:var(--admin-danger-text)}.status-badge.rapor_bekleniyor{background:var(--admin-warning-bg);color:var(--admin-warning-text)}
 </style>
