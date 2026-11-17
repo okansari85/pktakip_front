@@ -78,7 +78,7 @@ const emit = defineEmits<{
 const flowId = `org-chart-${Math.random().toString(36).slice(2, 8)}`
 const { getIntersectingNodes, fitView } = useVueFlow(flowId)
 // Kutular ölçüldükten sonra (ilk açılış ve her yeniden yerleşim) şema alana sığdırılır; çok büyütülmez.
-const fit = () => nextTick(() => fitView({ padding: 0.12, maxZoom: 1, duration: 150 }))
+const fit = () => nextTick(() => setTimeout(() => fitView({ padding: 0.12, maxZoom: 1, duration: 150 }), 60))
 
 const SIZE = { org: { width: 300, height: 58 }, loc: { width: 230, height: 54 } }
 const flowNodes = ref<Node[]>([])
@@ -167,16 +167,18 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-node-icon { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
 .chart-node.root .chart-node-icon { background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
 .chart-node-text { flex: 1; min-width: 0; display: grid; }
-.chart-node-text strong { overflow: hidden; color: var(--admin-heading); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.chart-node-text strong { display: -webkit-box; overflow: hidden; color: var(--admin-heading); font-size: 13px; font-weight: 700; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .chart-node-text small { color: var(--admin-muted); font-size: 11px; }
-.chart-node-actions { flex: none; display: flex; gap: 4px; }
+/* Ekleme düğmeleri yalnız fare üstündeyken ya da kutu seçiliyken: uzun birim adları kesilmesin. */
+.chart-node-actions { flex: none; display: none; gap: 4px; }
+.chart-node:hover .chart-node-actions, .chart-node.on .chart-node-actions, .chart-node:focus-within .chart-node-actions { display: flex; }
 .chart-add { height: 26px; display: inline-flex; align-items: center; gap: 3px; padding: 0 7px; border: 1px dashed rgba(145, 158, 171, .55); border-radius: 7px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .chart-add .pi { font-size: 9px; }
 .chart-add:hover, .chart-add:focus-visible { border-style: solid; border-color: var(--pk-accent); background: var(--admin-accent-soft); color: var(--pk-accent); }
 .chart-location { width: 230px; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); }
 .chart-location > i { color: var(--pk-success-dark); }
 .chart-location span { min-width: 0; display: grid; }
-.chart-location strong { overflow: hidden; font-size: 12.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.chart-location strong { display: -webkit-box; overflow: hidden; font-size: 12.5px; font-weight: 700; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .chart-location small { color: var(--pk-success-dark); font-size: 11px; }
 .chart-location:hover { box-shadow: 0 0 0 2px rgba(0, 171, 85, .35); }
 .chart-location.target { box-shadow: 0 0 0 3px var(--pk-success-main); }
