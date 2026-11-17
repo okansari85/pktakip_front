@@ -27,18 +27,17 @@
           <Handle type="target" :position="Position.Top" class="handle" />
           <div class="chart-node" :class="{ root: data.root, on: selectedKey === id }" :style="{ '--c': data.color.main, '--c-soft': data.color.soft }">
             <span class="chart-node-top">
-              <span class="chart-node-icon"><i :class="data.root ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
+              <span class="chart-node-icon"><component :is="data.root ? Building2 : Network" :size="18" :stroke-width="1.8" aria-hidden="true" /></span>
               <span class="chart-node-text"><strong>{{ data.name }}</strong><small>{{ data.subtitle }}</small></span>
             </span>
-            <!-- İşlemler kutunun altında (mockup): alt dal, lokasyon, düzenle, lokasyon listesi, diğer -->
+            <!-- İşlemler kutunun altında (mockup, Lucide ikonları): lokasyon ekle, düzenle, lokasyon listesi, diğer. Alt birim ekleme alttaki "+" ile. -->
             <span class="chart-node-actions nodrag">
-              <button v-if="canEdit && canBranch" v-tooltip.bottom="`${branchLabel} ekle`" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><i class="pi pi-sitemap" /></button>
-              <button v-if="canEdit" v-tooltip.bottom="'Lokasyon ekle'" type="button" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><i class="pi pi-map-marker" /></button>
-              <button v-if="canEdit" v-tooltip.bottom="'Düzenle'" type="button" :aria-label="`${data.name} düzenle`" @click.stop="emit('edit', data.nodeId)"><i class="pi pi-pencil" /></button>
-              <button v-if="data.count" v-tooltip.bottom="'Lokasyon listesi'" type="button" :aria-label="`${data.name} lokasyon listesi`" @click.stop="emit('open-list', data.nodeId)"><i class="pi pi-list" /></button>
-              <button v-tooltip.bottom="'Diğer işlemler'" type="button" :aria-label="`${data.name} diğer işlemler`" @click.stop="emit('select', id)"><i class="pi pi-ellipsis-v" /></button>
+              <button v-if="canEdit" v-tooltip.bottom="'Lokasyon ekle'" type="button" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><MapPinPlus :size="16" :stroke-width="1.8" /></button>
+              <button v-if="canEdit" v-tooltip.bottom="'Düzenle'" type="button" :aria-label="`${data.name} düzenle`" @click.stop="emit('edit', data.nodeId)"><PencilLine :size="16" :stroke-width="1.8" /></button>
+              <button v-if="data.count" v-tooltip.bottom="'Lokasyon listesi'" type="button" :aria-label="`${data.name} lokasyon listesi`" @click.stop="emit('open-list', data.nodeId)"><List :size="16" :stroke-width="1.8" /></button>
+              <button v-tooltip.bottom="'Diğer işlemler'" type="button" :aria-label="`${data.name} diğer işlemler`" @click.stop="emit('select', id)"><EllipsisVertical :size="16" :stroke-width="1.8" /></button>
             </span>
-            <button v-if="canEdit && canBranch" class="chart-plus nodrag" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><i class="pi pi-plus" /></button>
+            <button v-if="canEdit && canBranch" v-tooltip.bottom="`${branchLabel} ekle`" class="chart-plus nodrag" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><Plus :size="14" :stroke-width="2.4" /></button>
           </div>
           <span v-if="data.hasLocations" class="chart-area" aria-hidden="true" />
           <!-- Çok lokasyonlu dal: lokasyonlar tek tek çizilmez, özet kutu; tıklayınca liste sağ panelde açılır -->
@@ -65,6 +64,7 @@ import { VueFlow, Handle, Position, useVueFlow, type Node, type Edge, type NodeM
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import dagre from '@dagrejs/dagre'
+import { Building2, EllipsisVertical, List, MapPinPlus, Network, PencilLine, Plus } from 'lucide-vue-next'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'
@@ -247,12 +247,14 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-node-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .chart-node-text strong { display: -webkit-box; overflow: hidden; color: var(--admin-heading); font-size: 13.5px; font-weight: 700; line-height: 1.25; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .chart-node-text small { overflow: hidden; color: var(--admin-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-/* Alttaki boşluk "+" düğmesine: simgelerin üstüne binmesin */
-.chart-node-actions { display: flex; justify-content: space-around; padding: 4px 0 14px; border-top: 1px solid rgba(145, 158, 171, .2); }
-.chart-node-actions button { width: 30px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--admin-muted); font-size: 13px; cursor: pointer; }
+/* İşlem çubuğu: eşit aralıklı ince ikonlar; alttaki boşluk "+" düğmesine (simgelerin üstüne binmesin) */
+.chart-node-actions { display: flex; justify-content: space-evenly; align-items: center; padding: 5px 4px 15px; border-top: 1px solid rgba(145, 158, 171, .18); }
+.chart-node-actions button { width: 32px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #637381; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .chart-node-actions button:hover, .chart-node-actions button:focus-visible { background: var(--c-soft); color: var(--c); }
-.chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 24px; height: 24px; margin-left: -12px; display: grid; place-items: center; border: 0; border-radius: 7px; background: #212b36; color: #fff; font-size: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); }
+.chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 26px; height: 26px; margin-left: -13px; display: grid; place-items: center; border: 2px solid var(--admin-card); border-radius: 50%; background: #212b36; color: #fff; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); transition: background .15s ease, transform .15s ease; }
+.chart-plus:hover, .chart-plus:focus-visible { transform: scale(1.08); }
 .chart-plus:hover, .chart-plus:focus-visible { background: var(--c); }
+:global(.dark-theme) .chart-node-actions button { color: #919eab; }
 .chart-group.target .chart-node { box-shadow: 0 0 0 3px var(--pk-success-main), 0 8px 16px rgba(0, 171, 85, .25); }
 .chart-location { width: 230px; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--pk-success-lighter); color: var(--pk-success-darker); }
 .chart-location > i { color: var(--pk-success-dark); }
