@@ -249,9 +249,9 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .chart-node-text small { overflow: hidden; color: var(--admin-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 /* İşlem çubuğu: eşit aralıklı ince ikonlar; alttaki boşluk "+" düğmesine (simgelerin üstüne binmesin) */
 .chart-node-actions { display: flex; justify-content: space-evenly; align-items: center; padding: 5px 4px 15px; border-top: 1px solid rgba(145, 158, 171, .18); }
-.chart-node-actions button { width: 32px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #637381; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.chart-node-actions button { width: 32px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #637381; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .chart-node-actions button:hover, .chart-node-actions button:focus-visible { background: var(--c-soft); color: var(--c); }
-.chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 26px; height: 26px; margin-left: -13px; display: grid; place-items: center; border: 2px solid var(--admin-card); border-radius: 50%; background: #212b36; color: #fff; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); transition: background .15s ease, transform .15s ease; }
+.chart-plus { position: absolute; bottom: -13px; left: 50%; z-index: 2; width: 26px; height: 26px; margin-left: -13px; display: grid; place-items: center; padding: 0; border: 2px solid var(--admin-card); border-radius: 50%; background: #212b36; color: #fff; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 43, 54, .3); transition: background .15s ease, transform .15s ease; }
 .chart-plus:hover, .chart-plus:focus-visible { transform: scale(1.08); }
 .chart-plus:hover, .chart-plus:focus-visible { background: var(--c); }
 :global(.dark-theme) .chart-node-actions button { color: #919eab; }
