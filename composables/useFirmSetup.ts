@@ -9,7 +9,7 @@ export interface FirmNode { id: number | string; name: string; type?: string | n
 export interface FirmLocation { id: number | string; name: string; city?: string | null; district?: string | null; organization_id?: number | string | null }
 export interface FirmProgress { customerId?: number | string; rootId?: number | string }
 export interface WorkplaceProgress { locationId?: number | string; workplaceDone?: boolean }
-export interface WorkplaceRowDraft { name: string; company: string; sgk: string; hazard: string; naceCode?: string | null; activity?: string | null }
+export interface WorkplaceRowDraft { name: string; company: string; sgk: string; hazard: string; naceCode?: string | null; activity?: string | null; subFacilityId?: number | null }
 export interface LocationDraft { name: string; cityId: number | null; districtId: number | null; address: string; hazard: string; company: string; naceCode?: string | null; activity?: string | null }
 
 export const FIRM_KINDS: { id: FirmKind; type: CustomerType; title: string; text: string; icon: string; tone: string; nameLabel: string; placeholder: string; hasTree: boolean }[] = [
@@ -26,7 +26,7 @@ export const useFirmSetup = () => {
   const { get, post, patch } = useExpertApi()
   const { load: loadTypes, save: saveType } = useCustomerTypes()
   const { status: billing, load: loadBilling } = useBilling()
-  const { setName, addAdditional } = useWorkplaceNames()
+  const { setName } = useWorkplaceNames()
 
   const listFirms = async (): Promise<Firm[]> => {
     const [customers, counts, types] = await Promise.all([
@@ -95,8 +95,8 @@ export const useFirmSetup = () => {
   const addWorkplace = async (customerId: number | string, nodeId: number | string, draft: LocationDraft, type: CustomerType | null, progress: WorkplaceProgress) => {
     const locationName = draft.name.trim()
     if (!progress.locationId) progress.locationId = await addLocation(customerId, nodeId, draft)
-    // Kamu kurumunda her birimin kartı lokasyonun adıyla açılır (mevcut sihirbazla aynı kural).
-    const companyName = (type === 'public' ? locationName : draft.company).trim()
+    // Firma kartı: verilen firma (KSY-SIS'teki gibi kamuda da kurumun kendisi); boşsa lokasyonun adı.
+    const companyName = (draft.company || locationName).trim()
     const companies = await get<MyCompany[]>('/my-companies')
     const key = normalizeCompanyName(companyName)
     const existing = companies.find(c => normalizeCompanyName(c.name) === key)
@@ -115,31 +115,18 @@ export const useFirmSetup = () => {
     return progress.locationId
   }
 
-  // Firma sayfasındaki satır içi ekleme: hazır bir lokasyona tek işyeri. Firma bu lokasyonda ilk kez geçiyorsa mevcut uçla
-  // bağlanır (ad varsa işyeri adı olarak kaydedilir); zaten varsa "ek işyeri" ucuyla açılır ve ad zorunludur
-  // (ör. Beylikdüzü'nde Arçelik A.Ş.'nin "Üretim Tesisi" ve "Antrepo" işyerleri). Mevcut addWorkplace değişmez.
-  const addWorkplaceRow = async (customerId: number | string, locationId: number | string, row: WorkplaceRowDraft, type: CustomerType | null, companiesHere: string[]) => {
+  // Firma sayfasındaki satır içi ekleme (KSY-SIS işyeri açılışı): firma ana firmanın Firmalar listesinden gelir; aynı firmanın
+  // aynı lokasyondaki ikinci işyeri ayrı alt tesiste açılır (backend kontrol eder). İşyeri adı isteğe bağlı bir etikettir.
+  const addWorkplaceRow = async (customerId: number | string, locationId: number | string, row: WorkplaceRowDraft, type: CustomerType | null) => {
     const companyName = row.company.trim()
     const name = row.name.trim()
-    const sgk = row.sgk.trim() || null
     const key = normalizeCompanyName(companyName)
-    const already = companiesHere.some(n => normalizeCompanyName(n) === key)
-    if (already && !name) throw new Error(`${companyName} bu lokasyonda zaten var. İkinci işyeri için bir ad yazın (ör. Antrepo).`)
     const companies = await get<MyCompany[]>('/my-companies')
     const businessEntityId = companies.find(c => normalizeCompanyName(c.name) === key)?.business_entity_id
       ?? (await post<MyCompany>('/my-companies', { name: companyName, company_type: type === 'individual' ? 'individual' : 'corporate' })).business_entity_id
-    const details = { hazard_class: row.hazard, nace_code: row.naceCode ?? null, activity: row.activity ?? null, sgk_workplace_number: sgk }
-    if (already) {
-      await addAdditional({ location_id: Number(locationId), business_entity_id: businessEntityId, name, ...details })
-    } else {
-      const path = `/customers/${customerId}/locations/${locationId}/companies`
-      await post(path, { business_entity_id: businessEntityId, ...details })
-      if (name && normalizeCompanyName(name) !== key) {
-        const items = await get<{ id: number; business_entity_id: number }[]>(path).catch(() => [])
-        const id = items.filter(i => i.business_entity_id === businessEntityId).sort((a, b) => b.id - a.id)[0]?.id
-        if (id) await setName(id, name).catch(() => {})
-      }
-    }
+    const path = `/customers/${customerId}/locations/${locationId}/companies`
+    const created = await post<{ id: number }>(path, { business_entity_id: businessEntityId, hazard_class: row.hazard, nace_code: row.naceCode ?? null, activity: row.activity ?? null, sgk_workplace_number: row.sgk.trim() || null, sub_facility_id: row.subFacilityId ?? null })
+    if (name && normalizeCompanyName(name) !== key && created?.id) await setName(created.id, name).catch(() => {})
     loadBilling()
   }
 

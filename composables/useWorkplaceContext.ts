@@ -9,7 +9,7 @@ export interface WorkplaceContext {
   company_name?: string
 }
 
-export interface Workplace { id: number; company_name: string; customer_name?: string | null; location_id: number; location_name: string; organization_name?: string | null; nace_code?: string | null; hazard_class: string; sgk_workplace_number?: string | null }
+export interface Workplace { id: number; company_name: string; customer_id?: number | null; customer_name?: string | null; sub_facility_id?: number | null; sub_facility_name?: string | null; location_id: number; location_name: string; organization_name?: string | null; nace_code?: string | null; hazard_class: string; sgk_workplace_number?: string | null }
 export interface WorkplaceGroup { location_id: number; location_name: string; customer_name?: string | null; organization_name?: string | null; items: Workplace[] }
 
 const STORAGE_KEY = 'pktakip_workplace_context'

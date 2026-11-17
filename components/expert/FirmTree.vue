@@ -33,7 +33,7 @@
       <div v-if="!embedded && nodes.length" class="overview">
         <section class="card schema-card">
           <header class="schema-head">
-            <div><h2>Organizasyon şeması</h2><small>{{ orgCount }} {{ firm.type === 'public' ? 'birim' : 'dal' }} · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <div><h2>Organizasyon şeması</h2><small>{{ firms.length }} firma · {{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
           </header>
           <div class="schema">
             <div v-for="item in schemaRows" :key="item.key" class="schema-row" :class="{ child: item.depth }" :style="{ '--depth': item.depth }">
@@ -60,9 +60,22 @@
             <div><h2>{{ focusLocation.name }}</h2><small v-if="focusLocation.city">{{ focusLocation.city }}<template v-if="focusLocation.district"> · {{ focusLocation.district }}</template></small></div>
           </header>
           <ul v-if="workplacesOf(focusLocation).length" class="location-workplaces">
-            <li v-for="w in workplacesOf(focusLocation)" :key="w.id"><span>{{ nameOf(w.id) || w.company_name }}</span><span class="hazard-badge" :class="hazardClassKey(w.hazard_class)">{{ w.hazard_class }}</span></li>
+            <li v-for="w in workplacesOf(focusLocation)" :key="w.id"><span>{{ nameOf(w.id) || w.company_name }}<small v-if="w.sub_facility_name"> · {{ w.sub_facility_name }}</small></span><span class="hazard-badge" :class="hazardClassKey(w.hazard_class)">{{ w.hazard_class }}</span></li>
           </ul>
           <p v-else class="muted location-empty">Bu lokasyonda henüz işyeri yok.</p>
+          <!-- Alt tesisler (KSY-SIS): bina, hangar…; aynı firmanın ikinci işyeri ayrı alt tesiste açılır -->
+          <div class="subs">
+            <strong>Alt tesisler</strong>
+            <div class="sub-chips">
+              <span v-for="sub in subsOf(focusLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="canEdit && !sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(focusLocation, sub)"><i class="pi pi-times" /></button></span>
+              <span v-if="!subsOf(focusLocation).length" class="muted">Yok</span>
+            </div>
+            <form v-if="canEdit" class="sub-add" @submit.prevent="addSub(focusLocation)">
+              <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
+              <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
+            </form>
+            <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+          </div>
           <button v-if="canEdit" class="primary-button go-button" type="button" @click="startWorkplace(focusLocation)"><i class="pi pi-plus" aria-hidden="true" /> İşyeri aç</button>
           <div class="location-links">
             <!-- Ekipman / tesisat sayfası ve Lokasyona git: üstteki seçim bu lokasyon olur (işyeri olmayan lokasyon seçilemez) -->
@@ -88,7 +101,8 @@
         <div v-if="!embedded" class="tabs-row">
           <div class="tabs" role="tablist">
             <button type="button" role="tab" :aria-selected="treeView === 'yer'" :class="{ active: treeView === 'yer' }" @click="treeView = 'yer'"><i class="pi pi-map-marker" aria-hidden="true" /> Lokasyonlar</button>
-            <button v-if="canBranch" type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-building" aria-hidden="true" /> İşyerleri</button>
+            <button v-if="canBranch" type="button" role="tab" :aria-selected="treeView === 'firma'" :class="{ active: treeView === 'firma' }" @click="treeView = 'firma'"><i class="pi pi-briefcase" aria-hidden="true" /> İşyerleri</button>
+            <button type="button" role="tab" :aria-selected="treeView === 'firmalar'" :class="{ active: treeView === 'firmalar' }" @click="treeView = 'firmalar'"><i class="pi pi-building" aria-hidden="true" /> Firmalar <small class="tab-count">{{ firms.length }}</small></button>
           </div>
           <button v-if="canEdit" class="primary-button" type="button" @click="addLocationFromTab"><i class="pi pi-plus" aria-hidden="true" /> Lokasyon ekle</button>
         </div>
@@ -144,7 +158,7 @@
                   <i class="pi pi-briefcase k-workplace" />
                   <span class="row-text">
                     <strong>{{ nameOf(item.workplace.id) || item.workplace.company_name }}</strong>
-                    <small>SGK: {{ item.workplace.sgk_workplace_number || 'Girilmedi' }}</small>
+                    <small><template v-if="item.workplace.sub_facility_name">{{ item.workplace.sub_facility_name }} · </template>SGK: {{ item.workplace.sgk_workplace_number || 'Girilmedi' }}</small>
                   </span>
                   <span v-if="showCompanyColumn" class="company-chip">{{ item.workplace.company_name }}</span>
                   <span class="hazard-badge" :class="hazardClassKey(item.workplace.hazard_class)">{{ item.workplace.hazard_class }}</span>
@@ -232,23 +246,26 @@
                 <div class="add-row-head">
                   <h3>{{ item.location.name }} içine işyeri ekle</h3>
                   <div class="head-end">
-                    <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir işyeri)' }}</button>
+                    <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
                     <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><i class="pi pi-times" /></button>
                   </div>
                 </div>
                 <p v-if="rowNotice" class="row-notice" role="status"><i class="pi pi-check-circle" /> {{ rowNotice }}</p>
                 <div class="add-grid">
-                  <label v-if="!bulk" class="field">İşyeri adı <small v-if="!nameRequired">(isteğe bağlı)</small><span v-else class="req">*</span>
-                    <input v-model="row.name" type="text" :placeholder="nameRequired ? 'Örn. Antrepo' : 'Örn. Antrepo · boşsa firma adı görünür'" />
-                  </label>
-                  <label v-if="firm.type === 'corporate' && companyOptions.length" class="field">Firma <span class="req">*</span>
-                    <select v-model="companyChoice">
+                  <label v-if="firm.type !== 'individual'" class="field">Firma <span class="req">*</span>
+                    <select v-model="companyChoice" :disabled="!companyOptions.length">
                       <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
-                      <option value="__new">+ Yeni firma ekle…</option>
+                    </select>
+                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <button class="link-button" type="button" @click="treeView = 'firmalar'">Firmalar sekmesinden ekleyin</button></small>
+                  </label>
+                  <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
+                    <select v-model="row.subFacilityId">
+                      <option :value="null">Lokasyonun geneli</option>
+                      <option v-for="sub in subsOf(item.location)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
                     </select>
                   </label>
-                  <label v-if="firm.type === 'corporate' && companyChoice === '__new'" class="field">Yeni firmanın ünvanı <span class="req">*</span>
-                    <input v-model="newCompany" type="text" placeholder="Örn. ABC Gıda A.Ş." />
+                  <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
+                    <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
                   </label>
                   <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
                     <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
@@ -270,18 +287,33 @@
                     <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
                   </ul>
                 </div>
-                <label v-if="bulk" class="field">Her satıra bir işyeri adı yazın (Excel'den yapıştırabilirsiniz)
+                <label v-if="bulk" class="field">Her satıra bir alt tesis yazın; seçili firma her birinde ayrı işyeri açar (Excel'den yapıştırabilirsiniz)
                   <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
                 </label>
                 <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
                 <div class="add-actions">
                   <button class="primary-button" type="submit" :disabled="rowSaving || limitFull"><i class="pi pi-plus" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini ekle' : 'Ekle' }}</button>
-                  <small>{{ firm.type === 'corporate' ? 'Firma seçimi bir sonraki kayıt için hatırlanır.' : 'Eklenen işyeri listeye hemen düşer.' }}</small>
+                  <small>Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
                 </div>
               </form>
             </li>
           </template>
         </ul>
+
+        <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. -->
+        <div v-else-if="treeView === 'firmalar'" class="firms-tab">
+          <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
+            <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
+            <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><i class="pi pi-plus" /> {{ firmSaving ? 'Ekleniyor...' : 'Firma ekle' }}</button>
+          </form>
+          <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
+          <p v-if="!firms.length" class="empty">Henüz firma yok. Ticari unvanı yazıp ekleyin; işyeri açarken bu listeden seçilir.</p>
+          <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
+            <span class="firm-avatar"><i class="pi pi-building" aria-hidden="true" /></span>
+            <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
+            <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><i class="pi pi-times" /></button>
+          </div>
+        </div>
 
         <!-- Firmaya göre: aynı firmanın işyerleri; satır, ağaçta o lokasyonu açar. -->
         <template v-else>
@@ -403,7 +435,8 @@ const pathTo = (list: FirmNode[], id: number | string): FirmNode[] => {
 }
 const canBranch = computed(() => firm.value?.type === 'corporate' || firm.value?.type === 'public')
 const hasBranches = computed(() => nodes.value.some(n => n.children?.length))
-const workplacesOf = (location: FirmLocation) => workplaces.value.filter(w => String(w.location_id) === String(location.id))
+// KSY-SIS: ortak lokasyonda yalnız bu ana firmanın işyerleri (sahibi boş eski kayıtlar da görünür).
+const workplacesOf = (location: FirmLocation) => workplaces.value.filter(w => String(w.location_id) === String(location.id) && (w.customer_id == null || String(w.customer_id) === String(props.customerId)))
 const firmsOf = (location: FirmLocation) => workplacesOf(location).map(w => w.company_name)
 
 // İşyeri formu açık olan lokasyon; düğüm seçilince kapanır. Lokasyon silinirse bulunamaz, form da kapanmış olur.
@@ -530,7 +563,7 @@ function revealLocation(location: FirmLocation) {
 }
 
 // "Firmaya göre": aynı firmanın bu müşterideki bütün işyerleri, lokasyonlarıyla.
-const treeView = ref<'yer' | 'firma'>('yer')
+const treeView = ref<'yer' | 'firma' | 'firmalar'>('yer')
 const byCompany = computed(() => {
   const map = new Map<string, { company: string; items: { id: number; title: string; location: FirmLocation }[] }>()
   for (const location of locations.value) {
@@ -557,6 +590,7 @@ async function load() {
     if (!firm.value) { error.value = 'Firma bulunamadı.'; return }
     nodes.value = structure.nodes
     locations.value = structure.locations
+    loadFirms()
     nodeLabels.value = labels || {}
     // Üstteki Organizasyon kutusu da güncel kalsın; hatasını kendi yutar.
     loadOrganizationScope(true)
@@ -644,6 +678,62 @@ async function linkCandidate(candidate: { id: number }) {
   } finally { saving.value = false }
 }
 
+// --- Ana firmanın firmaları (KSY-SIS): Firmalar sekmesi ve işyeri formundaki seçenekler ---
+type CustomerFirm = { business_entity_id: number; name: string; company_type: string | null; workplaces_count: number }
+const firms = ref<CustomerFirm[]>([])
+const newFirmName = ref('')
+const firmSaving = ref(false)
+const firmError = ref('')
+const loadFirms = async () => { firms.value = await get<CustomerFirm[]>(`/customers/${props.customerId}/firms`).catch(() => firms.value) }
+async function addFirm() {
+  if (!newFirmName.value.trim() || firmSaving.value) return
+  firmSaving.value = true
+  firmError.value = ''
+  try {
+    await post(`/customers/${props.customerId}/firms`, { name: newFirmName.value.trim(), company_type: firm.value?.type === 'individual' ? 'individual' : 'corporate' })
+    newFirmName.value = ''
+    await loadFirms()
+  } catch (e: any) { firmError.value = errorMessage(e, 'Firma eklenemedi.') }
+  finally { firmSaving.value = false }
+}
+async function unlinkFirm(item: CustomerFirm) {
+  firmError.value = ''
+  try { await del(`/customers/${props.customerId}/firms/${item.business_entity_id}`); await loadFirms() }
+  catch (e: any) { firmError.value = errorMessage(e, 'Firma çıkarılamadı.') }
+}
+
+// --- Alt tesisler (KSY-SIS): lokasyonun bölümleri; lokasyon başına bir kez yüklenir ---
+type SubFacility = { id: number; name: string; workplaces_count: number }
+const subFacilities = ref<Record<string, SubFacility[]>>({})
+const newSubName = ref('')
+const subSaving = ref(false)
+const subError = ref('')
+const subsOf = (location: FirmLocation) => subFacilities.value[String(location.id)] || []
+const loadSubs = async (locationId: number | string) => {
+  try { subFacilities.value = { ...subFacilities.value, [String(locationId)]: await get<SubFacility[]>(`/locations/${locationId}/sub-facilities`) } }
+  catch { /* alt tesis listesi alınamazsa boş görünür */ }
+}
+async function ensureSub(location: FirmLocation, name: string) {
+  const found = subsOf(location).find(sub => sub.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'))
+  if (found) return found.id
+  const created = await post<SubFacility>(`/locations/${location.id}/sub-facilities`, { name })
+  subFacilities.value = { ...subFacilities.value, [String(location.id)]: [...subsOf(location), created] }
+  return created.id
+}
+async function addSub(location: FirmLocation) {
+  if (!newSubName.value.trim() || subSaving.value) return
+  subSaving.value = true
+  subError.value = ''
+  try { await ensureSub(location, newSubName.value.trim()); newSubName.value = '' }
+  catch (e: any) { subError.value = errorMessage(e, 'Alt tesis eklenemedi.') }
+  finally { subSaving.value = false }
+}
+async function removeSub(location: FirmLocation, sub: SubFacility) {
+  subError.value = ''
+  try { await del(`/locations/${location.id}/sub-facilities/${sub.id}`); await loadSubs(location.id) }
+  catch (e: any) { subError.value = errorMessage(e, 'Alt tesis silinemedi.') }
+}
+
 // --- Lokasyona işyeri: satır içi form (tek ya da toplu) ---
 // Firma (tüzel kişi) listeden seçilir ya da yazılır; bağ kayıtla birlikte kurulur. Şahıs işletmesinde firma kendisidir,
 // kamuda kart lokasyonun adıyla açılır (mevcut kural). Tehlike sınıfı için varsayılan verilmez: her kayıtta seçilir.
@@ -652,23 +742,13 @@ const nodeNames = computed(() => flatten(nodes.value).map(n => n.name))
 const showCompanyColumn = computed(() => firm.value?.type === 'corporate')
 // Seçenekler yalnız gerçek firmalar: bu lokasyondakiler ve üstteki ilk organizasyonla onun alt dallarındaki lokasyonlardakiler (aynı ad bir kez).
 // Yukarı doğru gidilmez: alttaki lokasyonda üst grubun firması görünmez. Firma, işyeri açıldığı lokasyon üzerinden o organizasyona bağlanır. Tek şirketlik yapıda firmanın kendisi.
+// Firma seçenekleri: ana firmanın Firmalar listesi (KSY-SIS). Liste boş ve tek şirketlik yapıysa firmanın kendisi.
 const companyOptions = computed(() => {
-  const seen = new Set<string>()
-  const out: string[] = []
-  const push = (name?: string | null) => {
-    const key = name ? normalizeCompanyName(name) : ''
-    if (key && !seen.has(key)) { seen.add(key); out.push(name!.trim()) }
-  }
-  if (!hasBranches.value && firm.value) push(firm.value.name)
-  const location = selectedLocation.value
-  if (location) {
-    workplacesOf(location).forEach(w => push(w.company_name))
-    const owner = flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))
-    if (owner) locationsUnder(owner).forEach(l => workplacesOf(l).forEach(w => push(w.company_name)))
-  }
-  return out
+  const names = firms.value.map(f => f.name)
+  if (!names.length && !hasBranches.value && firm.value) names.push(firm.value.name)
+  return names
 })
-const row = reactive<WorkplaceRowDraft>({ name: '', company: '', sgk: '', hazard: '', naceCode: null, activity: null })
+const row = reactive<WorkplaceRowDraft>({ name: '', company: '', sgk: '', hazard: '', naceCode: null, activity: null, subFacilityId: null })
 const companyChoice = ref('')
 const newCompany = ref('')
 const lastCompany = ref('')
@@ -681,29 +761,20 @@ const freshIds = ref<number[]>([])
 const companyFor = (location: FirmLocation) => {
   const type = firm.value?.type
   if (type === 'individual') return firm.value!.name
-  if (type === 'public') return location.name
-  return companyChoice.value === '__new' ? newCompany.value.trim() : companyChoice.value
+  return companyChoice.value
 }
-// Aynı firma bu lokasyonda zaten varsa ikinci işyeri "ek işyeri" olur ve adı zorunludur.
-const nameRequired = computed(() => {
-  if (!selectedLocation.value || bulk.value) return false
-  const key = normalizeCompanyName(companyFor(selectedLocation.value) || '')
-  return !!key && firmsOf(selectedLocation.value).some(n => normalizeCompanyName(n) === key)
-})
 function resetRow(keepNothing = false) {
-  Object.assign(row, { name: '', sgk: '', hazard: '', naceCode: null, activity: null })
+  Object.assign(row, { name: '', sgk: '', hazard: '', naceCode: null, activity: null, subFacilityId: null })
   newCompany.value = ''
   bulkText.value = ''
   rowError.value = ''
   naceOpen.value = false
   naceQuery.value = ''
   naceResults.value = []
-  if (keepNothing || !companyChoice.value || companyChoice.value === '__new') {
-    // Son seçilen firma öne gelir; tek şirkette firmanın kendisi; hiç yoksa yeni firma yazılır.
+  if (keepNothing || !companyOptions.value.includes(companyChoice.value)) {
+    // Son seçilen firma öne gelir; yoksa listenin ilki.
     const options = companyOptions.value
-    companyChoice.value = options.includes(lastCompany.value) ? lastCompany.value
-      : !hasBranches.value && firm.value ? firm.value.name
-      : options[0] ?? '__new'
+    companyChoice.value = options.includes(lastCompany.value) ? lastCompany.value : options[0] ?? ''
   }
   limitFull.value = false
   workplaceLimitMessage().then((message) => { limitFull.value = !!message; if (message) rowError.value = message }).catch(() => {})
@@ -716,19 +787,19 @@ async function saveRow() {
   const company = companyFor(location)
   const names = bulk.value ? bulkText.value.split('\n').map(s => s.trim()).filter(Boolean) : [row.name.trim()]
   rowError.value = ''
-  if (!company) { rowError.value = 'Firmanın adını yazın.'; return }
-  if (bulk.value && !names.length) { rowError.value = 'En az bir işyeri adı yazın.'; return }
+  if (!company) { rowError.value = 'Firma seçin (Firmalar sekmesinden ekleyebilirsiniz).'; return }
+  if (bulk.value && !names.length) { rowError.value = 'En az bir alt tesis yazın.'; return }
   if (!row.hazard) { rowError.value = 'Tehlike sınıfını seçin.'; return }
   rowSaving.value = true
   const before = new Set(workplacesOf(location).map(w => w.id))
-  const here = firmsOf(location)
   let done = 0
   try {
     const limit = await workplaceLimitMessage()
     if (limit) { rowError.value = limit; limitFull.value = true; return }
+    // Toplu: her satır bir alt tesis (yoksa açılır), seçili firma her birinde ayrı işyeri açar.
     for (const name of names) {
-      await addWorkplaceRow(firm.value.id, location.id, { ...row, name, company, sgk: bulk.value ? '' : row.sgk }, firm.value.type, here)
-      here.push(company)
+      const subFacilityId = bulk.value ? await ensureSub(location, name) : row.subFacilityId
+      await addWorkplaceRow(firm.value.id, location.id, { ...row, name: bulk.value ? '' : name, company, sgk: bulk.value ? '' : row.sgk, subFacilityId }, firm.value.type)
       done++
     }
   } catch (e: any) {
@@ -738,8 +809,10 @@ async function saveRow() {
       await loadWorkplaces(true).catch(() => {})
       freshIds.value = workplacesOf(location).map(w => w.id).filter(id => !before.has(id))
       const label = names.length === 1 ? (names[0] || company) : `${done} işyeri`
-      rowNotice.value = firm.value!.type === 'corporate' ? `${label} eklendi · ${company} adına` : `${label} eklendi`
-      if (firm.value!.type === 'corporate') { lastCompany.value = company; companyChoice.value = company }
+      rowNotice.value = firm.value!.type !== 'individual' ? `${label} eklendi · ${company} adına` : `${label} eklendi`
+      if (firm.value!.type !== 'individual') { lastCompany.value = company; companyChoice.value = company }
+      loadFirms()
+      loadSubs(location.id)
       if (!rowError.value) { resetRow(); focusForm() }
       else bulkText.value = names.slice(done).join('\n')
     }
@@ -890,6 +963,8 @@ const focusLocation = computed(() => locations.value.find(l => String(l.id) === 
 // Lokasyonun ekipman (aktif) ve tesisat sayısı: Durum raporu ucundan, lokasyon başına bir kez.
 const locationCounts = ref<Record<string, { equipment: number; installations: number }>>({})
 const focusCounts = computed(() => focusLocation.value ? locationCounts.value[String(focusLocation.value.id)] || null : null)
+// Seçili lokasyonun (kart) ve işyeri formu açık lokasyonun alt tesisleri
+watch(() => [focusLocation.value?.id, selectedLocationId.value], ([a, b]) => { for (const id of [a, b]) if (id != null && !subFacilities.value[String(id)]) loadSubs(id) })
 watch(() => props.embedded ? null : focusLocation.value?.id, async (id) => {
   if (id == null || locationCounts.value[String(id)]) return
   try {
@@ -1110,6 +1185,23 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-text { display: grid; }
 .count-text strong { font-size: 18px; font-weight: 700; line-height: 1.1; }
 .count-text small { color: var(--admin-muted); font-size: 12px; }
+/* Alt tesisler (lokasyon kartı) */
+.subs { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed rgba(145, 158, 171, .24); }
+.subs > strong { color: var(--admin-heading); font-size: 13px; }
+.sub-chips { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; }
+.sub-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px; background: var(--pk-violet-lighter); color: var(--pk-violet-dark); font-weight: 600; }
+.sub-chip button { border: 0; background: none; color: inherit; cursor: pointer; padding: 0; font-size: 10px; }
+.sub-add { display: flex; gap: 8px; }
+.sub-add input, .firm-add input { flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
+/* Firmalar sekmesi */
+.firms-tab { display: grid; gap: 10px; }
+.firm-add { display: flex; gap: 10px; margin-bottom: 6px; }
+.firm-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-top: 1px dashed rgba(145, 158, 171, .24); }
+.firm-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
+.firm-text { flex: 1; display: grid; min-width: 0; }
+.firm-text strong { color: var(--admin-heading); font-size: 14px; }
+.firm-text small { color: var(--admin-muted); font-size: 12px; }
+.tab-count { margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(145, 158, 171, .16); font-size: 11px; font-weight: 700; }
 /* Lokasyon formunda kayıtlı lokasyonlar */
 .candidates { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--pk-info-lighter); color: var(--pk-info-darker); }
 .candidates p { margin: 0; font-size: 13px; font-weight: 600; }
