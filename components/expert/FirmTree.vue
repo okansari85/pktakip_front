@@ -1162,7 +1162,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .page-head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
 .page-head .lead { margin: 6px 0 0; color: var(--admin-muted); font-size: 15px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
-.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-bottom: 24px; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto 1fr; gap: 24px; align-items: start; margin-bottom: 24px; }
 /* Solda şema + altında Firmalar, sağda seçili lokasyon kartı (iki satır boyunca) */
 .overview > .schema-card { grid-column: 1; grid-row: 1; }
 .overview > .firms-card { grid-column: 1; grid-row: 2; }
