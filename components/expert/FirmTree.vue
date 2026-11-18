@@ -233,11 +233,12 @@
         <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplaceRows.length }} işyeri</small></div></header>
         <div class="wp-table-wrap">
           <table class="wp-table">
-            <thead><tr><th>{{ firm.type === 'public' ? 'Birim' : 'Firma' }}</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+            <!-- Kamuda firma sütunu yok: her satırda kurumun adı yazıyordu (kullanıcı 19 Kas 2026); işyeri adı ve SGK lokasyonun altında -->
+            <thead><tr><th v-if="firm.type !== 'public'">Firma</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
             <tbody>
               <tr v-for="entry in workplaceRows" :key="entry.workplace.id" tabindex="0" @click="revealLocation(entry.location)" @keydown.enter="revealLocation(entry.location)">
-                <td><span class="wp-firm"><span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span><span><strong>{{ entry.workplace.company_name }}</strong><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></span></span></td>
-                <td><strong>{{ entry.location.name }}</strong><small>{{ entry.location.city || '—' }} / {{ entry.location.district || '—' }}</small></td>
+                <td v-if="firm.type !== 'public'"><span class="wp-firm"><span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span><span><strong>{{ entry.workplace.company_name }}</strong><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></span></span></td>
+                <td><strong>{{ entry.location.name }}</strong><small>{{ entry.location.city || '—' }} / {{ entry.location.district || '—' }}</small><template v-if="firm.type === 'public'"><small v-if="nameOf(entry.workplace.id)">{{ nameOf(entry.workplace.id) }}</small><small v-if="entry.workplace.sgk_workplace_number">SGK {{ entry.workplace.sgk_workplace_number }}</small></template></td>
                 <td :class="{ muted: !entry.workplace.sub_facility_name }">{{ entry.workplace.sub_facility_name || '—' }}</td>
                 <td><span class="hazard-badge" :class="hazardClassKey(entry.workplace.hazard_class)">{{ entry.workplace.hazard_class }}</span></td>
                 <td class="end" @click.stop>
@@ -249,7 +250,7 @@
                   </span>
                 </td>
               </tr>
-              <tr v-if="!workplaceRows.length"><td colspan="5" class="empty">Henüz işyeri yok.</td></tr>
+              <tr v-if="!workplaceRows.length"><td :colspan="firm.type === 'public' ? 4 : 5" class="empty">Henüz işyeri yok.</td></tr>
             </tbody>
           </table>
         </div>
