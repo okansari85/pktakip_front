@@ -31,12 +31,10 @@
               <span class="chart-node-text"><strong>{{ data.name }}</strong><small>{{ data.subtitle }}</small></span>
             </span>
             <!-- İşlemler kutunun altında (mockup, Lucide ikonları): lokasyon ekle, düzenle, lokasyon listesi, sil. Alt birim ekleme alttaki "+" ile. -->
-            <span v-if="canEdit || data.count || data.hasChildren" class="chart-node-actions nodrag">
+            <span v-if="canEdit || data.count" class="chart-node-actions nodrag">
               <button v-if="canEdit" v-tooltip.bottom="'Lokasyon ekle'" type="button" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><MapPinPlus :size="16" :stroke-width="1.8" /></button>
               <button v-if="canEdit" v-tooltip.bottom="'Düzenle'" type="button" :aria-label="`${data.name} düzenle`" @click.stop="emit('edit', data.nodeId)"><PencilLine :size="16" :stroke-width="1.8" /></button>
               <button v-if="data.count" v-tooltip.bottom="'Lokasyon listesi'" type="button" :aria-label="`${data.name} lokasyon listesi`" @click.stop="emit('open-list', data.nodeId)"><List :size="16" :stroke-width="1.8" /></button>
-              <!-- Alt birimleri aç / kapat yalnız büyüteçle (kutuya tıklamak kapatmaz, kullanıcı 18 Kas 2026) -->
-              <button v-if="data.hasChildren" v-tooltip.bottom="data.collapsed ? 'Altını göster' : 'Altını gizle'" type="button" :aria-expanded="!data.collapsed" :aria-label="`${data.name} altını ${data.collapsed ? 'göster' : 'gizle'}`" @click.stop="toggle(id)"><component :is="data.collapsed ? ZoomIn : ZoomOut" :size="16" :stroke-width="1.8" /></button>
               <button v-if="canEdit" v-tooltip.bottom="'Sil'" type="button" class="danger" :aria-label="`${data.name} sil`" @click.stop="emit('remove', data.nodeId)"><Trash2 :size="16" :stroke-width="1.8" /></button>
             </span>
             <button v-if="canEdit && canBranch" v-tooltip.bottom="`${branchLabel} ekle`" class="chart-plus nodrag" type="button" :aria-label="`${data.name} altına ${branchLabel.toLocaleLowerCase('tr-TR')} ekle`" @click.stop="emit('add-branch', data.nodeId)"><Plus :size="14" :stroke-width="2.4" /></button>
@@ -66,7 +64,7 @@ import { VueFlow, Handle, Position, useVueFlow, type Node, type Edge, type NodeM
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import dagre from '@dagrejs/dagre'
-import { Building2, ChevronRight, List, MapPin, MapPinPlus, Move, Network, PencilLine, Plus, Trash2, ZoomIn, ZoomOut } from 'lucide-vue-next'
+import { Building2, ChevronRight, List, MapPin, MapPinPlus, Move, Network, PencilLine, Plus, Trash2 } from 'lucide-vue-next'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import type { FirmLocation, FirmNode } from '~/composables/useFirmSetup'
@@ -207,7 +205,6 @@ function layout() {
       draggable: props.canEdit && !!group.parent,
       data: { nodeId: group.node.id, name: group.node.name, label: props.labels[String(group.node.id)] || '', root: !group.parent, hasLocations: group.locs.length > 0, summary: group.summary, count: group.count, color: group.color,
         collapsed: !!group.node.children?.length && !expanded.value.has(group.id),
-        hasChildren: !!group.node.children?.length,
         subtitle: [group.parent ? branchLabel.value : 'Ana yapı', group.node.children?.length ? `${group.node.children.length} alt ${branchLabel.value.toLocaleLowerCase('tr-TR')}` : '', group.count ? `${group.count} lokasyon` : '', props.labels[String(group.node.id)] || ''].filter(Boolean).join(' · ') }
     })
     group.locs.forEach((location, i) => {
@@ -227,6 +224,7 @@ watch(() => [props.nodes, props.locations, props.counts, props.labels, props.can
 
 const onNodeClick = ({ node }: NodeMouseEvent) => {
   emit('select', node.id)
+  if (node.type === 'org' && childrenOf(node.id).length) toggle(node.id)
 }
 
 // --- Sürükle bırak: bırakılan alanın dalı hedeftir; geçersizse kutu yerine döner. ---
