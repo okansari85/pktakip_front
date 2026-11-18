@@ -30,12 +30,14 @@
 
       <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
            paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
-      <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode }">
+      <!-- Şema penceresi (KSY-SIS'teki büyük harita): aynı şema ve yan panel ekranın ortasında açılır, düzenleme içinde yapılır; yalnız X kapatır -->
+      <div v-if="chartPopup" class="chart-popup-backdrop" aria-hidden="true" />
+      <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode && !chartPopup, 'chart-popup': chartPopup }" :role="chartPopup ? 'dialog' : undefined" :aria-modal="chartPopup ? 'true' : undefined" :aria-label="chartPopup ? `${topLabel} şeması` : undefined">
         <div class="main-col">
         <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
-        <section v-if="listNode" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
+        <section v-if="listNode && !chartPopup" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
           <!-- Şemanın küçük hâli (solda, simgenin yerinde): bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
-          <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /></button>
+          <button class="mini-tree-button" type="button" title="Şemayı büyüt" aria-label="Şemayı büyüt" @click="chartPopup = true"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /><span class="mini-tree-zoom" aria-hidden="true"><ZoomIn :size="14" :stroke-width="2" /></span></button>
           <div>
             <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><span>{{ listNode.name }}</span></nav>
             <h2>{{ listNode.name }}</h2>
@@ -44,11 +46,11 @@
           <button class="close-list" type="button" @click="closeList"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Kapat</button>
         </section>
         <!-- Dal lokasyonları: süzgeç ayrı kart, lokasyonlar kart liste -->
-        <section v-if="listNode" class="card list-tools-card">
+        <section v-if="listNode && !chartPopup" class="card list-tools-card">
           <input v-model="listQuery" class="list-search" type="search" placeholder="Lokasyon, ilçe ya da adres ara" aria-label="Lokasyon ara" />
           <button v-if="canEdit" class="primary-button" type="button" @click="startLocation(listNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyon ekle</button>
         </section>
-        <section v-if="listNode" class="card loc-cards-card">
+        <section v-if="listNode && !chartPopup" class="card loc-cards-card">
           <ul class="loc-rows">
             <li v-for="location in pagedList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
               <span class="loc-row-main">
@@ -75,13 +77,14 @@
         <section v-else class="card schema-card">
           <header class="schema-head">
             <div><h2>{{ topLabel }} şeması</h2><small><template v-if="firm.type !== 'public'">{{ firms.length }} firma · </template>{{ locations.length }} lokasyon · {{ firmWorkplaces.length }} işyeri</small></div>
+            <button v-if="chartPopup" class="close-list" type="button" aria-label="Şema penceresini kapat" @click="chartPopup = false"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Kapat</button>
           </header>
           <ExpertOrgChart
             :nodes="nodes" :locations="locations" :counts="locationWorkplaceCounts" :labels="nodeLabels"
             :selected-key="chartKey" :can-edit="canEdit" :can-branch="canBranch && !singleCompany"
             :branch-label="firm.type === 'public' ? 'Birim' : 'Dal'"
             @select="selectChart" @add-branch="id => startOrg(nodeById(id))" @add-location="id => startLocation(nodeById(id))"
-            @move-location="moveLocation" @move-node="moveNode" @open-list="openList" @edit="id => startEdit(nodeById(id))" @layout="positions => chartPositions = positions"
+            @move-location="moveLocation" @move-node="moveNode" @open-list="openList" @edit="id => startEdit(nodeById(id))" @remove="removeFromChart" @layout="positions => chartPositions = positions"
           />
         </section>
         </div>
@@ -236,23 +239,8 @@
             </form>
           </section>
 
-          <!-- Seçili dal / kök: bilgiler ve işlemler -->
-          <section v-else-if="focusNode" class="card location-card">
-            <header>
-              <span class="location-icon org"><PkIcon :class="focusNode.id === nodes[0]?.id ? 'pi pi-building' : 'pi pi-sitemap'" aria-hidden="true" /></span>
-              <div><h2>{{ focusNode.name }}</h2><small>{{ nodeSummary(focusNode) }}</small></div>
-            </header>
-            <div v-if="canEdit" class="panel-actions">
-              <button v-if="canBranch && !singleCompany" class="secondary-button" type="button" @click="startOrg(focusNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firm.type === 'public' ? 'Birim' : 'Dal' }}</button>
-              <button class="secondary-button" type="button" @click="startLocation(focusNode)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Lokasyon</button>
-              <button class="secondary-button" type="button" @click="startEdit(focusNode)"><PencilLine :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Düzenle</button>
-              <!-- Kurumsal / kamu hesabında kök de bir düğümdür: müşteri (hesabın kendisi) silinmez, yalnız düğüm silinir. -->
-              <button class="secondary-button danger" type="button" @click="focusNode.id !== nodes[0]?.id || corporate ? openRemove({ name: focusNode.name, node: focusNode }) : openDelete()"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ focusNode.id !== nodes[0]?.id || corporate ? 'Sil' : 'Ana firmayı sil' }}</button>
-            </div>
-          </section>
-
           <!-- Seçili lokasyon: avatar, ad, adres, ekipman / tesisat (işlemler listede satırda; şemadan seçilince burada küçük satır) -->
-          <section v-else-if="focusLocation" class="card location-card loc-detail" :class="{ wide: listNode }">
+          <section v-else-if="focusLocation" class="card location-card loc-detail" :class="{ wide: listNode && !chartPopup }">
             <span class="loc-avatar big" :style="avatarStyle(focusLocation.name)">{{ initialsOf(focusLocation.name) }}</span>
             <h2>{{ focusLocation.name }}</h2>
             <small class="loc-detail-sub">{{ [focusLocation.district, focusLocation.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small>
@@ -285,7 +273,7 @@
           </section>
 
           <!-- Liste açıkken (KSY-SIS gibi): seçili lokasyonun işyerleri; kamuda firma yerine bağlı olduğu birim -->
-          <section v-if="listNode && focusLocation" class="card wp-card">
+          <section v-if="listNode && focusLocation && !chartPopup" class="card wp-card">
             <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplacesOf(focusLocation).length }} işyeri</small></div></header>
             <div class="wp-table-wrap">
               <table class="wp-table">
@@ -421,7 +409,7 @@
 <script setup lang="ts">
 // Bireysel uzmanın firma sayfası: tek pencere, bütün yapı ağaçta; işlemler satırda, formlar satırın altında. Lokasyon herhangi bir düğüme bağlanan boş bir yerdir; firmalar lokasyonda faaliyet gösterir.
 import { customerTypeLabel } from '~/composables/useCustomerTypes'
-import { ArrowLeft, BriefcaseBusiness, Building2, ChevronLeft, ChevronRight, CircleCheck, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
+import { ArrowLeft, BriefcaseBusiness, Building2, ChevronLeft, ChevronRight, CircleCheck, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X, ZoomIn } from 'lucide-vue-next'
 import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, type NaceItem } from '~/composables/useExpertApi'
 import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress, WorkplaceRowDraft } from '~/composables/useFirmSetup'
 import type { Workplace } from '~/composables/useWorkplaceContext'
@@ -683,6 +671,12 @@ async function saveLocation() {
 
 // --- Şema (OrgChart): seçim, taşıma ---
 const nodeById = (id: number | string) => flatten(nodes.value).find(n => String(n.id) === String(id))!
+// Şemadaki Sil: paneldeki Sil ile aynı (kurumsal / kamuda kök de yalnız düğümdür; bireyselde kök = ana firmayı sil)
+function removeFromChart(id: number | string) {
+  const node = nodeById(id)
+  if (node.id !== nodes.value[0]?.id || corporate.value) openRemove({ name: node.name, node })
+  else openDelete()
+}
 const focusNodeId = ref<number | string | null>(null)
 const focusNode = computed(() => focusNodeId.value == null ? null : flatten(nodes.value).find(n => String(n.id) === String(focusNodeId.value)) ?? null)
 const chartKey = computed(() => adding.value === 'workplace' && selectedLocation.value ? `l${selectedLocation.value.id}`
@@ -708,6 +702,7 @@ async function moveNode(nodeId: number | string, parentId: number | string) {
 
 // --- Çok lokasyonlu dalın listesi (sağ panel) ---
 const listNodeId = ref<number | string | null>(null)
+const chartPopup = ref(false)
 const listQuery = ref('')
 // Büyük şemanın dal konumları (OrgChart yerleşimi): küçük şema aynı yerleşimi çizer.
 const chartPositions = ref<Record<string, { x: number; y: number }>>({})
@@ -719,6 +714,7 @@ const filteredList = computed(() => {
 })
 function openList(nodeId: number | string) {
   closeForm()
+  chartPopup.value = false
   focusNodeId.value = null
   listQuery.value = ''
   listNodeId.value = nodeId
@@ -731,6 +727,7 @@ function openFromList(location: FirmLocation) {
   focusId.value = location.id
 }
 function closeList() {
+  chartPopup.value = false
   listNodeId.value = null
   listQuery.value = ''
 }
@@ -997,15 +994,6 @@ const kindOf = (node: FirmNode): NodeKind => depthOf(node) <= 0 ? 'root' : 'org'
 // Önceki sürümde "şirket"/"marka" türüyle açılan düğümlerin adını backend değiştirtmez (silme yeni PK ucuyla yapılır).
 const isLocked = (node: FirmNode) => node.type === 'company' || node.type === 'brand'
 const firmWorkplaces = computed(() => locations.value.flatMap(l => workplacesOf(l)))
-// "2 alt organizasyon · 2 lokasyon · 5 işyeri"
-const nodeSummary = (node: FirmNode) => {
-  const locs = locationsUnder(node)
-  const count = locs.reduce((sum, l) => sum + workplacesOf(l).length, 0)
-  const parts: string[] = []
-  if (node.children?.length) parts.push(`${node.children.length} alt ${firm.value?.type === 'public' ? 'birim' : 'dal'}`)
-  parts.push(`${locs.length} lokasyon`, `${count} işyeri`)
-  return parts.join(' · ')
-}
 const headerStats = computed(() => {
   const orgs = flatten(nodes.value).length - nodes.value.length
   const parts: string[] = []
@@ -1304,13 +1292,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .panel-card .primary-button.wide { min-height: 40px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 8px; background: var(--pk-accent); color: var(--pk-on-accent); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 16px rgba(var(--pk-accent-rgb), .24); }
 .panel-card .primary-button.wide:disabled { opacity: .5; box-shadow: none; cursor: default; }
 .panel-card .field { display: grid; gap: 6px; }
-.panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.panel-actions .secondary-button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.panel-actions .secondary-button:hover:not(:disabled) { background: rgba(145, 158, 171, .08); }
-.panel-actions .secondary-button.danger { color: var(--admin-danger-text); }
-.panel-actions .secondary-button:disabled { opacity: .5; cursor: default; }
 .primary-button.wide { width: 100%; justify-content: center; }
-.location-icon.org { background: var(--pk-violet-lighter); color: var(--pk-violet-dark); }
 .location-workplaces li.fresh { background: var(--pk-success-lighter); border-radius: 6px; }
 .wp-card { padding: 24px 0 8px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .wp-card .schema-head { padding: 0 24px 16px; }
@@ -1346,7 +1328,6 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 :global(.dark-theme) .schema-location:not(.on) { background: rgba(0, 171, 85, .14); color: var(--admin-heading); }
 .location-card { align-self: start; }
 .location-card header { display: flex; align-items: flex-start; gap: 12px; }
-.location-icon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-success-lighter); color: var(--pk-success-dark); }
 .location-card header small { display: block; margin-top: 4px; color: var(--admin-muted); font-size: 13px; }
 .location-workplaces { display: grid; margin: 0; padding: 0; list-style: none; }
 .location-workplaces li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; color: var(--admin-heading); font-size: 14px; }
@@ -1380,6 +1361,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-banner .close-list { border-color: transparent; background: var(--admin-card); }
 /* Küçük şema: beyaz zemin, büyük şemanın renkleri */
 .mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: none; cursor: pointer; }
+.mini-tree-button { position: relative; }
+.mini-tree-zoom { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--admin-card); color: color-mix(in srgb, var(--dal) 70%, #212b36); box-shadow: 0 1px 4px rgba(145, 158, 171, .4); }
 .mini-tree-button:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--dal) 35%, transparent); }
 @media (max-width: 700px) { .mini-tree-button { padding: 2px 4px; } }
 .list-tools-card { display: flex; gap: 10px; padding: 16px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
@@ -1444,6 +1427,12 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-detail-sub { color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 .loc-detail-addr { color: var(--admin-muted); font-size: 12.5px; line-height: 1.45; }
 .loc-detail .location-links { width: 100%; }
+/* Şema penceresi: modal gibi karartma + ortada geniş kutu (modal-backdrop 100'ün altında, silme pencereleri üstte açılır) */
+.chart-popup-backdrop { position: fixed; inset: 0; z-index: 89; background: var(--admin-overlay); }
+.overview.chart-popup { position: fixed; inset: 40px; z-index: 90; margin: 0; padding: 24px; overflow: auto; border-radius: var(--pk-radius); background: var(--admin-backdrop); box-shadow: 0 30px 80px rgba(8, 20, 50, .35); }
+.overview.chart-popup .side { position: static; max-height: none; overflow: visible; }
+.overview.chart-popup .schema-head { align-items: center; }
+@media (max-width: 760px) { .overview.chart-popup { inset: 12px; padding: 12px; } }
 /* Liste açıkken (KSY-SIS): solda dar liste, sağda geniş lokasyon kartı; avatar solda, bilgiler yanında */
 @media (min-width: 1181px) { .overview.list-open { grid-template-columns: 440px minmax(0, 1fr); } }
 .loc-detail.wide { grid-template-columns: 72px minmax(0, 1fr); justify-items: start; column-gap: 20px; row-gap: 4px; text-align: left; }
