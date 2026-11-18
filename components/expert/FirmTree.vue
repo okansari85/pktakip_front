@@ -30,7 +30,7 @@
 
       <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
            paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
-      <div v-if="nodes.length" class="overview">
+      <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode }">
         <div class="main-col">
         <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
         <section v-if="listNode" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
@@ -53,22 +53,8 @@
             <li v-for="location in pagedList" :key="location.id" class="loc-row" :class="{ selected: String(focusLocation?.id) === String(location.id) }" tabindex="0" @click="openFromList(location)" @keydown.enter.self="openFromList(location)">
               <span class="loc-row-main">
                 <span class="loc-avatar" :style="avatarStyle(location.name)">{{ initialsOf(location.name) }}</span>
-                <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ location.address || 'Adres girilmemiş' }}</small></span>
-              </span>
-              <!-- Çizginin altında: solda rozetler (ilçe, işyeri), sağda işlem çubuğu -->
-              <span class="loc-row-foot">
-                <span class="loc-badges">
-                  <b v-if="location.district || location.city" class="loc-chip">{{ location.district || location.city }}</b>
-                  <span class="count-pill" :class="{ none: !workplacesOf(location).length }">{{ workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok' }}</span>
-                </span>
-              <span class="loc-actions">
-                <button v-if="canEdit" v-tooltip.top="'İşyeri aç'" type="button" :aria-label="`${location.name} içinde işyeri aç`" @click.stop="startWorkplace(location)"><BriefcaseBusiness :size="16" :stroke-width="1.8" /></button>
-                <button v-if="canEdit" v-tooltip.top="'Alt tesisler'" type="button" :aria-label="`${location.name} alt tesisleri`" @click.stop="openSub(location)"><Layers :size="16" :stroke-width="1.8" /></button>
-                <button v-tooltip.top="'Genel bakış'" type="button" :disabled="!workplacesOf(location).length" :aria-label="`${location.name} genel bakış`" @click.stop="openLocationPage(location, '/expert')"><LayoutDashboard :size="16" :stroke-width="1.8" /></button>
-                <button v-if="multiUser" v-tooltip.top="'Alanlar'" type="button" :aria-label="`${location.name} alanları`" @click.stop="areaLocation = location"><LayoutGrid :size="16" :stroke-width="1.8" /></button>
-                <button v-if="canEdit && flatten(nodes).length > 1" v-tooltip.top="firm.type === 'public' ? 'Başka birime taşı' : 'Başka dala taşı'" type="button" :aria-label="`${location.name} taşı`" @click.stop="openMove(location)"><FolderInput :size="16" :stroke-width="1.8" /></button>
-                <button v-if="canEdit" v-tooltip.top="'Sil'" type="button" class="danger" :aria-label="`${location.name} sil`" @click.stop="openRemove({ name: location.name, location: location })"><Trash2 :size="16" :stroke-width="1.8" /></button>
-              </span>
+                <!-- KSY-SIS gibi dar liste: ad, ilçe, işyeri sayısı; adres ve işlemler sağdaki lokasyon kartında -->
+                <span class="loc-row-text"><strong>{{ location.name }}</strong><small>{{ [location.district || location.city, workplacesOf(location).length ? `${workplacesOf(location).length} işyeri` : 'İşyeri yok'].filter(Boolean).join(' · ') }}</small></span>
               </span>
             </li>
             <li v-if="!filteredList.length" class="muted location-empty">Aramayla eşleşen lokasyon yok.</li>
@@ -266,10 +252,12 @@
           </section>
 
           <!-- Seçili lokasyon: avatar, ad, adres, ekipman / tesisat (işlemler listede satırda; şemadan seçilince burada küçük satır) -->
-          <section v-else-if="focusLocation" class="card location-card loc-detail">
+          <section v-else-if="focusLocation" class="card location-card loc-detail" :class="{ wide: listNode }">
             <span class="loc-avatar big" :style="avatarStyle(focusLocation.name)">{{ initialsOf(focusLocation.name) }}</span>
             <h2>{{ focusLocation.name }}</h2>
             <small class="loc-detail-sub">{{ [focusLocation.district, focusLocation.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small>
+            <!-- Kamuda firma yok: lokasyonun bağlı olduğu birim yazılır -->
+            <small v-if="ownerOf(focusLocation)" class="loc-detail-sub">{{ firm.type === 'public' ? 'Birim' : 'Firma' }}: {{ ownerOf(focusLocation) }}</small>
             <small v-if="focusLocation.address" class="loc-detail-addr">{{ focusLocation.address }}</small>
             <span class="count-pill" :class="{ none: !workplacesOf(focusLocation).length }">{{ workplacesOf(focusLocation).length ? `${workplacesOf(focusLocation).length} işyeri` : 'İşyeri yok' }}</span>
             <div class="location-links">
@@ -283,7 +271,7 @@
                 <span class="count-text"><strong>{{ focusCounts ? focusCounts.installations : '—' }}</strong><small>Tesisat</small></span>
               </button>
             </div>
-            <span v-if="!listNode" class="loc-actions detail">
+            <span class="loc-actions detail">
                 <button v-if="canEdit" v-tooltip.top="'İşyeri aç'" type="button" :aria-label="`${focusLocation.name} içinde işyeri aç`" @click.stop="startWorkplace(focusLocation)"><BriefcaseBusiness :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit" v-tooltip.top="'Alt tesisler'" type="button" :aria-label="`${focusLocation.name} alt tesisleri`" @click.stop="openSub(focusLocation)"><Layers :size="16" :stroke-width="1.8" /></button>
                 <button v-tooltip.top="'Genel bakış'" type="button" :disabled="!workplacesOf(focusLocation).length" :aria-label="`${focusLocation.name} genel bakış`" @click.stop="openLocationPage(focusLocation, '/expert')"><LayoutDashboard :size="16" :stroke-width="1.8" /></button>
@@ -294,6 +282,31 @@
           </section>
           <section v-else class="card location-card">
             <p class="muted location-empty">Şemada bir kutuya tıklayın; işlemleri burada görürsünüz. İlk lokasyonu eklemek için ana firmanın kutusundaki "+ Lokasyon"u kullanın.</p>
+          </section>
+
+          <!-- Liste açıkken (KSY-SIS gibi): seçili lokasyonun işyerleri; kamuda firma yerine bağlı olduğu birim -->
+          <section v-if="listNode && focusLocation" class="card wp-card">
+            <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplacesOf(focusLocation).length }} işyeri</small></div></header>
+            <div class="wp-table-wrap">
+              <table class="wp-table">
+                <thead><tr><th>{{ firm.type === 'public' ? 'Birim' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+                <tbody>
+                  <tr v-for="workplace in workplacesOf(focusLocation)" :key="workplace.id">
+                    <td><span class="wp-firm"><span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span><span><strong>{{ firm.type === 'public' ? ownerOf(focusLocation) : workplace.company_name }}</strong><small v-if="nameOf(workplace.id)">{{ nameOf(workplace.id) }}</small><small v-if="workplace.sgk_workplace_number">SGK {{ workplace.sgk_workplace_number }}</small></span></span></td>
+                    <td :class="{ muted: !workplace.sub_facility_name }">{{ workplace.sub_facility_name || '—' }}</td>
+                    <td><span class="hazard-badge" :class="hazardClassKey(workplace.hazard_class)">{{ workplace.hazard_class }}</span></td>
+                    <td class="end">
+                      <span class="wp-actions">
+                        <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} birimleri`" @click="unitTarget = { location: focusLocation, workplace: { id: workplace.id, name: workplaceLabel(workplace.id, workplace.company_name) } }"><Network :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                        <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} işyerine uzman ata`" @click="assignId = workplace.id"><UserCog :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                        <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(workplace.id) || workplace.company_name, workplace, location: focusLocation })"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="!workplacesOf(focusLocation).length"><td colspan="4" class="empty">Bu lokasyonda işyeri yok.</td></tr>
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. Kamuda firma kurumun kendisi. -->
@@ -452,6 +465,10 @@ const canBranch = computed(() => firm.value?.type === 'corporate' || firm.value?
 const hasBranches = computed(() => nodes.value.some(n => n.children?.length))
 // KSY-SIS: ortak lokasyonda yalnız bu ana firmanın işyerleri (sahibi boş eski kayıtlar da görünür).
 const workplacesOf = (location: FirmLocation) => workplaces.value.filter(w => String(w.location_id) === String(location.id) && (w.customer_id == null || String(w.customer_id) === String(props.customerId)))
+// Lokasyon kartındaki "Firma: …" / kamuda "Birim: …" (lokasyonun bağlı olduğu düğüm)
+const ownerOf = (location: FirmLocation) => firm.value?.type === 'public'
+  ? flatten(nodes.value).find(n => String(n.id) === String(location.organization_id))?.name || ''
+  : [...new Set(workplacesOf(location).map(w => w.company_name))].join(', ')
 const firmsOf = (location: FirmLocation) => workplacesOf(location).map(w => w.company_name)
 
 // İşyeri formu açık olan lokasyon; düğüm seçilince kapanır. Lokasyon silinirse bulunamaz, form da kapanmış olur.
@@ -1410,9 +1427,6 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-pager-pages button:disabled { opacity: .35; cursor: default; }
 .loc-pager-gap { padding: 0 4px; color: var(--admin-muted); }
 .loc-row-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.loc-row-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px dashed rgba(145, 158, 171, .24); }
-.loc-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
-.loc-chip { padding: 2px 8px; border-radius: 6px; background: rgba(145, 158, 171, .12); color: var(--admin-text); font-size: 12px; font-weight: 600; }
 .loc-avatar { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; font-size: 15px; font-weight: 700; letter-spacing: .02em; }
 .loc-avatar.big { width: 72px; height: 72px; font-size: 22px; }
 .loc-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
@@ -1430,7 +1444,12 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-detail-sub { color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 .loc-detail-addr { color: var(--admin-muted); font-size: 12.5px; line-height: 1.45; }
 .loc-detail .location-links { width: 100%; }
-@media (max-width: 800px) { .loc-row-foot { flex-wrap: wrap; } .loc-actions { margin-left: auto; } }
+/* Liste açıkken (KSY-SIS): solda dar liste, sağda geniş lokasyon kartı; avatar solda, bilgiler yanında */
+@media (min-width: 1181px) { .overview.list-open { grid-template-columns: 440px minmax(0, 1fr); } }
+.loc-detail.wide { grid-template-columns: 72px minmax(0, 1fr); justify-items: start; column-gap: 20px; row-gap: 4px; text-align: left; }
+.loc-detail.wide > .loc-avatar { grid-row: 1 / span 5; }
+.loc-detail.wide > .location-links, .loc-detail.wide > .loc-actions { grid-column: 1 / -1; margin-top: 12px; }
+.loc-detail.wide > .loc-actions { justify-content: flex-end; width: 100%; }
 /* (eski) sağ panel listesi stilleri */
 .list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 .loc-list { max-height: 460px; overflow-y: auto; display: grid; margin: 0; padding: 0; list-style: none; }
