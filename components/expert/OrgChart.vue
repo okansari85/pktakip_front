@@ -35,7 +35,7 @@
               <button v-if="canEdit" v-tooltip.bottom="'Lokasyon ekle'" type="button" :aria-label="`${data.name} altına lokasyon ekle`" @click.stop="emit('add-location', data.nodeId)"><MapPinPlus :size="16" :stroke-width="1.8" /></button>
               <button v-if="canEdit" v-tooltip.bottom="'Düzenle'" type="button" :aria-label="`${data.name} düzenle`" @click.stop="emit('edit', data.nodeId)"><PencilLine :size="16" :stroke-width="1.8" /></button>
               <button v-if="data.count" v-tooltip.bottom="'Lokasyon listesi'" type="button" :aria-label="`${data.name} lokasyon listesi`" @click.stop="emit('open-list', data.nodeId)"><List :size="16" :stroke-width="1.8" /></button>
-              <!-- Alt birimleri aç / kapat: büyüteç ya da kutuya tıklama (kullanıcı 18 Kas 2026) -->
+              <!-- Alt birimleri aç / kapat yalnız büyüteçle; kutuya tıklamak kapatmaz (kullanıcı 18 Kas 2026, iki kez söyledi) -->
               <button v-if="data.hasChildren" v-tooltip.bottom="data.collapsed ? 'Altını göster' : 'Altını gizle'" type="button" :aria-expanded="!data.collapsed" :aria-label="`${data.name} altını ${data.collapsed ? 'göster' : 'gizle'}`" @click.stop="toggle(id)"><component :is="data.collapsed ? ZoomIn : ZoomOut" :size="16" :stroke-width="1.8" /></button>
               <button v-if="canEdit" v-tooltip.bottom="'Sil'" type="button" class="danger" :aria-label="`${data.name} sil`" @click.stop="emit('remove', data.nodeId)"><Trash2 :size="16" :stroke-width="1.8" /></button>
             </span>
@@ -227,7 +227,6 @@ watch(() => [props.nodes, props.locations, props.counts, props.labels, props.can
 
 const onNodeClick = ({ node }: NodeMouseEvent) => {
   emit('select', node.id)
-  if (node.type === 'org' && childrenOf(node.id).length) toggle(node.id)
 }
 
 // --- Sürükle bırak: bırakılan alanın dalı hedeftir; geçersizse kutu yerine döner. ---
