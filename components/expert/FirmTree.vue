@@ -321,7 +321,7 @@
       <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
 
       <!-- İşyerleri (KSY-SIS'teki müşteri işyerleri listesi): firma, lokasyon, alt tesis, tehlike sınıfı; satır şemada o lokasyonu seçer. -->
-      <section v-if="nodes.length" class="card wp-card">
+      <section v-if="nodes.length && !listNode" class="card wp-card">
         <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplaceRows.length }} işyeri</small></div></header>
         <div class="wp-table-wrap">
           <table class="wp-table">
