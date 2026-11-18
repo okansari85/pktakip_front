@@ -226,6 +226,7 @@ function layout() {
 watch(() => [props.nodes, props.locations, props.counts, props.labels, props.canEdit], () => { layout(); fit() }, { immediate: true, deep: true })
 
 const onNodeClick = ({ node }: NodeMouseEvent) => {
+  picked.value = true
   emit('select', node.id)
 }
 
@@ -256,9 +257,11 @@ const targetFor = (node: Node) => {
     .sort((a, b) => depth(b.id) - depth(a.id))[0] ?? null
 }
 // Seçim varken net kalanlar: seçili kutu, ondan köke giden yol ve seçilinin altı (alt dallar + lokasyonları); gerisi soluk (kullanıcı 18 Kas 2026).
+// Şema açılınca hepsi net; soluklaşma yalnız şemada bir kutuya tıklandıktan sonra.
+const picked = ref(false)
 const lit = computed(() => {
   const key = props.selectedKey
-  if (!key) return null
+  if (!key || !picked.value) return null
   const loc = key.startsWith('l') ? flowNodes.value.find(n => n.id === key) : null
   const org = loc ? `n${loc.data.nodeId}` : key.startsWith('s') ? `n${key.slice(1)}` : key
   const set = new Set<string>(loc ? [key] : [])
