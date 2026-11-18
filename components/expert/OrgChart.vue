@@ -6,7 +6,7 @@
     <VueFlow
       :id="flowId"
       :nodes="flowNodes"
-      :edges="flowEdges"
+      :edges="shownEdges"
       :nodes-draggable="canEdit"
       :nodes-connectable="false"
       :elements-selectable="false"
@@ -23,7 +23,7 @@
       <Controls :show-interactive="false" position="bottom-left" />
 
       <template #node-org="{ id, data }">
-        <div class="chart-group" :class="{ 'has-area': data.hasLocations, target: dropId === id }">
+        <div class="chart-group" :class="{ 'has-area': data.hasLocations, target: dropId === id, dim: dim(id) }">
           <Handle type="target" :position="Position.Top" class="handle" />
           <div class="chart-node" :class="{ root: data.root, on: selectedKey === id, collapsed: data.collapsed }" :style="{ '--c': data.color.main, '--c-soft': data.color.soft }">
             <span class="chart-node-top">
@@ -51,7 +51,7 @@
       </template>
 
       <template #node-loc="{ id, data }">
-        <div class="chart-location" :class="{ on: selectedKey === id }">
+        <div class="chart-location" :class="{ on: selectedKey === id, dim: dim(id) }">
           <MapPin :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" />
           <span><strong>{{ data.name }}</strong><small>{{ data.count ? `${data.count} işyeri` : 'İşyeri yok' }}<template v-if="data.city"> · {{ data.city }}</template></small></span>
         </div>
@@ -255,6 +255,20 @@ const targetFor = (node: Node) => {
     .filter(other => overlap(own, node.type === 'loc' ? areaRect(other) : headerRect(other)))
     .sort((a, b) => depth(b.id) - depth(a.id))[0] ?? null
 }
+// Seçim varken net kalanlar: seçili kutu, ondan köke giden yol ve seçilinin altı (alt dallar + lokasyonları); gerisi soluk (kullanıcı 18 Kas 2026).
+const lit = computed(() => {
+  const key = props.selectedKey
+  if (!key) return null
+  const loc = key.startsWith('l') ? flowNodes.value.find(n => n.id === key) : null
+  const org = loc ? `n${loc.data.nodeId}` : key.startsWith('s') ? `n${key.slice(1)}` : key
+  const set = new Set<string>(loc ? [key] : [])
+  for (let id: string | null | undefined = org; id; id = parentOf.get(id)) set.add(id)
+  if (!loc) for (const n of flowNodes.value) if (isDescendant(n.type === 'loc' ? `n${n.data.nodeId}` : n.id, org)) set.add(n.id)
+  return set
+})
+const dim = (id: string) => !!lit.value && !lit.value.has(id)
+const shownEdges = computed(() => flowEdges.value.map(e => dim(e.target) ? { ...e, style: { ...e.style, opacity: 0.15 } } : e))
+
 const onDragStart = ({ node }: NodeDragEvent) => { dragId.value = node.id }
 const onDrag = ({ node }: NodeDragEvent) => { dropId.value = targetFor(node)?.id ?? null }
 const onDragStop = ({ node }: NodeDragEvent) => {
@@ -280,7 +294,8 @@ const onDragStop = ({ node }: NodeDragEvent) => {
 .org-chart :deep(.vue-flow__controls-button) { width: 28px; height: 28px; border-bottom: 1px solid rgba(145, 158, 171, .2); background: var(--admin-card); color: var(--admin-heading); }
 .handle { opacity: 0; pointer-events: none; }
 /* Dal alanı: üstte dal kutusu, altında lokasyonların durduğu kesik çizgili alan */
-.chart-group { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
+.chart-group { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; transition: opacity .2s ease; }
+.chart-group.dim, .chart-location.dim { opacity: .35; }
 .chart-area { position: absolute; left: 0; right: 0; top: 122px; bottom: 0; border: 1.5px dashed rgba(145, 158, 171, .45); border-radius: 14px; background: rgba(145, 158, 171, .05); }
 .chart-group.target .chart-area { border-color: var(--pk-success-main); background: rgba(0, 171, 85, .08); }
 /* Alt birimleri kapalı: arkasında üst üste kart (gizli alt birim var) */
