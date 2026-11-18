@@ -30,7 +30,7 @@
 
       <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
            paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
-      <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode }">
+      <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode, 'no-side': !sideOpen }">
         <div class="main-col">
         <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren ayrı başlık kartı -->
         <section v-if="listNode" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
@@ -86,7 +86,7 @@
         </section>
         </div>
 
-        <aside class="side">
+        <aside v-if="sideOpen" class="side">
           <!-- Açık form (dal, lokasyon, düzenleme, işyeri): seçili kutunun panelinde -->
           <section v-if="adding === 'edit' && selected" class="card panel-card">
             <form class="float-card" @submit.prevent="saveEdit">
@@ -236,8 +236,8 @@
             </form>
           </section>
 
-          <!-- Seçili lokasyon: avatar, ad, adres, ekipman / tesisat (işlemler listede satırda; şemadan seçilince burada küçük satır) -->
-          <section v-else-if="focusLocation" class="card location-card loc-detail" :class="{ wide: listNode }">
+          <!-- Seçili lokasyon: yalnız dal listesi açıkken (şemanın yanındaki kart kalktı, kullanıcı 18 Kas 2026; şemadaki lokasyon listeyi açar) -->
+          <section v-else-if="listNode && focusLocation" class="card location-card loc-detail wide">
             <span class="loc-avatar big" :style="avatarStyle(focusLocation.name)">{{ initialsOf(focusLocation.name) }}</span>
             <h2>{{ focusLocation.name }}</h2>
             <small class="loc-detail-sub">{{ [focusLocation.district, focusLocation.city].filter(Boolean).join(' · ') || 'İl girilmemiş' }}</small>
@@ -264,9 +264,6 @@
                 <button v-if="canEdit && flatten(nodes).length > 1" v-tooltip.top="firm.type === 'public' ? 'Başka birime taşı' : 'Başka dala taşı'" type="button" :aria-label="`${focusLocation.name} taşı`" @click.stop="openMove(focusLocation)"><FolderInput :size="16" :stroke-width="1.8" /></button>
                 <button v-if="canEdit" v-tooltip.top="'Sil'" type="button" class="danger" :aria-label="`${focusLocation.name} sil`" @click.stop="openRemove({ name: focusLocation.name, location: focusLocation })"><Trash2 :size="16" :stroke-width="1.8" /></button>
               </span>
-          </section>
-          <section v-else class="card location-card">
-            <p class="muted location-empty">Şemada bir kutuya tıklayın; işlemleri burada görürsünüz. İlk lokasyonu eklemek için ana firmanın kutusundaki "+ Lokasyon"u kullanın.</p>
           </section>
 
           <!-- Liste açıkken (KSY-SIS gibi): seçili lokasyonun işyerleri; kamuda firma yerine bağlı olduğu birim -->
@@ -573,9 +570,7 @@ onBeforeUnmount(() => {
 })
 // İşyerleri tablosundan: lokasyon şemada seçilir, sayfa şemaya kayar.
 function revealLocation(location: FirmLocation) {
-  closeForm()
-  focusNodeId.value = null
-  focusId.value = location.id
+  showLocation(location)
   nextTick(() => rootEl.value?.querySelector('.overview')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
 }
 
@@ -681,11 +676,21 @@ const chartKey = computed(() => adding.value === 'workplace' && selectedLocation
   : focusNode.value ? `n${focusNode.value.id}` : focusLocation.value ? `l${focusLocation.value.id}` : null)
 const locationWorkplaceCounts = computed(() => Object.fromEntries(locations.value.map(l => [String(l.id), workplacesOf(l).length])))
 function selectChart(key: string) {
+  const location = key.startsWith('l') ? locations.value.find(l => String(l.id) === key.slice(1)) : null
+  if (location) return showLocation(location)
   closeForm()
   listNodeId.value = null
-  if (key.startsWith('l')) { focusNodeId.value = null; focusId.value = key.slice(1) }
-  else { focusNodeId.value = key.slice(1) }
+  focusNodeId.value = key.slice(1)
 }
+// Lokasyonun işlemleri dal listesindeki kartta: listeyi açar, lokasyon seçili gelir.
+function showLocation(location: FirmLocation) {
+  focusId.value = location.id
+  if (location.organization_id != null) return openList(location.organization_id)
+  closeForm()
+  focusNodeId.value = null
+}
+// Sağ sütun yalnız içinde bir şey varken: açık form, dal listesindeki lokasyon ya da Firmalar kartı (kamuda yok).
+const sideOpen = computed(() => !!listNodeId.value || !!adding.value || firm.value?.type !== 'public')
 async function moveLocation(locationId: number | string, nodeId: number | string) {
   error.value = ''
   try { await patch(`/customers/${props.customerId}/pk-location-links/${locationId}`, { organization_id: nodeId }); await load() }
@@ -1271,6 +1276,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .lucide-i { flex: none; vertical-align: -3px; }
 /* Organizasyon şeması (KSY-SIS'teki gibi) + sağda seçili lokasyon kartı; Behance kart görünümü */
 .overview { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 24px; }
+.overview.no-side { grid-template-columns: minmax(0, 1fr); }
 .side { position: sticky; top: 90px; display: grid; gap: 24px; align-content: start; min-width: 0; max-height: calc(100vh - 110px); overflow-y: auto; }
 @media (max-width: 1180px) { .side { position: static; max-height: none; overflow: visible; } }
 .panel-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
