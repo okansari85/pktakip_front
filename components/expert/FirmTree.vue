@@ -145,98 +145,6 @@
             </form>
           </section>
 
-          <section v-else-if="adding === 'workplace' && selectedLocation" class="card panel-card">
-            <form class="float-card" @submit.prevent="saveRow">
-              <div class="add-row-head">
-                <h3>{{ selectedLocation.name }} içine işyeri aç</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
-              <p v-if="rowNotice" class="row-notice" role="status"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowNotice }}</p>
-              <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
-                <select v-model="companyChoice" :disabled="!companyOptions.length">
-                  <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
-                </select>
-                <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
-              </label>
-              <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
-                <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
-                  <option :value="null">Lokasyonun geneli</option>
-                  <option v-for="sub in subsOf(selectedLocation)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
-                  <option v-if="canEdit" :value="-1">+ Yeni alt tesis…</option>
-                </select>
-                <span v-if="newSubOpen" class="sub-add">
-                  <input v-model="newSubName" type="text" placeholder="Alt tesis adı (ör. Hangar 2)" aria-label="Yeni alt tesis adı" @keydown.enter.prevent="addSubToRow(selectedLocation)" />
-                  <button class="secondary-button" type="button" :disabled="!newSubName.trim() || subSaving" @click="addSubToRow(selectedLocation)">Ekle</button>
-                </span>
-              </label>
-              <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
-                <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
-              </label>
-              <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
-                <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
-              </label>
-              <label class="field">Tehlike sınıfı <span class="req">*</span>
-                <select v-model="row.hazard">
-                  <option value="" disabled>Seçin</option>
-                  <option v-for="h in HAZARD_CLASSES" :key="h" :value="h">{{ h }}</option>
-                </select>
-              </label>
-              <div class="nace-line">
-                <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
-                <span v-if="row.naceCode" class="nace-picked"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ row.naceCode }} {{ row.activity }}</span>
-              </div>
-              <div v-if="naceOpen" class="nace-box">
-                <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
-                <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
-                  <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
-                </ul>
-              </div>
-              <label v-if="bulk" class="field">Her satıra bir alt tesis yazın; seçili firma her birinde ayrı işyeri açar
-                <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
-              </label>
-              <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
-              <small class="field-note">Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
-            </form>
-          </section>
-
-          <!-- Alt tesisler (satırdaki işlemden) -->
-          <section v-else-if="adding === 'sub' && selectedLocation" class="card panel-card">
-            <div class="float-card">
-              <div class="add-row-head">
-                <h3>{{ selectedLocation.name }} · alt tesisler</h3>
-                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <div class="sub-chips">
-                <span v-for="sub in subsOf(selectedLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(selectedLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
-                <span v-if="!subsOf(selectedLocation).length" class="muted">Henüz alt tesis yok.</span>
-              </div>
-              <form class="sub-add" @submit.prevent="addSub(selectedLocation)">
-                <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
-                <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
-              </form>
-              <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
-            </div>
-          </section>
-
-          <!-- Başka dala taşı (satırdaki işlemden) -->
-          <section v-else-if="adding === 'move' && selectedLocation" class="card panel-card">
-            <form class="float-card" @submit.prevent="confirmMove">
-              <div class="add-row-head">
-                <h3>{{ selectedLocation.name }} · {{ firm.type === 'public' ? 'başka birime taşı' : 'başka dala taşı' }}</h3>
-                <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <label class="field">{{ firm.type === 'public' ? 'Taşınacak birim' : 'Taşınacak dal' }}
-                <select v-model="moveTarget">
-                  <option value="" disabled>Seçin</option>
-                  <option v-for="n in flatten(nodes).filter(n => String(n.id) !== String(selectedLocation!.organization_id))" :key="n.id" :value="String(n.id)">{{ n.name }}</option>
-                </select>
-              </label>
-              <button class="primary-button wide" type="submit" :disabled="!moveTarget || saving">{{ saving ? 'Taşınıyor...' : 'Taşı' }}</button>
-            </form>
-          </section>
-
           <!-- Seçili lokasyon: yalnız dal listesi açıkken (şemanın yanındaki kart kalktı, kullanıcı 18 Kas 2026). Kimlik + yazılı işlemler,
                işyeri yoksa tek ana düğmeli uyarı, ekipman / tesisat, işyerleri aynı kartta (19 Kas 2026 tasarımı). -->
           <section v-else-if="listNode && focusLocation" class="card loc-panel">
@@ -363,9 +271,106 @@
     <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="firm?.name" @close="areaLocation = null" />
     <ExpertWorkplaceUnitsModal v-if="unitTarget" :location="unitTarget.location" :workplace="unitTarget.workplace" @close="unitTarget = null" />
 
+    <!-- Lokasyon işlemleri (İşyeri aç, Alt tesisler, Başka dala taşı) sağdan açılan panelde; yalnız X kapatır (kullanıcı 19 Kas 2026) -->
+    <div v-if="drawerForm && selectedLocation" class="modal-backdrop as-drawer">
+      <section class="modal-card as-drawer panel-card" role="dialog" aria-modal="true" :aria-label="`${selectedLocation.name} işlemi`">
+              <template v-if="adding === 'workplace'">
+                <form class="float-card" @submit.prevent="saveRow">
+                  <div class="add-row-head">
+                    <h3>{{ selectedLocation.name }} içine işyeri aç</h3>
+                    <button class="close-button" type="button" aria-label="Kapat" :disabled="rowSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                  </div>
+                  <button class="link-button" type="button" @click="toggleBulk">{{ bulk ? 'Tek tek ekle' : 'Toplu ekle (her satıra bir alt tesis)' }}</button>
+                  <p v-if="rowNotice" class="row-notice" role="status"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowNotice }}</p>
+                  <label v-if="firm.type !== 'individual' && firm.type !== 'public'" class="field">Firma <span class="req">*</span>
+                    <select v-model="companyChoice" :disabled="!companyOptions.length">
+                      <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
+                    </select>
+                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
+                  </label>
+                  <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
+                    <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
+                      <option :value="null">Lokasyonun geneli</option>
+                      <option v-for="sub in subsOf(selectedLocation)" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
+                      <option v-if="canEdit" :value="-1">+ Yeni alt tesis…</option>
+                    </select>
+                    <span v-if="newSubOpen" class="sub-add">
+                      <input v-model="newSubName" type="text" placeholder="Alt tesis adı (ör. Hangar 2)" aria-label="Yeni alt tesis adı" @keydown.enter.prevent="addSubToRow(selectedLocation)" />
+                      <button class="secondary-button" type="button" :disabled="!newSubName.trim() || subSaving" @click="addSubToRow(selectedLocation)">Ekle</button>
+                    </span>
+                  </label>
+                  <label v-if="!bulk" class="field">İşyeri adı <small>(isteğe bağlı)</small>
+                    <input v-model="row.name" type="text" placeholder="Boşsa firma adı görünür" />
+                  </label>
+                  <label v-if="!bulk" class="field">SGK sicil no <small>(isteğe bağlı)</small>
+                    <input v-model="row.sgk" type="text" inputmode="numeric" placeholder="İşyeri sicil numarası" />
+                  </label>
+                  <label class="field">Tehlike sınıfı <span class="req">*</span>
+                    <select v-model="row.hazard">
+                      <option value="" disabled>Seçin</option>
+                      <option v-for="h in HAZARD_CLASSES" :key="h" :value="h">{{ h }}</option>
+                    </select>
+                  </label>
+                  <div class="nace-line">
+                    <button class="link-button" type="button" @click="naceOpen = !naceOpen">{{ naceOpen ? 'NACE aramasını kapat' : 'Tehlike sınıfını NACE\'den bul' }}</button>
+                    <span v-if="row.naceCode" class="nace-picked"><CircleCheck :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ row.naceCode }} {{ row.activity }}</span>
+                  </div>
+                  <div v-if="naceOpen" class="nace-box">
+                    <input v-model="naceQuery" type="text" aria-label="NACE kodu ya da faaliyet ara" placeholder="Faaliyeti ya da NACE kodunu yazın: depolama, 52.10" autocomplete="off" @input="searchNace" />
+                    <ul v-if="naceResults.length" class="nace-results" aria-label="NACE sonuçları">
+                      <li v-for="nace in naceResults" :key="nace.id"><button type="button" @click="selectNace(nace)"><strong>{{ nace.nace_code }}</strong> {{ nace.activity_name }} <em>{{ nace.hazard_class }}</em></button></li>
+                    </ul>
+                  </div>
+                  <label v-if="bulk" class="field">Her satıra bir alt tesis yazın; seçili firma her birinde ayrı işyeri açar
+                    <textarea v-model="bulkText" rows="4" placeholder="Beyaz Eşya Depo&#10;Antrepo&#10;Yedek Parça Deposu" />
+                  </label>
+                  <p v-if="rowError" class="form-error" role="alert">{{ rowError }}</p>
+                  <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
+                  <small class="field-note">Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
+                </form>
+              </template>
+
+              <!-- Alt tesisler -->
+              <template v-else-if="adding === 'sub'">
+                <div class="float-card">
+                  <div class="add-row-head">
+                    <h3>{{ selectedLocation.name }} · alt tesisler</h3>
+                    <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                  </div>
+                  <div class="sub-chips">
+                    <span v-for="sub in subsOf(selectedLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(selectedLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
+                    <span v-if="!subsOf(selectedLocation).length" class="muted">Henüz alt tesis yok.</span>
+                  </div>
+                  <form class="sub-add" @submit.prevent="addSub(selectedLocation)">
+                    <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
+                    <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
+                  </form>
+                  <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+                </div>
+              </template>
+
+              <!-- Başka dala taşı -->
+              <template v-else-if="adding === 'move'">
+                <form class="float-card" @submit.prevent="confirmMove">
+                  <div class="add-row-head">
+                    <h3>{{ selectedLocation.name }} · {{ firm.type === 'public' ? 'başka birime taşı' : 'başka dala taşı' }}</h3>
+                    <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                  </div>
+                  <label class="field">{{ firm.type === 'public' ? 'Taşınacak birim' : 'Taşınacak dal' }}
+                    <select v-model="moveTarget">
+                      <option value="" disabled>Seçin</option>
+                      <option v-for="n in flatten(nodes).filter(n => String(n.id) !== String(selectedLocation!.organization_id))" :key="n.id" :value="String(n.id)">{{ n.name }}</option>
+                    </select>
+                  </label>
+                  <button class="primary-button wide" type="submit" :disabled="!moveTarget || saving">{{ saving ? 'Taşınıyor...' : 'Taşı' }}</button>
+                </form>
+              </template>
+      </section>
+    </div>
+
     <!-- Grup, şirket ya da lokasyonu sil -->
-    <div v-if="removing" class="modal-backdrop">
-      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="remove-title">
+    <div v-if="removing" class="modal-backdrop" :class="{ 'as-drawer': removing.location && !removing.workplace }">
+      <section class="modal-card" :class="{ 'as-drawer': removing.location && !removing.workplace }" role="dialog" aria-modal="true" aria-labelledby="remove-title">
         <div class="modal-head">
           <span class="head-icon danger"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
           <div><h2 id="remove-title">{{ removing.workplace ? 'Firmayı Lokasyondan Çıkar' : removing.location ? 'Lokasyonu Sil' : 'Sil' }}</h2><p>"{{ removing.name }}"<template v-if="removing.workplace"> · {{ removing.location?.name }}</template></p></div>
@@ -563,9 +568,10 @@ const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && 
   : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId || draft.hazard)
   : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
+const drawerForm = computed(() => adding.value === 'workplace' || adding.value === 'sub' || adding.value === 'move')
 function onPagePointer(event: PointerEvent) {
   if (!adding.value || formDirty.value || dialogOpen()) return
-  if (!(event.target as Element).closest?.('.float-card, .row-actions')) closeForm()
+  if (!(event.target as Element).closest?.('.float-card, .row-actions, .as-drawer')) closeForm()
 }
 function onPageKey(event: KeyboardEvent) {
   if (event.key === 'Escape' && adding.value && !dialogOpen() && !formDirty.value) closeForm()
@@ -700,7 +706,7 @@ function showLocation(location: FirmLocation) {
   focusNodeId.value = null
 }
 // Sağ sütun yalnız içinde bir şey varken: açık form, dal listesindeki lokasyon ya da Firmalar kartı (kamuda yok).
-const sideOpen = computed(() => !!listNodeId.value || !!adding.value || firm.value?.type !== 'public')
+const sideOpen = computed(() => !!listNodeId.value || (!!adding.value && !drawerForm.value) || firm.value?.type !== 'public')
 async function moveLocation(locationId: number | string, nodeId: number | string) {
   error.value = ''
   try { await patch(`/customers/${props.customerId}/pk-location-links/${locationId}`, { organization_id: nodeId }); await load() }
@@ -1607,6 +1613,9 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .other-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 0; background: none; color: var(--admin-heading); font: inherit; font-size: 13.5px; cursor: pointer; }
 .other-link:hover { text-decoration: underline; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: var(--admin-overlay); }
+.modal-backdrop.as-drawer { place-items: stretch end; padding: 0; }
+.modal-card.as-drawer { width: min(520px, 94vw); height: 100%; max-height: none; padding: 26px 24px; border-radius: var(--pk-radius) 0 0 var(--pk-radius); box-shadow: -24px 0 48px -8px var(--admin-shadow); }
+.modal-card.as-drawer.panel-card .float-card { gap: 16px; }
 .modal-card { width: min(540px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 22px; border-radius: 14px; background: var(--admin-input); box-shadow: 0 20px 60px var(--admin-shadow); }
 .modal-head { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
 .modal-head > div { flex: 1; min-width: 0; }
