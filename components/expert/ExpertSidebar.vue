@@ -215,7 +215,7 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .sidebar-link > span { white-space: nowrap; }
 .count-badge { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; }
 .count-badge.dot { position: absolute; margin: -18px 0 0 18px; min-width: 9px; width: 9px; height: 9px; padding: 0; }
-.group-toggle { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.group-toggle { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; cursor: pointer; }
 .group-toggle .chevron { margin-left: auto; font-size: 11px; transition: transform .15s ease; }
 .sidebar-group:not(.open) .chevron { transform: rotate(-90deg); }
 .sidebar-group.active > .group-toggle { color: var(--admin-sidebar-strong); font-weight: 600; }
@@ -230,7 +230,7 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 .credit-link:hover :deep(.credit-summary) { border-color: var(--pk-yellow); }
 .sidebar-bottom { margin-top: 14px; display: grid; gap: 8px; padding: 14px 8px 4px; border-top: 1px solid var(--admin-sidebar-border); }
 .expert-badge, .logout-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; color: var(--admin-sidebar-muted); font-size: 12px; }
-.logout-link { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
+.logout-link { width: 100%; border: 0; background: transparent; font-family: inherit; cursor: pointer; text-align: left; border-radius: 8px; }
 .collapsed .logout-link { justify-content: center; padding: 0; }
 .logout-link:hover { background: var(--admin-sidebar-hover); color: var(--admin-sidebar-strong); }
 @media (max-width: 800px) { .expert-sidebar { position: static; width: auto; height: auto; overflow: visible; border-right: 0; border-bottom: 1px solid var(--admin-sidebar-border); } .expert-sidebar.collapsed { width: auto; } }
