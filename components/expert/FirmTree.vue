@@ -153,8 +153,9 @@
           </section>
 
           <!-- Seçili lokasyon: yalnız dal listesi açıkken (şemanın yanındaki kart kalktı, kullanıcı 18 Kas 2026). Kimlik + yazılı işlemler,
-               işyeri yoksa tek ana düğmeli uyarı, ekipman / tesisat, işyerleri aynı kartta (19 Kas 2026 tasarımı). -->
-          <section v-else-if="listNode && focusLocation" class="card loc-panel">
+               işyeri yoksa tek ana düğmeli uyarı, ekipman / tesisat; işyerleri altta ayrı kartta (kullanıcı 20 Kas 2026). -->
+          <template v-else-if="listNode && focusLocation">
+          <section class="card loc-panel">
             <header class="loc-panel-head">
               <div class="loc-panel-id">
                 <h2>{{ focusLocation.name }} <span class="count-pill" :class="{ none: !workplacesOf(focusLocation).length }">{{ workplacesOf(focusLocation).length ? `${workplacesOf(focusLocation).length} işyeri` : 'İşyeri tanımlı değil' }}</span></h2>
@@ -166,7 +167,6 @@
                 <button v-if="canEdit" class="primary-button" type="button" @click="startWorkplace(focusLocation)"><BriefcaseBusiness :size="16" :stroke-width="1.8" aria-hidden="true" /> İşyeri aç</button>
                 <span class="action-group">
                   <button v-if="canEdit" type="button" @click="openSub(focusLocation)"><Layers :size="16" :stroke-width="1.8" aria-hidden="true" /> Alt tesisler</button>
-                  <button type="button" :disabled="!workplacesOf(focusLocation).length" @click="openLocationPage(focusLocation, '/expert')"><LayoutDashboard :size="16" :stroke-width="1.8" aria-hidden="true" /> Genel bakış</button>
                   <button v-if="multiUser" type="button" @click="areaLocation = focusLocation"><LayoutGrid :size="16" :stroke-width="1.8" aria-hidden="true" /> Alanlar</button>
                 </span>
                 <button v-if="locMenuItems.length" class="more-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="locMenu?.toggle($event)"><Ellipsis :size="18" :stroke-width="1.8" aria-hidden="true" /></button>
@@ -186,8 +186,9 @@
                 <ChevronRight :size="16" :stroke-width="1.8" class="lucide-i count-go" aria-hidden="true" />
               </button>
             </div>
-            <!-- İşyerleri (KSY-SIS gibi); kamuda birim üstte yazdığı için ilk sütun işyerinin kendisi -->
-            <div class="loc-panel-wp">
+          </section>
+            <!-- İşyerleri (KSY-SIS gibi); kamuda işyeri adı yok, ilk sütun SGK no (kullanıcı 20 Kas 2026) -->
+            <section class="card loc-panel-wp loc-wp-card">
               <h3>İşyerleri <span class="count-pill none">{{ workplacesOf(focusLocation).length }}</span></h3>
               <div v-if="!workplacesOf(focusLocation).length" class="wp-empty">
                 <span class="wp-empty-icon"><Building2 :size="20" :stroke-width="1.8" aria-hidden="true" /></span>
@@ -197,10 +198,11 @@
               </div>
               <div v-else class="wp-table-wrap">
                 <table class="wp-table">
-                  <thead><tr><th>{{ firm.type === 'public' ? 'İşyeri' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+                  <thead><tr><th>{{ firm.type === 'public' ? 'SGK no' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
                   <tbody>
                     <tr v-for="workplace in workplacesOf(focusLocation)" :key="workplace.id">
-                      <td><strong>{{ firm.type === 'public' ? (nameOf(workplace.id) || workplace.company_name) : workplace.company_name }}</strong><small v-if="firm.type !== 'public' && nameOf(workplace.id)">{{ nameOf(workplace.id) }}</small><small v-if="workplace.sgk_workplace_number">SGK {{ workplace.sgk_workplace_number }}</small></td>
+                      <td v-if="firm.type === 'public'" :class="{ muted: !workplace.sgk_workplace_number }"><strong>{{ workplace.sgk_workplace_number || '—' }}</strong></td>
+                      <td v-else><strong>{{ workplace.company_name }}</strong><small v-if="nameOf(workplace.id)">{{ nameOf(workplace.id) }}</small><small v-if="workplace.sgk_workplace_number">SGK {{ workplace.sgk_workplace_number }}</small></td>
                       <td :class="{ muted: !workplace.sub_facility_name }">{{ workplace.sub_facility_name || '—' }}</td>
                       <td><span class="hazard-badge" :class="hazardClassKey(workplace.hazard_class)">{{ workplace.hazard_class }}</span></td>
                       <td class="end">
@@ -214,8 +216,8 @@
                   </tbody>
                 </table>
               </div>
-            </div>
-          </section>
+            </section>
+          </template>
         </aside>
       </div>
       <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
@@ -428,7 +430,7 @@
 <script setup lang="ts">
 // Bireysel uzmanın firma sayfası: tek pencere, bütün yapı ağaçta; işlemler satırda, formlar satırın altında. Lokasyon herhangi bir düğüme bağlanan boş bir yerdir; firmalar lokasyonda faaliyet gösterir.
 import { customerTypeLabel } from '~/composables/useCustomerTypes'
-import { ArrowLeft, BriefcaseBusiness, Building2, ChevronLeft, ChevronRight, CircleCheck, Ellipsis, FolderInput, Info, Layers, LayoutDashboard, LayoutGrid, Link, MapPin, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
+import { ArrowLeft, BriefcaseBusiness, Building2, ChevronLeft, ChevronRight, CircleCheck, Ellipsis, FolderInput, Info, Layers, LayoutGrid, Link, MapPin, Network, Package, PencilLine, Plus, Settings, Trash2, UserCog, X } from 'lucide-vue-next'
 import { HAZARD_CLASSES, hazardClassKey, normalizeCompanyName, type NaceItem } from '~/composables/useExpertApi'
 import type { Firm, FirmLocation, FirmNode, LocationDraft, WorkplaceProgress, WorkplaceRowDraft } from '~/composables/useFirmSetup'
 import type { Workplace } from '~/composables/useWorkplaceContext'
@@ -1508,6 +1510,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .count-row .count-go { margin-left: auto; color: var(--admin-muted); }
 .count-row:disabled .count-go { display: none; }
 .loc-panel-wp { display: grid; gap: 10px; }
+.loc-wp-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .loc-panel-wp h3 { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--admin-heading); font-size: 15px; font-weight: 700; }
 .loc-panel-wp .wp-table { min-width: 560px; }
 @media (max-width: 900px) { .loc-panel-head { flex-wrap: wrap; } .loc-panel-actions { justify-content: flex-start; } }
