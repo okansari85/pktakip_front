@@ -28,6 +28,13 @@
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
+      <!-- KSY-SIS müşteri kartı gibi sekmeler (kullanıcı 19 Kas 2026); kamuda firma yok, sekme de yok -->
+      <div v-if="firm.type !== 'public'" class="segment" role="tablist" aria-label="Ana firma bölümleri">
+        <button type="button" role="tab" :aria-selected="tab === 'org'" :class="{ active: tab === 'org' }" @click="tab = 'org'">Organizasyon ve lokasyonlar <span class="seg-count">{{ locations.length }}</span></button>
+        <button type="button" role="tab" :aria-selected="tab === 'firmalar'" :class="{ active: tab === 'firmalar' }" @click="tab = 'firmalar'">Firmalar <span class="seg-count">{{ firms.length }}</span></button>
+      </div>
+
+      <template v-if="tab === 'org'">
       <!-- Ana firma şeması (Vue Flow): solda şema, sağda seçilen kutunun paneli. Ekleme / düzenleme / silme / işyeri açma
            paneldedir (eski alt ağaç kalktı, kullanıcı 17 Kas 2026). Lokasyon ya da dal sürüklenip başka dala bırakılınca taşınır. -->
       <!-- Liste açıkken: hangi dalın içinde olunduğunu gösteren başlık, iki sütunun üstünde tam genişlik (ad tek satıra sığsın) -->
@@ -209,22 +216,6 @@
               </div>
             </div>
           </section>
-
-          <!-- Firmalar (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. Kamuda firma kurumun kendisi. -->
-          <section v-if="firm.type !== 'public'" id="firmalar" class="card firms-card">
-            <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
-            <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
-              <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
-              <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
-            </form>
-            <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
-            <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
-            <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
-              <span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
-              <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
-              <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-            </div>
-          </section>
         </aside>
       </div>
       <section v-else class="card"><div class="state">Bu firmanın yapısı boş. <button v-if="canEdit" class="link-button" type="button" @click="repairRoot">Düzelt</button></div></section>
@@ -254,6 +245,23 @@
               <tr v-if="!workplaceRows.length"><td :colspan="firm.type === 'public' ? 4 : 5" class="empty">Henüz işyeri yok.</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+      </template>
+
+      <!-- Firmalar sekmesi (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. Kamuda firma kurumun kendisi. -->
+      <section v-else id="firmalar" class="card firms-card">
+        <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
+        <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
+          <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
+          <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
+        </form>
+        <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
+        <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
+        <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
+          <span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
+          <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
+          <button v-if="canEdit && !f.workplaces_count" v-tooltip.top="'Ana firmadan çıkar'" class="row-button icon remove" type="button" :aria-label="`${f.name} firmasını çıkar`" @click="unlinkFirm(f)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
         </div>
       </section>
 
@@ -288,7 +296,7 @@
                     <select v-model="companyChoice" :disabled="!companyOptions.length">
                       <option v-for="name in companyOptions" :key="name" :value="name">{{ name }}</option>
                     </select>
-                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <a class="link-button" href="#firmalar">Firmalar kartından ekleyin</a></small>
+                    <small v-if="!companyOptions.length" class="field-note">Bu ana firmanın firması yok. <button class="link-button" type="button" @click="closeForm(); tab = 'firmalar'">Firmalar sekmesinden ekleyin</button></small>
                   </label>
                   <label v-if="!bulk" class="field">Alt tesis <small>(isteğe bağlı)</small>
                     <select v-model="row.subFacilityId" @change="row.subFacilityId === -1 && (newSubOpen = true)">
@@ -708,7 +716,9 @@ function showLocation(location: FirmLocation) {
   focusNodeId.value = null
 }
 // Sağ sütun yalnız içinde bir şey varken: açık form, dal listesindeki lokasyon ya da Firmalar kartı (kamuda yok).
-const sideOpen = computed(() => !!listNodeId.value || (!!adding.value && !drawerForm.value) || firm.value?.type !== 'public')
+// Firmalar kartı kendi sekmesine geçti: sağ sütun yalnız form ya da dal listesi açıkken
+const sideOpen = computed(() => !!listNodeId.value || (!!adding.value && !drawerForm.value))
+const tab = ref<'org' | 'firmalar'>('org')
 async function moveLocation(locationId: number | string, nodeId: number | string) {
   error.value = ''
   try { await patch(`/customers/${props.customerId}/pk-location-links/${locationId}`, { organization_id: nodeId }); await load() }
@@ -1327,6 +1337,12 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .wp-card { padding: 24px 0 8px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .wp-card .schema-head { padding: 0 24px 16px; }
 .wp-actions { display: inline-flex; gap: 6px; }
+/* Sekmeler: Raporlar sayfasındaki .segment ile aynı görünüm */
+.segment { display: inline-flex; gap: 4px; margin-bottom: 16px; padding: 4px; border-radius: 10px; background: var(--admin-card); box-shadow: var(--pk-card-shadow); max-width: 100%; }
+.segment button { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 20px; border: 0; border-radius: 8px; background: none; color: var(--admin-heading); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.segment button.active { background: var(--pk-accent); color: var(--pk-on-accent); font-weight: 700; }
+.seg-count { padding: 1px 8px; border-radius: 999px; background: rgba(145, 158, 171, .16); font-size: 12px; }
+@media (max-width: 760px) { .segment button { padding: 0 12px; font-size: 13px; } }
 .firms-card { display: grid; gap: 10px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
