@@ -95,66 +95,10 @@
         </div>
 
         <aside v-if="sideOpen" class="side">
-          <!-- Açık form (dal, lokasyon, düzenleme, işyeri): seçili kutunun panelinde -->
-          <section v-if="adding === 'edit' && selected" class="card panel-card">
-            <form class="float-card" @submit.prevent="saveEdit">
-              <div class="add-row-head">
-                <h3>{{ selected.name }} düzenle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <label class="field">Ad <span class="req">*</span>
-                <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(selected)" />
-              </label>
-              <!-- Tür etiketi yalnız bireysel uzman hesabında var (backend OSGB / kurumsalda kapalı). -->
-              <label v-if="!multiUser" class="field">Tür <small>(isteğe bağlı)</small>
-                <select v-model="editLabel">
-                  <option value="">Yok</option>
-                  <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
-                </select>
-              </label>
-              <small v-if="isLocked(selected)" class="field-note">Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</small>
-              <p v-if="editError" class="form-error" role="alert">{{ editError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="!editName.trim() || editSaving">{{ editSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
-            </form>
-          </section>
-
-          <section v-else-if="adding === 'org' && selected" class="card panel-card">
-            <form class="float-card" @submit.prevent="saveChild">
-              <div class="add-row-head">
-                <h3>{{ selected.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <label class="field">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
-                <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
-              </label>
-              <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="!groupName.trim() || saving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Ekle</button>
-            </form>
-          </section>
-
-          <section v-else-if="adding === 'location' && selected" class="card panel-card">
-            <form class="float-card" @submit.prevent="saveLocation">
-              <div class="add-row-head">
-                <h3>{{ selected.name }} altına lokasyon ekle</h3>
-                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-              </div>
-              <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
-              <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
-              <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
-                <p><Info :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
-                <div v-for="c in candidates" :key="c.id" class="candidate">
-                  <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
-                  <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><Link :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bağla</button>
-                </div>
-              </div>
-              <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
-              <button class="primary-button wide" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
-            </form>
-          </section>
 
           <!-- Seçili lokasyon: yalnız dal listesi açıkken (şemanın yanındaki kart kalktı, kullanıcı 18 Kas 2026). Kimlik + yazılı işlemler,
                işyeri yoksa tek ana düğmeli uyarı, ekipman / tesisat; işyerleri altta ayrı kartta (kullanıcı 20 Kas 2026). -->
-          <template v-else-if="listNode && focusLocation">
+          <template v-if="listNode && focusLocation">
           <section class="card loc-panel">
             <header class="loc-panel-head">
               <div class="loc-panel-id">
@@ -253,13 +197,12 @@
 
       <!-- Firmalar sekmesi (KSY-SIS): ana firmanın ticari unvanları; işyeri yalnız bunlarla açılır. Kamuda firma kurumun kendisi. -->
       <section v-else id="firmalar" class="card firms-card">
-        <header class="schema-head"><div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div></header>
-        <form v-if="canEdit" class="firm-add" @submit.prevent="addFirm">
-          <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" aria-label="Firmanın ticari unvanı" />
-          <button class="primary-button" type="submit" :disabled="!newFirmName.trim() || firmSaving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
-        </form>
-        <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
-        <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ticari unvanı yazıp ekleyin.</p>
+        <header class="schema-head">
+          <div><h2>Firmalar</h2><small>İşyeri açarken firma bu listeden seçilir</small></div>
+          <button v-if="canEdit" class="primary-button" type="button" @click="firmError = ''; firmFormOpen = true"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Ekle</button>
+        </header>
+        <p v-if="firmError && !firmFormOpen" class="form-error" role="alert">{{ firmError }}</p>
+        <p v-if="!firms.length" class="muted location-empty">Henüz firma yok. Ekle ile ticari unvanı ekleyin.</p>
         <div v-for="f in firms" :key="f.business_entity_id" class="firm-row">
           <span class="firm-avatar"><Building2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
           <span class="firm-text"><strong>{{ f.name }}</strong><small>{{ f.workplaces_count ? `${f.workplaces_count} işyeri` : 'İşyeri yok' }}</small></span>
@@ -283,9 +226,86 @@
     <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="firm?.name" @close="areaLocation = null" />
     <ExpertWorkplaceUnitsModal v-if="unitTarget" :location="unitTarget.location" :workplace="unitTarget.workplace" @close="unitTarget = null" />
 
-    <!-- Lokasyon işlemleri (İşyeri aç, Alt tesisler, Başka dala taşı) sağdan açılan panelde; yalnız X kapatır (kullanıcı 19 Kas 2026) -->
-    <div v-if="drawerForm && selectedLocation" class="modal-backdrop as-drawer">
-      <section class="modal-card as-drawer panel-card" role="dialog" aria-modal="true" :aria-label="`${selectedLocation.name} işlemi`">
+    <!-- Firma ekle (Firmalar sekmesi): ortada açılan pencere, yalnız X kapatır -->
+    <div v-if="firmFormOpen" class="modal-backdrop">
+      <section class="modal-card panel-card" role="dialog" aria-modal="true" aria-label="Firma ekle">
+        <form class="float-card" @submit.prevent="addFirm">
+          <div class="add-row-head">
+            <h3>Firma ekle</h3>
+            <button class="close-button" type="button" aria-label="Kapat" :disabled="firmSaving" @click="firmFormOpen = false"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+          </div>
+          <label class="field">Ticari unvan <span class="req">*</span>
+            <input v-model="newFirmName" type="text" placeholder="Ticari unvan (ör. ABC Gıda A.Ş.)" autofocus />
+          </label>
+          <p v-if="firmError" class="form-error" role="alert">{{ firmError }}</p>
+          <button class="primary-button wide" type="submit" :disabled="!newFirmName.trim() || firmSaving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ firmSaving ? 'Ekleniyor...' : 'Ekle' }}</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Dal / birim ekle, düzenle, lokasyon ekle: ortada açılan pencerede; yalnız X kapatır (kullanıcı 20 Kas 2026) -->
+    <div v-if="(adding === 'edit' || adding === 'org' || adding === 'location') && selected" class="modal-backdrop">
+      <section class="modal-card panel-card" role="dialog" aria-modal="true" :aria-label="`${selected.name} işlemi`">
+          <template v-if="adding === 'edit'">
+            <form class="float-card" @submit.prevent="saveEdit">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} düzenle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="editSaving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+              </div>
+              <label class="field">Ad <span class="req">*</span>
+                <input id="edit-name" v-model="editName" type="text" :disabled="isLocked(selected)" />
+              </label>
+              <!-- Tür etiketi yalnız bireysel uzman hesabında var (backend OSGB / kurumsalda kapalı). -->
+              <label v-if="!multiUser" class="field">Tür <small>(isteğe bağlı)</small>
+                <select v-model="editLabel">
+                  <option value="">Yok</option>
+                  <option v-for="label in NODE_LABELS" :key="label" :value="label">{{ label }}</option>
+                </select>
+              </label>
+              <small v-if="isLocked(selected)" class="field-note">Bu kayıt önceki bir sürümde şirket türüyle açıldı; adı değiştirilemiyor. Silip aynı adla yeniden ekleyebilirsiniz.</small>
+              <p v-if="editError" class="form-error" role="alert">{{ editError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!editName.trim() || editSaving">{{ editSaving ? 'Kaydediliyor...' : 'Kaydet' }}</button>
+            </form>
+          </template>
+
+          <template v-else-if="adding === 'org'">
+            <form class="float-card" @submit.prevent="saveChild">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} altına {{ firm.type === 'public' ? 'birim' : 'dal' }} ekle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+              </div>
+              <label class="field">{{ firm.type === 'public' ? 'Birimin adı' : 'Dalın adı' }}
+                <input v-model="groupName" type="text" :placeholder="firm.type === 'public' ? 'Örn. Fen İşleri Müdürlüğü' : 'Örn. Gıda Grubu, Marmara Bölgesi'" />
+              </label>
+              <p v-if="childError" class="form-error" role="alert">{{ childError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!groupName.trim() || saving"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Ekle</button>
+            </form>
+          </template>
+
+          <template v-else-if="adding === 'location'">
+            <form class="float-card" @submit.prevent="saveLocation">
+              <div class="add-row-head">
+                <h3>{{ selected.name }} altına lokasyon ekle</h3>
+                <button class="close-button" type="button" aria-label="Kapat" :disabled="saving" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+              </div>
+              <ExpertFirmLocationFields :key="locationFormKey" :draft="draft" :location-only="!autoWorkplace" autofocus />
+              <!-- Lokasyon hesabın kaydıdır (KSY-SIS'teki gibi): yazılan ada benzeyen kayıtlı lokasyonlar burada çıkar, "Bağla" ile bu dala bağlanır. -->
+              <div v-if="candidates.length" class="candidates" role="group" aria-label="Kayıtlı lokasyonlar">
+                <p><Info :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bu lokasyon zaten kayıtlı olabilir. Yenisini açmak yerine bağlayabilirsiniz:</p>
+                <div v-for="c in candidates" :key="c.id" class="candidate">
+                  <span><strong>{{ c.name }}</strong><small>{{ [c.city, c.district].filter(Boolean).join(' / ') || 'İl girilmemiş' }}{{ c.links ? ' · başka ana firmada da kullanılıyor' : ' · hiçbir ana firmaya bağlı değil' }}</small></span>
+                  <button class="secondary-button" type="button" :disabled="saving" @click="linkCandidate(c)"><Link :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Bağla</button>
+                </div>
+              </div>
+              <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+              <button class="primary-button wide" type="submit" :disabled="!canSaveLocation || saving">{{ saving ? 'Ekleniyor...' : 'Lokasyonu ekle' }}</button>
+            </form>
+          </template>
+      </section>
+    </div>
+    <!-- Lokasyon işlemleri (İşyeri aç, Alt tesisler, Başka dala taşı): ortada açılan pencerede; yalnız X kapatır (kullanıcı 20 Kas 2026) -->
+    <div v-if="drawerForm && selectedLocation" class="modal-backdrop">
+      <section class="modal-card panel-card" role="dialog" aria-modal="true" :aria-label="`${selectedLocation.name} işlemi`">
               <template v-if="adding === 'workplace'">
                 <form class="float-card" @submit.prevent="saveRow">
                   <div class="add-row-head">
@@ -381,8 +401,8 @@
     </div>
 
     <!-- Grup, şirket ya da lokasyonu sil -->
-    <div v-if="removing" class="modal-backdrop" :class="{ 'as-drawer': removing.location && !removing.workplace }">
-      <section class="modal-card" :class="{ 'as-drawer': removing.location && !removing.workplace }" role="dialog" aria-modal="true" aria-labelledby="remove-title">
+    <div v-if="removing" class="modal-backdrop">
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="remove-title">
         <div class="modal-head">
           <span class="head-icon danger"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
           <div><h2 id="remove-title">{{ removing.workplace ? 'Firmayı Lokasyondan Çıkar' : removing.location ? 'Lokasyonu Sil' : 'Sil' }}</h2><p>"{{ removing.name }}"<template v-if="removing.workplace"> · {{ removing.location?.name }}</template></p></div>
@@ -574,26 +594,20 @@ function closeForm() {
   adding.value = null
   selectedLocationId.value = null
 }
-// Dışarı tıklama yalnız boş kartı kapatır: yazılan kaybolmasın. Satır düğmeleri kendi işini yapar. Esc her zaman kapatır.
+// Formlar pencerede: dışarı tıklama kapatmaz (yalnız X); Esc boş formu kapatır.
 const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && (editName.value.trim() !== selected.value.name || editLabel.value !== labelOf(selected.value)))
   : adding.value === 'org' ? !!groupName.value.trim()
   : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId || draft.hazard)
   : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
 const drawerForm = computed(() => adding.value === 'workplace' || adding.value === 'sub' || adding.value === 'move')
-function onPagePointer(event: PointerEvent) {
-  if (!adding.value || formDirty.value || dialogOpen()) return
-  if (!(event.target as Element).closest?.('.float-card, .row-actions, .as-drawer')) closeForm()
-}
 function onPageKey(event: KeyboardEvent) {
   if (event.key === 'Escape' && adding.value && !dialogOpen() && !formDirty.value) closeForm()
 }
 onMounted(() => {
-  document.addEventListener('pointerdown', onPagePointer)
   document.addEventListener('keydown', onPageKey)
 })
 onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onPagePointer)
   document.removeEventListener('keydown', onPageKey)
 })
 // İşyerleri tablosundan: lokasyon şemada seçilir, sayfa şemaya kayar.
@@ -718,8 +732,8 @@ function showLocation(location: FirmLocation) {
   focusNodeId.value = null
 }
 // Sağ sütun yalnız içinde bir şey varken: açık form, dal listesindeki lokasyon ya da Firmalar kartı (kamuda yok).
-// Firmalar kartı kendi sekmesine geçti: sağ sütun yalnız form ya da dal listesi açıkken
-const sideOpen = computed(() => !!listNodeId.value || (!!adding.value && !drawerForm.value))
+// Formlar pencerede, Firmalar kendi sekmesinde: sağ sütun yalnız dal listesi açıkken
+const sideOpen = computed(() => !!listNodeId.value)
 const tab = ref<'org' | 'firmalar'>('org')
 async function moveLocation(locationId: number | string, nodeId: number | string) {
   error.value = ''
@@ -860,6 +874,7 @@ const firms = ref<CustomerFirm[]>([])
 const newFirmName = ref('')
 const firmSaving = ref(false)
 const firmError = ref('')
+const firmFormOpen = ref(false)
 const loadFirms = async () => { firms.value = await get<CustomerFirm[]>(`/customers/${props.customerId}/firms`).catch(() => firms.value) }
 async function addFirm() {
   if (!newFirmName.value.trim() || firmSaving.value) return
@@ -868,6 +883,7 @@ async function addFirm() {
   try {
     await post(`/customers/${props.customerId}/firms`, { name: newFirmName.value.trim(), company_type: firm.value?.type === 'individual' ? 'individual' : 'corporate' })
     newFirmName.value = ''
+    firmFormOpen.value = false
     await loadFirms()
   } catch (e: any) { firmError.value = errorMessage(e, 'Firma eklenemedi.') }
   finally { firmSaving.value = false }
@@ -1345,6 +1361,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .segment button.active { background: var(--pk-accent); color: var(--pk-on-accent); font-weight: 700; }
 .seg-count { padding: 1px 8px; border-radius: 999px; background: rgba(145, 158, 171, .16); font-size: 12px; }
 @media (max-width: 760px) { .segment button { padding: 0 12px; font-size: 13px; } }
+.firms-card .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .firms-card { display: grid; gap: 10px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-card, .location-card { display: grid; gap: 16px; padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .schema-head h2, .location-card h2 { margin: 0; color: var(--admin-heading); font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
@@ -1537,10 +1554,9 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .sub-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px; background: var(--pk-violet-lighter); color: var(--pk-violet-dark); font-weight: 600; }
 .sub-chip button { border: 0; background: none; color: inherit; cursor: pointer; padding: 0; font-size: 10px; }
 .sub-add { display: flex; gap: 8px; }
-.sub-add input, .firm-add input { flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
+.sub-add input { flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
 /* Firmalar sekmesi */
-.firm-add { display: flex; gap: 10px; margin-bottom: 6px; }
-.firm-add .primary-button, .sub-add .secondary-button { flex: none; }
+.sub-add .secondary-button { flex: none; }
 .firm-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-top: 1px dashed rgba(145, 158, 171, .24); }
 .firm-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: var(--pk-primary-lighter); color: var(--pk-primary-dark); }
 .firm-text { flex: 1; display: grid; min-width: 0; }
@@ -1662,9 +1678,7 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .other-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 0; background: none; color: var(--admin-heading); font: inherit; font-size: 13.5px; cursor: pointer; }
 .other-link:hover { text-decoration: underline; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: var(--admin-overlay); }
-.modal-backdrop.as-drawer { place-items: stretch end; padding: 0; }
-.modal-card.as-drawer { width: min(520px, 94vw); height: 100%; max-height: none; padding: 26px 24px; border-radius: var(--pk-radius) 0 0 var(--pk-radius); box-shadow: -24px 0 48px -8px var(--admin-shadow); }
-.modal-card.as-drawer.panel-card .float-card { gap: 16px; }
+.modal-card.panel-card .float-card { gap: 16px; }
 .modal-card { width: min(540px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 22px; border-radius: 14px; background: var(--admin-input); box-shadow: 0 20px 60px var(--admin-shadow); }
 .modal-head { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
 .modal-head > div { flex: 1; min-width: 0; }
