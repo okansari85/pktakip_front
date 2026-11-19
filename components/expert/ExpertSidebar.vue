@@ -189,7 +189,8 @@ watch(settingsActive, active => { if (active) settingsOpen.value = true })
 /* Sayfa uzasa da menü ekran boyunda sabit kalır (yapışık); menü ekrana sığmazsa kendi içinde kayar.
    Behance CRM tasarımı: ekranın soluna yaslı düz beyaz panel, sağda ince çizgi; seçili satır açık mavi zemin + mavi yazı. */
 .expert-sidebar {
-  --admin-sidebar: var(--admin-surface); --admin-sidebar-text: #637381; --admin-sidebar-muted: #919eab;
+  /* Yazılar koyulaştırıldı: soluk gri beyaz zeminde okunmuyordu (kullanıcı 20 Kas 2026) */
+  --admin-sidebar: var(--admin-surface); --admin-sidebar-text: #344054; --admin-sidebar-muted: #667085;
   --admin-sidebar-hover: rgba(145, 158, 171, .08); --admin-sidebar-border: rgba(145, 158, 171, .2); --admin-sidebar-strong: #212b36;
   position: sticky; top: 0; align-self: flex-start; width: 264px; height: 100vh; margin: 0; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; flex-shrink: 0;
   background: var(--admin-sidebar); color: var(--admin-sidebar-text); border-right: 1px solid var(--admin-sidebar-border); transition: width .2s ease, padding .2s ease;
