@@ -109,10 +109,6 @@
               <!-- İşlemler sağ üstte: ana düğme İşyeri aç, yanında grup, taşı / sil ⋯ menüsünde; hepsi sağdaki panelde açılır -->
               <div class="loc-panel-actions">
                 <button v-if="canEdit" class="primary-button" type="button" @click="startWorkplace(focusLocation)"><BriefcaseBusiness :size="16" :stroke-width="1.8" aria-hidden="true" /> İşyeri aç</button>
-                <span class="action-group">
-                  <button v-if="canEdit" type="button" @click="openSub(focusLocation)"><Layers :size="16" :stroke-width="1.8" aria-hidden="true" /> Alt tesisler</button>
-                  <button v-if="multiUser" type="button" @click="areaLocation = focusLocation"><LayoutGrid :size="16" :stroke-width="1.8" aria-hidden="true" /> Alanlar</button>
-                </span>
                 <button v-if="locMenuItems.length" class="more-button" type="button" aria-label="Diğer işlemler" aria-haspopup="true" @click="locMenu?.toggle($event)"><Ellipsis :size="18" :stroke-width="1.8" aria-hidden="true" /></button>
                 <Menu ref="locMenu" :model="locMenuItems" popup :pt="{ root: { style: MENU_VARS } }" />
               </div>
@@ -131,35 +127,56 @@
               </button>
             </div>
           </section>
-            <!-- İşyerleri (KSY-SIS gibi); kamuda işyeri adı yok, ilk sütun SGK no (kullanıcı 20 Kas 2026) -->
+            <!-- İşyerleri / Alt tesisler / Alanlar: KSY-SIS lokasyon kartındaki lacivert şerit gibi ayrı kartta sekme; içerik alttaki kartta
+                 (kullanıcı 21 Kas 2026). Alt tesisler penceresi ve Alanlar yan paneli bu sekmelere taşındı. -->
+            <nav class="lok-serit" aria-label="Lokasyon bölümleri">
+              <button type="button" :class="{ on: shownLocTab === 'wp' }" :aria-current="shownLocTab === 'wp' ? 'true' : undefined" @click="locTab = 'wp'"><BriefcaseBusiness :size="16" :stroke-width="1.8" aria-hidden="true" /> İşyerleri <em class="sayac">{{ workplacesOf(focusLocation).length }}</em></button>
+              <button v-if="canEdit" type="button" :class="{ on: shownLocTab === 'sub' }" :aria-current="shownLocTab === 'sub' ? 'true' : undefined" @click="locTab = 'sub'"><Layers :size="16" :stroke-width="1.8" aria-hidden="true" /> Alt tesisler <em class="sayac">{{ subsOf(focusLocation).length }}</em></button>
+              <button v-if="multiUser" type="button" :class="{ on: shownLocTab === 'area' }" :aria-current="shownLocTab === 'area' ? 'true' : undefined" @click="locTab = 'area'"><LayoutGrid :size="16" :stroke-width="1.8" aria-hidden="true" /> Alanlar <em v-if="areaCount != null" class="sayac">{{ areaCount }}</em></button>
+            </nav>
             <section class="card loc-panel-wp loc-wp-card">
-              <h3>İşyerleri <span class="count-pill none">{{ workplacesOf(focusLocation).length }}</span></h3>
-              <div v-if="!workplacesOf(focusLocation).length" class="wp-empty">
-                <span class="wp-empty-icon"><Building2 :size="20" :stroke-width="1.8" aria-hidden="true" /></span>
-                <strong>Bu lokasyonda henüz işyeri bulunmuyor</strong>
-                <p>SGK sicil / işyeri kaydı ekleyerek çalışan ve tehlike sınıfı takibini başlatabilirsiniz.</p>
-                <button v-if="canEdit" class="soft-button" type="button" @click="startWorkplace(focusLocation)"><Plus :size="16" :stroke-width="1.8" aria-hidden="true" /> Bu lokasyonda işyeri aç</button>
-              </div>
-              <div v-else class="wp-table-wrap">
-                <table class="wp-table">
-                  <thead><tr><th>{{ firm.type === 'public' ? 'SGK no' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
-                  <tbody>
-                    <tr v-for="workplace in workplacesOf(focusLocation)" :key="workplace.id">
-                      <td v-if="firm.type === 'public'" :class="{ muted: !workplace.sgk_workplace_number }"><strong>{{ workplace.sgk_workplace_number || '—' }}</strong></td>
-                      <td v-else><strong>{{ workplace.company_name }}</strong><small v-if="nameOf(workplace.id)">{{ nameOf(workplace.id) }}</small><small v-if="workplace.sgk_workplace_number">SGK {{ workplace.sgk_workplace_number }}</small></td>
-                      <td :class="{ muted: !workplace.sub_facility_name }">{{ workplace.sub_facility_name || '—' }}</td>
-                      <td><span class="hazard-badge" :class="hazardClassKey(workplace.hazard_class)">{{ workplace.hazard_class }}</span></td>
-                      <td class="end">
-                        <span class="wp-actions">
-                          <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} birimleri`" @click="unitTarget = { location: focusLocation, workplace: { id: workplace.id, name: workplaceLabel(workplace.id, workplace.company_name) } }"><Network :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-                          <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} işyerine uzman ata`" @click="assignId = workplace.id"><UserCog :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-                          <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(workplace.id) || workplace.company_name, workplace, location: focusLocation })"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <template v-if="shownLocTab === 'wp'">
+                <div v-if="!workplacesOf(focusLocation).length" class="wp-empty">
+                  <span class="wp-empty-icon"><Building2 :size="20" :stroke-width="1.8" aria-hidden="true" /></span>
+                  <strong>Bu lokasyonda henüz işyeri bulunmuyor</strong>
+                  <p>SGK sicil / işyeri kaydı ekleyerek çalışan ve tehlike sınıfı takibini başlatabilirsiniz.</p>
+                  <button v-if="canEdit" class="soft-button" type="button" @click="startWorkplace(focusLocation)"><Plus :size="16" :stroke-width="1.8" aria-hidden="true" /> Bu lokasyonda işyeri aç</button>
+                </div>
+                <div v-else class="wp-table-wrap">
+                  <table class="wp-table">
+                    <thead><tr><th>{{ firm.type === 'public' ? 'SGK no' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+                    <tbody>
+                      <tr v-for="workplace in workplacesOf(focusLocation)" :key="workplace.id">
+                        <td v-if="firm.type === 'public'" :class="{ muted: !workplace.sgk_workplace_number }"><strong>{{ workplace.sgk_workplace_number || '—' }}</strong></td>
+                        <td v-else><strong>{{ workplace.company_name }}</strong><small v-if="nameOf(workplace.id)">{{ nameOf(workplace.id) }}</small><small v-if="workplace.sgk_workplace_number">SGK {{ workplace.sgk_workplace_number }}</small></td>
+                        <td :class="{ muted: !workplace.sub_facility_name }">{{ workplace.sub_facility_name || '—' }}</td>
+                        <td><span class="hazard-badge" :class="hazardClassKey(workplace.hazard_class)">{{ workplace.hazard_class }}</span></td>
+                        <td class="end">
+                          <span class="wp-actions">
+                            <button v-if="multiUser" v-tooltip.top="'Birimler'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} birimleri`" @click="unitTarget = { location: focusLocation, workplace: { id: workplace.id, name: workplaceLabel(workplace.id, workplace.company_name) } }"><Network :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                            <button v-if="multiUser" v-tooltip.top="'Uzman ata'" class="row-button icon" type="button" :aria-label="`${workplace.company_name} işyerine uzman ata`" @click="assignId = workplace.id"><UserCog :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                            <button v-if="canEdit" v-tooltip.top="'Lokasyondan çıkar'" class="row-button icon remove" type="button" :aria-label="`${workplace.company_name} işyerini lokasyondan çıkar`" @click="openRemove({ name: nameOf(workplace.id) || workplace.company_name, workplace, location: focusLocation })"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+              <!-- Alt tesisler (eski pencerenin içeriği) -->
+              <template v-else-if="shownLocTab === 'sub'">
+                <div class="sub-chips">
+                  <span v-for="sub in subsOf(focusLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(focusLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
+                  <span v-if="!subsOf(focusLocation).length" class="muted">Henüz alt tesis yok.</span>
+                </div>
+                <form class="sub-add" @submit.prevent="addSub(focusLocation)">
+                  <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
+                  <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
+                </form>
+                <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+              </template>
+              <!-- Alanlar (eski yan panelin içeriği): sekme açık değilken de yüklü kalır, şeritteki sayı için -->
+              <ExpertLocationAreasDrawer v-if="multiUser" v-show="shownLocTab === 'area'" :key="focusLocation.id" embedded :location="focusLocation" :customer-name="firm?.name" @count="n => areaCount = n" />
             </section>
           </template>
         </aside>
@@ -223,7 +240,6 @@
     </template>
 
     <ExpertWorkplaceAssignments v-if="assignId" :only="assignId" @close="assignId = null" />
-    <ExpertLocationAreasDrawer v-if="areaLocation" :location="areaLocation" :customer-name="firm?.name" @close="areaLocation = null" />
     <ExpertWorkplaceUnitsModal v-if="unitTarget" :location="unitTarget.location" :workplace="unitTarget.workplace" @close="unitTarget = null" />
 
     <!-- Firma ekle (Firmalar sekmesi): ortada açılan pencere, yalnız X kapatır -->
@@ -360,25 +376,6 @@
                   <button class="primary-button wide" type="submit" :disabled="rowSaving || limitFull || !row.hazard || !companyFor(selectedLocation)"><Plus :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> {{ rowSaving ? 'Ekleniyor...' : bulk ? 'Hepsini aç' : 'İşyeri aç' }}</button>
                   <small class="field-note">Aynı firmanın bu lokasyondaki ikinci işyeri ayrı bir alt tesiste açılır.</small>
                 </form>
-              </template>
-
-              <!-- Alt tesisler -->
-              <template v-else-if="adding === 'sub'">
-                <div class="float-card">
-                  <div class="add-row-head">
-                    <h3>{{ selectedLocation.name }} · alt tesisler</h3>
-                    <button class="close-button" type="button" aria-label="Kapat" @click="closeForm"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
-                  </div>
-                  <div class="sub-chips">
-                    <span v-for="sub in subsOf(selectedLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(selectedLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
-                    <span v-if="!subsOf(selectedLocation).length" class="muted">Henüz alt tesis yok.</span>
-                  </div>
-                  <form class="sub-add" @submit.prevent="addSub(selectedLocation)">
-                    <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
-                    <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
-                  </form>
-                  <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
-                </div>
               </template>
 
               <!-- Başka dala taşı -->
@@ -600,7 +597,7 @@ const formDirty = computed(() => adding.value === 'edit' ? (!!selected.value && 
   : adding.value === 'location' ? !!(draft.name.trim() || draft.cityId || draft.districtId || draft.hazard)
   : !!(row.name.trim() || row.sgk.trim() || row.hazard || row.naceCode || bulkText.value.trim() || naceQuery.value.trim()))
 const dialogOpen = () => !!removing.value || deleteOpen.value
-const drawerForm = computed(() => adding.value === 'workplace' || adding.value === 'sub' || adding.value === 'move')
+const drawerForm = computed(() => adding.value === 'workplace' || adding.value === 'move')
 function onPageKey(event: KeyboardEvent) {
   if (event.key === 'Escape' && adding.value && !dialogOpen() && !formDirty.value) closeForm()
 }
@@ -809,11 +806,6 @@ async function onMoveSelect(location: FirmLocation, nodeId: string) {
 }
 
 // --- Satırdaki işlemler: alt tesisler, başka dala taşı (formlar sağ panelde) ---
-function openSub(location: FirmLocation) {
-  selectLocation(location)
-  focusId.value = location.id
-  adding.value = 'sub'
-}
 const moveTarget = ref('')
 function openMove(location: FirmLocation) {
   selectLocation(location)
@@ -1182,8 +1174,12 @@ function addLocationFromTab() {
 }
 // Uzman ata penceresi açık olan işyeri (OSGB / kurumsal / kamu; yönetici ve operasyon yöneticisi).
 const assignId = ref<number | null>(null)
-// Alanlar paneli açık olan lokasyon ve Birimler penceresi açık olan işyeri (OSGB / kurumsal / kamu).
-const areaLocation = ref<FirmLocation | null>(null)
+// Lokasyon kartının sekmesi (İşyerleri / Alt tesisler / Alanlar); yetkisi olmayan sekme seçili kaldıysa İşyerleri görünür.
+const locTab = ref<'wp' | 'sub' | 'area'>('wp')
+const shownLocTab = computed(() => (locTab.value === 'sub' && !canEdit.value) || (locTab.value === 'area' && !multiUser.value) ? 'wp' : locTab.value)
+const areaCount = ref<number | null>(null)
+watch(() => focusLocation.value?.id, () => { areaCount.value = null; subError.value = '' })
+// Birimler penceresi açık olan işyeri (OSGB / kurumsal / kamu).
 const unitTarget = ref<{ location: FirmLocation; workplace: { id: number; name: string } } | null>(null)
 
 // --- Ağaçtan silme ---
@@ -1530,6 +1526,13 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-wp-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .loc-panel-wp h3 { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--admin-heading); font-size: 15px; font-weight: 700; }
 .loc-panel-wp .wp-table { min-width: 560px; }
+/* Lokasyon sekmeleri: KSY-SIS LokasyonKarti .lok-serit */
+.lok-serit { display: flex; gap: 4px; padding: 8px 14px; background: #0f2a63; border-radius: 18px; overflow-x: auto; }
+.lok-serit button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 10px; background: transparent; color: #c3d1ee; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.lok-serit button:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.lok-serit button.on { color: #0f2a63; background: #fff; }
+.lok-serit .sayac { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: inherit; font-style: normal; font-size: 11px; text-align: center; }
+.lok-serit button.on .sayac { background: #e8eefc; color: #0f2a63; }
 @media (max-width: 900px) { .loc-panel-head { flex-wrap: wrap; } .loc-panel-actions { justify-content: flex-start; } }
 /* (eski) sağ panel listesi stilleri */
 .list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }

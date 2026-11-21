@@ -1,7 +1,8 @@
 <template>
-  <div class="drawer-backdrop">
-    <aside class="area-drawer">
-      <div class="drawer-head">
+  <!-- embedded: Kurum şemasındaki lokasyon kartının Alanlar sekmesinde sayfa içinde (kullanıcı 21 Kas 2026); değilse sağdan açılan panel -->
+  <div :class="embedded ? 'areas-embedded' : 'drawer-backdrop'">
+    <component :is="embedded ? 'div' : 'aside'" :class="embedded ? 'area-panel' : 'area-drawer'">
+      <div v-if="!embedded" class="drawer-head">
         <div>
           <h2>Lokasyon Alanları</h2>
           <div class="drawer-subtitle"><PkIcon class="pi pi-map-marker" /><div><strong>{{ location.name }}</strong><span>{{ customerName }}</span></div></div>
@@ -45,7 +46,7 @@
         </li>
       </ul>
       <p v-if="actionError" class="action-error">{{ actionError }}</p>
-    </aside>
+    </component>
 
     <!-- Alan ekle / düzenle -->
     <div v-if="formOpen" class="modal-backdrop">
@@ -97,8 +98,8 @@ interface Area {
   is_active: boolean; equipment_count: number; installation_count: number; children: Area[]
 }
 
-const props = defineProps<{ location: { id: number; name: string }; customerName?: string | null }>()
-const emit = defineEmits<{ close: []; changed: [] }>()
+const props = defineProps<{ location: { id: number; name: string }; customerName?: string | null; embedded?: boolean }>()
+const emit = defineEmits<{ close: []; changed: []; count: [number] }>()
 
 const { get, post, patch, del, errorMessage } = useExpertApi()
 const { multiUser, isManager } = useAccount()
@@ -206,6 +207,8 @@ const remove = async (area: Area) => {
 }
 
 onMounted(load)
+// Sekmedeki sayı: alt alanlar dahil bütün alanlar
+watch(areas, list => emit('count', list.reduce((sum, area) => sum + 1 + area.children.length, 0)))
 </script>
 
 <style scoped>
@@ -240,5 +243,6 @@ onMounted(load)
 .form-error{margin:0 0 8px;color:var(--admin-danger-text);font-size:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover:not(:disabled){background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}.primary-button.small{min-height:36px;padding:0 13px;font-size:12px}
+.area-panel{display:grid;gap:12px}.area-panel .intro,.area-panel .action-error{margin:0}.area-panel .drawer-toolbar{padding:0}.area-panel .area-list{padding:0;overflow:visible}.area-panel .drawer-state{padding:36px 20px}
 .secondary-button{min-height:40px;padding:0 16px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.secondary-button:hover{background:rgba(145,158,171,.08)}.secondary-button:disabled{opacity:.55;cursor:not-allowed}
 </style>
