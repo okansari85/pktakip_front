@@ -10,14 +10,41 @@
         <button class="close-button" type="button" @click="emit('close')"><PkIcon class="pi pi-times" /></button>
       </div>
 
-      <p class="intro"><PkIcon class="pi pi-info-circle" /> Alan, lokasyondaki fiziksel yerdir (bina, depo, kat, yemekhane…); isteğe bağlıdır, alan eklenmeyen lokasyon bugünkü gibi çalışır. Alan firmaya bağlı değildir: ekipman firmaya ait kalır, alan yalnızca nerede olduğunu söyler. Ayrı yönetilen bölümler (ör. Müşteri Hizmetleri) alan değil, lokasyonun "Firmalar" listesinde firmanın birimidir.</p>
-      <div v-if="canEdit" class="drawer-toolbar">
+      <p v-if="!embedded" class="intro"><PkIcon class="pi pi-info-circle" /> Alan, lokasyondaki fiziksel yerdir (bina, depo, kat, yemekhane…); isteğe bağlıdır, alan eklenmeyen lokasyon bugünkü gibi çalışır. Alan firmaya bağlı değildir: ekipman firmaya ait kalır, alan yalnızca nerede olduğunu söyler. Ayrı yönetilen bölümler (ör. Müşteri Hizmetleri) alan değil, lokasyonun "Firmalar" listesinde firmanın birimidir.</p>
+      <div v-if="embedded" class="tab-tools">
+        <small>Alan, lokasyondaki fiziksel yerdir (bina, depo, kat, yemekhane…); isteğe bağlıdır ve firmaya bağlı değildir.</small>
+        <button v-if="canEdit" class="primary-button" type="button" :disabled="loading" @click="openForm(null, null)"><PkIcon class="pi pi-plus" /> Alan ekle</button>
+      </div>
+      <div v-if="canEdit && !embedded" class="drawer-toolbar">
         <button class="primary-button small" type="button" :disabled="loading" @click="openForm(null, null)"><PkIcon class="pi pi-plus" /> Alan Ekle</button>
       </div>
 
       <div v-if="loading" class="drawer-state">Alanlar yükleniyor...</div>
       <div v-else-if="error" class="drawer-state error-state">{{ error }}</div>
       <div v-else-if="!areas.length" class="drawer-state">Bu lokasyonda alan yok.</div>
+      <!-- Sekmede tablo (kullanıcı 21 Kas 2026): alt alanlar üst alanın altında girintili -->
+      <div v-else-if="embedded" class="area-table-wrap">
+        <table class="area-table">
+          <thead><tr><th>Alan</th><th>Tür</th><th>Kayıtlar</th><th>Durum</th><th v-if="canEdit"><span class="sr-only">İşlem</span></th></tr></thead>
+          <tbody>
+            <template v-for="area in areas" :key="area.id">
+              <tr v-for="item in [area, ...area.children]" :key="item.id" :class="{ passive: !item.is_active, child: item !== area }">
+                <td><strong>{{ item.name }}</strong><small v-if="item !== area">{{ area.name }} içinde</small></td>
+                <td><span class="kind">{{ item.type.name }}</span></td>
+                <td :class="{ muted: !item.equipment_count && !item.installation_count }">{{ countText(item) || '—' }}</td>
+                <td>{{ item.is_active ? 'Aktif' : 'Pasif' }}</td>
+                <td v-if="canEdit" class="end">
+                  <span class="area-actions">
+                    <button v-if="item === area" class="icon-button" type="button" title="Alt alan ekle" :aria-label="`${item.name} içine alt alan ekle`" @click="openForm(null, area)"><PkIcon class="pi pi-plus" /></button>
+                    <button class="icon-button" type="button" title="Düzenle" :aria-label="`${item.name} alanını düzenle`" @click="openForm(item, item === area ? null : area)"><PkIcon class="pi pi-pencil" /></button>
+                    <button class="icon-button danger" type="button" title="Sil" :aria-label="`${item.name} alanını sil`" @click="actionError = ''; deleting = item"><PkIcon class="pi pi-trash" /></button>
+                  </span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
       <ul v-else class="area-list">
         <li v-for="area in areas" :key="area.id" class="area-item" :class="{ passive: !area.is_active }">
           <div class="area-row">
@@ -47,6 +74,22 @@
       </ul>
       <p v-if="actionError" class="action-error">{{ actionError }}</p>
     </component>
+
+    <!-- Alanı sil (sekmede): ortada pencere, yalnız X / Vazgeç kapatır -->
+    <div v-if="deleting" class="modal-backdrop">
+      <section class="modal-card" role="dialog" aria-modal="true" aria-label="Alanı sil">
+        <div class="modal-head">
+          <div><h2>Alanı Sil</h2><p>"{{ deleting.name }}" · {{ location.name }}</p></div>
+          <button class="close-button" type="button" :disabled="removing" @click="deleting = null"><PkIcon class="pi pi-times" /></button>
+        </div>
+        <p class="hint">Silinince geri alınamaz.</p>
+        <p v-if="actionError" class="form-error">{{ actionError }}</p>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" :disabled="removing" @click="deleting = null">Vazgeç</button>
+          <button class="danger-button" type="button" :disabled="removing" @click="removeConfirmed">{{ removing ? 'Siliniyor...' : 'Sil' }}</button>
+        </div>
+      </section>
+    </div>
 
     <!-- Alan ekle / düzenle -->
     <div v-if="formOpen" class="modal-backdrop">
@@ -194,6 +237,23 @@ const save = async () => {
   } finally { saving.value = false }
 }
 
+// Sekmedeki silme: onay penceresinden
+const deleting = ref<Area | null>(null)
+const removing = ref(false)
+const removeConfirmed = async () => {
+  if (!deleting.value || removing.value) return
+  removing.value = true
+  actionError.value = ''
+  try {
+    const data = await del<any>(`/pk-areas/${deleting.value.id}`)
+    areas.value = data.areas || []
+    deleting.value = null
+    emit('changed')
+  } catch (e: any) {
+    actionError.value = errorMessage(e, 'Alan silinemedi.')
+  } finally { removing.value = false }
+}
+
 const remove = async (area: Area) => {
   actionError.value = ''
   if (!confirm(`"${area.name}" alanı silinsin mi?`)) return
@@ -244,5 +304,13 @@ watch(areas, list => emit('count', list.reduce((sum, area) => sum + 1 + area.chi
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 17px;border:0;border-radius:8px;background:var(--pk-accent);color:var(--pk-on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(var(--pk-accent-rgb),.24)}.primary-button:hover:not(:disabled){background:var(--pk-accent-hover)}.primary-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}.primary-button.small{min-height:36px;padding:0 13px;font-size:12px}
 .area-panel{display:grid;gap:12px}.area-panel .intro,.area-panel .action-error{margin:0}.area-panel .drawer-toolbar{padding:0}.area-panel .area-list{padding:0;overflow:visible}.area-panel .drawer-state{padding:36px 20px}
+.tab-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}.tab-tools small{flex:1;min-width:220px;color:var(--admin-muted);font-size:13px;line-height:1.45}
+.area-table-wrap{overflow-x:auto}.area-table{width:100%;min-width:560px;border-collapse:collapse;font-size:13px}
+.area-table th{padding:10px 12px;border-bottom:1px solid var(--admin-border);color:var(--admin-muted);font-size:12px;font-weight:700;text-align:left;white-space:nowrap}
+.area-table td{padding:12px;border-bottom:1px solid var(--admin-border);color:var(--admin-heading);vertical-align:middle}.area-table tr:last-child td{border-bottom:0}
+.area-table td strong{display:block}.area-table td small{display:block;margin-top:2px;color:var(--admin-muted);font-size:12px}.area-table td.muted{color:var(--admin-muted)}
+.area-table tr.child td:first-child{padding-left:32px}.area-table td.end{text-align:right}.area-table td.end .area-actions{justify-content:flex-end}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.danger-button{min-height:40px;padding:0 16px;border:0;border-radius:8px;background:#d92d20;color:#fff;font-size:13px;font-weight:700;cursor:pointer}.danger-button:disabled{opacity:.55;cursor:not-allowed}
 .secondary-button{min-height:40px;padding:0 16px;border:1px solid rgba(145,158,171,.32);border-radius:8px;background:transparent;color:var(--admin-heading);font-size:13px;font-weight:700;cursor:pointer}.secondary-button:hover{background:rgba(145,158,171,.08)}.secondary-button:disabled{opacity:.55;cursor:not-allowed}
 </style>

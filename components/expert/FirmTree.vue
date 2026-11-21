@@ -163,17 +163,35 @@
                   </table>
                 </div>
               </template>
-              <!-- Alt tesisler (eski pencerenin içeriği) -->
+              <!-- Alt tesisler: tablo; ekle / düzenle / sil pencerede (kullanıcı 21 Kas 2026) -->
               <template v-else-if="shownLocTab === 'sub'">
-                <div class="sub-chips">
-                  <span v-for="sub in subsOf(focusLocation)" :key="sub.id" class="sub-chip">{{ sub.name }}<button v-if="!sub.workplaces_count" type="button" :aria-label="`${sub.name} alt tesisini sil`" @click="removeSub(focusLocation, sub)"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button></span>
-                  <span v-if="!subsOf(focusLocation).length" class="muted">Henüz alt tesis yok.</span>
+                <div class="tab-tools">
+                  <small>Lokasyonun bölümleri (bina, hangar, kat…); aynı firmanın bu lokasyondaki ikinci işyeri ayrı alt tesiste açılır.</small>
+                  <button class="primary-button" type="button" @click="openSubForm(null)"><Plus :size="16" :stroke-width="1.8" aria-hidden="true" /> Alt tesis ekle</button>
                 </div>
-                <form class="sub-add" @submit.prevent="addSub(focusLocation)">
-                  <input v-model="newSubName" type="text" placeholder="Yeni alt tesis (ör. Hangar 2)" aria-label="Yeni alt tesis adı" />
-                  <button class="secondary-button" type="submit" :disabled="!newSubName.trim() || subSaving">Ekle</button>
-                </form>
-                <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+                <p v-if="subError && !subForm.open && !subDelete" class="form-error" role="alert">{{ subError }}</p>
+                <div v-if="!subsOf(focusLocation).length" class="wp-empty">
+                  <span class="wp-empty-icon"><Layers :size="20" :stroke-width="1.8" aria-hidden="true" /></span>
+                  <strong>Bu lokasyonda alt tesis yok</strong>
+                  <p>Alt tesis isteğe bağlıdır; lokasyonda birden fazla bina ya da bölüm varsa ekleyin.</p>
+                </div>
+                <div v-else class="wp-table-wrap">
+                  <table class="wp-table">
+                    <thead><tr><th>Alt tesis</th><th>İşyeri</th><th><span class="sr-only">İşlem</span></th></tr></thead>
+                    <tbody>
+                      <tr v-for="sub in subsOf(focusLocation)" :key="sub.id">
+                        <td><strong>{{ sub.name }}</strong></td>
+                        <td :class="{ muted: !sub.workplaces_count }">{{ sub.workplaces_count ? `${sub.workplaces_count} işyeri` : 'İşyeri yok' }}</td>
+                        <td class="end">
+                          <span class="wp-actions">
+                            <button v-tooltip.top="'Düzenle'" class="row-button icon" type="button" :aria-label="`${sub.name} alt tesisini düzenle`" @click="openSubForm(sub)"><PencilLine :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                            <button v-tooltip.top="sub.workplaces_count ? 'İşyeri olan alt tesis silinemez' : 'Sil'" class="row-button icon remove" type="button" :disabled="!!sub.workplaces_count" :aria-label="`${sub.name} alt tesisini sil`" @click="subError = ''; subDelete = sub"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </template>
               <!-- Alanlar (eski yan panelin içeriği): sekme açık değilken de yüklü kalır, şeritteki sayı için -->
               <ExpertLocationAreasDrawer v-if="multiUser" v-show="shownLocTab === 'area'" :key="focusLocation.id" embedded :location="focusLocation" :customer-name="firm?.name" @count="n => areaCount = n" />
@@ -241,6 +259,39 @@
 
     <ExpertWorkplaceAssignments v-if="assignId" :only="assignId" @close="assignId = null" />
     <ExpertWorkplaceUnitsModal v-if="unitTarget" :location="unitTarget.location" :workplace="unitTarget.workplace" @close="unitTarget = null" />
+
+    <!-- Alt tesis ekle / düzenle: ortada açılan pencere, yalnız X kapatır -->
+    <div v-if="subForm.open && focusLocation" class="modal-backdrop">
+      <section class="modal-card panel-card" role="dialog" aria-modal="true" :aria-label="subForm.editing ? 'Alt tesisi düzenle' : 'Alt tesis ekle'">
+        <form class="float-card" @submit.prevent="saveSubForm(focusLocation)">
+          <div class="add-row-head">
+            <h3>{{ subForm.editing ? 'Alt tesisi düzenle' : `${focusLocation.name} · alt tesis ekle` }}</h3>
+            <button class="close-button" type="button" aria-label="Kapat" :disabled="subSaving" @click="subForm.open = false"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+          </div>
+          <label class="field">Alt tesis adı <span class="req">*</span>
+            <input v-model="subForm.name" type="text" placeholder="Örn. Hangar 2, İdari Bina" autofocus />
+          </label>
+          <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+          <button class="primary-button wide" type="submit" :disabled="!subForm.name.trim() || subSaving">{{ subSaving ? 'Kaydediliyor...' : subForm.editing ? 'Kaydet' : 'Ekle' }}</button>
+        </form>
+      </section>
+    </div>
+    <!-- Alt tesisi sil -->
+    <div v-if="subDelete && focusLocation" class="modal-backdrop">
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="sub-delete-title">
+        <div class="modal-head">
+          <span class="head-icon danger"><Trash2 :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></span>
+          <div><h2 id="sub-delete-title">Alt Tesisi Sil</h2><p>"{{ subDelete.name }}" · {{ focusLocation.name }}</p></div>
+          <button class="close-button" type="button" aria-label="Kapat" :disabled="subSaving" @click="subDelete = null"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /></button>
+        </div>
+        <p class="muted">Silinince geri alınamaz.</p>
+        <p v-if="subError" class="form-error" role="alert">{{ subError }}</p>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" :disabled="subSaving" @click="subDelete = null">Vazgeç</button>
+          <button class="danger-button" type="button" :disabled="subSaving" @click="confirmSubDelete(focusLocation)">{{ subSaving ? 'Siliniyor...' : 'Sil' }}</button>
+        </div>
+      </section>
+    </div>
 
     <!-- Firma ekle (Firmalar sekmesi): ortada açılan pencere, yalnız X kapatır -->
     <div v-if="firmFormOpen" class="modal-backdrop">
@@ -904,14 +955,6 @@ async function ensureSub(location: FirmLocation, name: string) {
   subFacilities.value = { ...subFacilities.value, [String(location.id)]: [...subsOf(location), created] }
   return created.id
 }
-async function addSub(location: FirmLocation) {
-  if (!newSubName.value.trim() || subSaving.value) return
-  subSaving.value = true
-  subError.value = ''
-  try { await ensureSub(location, newSubName.value.trim()); newSubName.value = '' }
-  catch (e: any) { subError.value = errorMessage(e, 'Alt tesis eklenemedi.') }
-  finally { subSaving.value = false }
-}
 // İşyeri formundaki "+ Yeni alt tesis": açılır, formda seçili gelir.
 const newSubOpen = ref(false)
 async function addSubToRow(location: FirmLocation) {
@@ -922,10 +965,35 @@ async function addSubToRow(location: FirmLocation) {
   catch (e: any) { rowError.value = errorMessage(e, 'Alt tesis eklenemedi.') }
   finally { subSaving.value = false }
 }
-async function removeSub(location: FirmLocation, sub: SubFacility) {
+// Alt tesisler sekmesi: ekle / düzenle penceresi ve silme onayı
+const subForm = reactive({ open: false, editing: null as SubFacility | null, name: '' })
+const subDelete = ref<SubFacility | null>(null)
+function openSubForm(sub: SubFacility | null) {
+  Object.assign(subForm, { open: true, editing: sub, name: sub?.name || '' })
   subError.value = ''
-  try { await del(`/locations/${location.id}/sub-facilities/${sub.id}`); await loadSubs(location.id) }
+}
+async function saveSubForm(location: FirmLocation) {
+  const name = subForm.name.trim()
+  if (!name || subSaving.value) return
+  subSaving.value = true
+  subError.value = ''
+  try {
+    if (subForm.editing) await patch(`/locations/${location.id}/sub-facilities/${subForm.editing.id}`, { name })
+    else await post(`/locations/${location.id}/sub-facilities`, { name })
+    await loadSubs(location.id)
+    subForm.open = false
+    // İşyeri tablosundaki alt tesis adı da güncellensin
+    if (subForm.editing) await load()
+  } catch (e: any) { subError.value = errorMessage(e, subForm.editing ? 'Alt tesis kaydedilemedi.' : 'Alt tesis eklenemedi.') }
+  finally { subSaving.value = false }
+}
+async function confirmSubDelete(location: FirmLocation) {
+  if (!subDelete.value || subSaving.value) return
+  subSaving.value = true
+  subError.value = ''
+  try { await del(`/locations/${location.id}/sub-facilities/${subDelete.value.id}`); await loadSubs(location.id); subDelete.value = null }
   catch (e: any) { subError.value = errorMessage(e, 'Alt tesis silinemedi.') }
+  finally { subSaving.value = false }
 }
 
 // --- Lokasyona işyeri: satır içi form (tek ya da toplu) ---
@@ -1526,6 +1594,8 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .loc-wp-card { padding: 24px; border: 0; border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); }
 .loc-panel-wp h3 { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--admin-heading); font-size: 15px; font-weight: 700; }
 .loc-panel-wp .wp-table { min-width: 560px; }
+.tab-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.tab-tools small { flex: 1; min-width: 220px; color: var(--admin-muted); font-size: 13px; line-height: 1.45; }
 /* Lokasyon sekmeleri: KSY-SIS LokasyonKarti .lok-serit */
 .lok-serit { display: flex; gap: 4px; padding: 8px 14px; background: #0f2a63; border-radius: 18px; overflow-x: auto; }
 .lok-serit button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 10px; background: transparent; color: #c3d1ee; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }
