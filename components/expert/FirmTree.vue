@@ -1482,8 +1482,10 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-banner > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .list-banner h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 700; }
 .list-banner small { color: var(--admin-muted); font-size: 13px; font-weight: 600; }
-.list-crumb { display: flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--dal) 70%, #212b36); font-size: 12.5px; }
-.list-crumb .link-button { padding: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; }
+/* Yol satırı sade gri, yalnız son dal koyu (kullanıcı 25 Kas 2026) */
+.list-crumb { display: flex; align-items: center; gap: 6px; color: var(--admin-muted); font-size: 13px; }
+.list-crumb .link-button { padding: 0; color: inherit; font: inherit; font-weight: 500; text-decoration: none; }
+.list-crumb .link-button:hover { color: var(--admin-heading); text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
 /* Küçük şema: beyaz zemin, büyük şemanın renkleri */
 .mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: none; cursor: pointer; }
@@ -1567,24 +1569,27 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .action-group button:disabled { opacity: .45; cursor: default; }
 .more-button { width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-input); color: var(--admin-heading); cursor: pointer; }
 .more-button:hover { background: rgba(145, 158, 171, .1); }
-.location-links .count-row { padding: 18px; border: 1px solid rgba(145, 158, 171, .2); background: transparent; }
-.location-links .count-icon { width: 44px; height: 44px; border-radius: 12px; }
-.location-links .count-text strong { font-size: 20px; }
+/* Ekipman / Tesisat: tek satır "simge  0 Ekipman", okunur boy (kullanıcı 25 Kas 2026) */
+.location-links .count-row { padding: 12px 16px; border: 1px solid rgba(145, 158, 171, .2); background: transparent; }
+.location-links .count-icon { width: 36px; height: 36px; border-radius: 10px; }
+.location-links .count-text { display: flex; align-items: baseline; gap: 6px; }
+.location-links .count-text strong { font-size: 18px; }
+.location-links .count-text small { color: var(--admin-heading); font-size: 15px; font-weight: 600; }
 .wp-empty { display: grid; justify-items: center; gap: 8px; padding: 36px 20px; border: 1px dashed rgba(145, 158, 171, .45); border-radius: 12px; text-align: center; }
 .wp-empty-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(145, 158, 171, .3); border-radius: 50%; color: var(--admin-muted); }
 .wp-empty strong { color: var(--admin-heading); font-size: 15px; }
 .wp-empty p { max-width: 420px; margin: 0; color: var(--admin-muted); font-size: 13px; line-height: 1.5; }
 .soft-button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--admin-accent-soft); color: var(--pk-accent); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .loc-panel-wp .wp-table td strong { display: block; }
-.list-banner { flex-wrap: wrap; padding: 20px; }
+.list-banner { flex-wrap: wrap; padding: 16px 20px; }
 .list-banner .list-crumb { flex: none; flex-wrap: wrap; font-size: 13px; }
-.list-crumb .crumb-parent { font-weight: 600; white-space: nowrap; }
+.list-crumb .crumb-parent { font-weight: 500; white-space: nowrap; }
 .list-banner .list-crumb h2 { margin: 0; font-size: 15px; white-space: nowrap; }
 .banner-pills { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; padding-left: 12px; border-left: 1px solid rgba(145, 158, 171, .3); }
 .loc-row.selected { box-shadow: inset 3px 0 0 var(--pk-accent); }
 .loc-panel-head { display: flex; align-items: flex-start; gap: 16px; }
 .loc-panel-id { flex: 1; min-width: 0; display: grid; gap: 4px; }
-.loc-panel-id h2 { margin: 0; color: var(--admin-heading); font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+.loc-panel-id h2 { margin: 0; color: var(--admin-heading); font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
 .loc-panel-id small { color: var(--admin-heading); font-size: 13px; font-weight: 600; }
 .loc-panel-id .loc-panel-addr { color: var(--admin-muted); font-weight: 400; line-height: 1.45; }
 .loc-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1597,15 +1602,24 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .tab-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .tab-tools small { flex: 1; min-width: 220px; color: var(--admin-muted); font-size: 13px; line-height: 1.45; }
 /* Lokasyon sekmeleri: KSY-SIS LokasyonKarti .lok-serit */
-.lok-serit { display: flex; gap: 4px; padding: 8px 14px; background: #0f2a63; border-radius: 18px; overflow-x: auto; }
-.lok-serit button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 10px; background: transparent; color: #c3d1ee; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }
-.lok-serit button:hover { color: #fff; background: rgba(255, 255, 255, .08); }
-.lok-serit button.on { color: #0f2a63; background: #fff; }
-.lok-serit .sayac { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: inherit; font-style: normal; font-size: 11px; text-align: center; }
-.lok-serit button.on .sayac { background: #e8eefc; color: #0f2a63; }
+/* Şerit beyaz kart (kullanıcı 25 Kas 2026; eskiden lacivert) */
+.lok-serit { display: flex; gap: 4px; padding: 8px; background: var(--admin-card); border-radius: var(--pk-radius); box-shadow: var(--pk-card-shadow); overflow-x: auto; }
+.lok-serit button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--admin-muted); font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.lok-serit button:hover { color: var(--admin-heading); background: rgba(145, 158, 171, .08); }
+.lok-serit button.on { color: var(--pk-accent); background: var(--admin-accent-soft); }
+.lok-serit .sayac { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: rgba(145, 158, 171, .16); color: inherit; font-style: normal; font-size: 12px; text-align: center; }
+.lok-serit button.on .sayac { background: rgba(var(--pk-accent-rgb), .14); color: var(--pk-accent); }
+/* Liste açıkken soldaki liste ile sağdaki kartların alt kenarı aynı hizada (kullanıcı 25 Kas 2026) */
+@media (min-width: 1181px) {
+  .overview.list-open { align-items: stretch; }
+  .overview.list-open .side { position: static; max-height: none; overflow: visible; display: flex; flex-direction: column; }
+  .overview.list-open .side > :last-child { flex: 1; }
+  .overview.list-open .loc-cards-card { height: 100%; display: flex; flex-direction: column; }
+  .overview.list-open .loc-rows { flex: 1; align-content: start; }
+}
 @media (max-width: 900px) { .loc-panel-head { flex-wrap: wrap; } .loc-panel-actions { justify-content: flex-start; } }
 /* (eski) sağ panel listesi stilleri */
-.list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 14px; }
+.list-search { min-height: 38px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: var(--admin-input); color: var(--admin-heading); font: inherit; font-size: 13px; }
 .loc-list { max-height: 460px; overflow-y: auto; display: grid; margin: 0; padding: 0; list-style: none; }
 .loc-list li + li { border-top: 1px dashed rgba(145, 158, 171, .24); }
 .loc-list button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 4px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
