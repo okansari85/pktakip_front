@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table>
+    <PkTable>
       <thead><tr><th>Lokasyon</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th>Rapor yok</th><th class="bar-col">Dağılım</th></tr></thead>
       <tbody>
         <tr v-for="location in locations" :key="location.location_id" class="clickable" @click="setLocation(location.location_id)">
@@ -16,7 +16,7 @@
           </td>
         </tr>
       </tbody>
-    </table>
+    </PkTable>
   </div>
 </template>
 

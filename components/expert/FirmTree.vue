@@ -143,7 +143,7 @@
                   <button v-if="canEdit" class="soft-button" type="button" @click="startWorkplace(focusLocation)"><Plus :size="16" :stroke-width="1.8" aria-hidden="true" /> Bu lokasyonda işyeri aç</button>
                 </div>
                 <div v-else class="wp-table-wrap">
-                  <table class="wp-table">
+                  <PkTable class="wp-table">
                     <thead><tr><th>{{ firm.type === 'public' ? 'SGK no' : 'Firma' }}</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
                     <tbody>
                       <tr v-for="workplace in workplacesOf(focusLocation)" :key="workplace.id">
@@ -160,7 +160,7 @@
                         </td>
                       </tr>
                     </tbody>
-                  </table>
+                  </PkTable>
                 </div>
               </template>
               <!-- Alt tesisler: tablo; ekle / düzenle / sil pencerede (kullanıcı 21 Kas 2026) -->
@@ -176,7 +176,7 @@
                   <p>Alt tesis isteğe bağlıdır; lokasyonda birden fazla bina ya da bölüm varsa ekleyin.</p>
                 </div>
                 <div v-else class="wp-table-wrap">
-                  <table class="wp-table">
+                  <PkTable class="wp-table">
                     <thead><tr><th>Alt tesis</th><th>İşyeri</th><th><span class="sr-only">İşlem</span></th></tr></thead>
                     <tbody>
                       <tr v-for="sub in subsOf(focusLocation)" :key="sub.id">
@@ -190,7 +190,7 @@
                         </td>
                       </tr>
                     </tbody>
-                  </table>
+                  </PkTable>
                 </div>
               </template>
               <!-- Alanlar (eski yan panelin içeriği): sekme açık değilken de yüklü kalır, şeritteki sayı için -->
@@ -205,7 +205,7 @@
       <section v-if="nodes.length && !listNode" class="card wp-card">
         <header class="schema-head"><div><h2>İşyerleri</h2><small>{{ workplaceRows.length }} işyeri</small></div></header>
         <div class="wp-table-wrap">
-          <table class="wp-table">
+          <PkTable class="wp-table">
             <!-- Kamuda firma sütunu yok: her satırda kurumun adı yazıyordu (kullanıcı 19 Kas 2026); işyeri adı ve SGK lokasyonun altında -->
             <thead><tr><th v-if="firm.type !== 'public'">Firma</th><th>Lokasyon</th><th>Alt tesis</th><th>Tehlike sınıfı</th><th><span class="sr-only">İşlem</span></th></tr></thead>
             <tbody>
@@ -225,7 +225,7 @@
               </tr>
               <tr v-if="!workplaceRows.length"><td :colspan="firm.type === 'public' ? 4 : 5" class="empty">Henüz işyeri yok.</td></tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </section>
       </template>

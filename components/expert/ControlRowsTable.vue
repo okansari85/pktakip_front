@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table :class="{ compact }">
+    <PkTable :class="{ compact }">
       <thead>
         <tr><th>Tarih</th><th>Firma / Kurum</th><th>Lokasyon / Tesis</th><th v-if="!compact">Tür</th><th>Ekipman / Tesisat</th><th>Öncelik</th></tr>
       </thead>
@@ -15,7 +15,7 @@
         </tr>
         <tr v-if="!rows.length"><td :colspan="compact ? 5 : 6" class="empty">{{ empty }}</td></tr>
       </tbody>
-    </table>
+    </PkTable>
   </div>
 </template>
 

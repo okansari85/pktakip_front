@@ -104,7 +104,7 @@ watch(() => [props.locationId, props.workplaceId], () => { open.value = new Set(
       <section class="card list-card">
         <header><div><h3>Cezaya konu ekipmanlar</h3><small>Süresi geçmiş ya da uygun olmayan aktif ekipmanlar; lokasyon geneli ekipmanlar dahil. Bir ekipman bir kez sayılır.</small></div></header>
         <p v-if="!data.items.length" class="muted pad">Bu işyerinde cezaya konu ekipman yok.</p>
-        <table v-else class="fine-table">
+        <PkTable v-else class="fine-table">
           <thead><tr><th>Ekipman türü</th><th class="num">Adet</th><th>Süresi geçmiş</th><th>Uygun değil</th><th class="num">Tutar</th></tr></thead>
           <tbody>
             <template v-for="g in groups" :key="g.type">
@@ -125,7 +125,7 @@ watch(() => [props.locationId, props.workplaceId], () => { open.value = new Set(
               </template>
             </template>
           </tbody>
-        </table>
+        </PkTable>
       </section>
 
       <p class="fine-note">

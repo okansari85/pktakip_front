@@ -70,14 +70,14 @@
               <div v-if="analysis.match && !analysis.duplicate && matchStatus !== 'match'" class="match" :class="matchStatus">
                 <div class="match-head"><PkIcon :class="MATCH_ICONS[matchStatus]" /><strong>{{ matchText }}</strong></div>
                 <!-- Eşleşince tablo gerekmez; farkı göstermek için yalnızca eşleşmeyince -->
-                <table v-if="matchStatus !== 'match' && analysis.match.checks?.length">
+                <PkTable v-if="matchStatus !== 'match' && analysis.match.checks?.length">
                   <thead><tr><th /><th>Kayıtlı</th><th>Raporda</th><th /></tr></thead>
                   <tbody>
                     <tr v-for="check in analysis.match.checks" :key="check.field" :class="check.result">
                       <td>{{ check.label }}</td><td>{{ check.equipment }}</td><td>{{ check.report || '—' }}</td><td><PkIcon :class="CHECK_ICONS[check.result]" /></td>
                     </tr>
                   </tbody>
-                </table>
+                </PkTable>
                 <div v-if="blocked && !mismatchConfirmed" class="match-actions">
                   <button class="secondary-button" type="button" @click="fileInput?.click()">Başka rapor seç</button>
                   <button class="danger-button" type="button" @click="mismatchConfirmed = true">Yine de devam et</button>

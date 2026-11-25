@@ -145,7 +145,7 @@
               <PkIcon :class="bulkDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" /> Seçilenleri sil
             </button>
           </div>
-          <table>
+          <PkTable>
             <thead>
               <tr>
                 <th class="check-col"><input type="checkbox" :checked="allSelected" :indeterminate="selected.length > 0 && !allSelected" title="Tümünü seç" @change="toggleAll" /></th>
@@ -206,7 +206,7 @@
                 </td>
               </tr>
             </tbody>
-          </table>
+          </PkTable>
           <div class="table-footer">
             <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filtered.length) }} / toplam {{ filtered.length }} ekipman · sayfada {{ PAGE_SIZE }}</span>
             <div v-if="pageCount > 1" class="pager">

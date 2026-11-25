@@ -110,7 +110,7 @@
         <div v-else-if="listError" class="empty error-text">{{ listError }}</div>
         <div v-else-if="fixtures.length === 0" class="empty">Henüz analiz yok.</div>
         <div v-else class="table-wrap">
-          <table>
+          <PkTable>
             <thead><tr><th>Dosya</th><th>Tip</th><th>Genel</th><th>Sistem</th><th>Ekipman</th><th>Bulgu</th><th>Süre</th><th>Tarih</th></tr></thead>
             <tbody>
               <tr v-for="item in fixtures" :key="item.fixture_id" :class="{ selected: selected?.fixture_id === item.fixture_id }" @click="openFixture(item.fixture_id)">
@@ -129,7 +129,7 @@
                 <td>{{ formatDate(item.created_at) }}</td>
               </tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </section>
     </div>

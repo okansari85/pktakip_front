@@ -24,7 +24,7 @@
       <div v-else-if="!areas.length" class="drawer-state">Bu lokasyonda alan yok.</div>
       <!-- Sekmede tablo (kullanıcı 21 Kas 2026): alt alanlar üst alanın altında girintili -->
       <div v-else-if="embedded" class="area-table-wrap">
-        <table class="area-table">
+        <PkTable class="area-table">
           <thead><tr><th>Alan</th><th>Tür</th><th>Kayıtlar</th><th>Durum</th><th v-if="canEdit"><span class="sr-only">İşlem</span></th></tr></thead>
           <tbody>
             <template v-for="area in areas" :key="area.id">
@@ -43,7 +43,7 @@
               </tr>
             </template>
           </tbody>
-        </table>
+        </PkTable>
       </div>
       <ul v-else class="area-list">
         <li v-for="area in areas" :key="area.id" class="area-item" :class="{ passive: !area.is_active }">

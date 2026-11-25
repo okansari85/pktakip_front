@@ -5,7 +5,7 @@
       <span class="count-badge">{{ customers.length }} kayıt</span>
     </div>
 
-    <DataTable :value="customers" :loading="loading" paginator :rows="10" responsiveLayout="scroll" emptyMessage="Kayıtlı müşteri bulunamadı.">
+    <PkTable wrap><DataTable :value="customers" :loading="loading" paginator :rows="10" responsiveLayout="scroll" emptyMessage="Kayıtlı müşteri bulunamadı.">
       <Column header="Müşteri">
         <template #body="{ data }">
           <div class="customer-cell">
@@ -31,7 +31,7 @@
           </div>
         </template>
       </Column>
-    </DataTable>
+    </DataTable></PkTable>
   </div>
 </template>
 

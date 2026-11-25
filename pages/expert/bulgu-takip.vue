@@ -118,7 +118,7 @@
       <!-- Eski tablo (firma / lokasyon, termin kalan gün, kapatma önerisi işareti, Detay): katalogda yok, gizli; ileride açılabilir -->
       <div v-if="SHOW_TABLE && result?.data?.length" class="card table-card">
         <div class="table-wrap">
-          <table>
+          <PkTable>
             <thead>
               <tr><th>Firma / Lokasyon</th><th>Ekipman / Tesisat</th><th>Bulgu</th><th>Yapılacak iş</th><th>Sorumlu</th><th>Termin</th><th>Durum</th><th /></tr>
             </thead>
@@ -137,7 +137,7 @@
                 <td><button class="detail-button" type="button" @click.stop="openId = row.id"><PkIcon class="pi pi-eye" /> Detay</button></td>
               </tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </div>
     </template>

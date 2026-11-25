@@ -209,7 +209,7 @@
               <small v-if="!table.systemId" class="warn">Bu sistem kontrolde yok ya da eşleşmedi; {{ resultsTitle.toLocaleLowerCase('tr-TR') }} kaydedilmez.</small>
             </div>
             <div class="table-wrap">
-              <table class="measure-table" :class="{ skipped: !table.systemId }">
+              <PkTable class="measure-table" :class="{ skipped: !table.systemId }">
                 <thead>
                   <tr>
                     <th>{{ table.codeLabel }}</th>
@@ -237,7 +237,7 @@
                     <tr v-if="row.open"><td :colspan="table.columns.length + (table.showPlace ? 4 : 3)"><ol class="row-findings"><li v-for="(finding, index) in row.findings" :key="index">{{ finding }}</li></ol></td></tr>
                   </template>
                 </tbody>
-              </table>
+              </PkTable>
             </div>
           </div>
         </div>

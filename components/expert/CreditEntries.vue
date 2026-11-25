@@ -4,7 +4,7 @@
     <div v-else-if="error" class="state error-text">{{ error }}</div>
     <div v-else-if="!rows.length" class="state">Henüz kredi hareketi yok.</div>
     <div v-else class="table-wrap">
-      <table>
+      <PkTable>
         <thead><tr><th>Tarih</th><th>Hareket</th><th>Kullanıcı</th><th class="amount">Kredi</th></tr></thead>
         <tbody>
           <tr v-for="entry in rows" :key="entry.id">
@@ -14,7 +14,7 @@
             <td class="amount" :class="entry.amount > 0 ? 'plus' : 'minus'">{{ entry.amount > 0 ? `+${entry.amount}` : entry.amount }}</td>
           </tr>
         </tbody>
-      </table>
+      </PkTable>
       <div class="table-footer">
         <span>{{ rows.length }} / {{ total }} hareket</span>
         <button v-if="page < lastPage" class="secondary-button" type="button" :disabled="loading" @click="loadPage(page + 1)">{{ loading ? 'Yükleniyor...' : 'Daha fazla göster' }}</button>

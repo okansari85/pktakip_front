@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table>
+    <PkTable>
       <thead><tr><th>Ekipman</th><th>Lokasyon / konum</th><th>Son durum</th><th>Gelecek kontrol</th><th>Kalan gün</th></tr></thead>
       <tbody>
         <tr v-for="item in shown" :key="item.id" @click="navigateTo(`/expert/equipment/${item.id}`)">
@@ -11,7 +11,7 @@
           <td><span class="days" :class="item.days_left < 0 ? 'overdue' : 'soon'">{{ daysText(item.days_left) }}</span></td>
         </tr>
       </tbody>
-    </table>
+    </PkTable>
     <button v-if="limit && items.length > shown.length" class="more" type="button" @click="expanded = true">Tümünü göster ({{ items.length }})</button>
   </div>
 </template>

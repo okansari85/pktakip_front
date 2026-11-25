@@ -47,7 +47,7 @@
         </div>
         <!-- Bütün hesaplarda tablo; satır ana firmanın şema sayfasını açar (OSGB'deki satır içi ağaç kalktı, kullanıcı 17 Kas 2026). -->
         <div class="table-wrap">
-          <table>
+          <PkTable>
             <thead><tr><th>Firma</th><th>Tür</th><th>Lokasyon</th><th v-if="SHOW_WORKPLACE_COLUMN" class="num">İşyeri</th><th>İşlemler</th></tr></thead>
             <tbody>
               <tr v-for="firm in filtered" :key="firm.id" tabindex="0" :class="{ featured: featured?.id === firm.id }" @click="open(firm)" @keydown.enter="open(firm)">
@@ -70,7 +70,7 @@
               </tr>
               <tr v-if="!filtered.length"><td :colspan="SHOW_WORKPLACE_COLUMN ? 5 : 4" class="state">Aramanızla eşleşen firma yok.</td></tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </template>
     </section>

@@ -25,7 +25,7 @@
         <span>Firmalar ana firmanın sayfasındaki Firmalar kartından eklenir.</span>
       </div>
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Firma Adı</th>
@@ -49,7 +49,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
         <div class="table-footer"><span>Toplam {{ filteredCompanies.length }} firma</span></div>
       </div>
     </section>

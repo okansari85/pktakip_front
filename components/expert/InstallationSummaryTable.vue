@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table>
+    <PkTable>
       <thead><tr><th>Tesisat</th><th>Lokasyon</th><th>Durum</th><th>Son kontrol</th><th>Geçerlilik</th><th>Kalan gün</th><th>Sistemler</th><th>Kontrolü yapan</th></tr></thead>
       <tbody>
         <template v-for="group in groups" :key="group.key">
@@ -41,7 +41,7 @@
           </template>
         </template>
       </tbody>
-    </table>
+    </PkTable>
   </div>
 </template>
 

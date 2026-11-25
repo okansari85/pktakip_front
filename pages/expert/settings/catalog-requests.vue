@@ -67,7 +67,7 @@
 
       <!-- Teknik özellik talepleri -->
       <div v-else-if="kind === 'spec'" class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Ekipman</th><th>Talep edilen özellik</th><th>Rapordaki ifade</th><th v-if="canManage">Talep eden</th><th>Durum</th><th class="actions">İşlemler</th>
@@ -121,12 +121,12 @@
               </tr>
             </template>
           </tbody>
-        </table>
+        </PkTable>
       </div>
 
       <!-- Tesisat sistemi talepleri -->
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Tesisat</th><th>Talep edilen sistem</th><th>Rapordaki sonuç</th><th>Rapor</th><th v-if="canManage">Talep eden</th><th>Durum</th><th class="actions">İşlemler</th>
@@ -190,7 +190,7 @@
               </tr>
             </template>
           </tbody>
-        </table>
+        </PkTable>
       </div>
     </section>
   </div>

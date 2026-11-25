@@ -6,7 +6,7 @@
     <div v-else-if="error" class="state error-text">{{ error }}</div>
     <div v-else-if="!rows.length" class="state">Henüz ödeme yok.</div>
     <div v-else class="table-wrap">
-      <table>
+      <PkTable>
         <thead><tr><th>Tarih</th><th>Paket</th><th>Dönem</th><th>Tutar (KDV dahil)</th><th>Durum</th><th>Sipariş no</th></tr></thead>
         <tbody>
           <tr v-for="order in rows" :key="order.merchant_oid">
@@ -18,7 +18,7 @@
             <td class="mono">{{ order.merchant_oid }}</td>
           </tr>
         </tbody>
-      </table>
+      </PkTable>
       <div class="table-footer">
         <span>{{ rows.length }} / {{ total }} ödeme</span>
         <button v-if="page < lastPage" class="secondary-button" type="button" :disabled="loading" @click="loadPage(page + 1)">{{ loading ? 'Yükleniyor...' : 'Daha fazla göster' }}</button>

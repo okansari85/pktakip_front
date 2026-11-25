@@ -17,7 +17,7 @@
 
     <!-- Hesaplar: paket, kalan kredi, işyeri doluluğu -->
     <div v-if="tab === 'accounts'" class="table-card">
-      <DataTable :value="accounts" :loading="loading" responsiveLayout="scroll" emptyMessage="Hesap yok.">
+      <PkTable wrap><DataTable :value="accounts" :loading="loading" responsiveLayout="scroll" emptyMessage="Hesap yok.">
         <Column header="Hesap">
           <template #body="{ data }"><strong>{{ data.name }}</strong><small class="block">{{ TYPE_LABELS[data.tenant_type] }}</small></template>
         </Column>
@@ -44,14 +44,14 @@
             </div>
           </template>
         </Column>
-      </DataTable>
+      </DataTable></PkTable>
     </div>
 
     <!-- Paketler: hesap türüne göre -->
     <template v-else>
       <div class="toolbar"><Button label="Yeni paket" class="pk-primary" @click="openPackage(null)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-plus" :class="iconClass" /></template></Button></div>
       <div class="table-card">
-        <DataTable :value="packages" :loading="loading" responsiveLayout="scroll" emptyMessage="Paket yok.">
+        <PkTable wrap><DataTable :value="packages" :loading="loading" responsiveLayout="scroll" emptyMessage="Paket yok.">
           <Column header="Paket"><template #body="{ data }"><strong>{{ data.name }}</strong></template></Column>
           <Column header="Müşteri türü"><template #body="{ data }">{{ TYPE_LABELS[data.account_type] }}</template></Column>
           <Column header="Aylık kredi"><template #body="{ data }">{{ data.monthly_credits }}</template></Column>
@@ -60,7 +60,7 @@
           <Column header="Yıllık fiyat"><template #body="{ data }">{{ money(data.yearly_price) }}</template></Column>
           <Column header="Durum"><template #body="{ data }"><Tag :value="data.is_active ? 'Aktif' : 'Pasif'" :severity="data.is_active ? 'success' : 'secondary'" /></template></Column>
           <Column header="" headerStyle="width: 70px"><template #body="{ data }"><Button text rounded @click="openPackage(data)"><template #icon="{ class: iconClass }"><PkIcon class="pi pi-pencil" :class="iconClass" /></template></Button></template></Column>
-        </DataTable>
+        </DataTable></PkTable>
       </div>
       <p class="hint">Paketi değiştirmek, o paketin atanmış olduğu hesapları değiştirmez (hesap atama anındaki değerlerle devam eder); hesaba yeniden atanınca yeni değerler geçer.</p>
     </template>

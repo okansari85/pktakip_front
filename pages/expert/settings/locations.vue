@@ -57,7 +57,7 @@
         <span v-else>Seçili {{ kamu ? 'birim' : 'dal' }} için ilk lokasyonu ekleyebilirsiniz.</span>
       </div>
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Lokasyon Adı</th>
@@ -82,7 +82,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
         <div class="table-footer">
           <span>{{ pageStart + 1 }}–{{ Math.min(pageStart + PAGE_SIZE, filteredLocations.length) }} / toplam {{ filteredLocations.length }} lokasyon · sayfada {{ PAGE_SIZE }}</span>
           <div class="pager">

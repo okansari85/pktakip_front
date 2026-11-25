@@ -20,7 +20,7 @@
     <div v-else-if="!workplaces.length" class="state-row">Henüz firma (işyeri) yok. Firmaları lokasyonlara Lokasyonlar sayfasından eklersiniz.</div>
     <div v-else-if="!shown.length" class="state-row">Filtreye uyan firma yok.</div>
     <div v-else class="table-wrap">
-      <table>
+      <PkTable>
         <thead><tr><th>İşyeri</th><th>{{ corporate ? 'Lokasyon' : 'Müşteri · Lokasyon' }}</th><th>Uzmanlar</th><th class="actions-head">İşlemler</th></tr></thead>
         <tbody>
           <tr v-for="item in shown" :key="item.id">
@@ -41,7 +41,7 @@
             <td class="actions"><button class="icon-button" type="button" title="Uzman ata" @click="open(item)"><PkIcon class="pi pi-user-edit" /></button></td>
           </tr>
         </tbody>
-      </table>
+      </PkTable>
       <div class="table-footer"><span>Toplam {{ shown.length }} firma</span></div>
     </div>
     </template>

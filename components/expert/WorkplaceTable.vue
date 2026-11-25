@@ -30,7 +30,7 @@
       <slot name="empty"><span>Aramanızla eşleşen işyeri yok.</span></slot>
     </div>
     <div v-else class="table-wrap">
-      <table>
+      <PkTable>
         <thead>
           <tr>
             <th>{{ kamu ? 'İşyeri' : 'Firma' }}</th>
@@ -58,7 +58,7 @@
             <td>{{ item.experts?.join(', ') || '—' }}</td>
           </tr>
         </tbody>
-      </table>
+      </PkTable>
       <div class="table-footer"><span>Toplam {{ filtered.length }} işyeri</span></div>
     </div>
   </section>

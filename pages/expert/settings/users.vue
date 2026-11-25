@@ -40,7 +40,7 @@
         <span v-if="!users.length">"Kullanıcı Ekle" ile uzman ya da operasyon yöneticisi davet edin.</span>
       </div>
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Ad Soyad</th>
@@ -74,7 +74,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
         <div class="table-footer"><span>Toplam {{ filteredUsers.length }} kullanıcı</span><span v-if="counts">{{ counts }}</span></div>
       </div>
     </section>

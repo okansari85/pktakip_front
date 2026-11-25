@@ -111,7 +111,7 @@
           <p v-if="rows.length && !existing.length" class="hint"><PkIcon class="pi pi-info-circle" /> Bu lokasyonda henüz tüp yok: kaydettikten sonra Kontrol Formları'nda bekleyen satırları seçip yeni tüp olarak ekleyin.</p>
           <p v-if="!rows.length" class="muted">Formda tüp satırı okunamadı.</p>
           <div v-else class="table-wrap">
-            <table>
+            <PkTable>
               <thead><tr><th>Bulunduğu yer</th><th>No</th><th>{{ bulk?.type?.variant_label || 'Tip' }}</th><th>Kapasite</th><th>Son dolum</th><th>Durum</th><th>Ekipmanlar'daki karşılığı</th></tr></thead>
               <tbody>
                 <tr v-if="!visibleRows.length"><td colspan="7" class="muted">Bu grupta satır yok.</td></tr>
@@ -142,7 +142,7 @@
                   </td>
                 </tr>
               </tbody>
-            </table>
+            </PkTable>
           </div>
           <p v-if="duplicateChoice" class="error-text">{{ duplicateChoice }}</p>
           <label v-if="manualCount" class="check-line">

@@ -126,7 +126,7 @@
             </header>
             <div v-if="!listSystems.length" class="empty-inline"><PkIcon class="pi pi-th-large" /> Henüz sistem yok. “Sistem ekle” ile katalogdan seçin.</div>
             <div v-else class="table-wrap">
-              <table class="systems-table">
+              <PkTable class="systems-table">
                 <thead><tr><th>Sistem</th><th>Ekipman</th><th>Son kontrol</th><th>Durum</th><th>Bulgular</th><th class="actions-col"><span class="sr-only">Aç</span></th></tr></thead>
                 <tbody>
                   <tr v-for="system in listSystems" :key="system.id" @click="openDetail(system.id)">
@@ -138,7 +138,7 @@
                     <td class="actions-col"><button class="icon-button" type="button" :aria-label="`${system.name} ayrıntıları`" @click.stop="openDetail(system.id)"><PkIcon class="pi pi-angle-right" /></button></td>
                   </tr>
                 </tbody>
-              </table>
+              </PkTable>
             </div>
           </section>
         </template>
@@ -337,7 +337,7 @@
                       <button class="secondary-button small" type="button" @click="equipmentSystemId = system.id"><PkIcon class="pi pi-plus" /> Ekipman ekle</button>
                     </div>
                     <div v-if="system.equipment.length" class="table-wrap">
-                      <table class="equipment-table">
+                      <PkTable class="equipment-table">
                         <thead><tr><th>Ekipman no</th><th>Tür / Etiket</th><th>Konum</th><th>Son kontrol</th><th>Gelecek kontrol</th><th>Kalan gün</th><th>Durum</th></tr></thead>
                         <tbody>
                           <tr v-for="item in system.equipment" :key="item.id" @click="navigateTo(`/expert/equipment/${item.id}`)">
@@ -350,7 +350,7 @@
                             <td><span class="status-badge" :class="item.status">{{ EQUIPMENT_STATUS_LABELS[item.status] || item.status }}</span></td>
                           </tr>
                         </tbody>
-                      </table>
+                      </PkTable>
                     </div>
                     <p v-else class="muted">Henüz ekipman yok. “Ekipman ekle” ile ekleyin; eklenenler Ekipmanlar menüsünde de görünür.</p>
                   </template>
@@ -363,7 +363,7 @@
                       <small class="muted">Sistemin durumu son kontroldeki raporların en kötüsü</small>
                     </div>
                     <div class="table-wrap">
-                      <table class="equipment-table static entry-table">
+                      <PkTable class="equipment-table static entry-table">
                         <thead><tr><th>Kontrol tarihi</th><th>Rapor</th><th>Raporda</th><th>Sonuç</th><th>Bulgu</th><th /></tr></thead>
                         <tbody>
                           <template v-for="(entry, entryIndex) in [...currentOf(system), ...(openPrevious.includes(system.id) ? previousOf(system) : [])]" :key="entry.report_id">
@@ -396,7 +396,7 @@
                                   <div v-for="table in measurementTables(entry.components)" :key="table.key" class="measure-block">
                                     <small v-if="table.name" class="measure-name">{{ table.name }}</small>
                                     <div class="table-wrap">
-                                      <table class="equipment-table static measure-table">
+                                      <PkTable class="equipment-table static measure-table">
                                         <thead>
                                           <tr>
                                             <th>{{ table.codeLabel }}</th>
@@ -415,7 +415,7 @@
                                             <td v-if="table.hasFindings" :title="(item.findings || []).join('\n')">{{ item.findings?.length || '—' }}</td>
                                           </tr>
                                         </tbody>
-                                      </table>
+                                      </PkTable>
                                     </div>
                                   </div>
                                 </template>
@@ -423,7 +423,7 @@
                             </tr>
                           </template>
                         </tbody>
-                      </table>
+                      </PkTable>
                     </div>
                     <button v-if="previousOf(system).length" class="link-button" type="button" @click="togglePrevious(system)">
                       <PkIcon :class="openPrevious.includes(system.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
@@ -447,7 +447,7 @@
             <template v-else-if="detailTab === 'history'">
             <div v-if="!detail.reports.length" class="empty-inline"><PkIcon class="pi pi-history" /> Henüz kontrol yok.</div>
             <div v-else class="table-wrap">
-              <table class="history-table">
+              <PkTable class="history-table">
                 <thead>
                   <tr>
                     <th>Kontrol tarihi</th><th>Geçerlilik</th><th>Rapor</th><th>Kontrolü yapan</th><th>Genel sonuç</th><th>Sonuç ve kanaat</th>
@@ -520,7 +520,7 @@
                     </tr>
                   </template>
                 </tbody>
-              </table>
+              </PkTable>
             </div>
             </template>
 

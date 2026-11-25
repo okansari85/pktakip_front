@@ -92,7 +92,7 @@
     <div v-else-if="!rows.length" class="state">Bu filtrelere uyan okuma yok.</div>
     <template v-else>
       <div class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>Tarih</th><th>Dosya</th><th>Tespit edilen</th><th>İlgili kayıt</th>
@@ -139,7 +139,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
       </div>
       <div class="table-footer">
         <span v-if="soleUser" class="by"><PkIcon class="pi pi-user" /> <strong>{{ soleUser }}</strong> tarafından işlendi.</span>

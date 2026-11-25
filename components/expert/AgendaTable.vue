@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table>
+    <PkTable>
       <thead><tr><th>Tarih</th><th>Lokasyon</th><th>Kontroller</th><th>Kalan gün</th></tr></thead>
       <tbody>
         <tr v-for="entry in shown" :key="`${entry.date}|${entry.location_id}`" @click="emit('select', entry.date)">
@@ -10,7 +10,7 @@
           <td><span class="days" :class="timingOf(entry.days_left)">{{ daysText(entry.days_left) }}</span></td>
         </tr>
       </tbody>
-    </table>
+    </PkTable>
     <button v-if="limit && entries.length > shown.length" class="more" type="button" @click="expanded = true">Tümünü göster ({{ entries.length }})</button>
   </div>
 </template>

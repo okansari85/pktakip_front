@@ -1,7 +1,7 @@
 <template>
   <div class="specs">
     <p v-if="!properties.length && !pendingSpecs?.length" class="empty">Henüz rapordan okunmuş teknik özellik yok. Periyodik kontrol raporu yapay zeka ile yüklenince burada görünür.</p>
-    <table v-if="properties.length">
+    <PkTable v-if="properties.length">
       <tbody>
         <template v-for="property in properties" :key="property.key">
           <tr>
@@ -39,7 +39,7 @@
           </tr>
         </template>
       </tbody>
-    </table>
+    </PkTable>
     <!-- Katalog dışı olup yetkiliye gönderilen talepler -->
     <div v-if="pendingSpecs?.length" class="pending">
       <h4><PkIcon class="pi pi-clock" /> Kataloğa eklenmesi onay bekleyen ({{ pendingSpecs.length }})</h4>

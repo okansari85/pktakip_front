@@ -1,6 +1,6 @@
 <template>
   <div class="table-wrap">
-    <table>
+    <PkTable>
       <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th v-for="[key, label] in optionalStatus" :key="key">{{ label }}</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
       <tbody>
         <tr v-for="type in types" :key="type.type_id">
@@ -21,7 +21,7 @@
           </td>
         </tr>
       </tbody>
-    </table>
+    </PkTable>
   </div>
 </template>
 

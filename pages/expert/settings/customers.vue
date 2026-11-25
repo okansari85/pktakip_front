@@ -30,7 +30,7 @@
         <button v-if="!search" class="primary-button empty-button" type="button" @click="wizardOpen = true"><PkIcon class="pi pi-plus" /> {{ orgMode ? 'İlk ana firmanızı ekleyin' : 'İlk müşterinizi ekleyin' }}</button>
       </div>
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead>
             <tr>
               <th>{{ t.nameCol }}</th>
@@ -61,7 +61,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
         <div class="table-footer"><span>Toplam {{ filteredCustomers.length }} {{ t.unit }}</span></div>
       </div>
     </section>

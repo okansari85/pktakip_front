@@ -70,7 +70,7 @@
           <header class="table-head"><PkIcon class="pi pi-clone" aria-hidden="true" /><h3>Kategorilere göre durum</h3></header>
           <p v-if="!data.categories.length" class="muted pad">Ekipman yok.</p>
           <div v-else class="table-wrap">
-            <table class="pill-table">
+            <PkTable class="pill-table">
               <thead><tr><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th>Belirtilmemiş</th><th v-for="[key, label] in categoryExtraStatus" :key="key">{{ label }}</th><th>Süresi geçen</th><th>Yaklaşan</th></tr></thead>
               <tbody>
                 <tr v-for="category in data.categories" :key="category.slug">
@@ -96,7 +96,7 @@
                   <td><span class="num upcoming">{{ data.totals.upcoming }}</span></td>
                 </tr>
               </tfoot>
-            </table>
+            </PkTable>
           </div>
           <p class="scope-note"><PkIcon class="pi pi-info-circle" aria-hidden="true" /> Rapor kapsamı: Ekipmanlar</p>
         </section>
@@ -118,7 +118,7 @@
           <header><h3>Ekipman türleri</h3><small>Tür başına durum ve kontrol zamanı</small></header>
           <Chart type="bar" :data="typeChart" :options="typeOptions" class="chart" :style="{ height: `${Math.max(220, data.types.length * 34 + 70)}px` }" />
           <div class="table-wrap">
-            <table>
+            <PkTable>
               <thead><tr><th>Tür</th><th>Kategori</th><th>Toplam</th><th>Uygun</th><th>Uygun değil</th><th v-for="[key, label] in optionalStatus" :key="key">{{ label }}</th><th>Süresi geçmiş</th><th>60 gün içinde</th><th class="bar-col">Uygun oranı</th></tr></thead>
               <tbody>
                 <tr v-for="type in data.types" :key="type.type_id">
@@ -139,7 +139,7 @@
                   </td>
                 </tr>
               </tbody>
-            </table>
+            </PkTable>
           </div>
         </section>
 
@@ -227,7 +227,7 @@
         <section v-if="data.installations.length" class="card table-card">
           <header class="table-head"><h3>Kontrol raporu</h3></header>
           <div class="table-wrap">
-            <table class="report-table">
+            <PkTable class="report-table">
               <thead><tr><th>Tesisat</th><th>Kontrol kuruluşu</th><th>Rapor no</th><th>Son kontrol</th><th>Geçerlilik</th><th>Sonuç</th></tr></thead>
               <tbody>
                 <tr v-for="installation in data.installations" :key="installation.id">
@@ -239,7 +239,7 @@
                   <td><span class="status-badge" :class="installation.status"><PkIcon :class="STATUS_ICONS[installation.status]" aria-hidden="true" /> {{ INSTALLATION_STATUS[installation.status] || installation.status }}</span></td>
                 </tr>
               </tbody>
-            </table>
+            </PkTable>
           </div>
         </section>
         <p class="scope-foot">Rapor kapsamı: Tesisatlar</p>
@@ -272,7 +272,7 @@
             </div>
           </div>
           <div class="table-wrap">
-            <table>
+            <PkTable>
               <thead><tr><th>Sistem</th><th>Durum</th><th>Ekipman</th><th>Uygun</th><th>Uygun değil</th><th>Belirtilmemiş</th><th>Bulgu</th></tr></thead>
               <tbody>
                 <template v-for="system in installation.systems" :key="system.name">
@@ -290,7 +290,7 @@
                   </tr>
                 </template>
               </tbody>
-            </table>
+            </PkTable>
           </div>
           <template v-if="installation.general_findings?.length">
             <h4>Genel bulgular</h4>

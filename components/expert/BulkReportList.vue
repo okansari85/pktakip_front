@@ -13,7 +13,7 @@
       <span>“Tüp Kontrol Formu Yükle” ile yükleyin; tüpler Ekipmanlar'daki kayıtlarla eşleşir, her tüpe kendi sonucuyla kontrol kaydı açılır.</span>
     </div>
     <div v-else class="table-wrap">
-      <table>
+      <PkTable>
         <thead><tr><th>Kontrol tarihi</th><th>Geçerlilik</th><th>Rapor</th><th>Kontrolü yapan</th><th>Genel sonuç</th><th>Bölümler</th><th>Tüp</th><th>Bulgu</th><th>Ekleyen</th><th /></tr></thead>
         <tbody>
           <template v-for="report in reports" :key="report.id">
@@ -78,7 +78,7 @@
             </tr>
           </template>
         </tbody>
-      </table>
+      </PkTable>
     </div>
   </section>
 </template>

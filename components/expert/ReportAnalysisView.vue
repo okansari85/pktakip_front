@@ -78,7 +78,7 @@
         </span>
       </div>
       <div v-if="equipment.length" class="table-wrap">
-        <table>
+        <PkTable>
           <thead><tr><th>Sistem</th><th>Ekipman</th><th>Kod</th><th>Özellikler</th><th>Uygunluk</th><th>Bulgu</th></tr></thead>
           <tbody>
             <tr v-for="(item, index) in equipment" :key="index">
@@ -96,7 +96,7 @@
               <td>{{ findingCountByCode[equipmentKey(item)] || '—' }}</td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
       </div>
     </section>
 
@@ -104,7 +104,7 @@
       <h2>Bulgular <span class="count">{{ findings.length }}</span></h2>
       <div v-if="findings.length === 0" class="empty">Bulgu yok.</div>
       <div v-else class="table-wrap">
-        <table>
+        <PkTable>
           <thead><tr><th>Sistem</th><th>Açıklama</th><th>Ekipman</th><th>Sayfa</th><th>Önem</th></tr></thead>
           <tbody>
             <tr v-for="(finding, index) in findings" :key="finding.id || index">
@@ -115,7 +115,7 @@
               <td>{{ finding.severity || '—' }}</td>
             </tr>
           </tbody>
-        </table>
+        </PkTable>
       </div>
     </section>
 

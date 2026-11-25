@@ -117,7 +117,7 @@
         <template v-if="listTab === 'checks'">
           <div v-if="!equipment.inspections?.length" class="state">Henüz kontrol kaydı yok.</div>
           <div v-else class="table-wrap">
-            <table>
+            <PkTable>
               <thead>
                 <tr>
                   <th>Tarih</th>
@@ -182,7 +182,7 @@
                 </tr>
                 </template>
               </tbody>
-            </table>
+            </PkTable>
           </div>
         </template>
 

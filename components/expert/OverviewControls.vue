@@ -24,7 +24,7 @@
       <section class="card">
         <header><h3>Son Eklenen Kayıtlar</h3><NuxtLink to="/expert/equipment">Tümünü Gör</NuxtLink></header>
         <div class="table-wrap">
-          <table>
+          <PkTable>
             <thead><tr><th v-if="hasDates">Tarih</th><th>Firma / Lokasyon</th><th>Kayıt</th><th>İşlem</th><th><span class="sr-only">Aç</span></th></tr></thead>
             <tbody>
               <tr v-for="row in recentRows" :key="row.id" tabindex="0" @click="navigateTo(`/expert/equipment/${row.id}`)" @keydown.enter="navigateTo(`/expert/equipment/${row.id}`)">
@@ -36,14 +36,14 @@
               </tr>
               <tr v-if="!recentRows.length"><td :colspan="hasDates ? 5 : 4" class="empty">{{ recentLoading ? 'Yükleniyor...' : 'Henüz kayıt yok.' }}</td></tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </section>
 
       <section class="card">
         <header><h3>Dikkat Gerektiren Kontroller</h3><NuxtLink to="/expert/kontroller/suresi-gecen">Tümünü Gör</NuxtLink></header>
         <div class="table-wrap">
-          <table>
+          <PkTable>
             <thead><tr><th>Firma / Lokasyon</th><th>Kayıt</th><th>Öncelik</th><th class="end"><span class="sr-only">Gün</span></th></tr></thead>
             <tbody>
               <tr v-for="row in attentionRows" :key="row.key" tabindex="0" @click="date = row.date" @keydown.enter="date = row.date">
@@ -54,7 +54,7 @@
               </tr>
               <tr v-if="!attentionRows.length"><td colspan="4" class="empty">Dikkat gerektiren kontrol yok.</td></tr>
             </tbody>
-          </table>
+          </PkTable>
         </div>
       </section>
     </div>

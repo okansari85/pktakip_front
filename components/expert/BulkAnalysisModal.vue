@@ -58,7 +58,7 @@
               <label class="check-line"><input type="checkbox" :checked="allSelected" :disabled="!savable.length || saving" @change="toggleAll" /> Tümünü seç <small>({{ selectedRows.length }} / {{ savable.length }} kaydedilebilir)</small></label>
             </div>
             <div class="table-wrap">
-              <table>
+              <PkTable>
                 <thead><tr><th /><th>Dosya</th><th>Tür</th><th>Raporda</th><th>Sonuç</th><th>Kontrol</th><th>Gelecek</th><th>Ekipman</th><th /></tr></thead>
                 <tbody>
                   <tr v-for="item in items" :key="item.key" :class="rowClass(item)">
@@ -96,7 +96,7 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
+              </PkTable>
             </div>
             <p class="hint"><PkIcon class="pi pi-info-circle" /> Mevcut ekipmanla eşleşmeyen rapor için yeni ekipman açılır; isterseniz satırdan mevcut bir ekipman seçin. Toplu kayıtta mevcut ekipmanın teknik özellikleri değişmez, yeni özellik de eklenmez; yeni ekipman rapordaki bilgilerle açılır.</p>
           </div>
