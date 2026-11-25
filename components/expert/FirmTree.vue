@@ -41,13 +41,14 @@
       <section v-if="nodes.length && listNode" class="card list-banner" :style="{ '--dal': chartPositions[String(listNode.id)]?.color || '#a43df5' }">
         <!-- Şemanın küçük hâli: bulunulan dal yanıp söner; tıklayınca şemaya dönülür -->
         <button class="mini-tree-button" type="button" title="Şemaya dön" @click="closeList"><ExpertMiniTree :nodes="nodes" :active-id="listNode.id" :positions="chartPositions" /></button>
-        <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><h2>{{ listNode.name }}</h2></nav>
+        <nav class="list-crumb" aria-label="Konum"><button class="link-button" type="button" @click="closeList">{{ topLabel }} şeması</button><!-- Tam hiyerarşi: üst dallar sırayla, en sonda bulunulan dal (kullanıcı 25 Kas 2026) -->
+          <template v-for="node in pathTo(nodes, listNode.id).slice(0, -1)" :key="node.id"><ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><span class="crumb-parent">{{ node.name }}</span></template>
+          <ChevronRight :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /><h2>{{ listNode.name }}</h2></nav>
         <span class="banner-pills">
           <span class="count-pill none">{{ listLocations.length }} lokasyon</span>
           <span class="count-pill">{{ listLocations.reduce((sum, l) => sum + workplacesOf(l).length, 0) }} işyeri</span>
           <span v-if="listEmptyCount" class="count-pill warn">{{ listEmptyCount }} lokasyonda işyeri yok</span>
         </span>
-        <button class="close-list" type="button" @click="closeList"><X :size="16" :stroke-width="1.8" class="lucide-i" aria-hidden="true" /> Kapat</button>
       </section>
       <div v-if="nodes.length" class="overview" :class="{ 'list-open': listNode, 'no-side': !sideOpen }">
         <div class="main-col">
@@ -1484,7 +1485,6 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .list-crumb { display: flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--dal) 70%, #212b36); font-size: 12.5px; }
 .list-crumb .link-button { padding: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; }
 .list-crumb .pi-angle-right { font-size: 10px; }
-.list-banner .close-list { border-color: transparent; background: var(--admin-card); }
 /* Küçük şema: beyaz zemin, büyük şemanın renkleri */
 .mini-tree-button { flex: none; display: grid; place-items: center; padding: 4px 8px; border: 0; border-radius: 10px; background: var(--admin-card); box-shadow: none; cursor: pointer; }
 .mini-tree-button:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--dal) 35%, transparent); }
@@ -1503,7 +1503,6 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .schema-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .crumb-back { padding: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--pk-accent); }
 .schema-head h2 .pi-angle-right { margin: 0 4px; color: var(--admin-muted); font-size: 12px; }
-.close-list { flex: none; min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(145, 158, 171, .32); border-radius: 8px; background: transparent; color: var(--admin-heading); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .chart-list { height: 560px; display: flex; flex-direction: column; gap: 12px; }
 .chart-list-tools { display: flex; gap: 10px; }
 .chart-list-tools .list-search { flex: 1; }
@@ -1577,8 +1576,9 @@ h1 { margin: 0; color: var(--admin-heading); font-size: 22px; letter-spacing: 0;
 .wp-empty p { max-width: 420px; margin: 0; color: var(--admin-muted); font-size: 13px; line-height: 1.5; }
 .soft-button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--admin-accent-soft); color: var(--pk-accent); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .loc-panel-wp .wp-table td strong { display: block; }
-.list-banner { flex-wrap: wrap; padding: 12px 20px; }
-.list-banner .list-crumb { flex: none; font-size: 13px; }
+.list-banner { flex-wrap: wrap; padding: 20px; }
+.list-banner .list-crumb { flex: none; flex-wrap: wrap; font-size: 13px; }
+.list-crumb .crumb-parent { font-weight: 600; white-space: nowrap; }
 .list-banner .list-crumb h2 { margin: 0; font-size: 15px; white-space: nowrap; }
 .banner-pills { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; padding-left: 12px; border-left: 1px solid rgba(145, 158, 171, .3); }
 .loc-row.selected { box-shadow: inset 3px 0 0 var(--pk-accent); }
